@@ -46,18 +46,18 @@ pbab::printStats()
 
         // printf("\t######Total %d\n", M);
         std::cout << "TOTdecomposed:\t " << stats.totDecomposed << std::endl;
-        std::cout << "TOTjohnson LBs:\t " << stats.johnsonBounds << std::endl;
-        std::cout << "TOTsimple LBs:\t " << stats.simpleBounds << std::endl;
-        std::cout << "TOTleaves:\t " << stats.leaves << std::endl;
+        // std::cout << "TOTjohnson LBs:\t " << stats.johnsonBounds << std::endl;
+        // std::cout << "TOTsimple LBs:\t " << stats.simpleBounds << std::endl;
+        // std::cout << "TOTleaves:\t " << stats.leaves << std::endl;
 
-        if (arguments::branchingMode > 0) {
-            printf("AvgBranchingFactor:\t %f\n", (double) (stats.simpleBounds / 2) / stats.totDecomposed);
-            printf("LB1-PruningRate:\t %f\n", 1.0 - (double) stats.totDecomposed / (stats.simpleBounds / 2));
-
-            if (arguments::boundMode == 2)
-                printf("LB2-SuccessRate:\t %f\n",
-                  (double) (stats.johnsonBounds - stats.totDecomposed) / stats.totDecomposed);
-        }
+        // if (arguments::branchingMode > 0) {
+        //     printf("AvgBranchingFactor:\t %f\n", (double) (stats.simpleBounds / 2) / stats.totDecomposed);
+        //     printf("LB1-PruningRate:\t %f\n", 1.0 - (double) stats.totDecomposed / (stats.simpleBounds / 2));
+        //
+        //     if (arguments::boundMode == 2)
+        //         printf("LB2-SuccessRate:\t %f\n",
+        //           (double) (stats.johnsonBounds - stats.totDecomposed) / stats.totDecomposed);
+        // }
 
 		std::cout<<"\n";
         if(foundAtLeastOneSolution)
