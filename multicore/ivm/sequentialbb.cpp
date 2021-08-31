@@ -97,9 +97,6 @@ sequentialbb::initAtInterval(int * pos, int * end)
         IVM->endVect[i] = end[i];
     }
 
-    // IVM->displayVector(IVM->posVect);
-    // IVM->displayVector(IVM->endVect);
-
     if (IVM->beforeEnd()) {
         unfold(arguments::boundMode);
         return true;
@@ -139,19 +136,12 @@ bool sequentialbb::next()
             // decode IVM -> subproblems
             bd->prepareSchedule(IVM);
 
-
-            // if (!IVM->beforeEnd()) { //DEBUG
-            //     printf("Whaaaaaaat\n"); fflush(stdout);
-            // }
-
             if (IVM->isLastLine()) {
                 bool foundNew=bd->boundLeaf(IVM);
 
                 state = 0;
                 continue;
             }
-
-                // computeBounds=IVM->line;
             break;
         }
     }

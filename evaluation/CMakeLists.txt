@@ -21,5 +21,4 @@ target_include_directories(bounds PUBLIC ${PROJECT_SOURCE_DIR}/)
 
 
 add_executable(testBounds test/testBounds.cpp)
-# target_link_libraries(testBounds ${PROJECT_SOURCE_DIR}/lib/libbounds.a)
 target_link_libraries(testBounds bounds)
