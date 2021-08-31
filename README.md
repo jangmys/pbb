@@ -46,7 +46,7 @@ _______________
 `./multicore -f ../../multicore/mcconfig.ini -z p=fsp,i=rand_51_7`
 
 - The beginning of the output shows the generated processing times (in Unif(0,99)).
-- A random 51x7 instance will usually be solved quickly...now try 51x10, 51x11, 51x12, 51x13, ... ("difficult territory start about here")
+- A random 51x7 instance will usually be solved quickly...now try 51x10, 51x11, 51x12, 51x13, ... ("difficult" territory starts here...")
 
 
 ##### Example 4 : Read instance data from a file and solve
