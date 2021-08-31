@@ -14,12 +14,12 @@ instance_vrf::instance_vrf(const char * inst_name)
     data = new std::stringstream();
 
     char *vrfdirname;//[30];
-    vrfdirname = (char*)"./parameters/vrf_parameters/";
+    vrfdirname = (char*)"../../evaluation/flowshop/data/vrf_parameters/";
 
-    struct stat buffer;
-    if (stat(vrfdirname, &buffer) != 0){
-        vrfdirname = (char*)"../parameters/vrf_parameters/";
-    };
+    // struct stat buffer;
+    // if (stat(vrfdirname, &buffer) != 0){
+    //     vrfdirname = (char*)"../parameters/vrf_parameters/";
+    // };
     const char ext[]        = "_Gap.txt";
 
     file = (char *) malloc(strlen(inst_name) + strlen(vrfdirname) + strlen(ext) + 1); /* make space for the new string*/

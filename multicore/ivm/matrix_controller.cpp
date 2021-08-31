@@ -36,7 +36,7 @@ matrix_controller::initFullInterval()
     {
         FILE_LOG(logDEBUG) << i;
     }
-    FILE_LOG(logINFO) << "MC initialized";
+    FILE_LOG(logDEBUG) << "MC initialized";
 }
 
 bool
@@ -57,8 +57,7 @@ matrix_controller::initFromFac(const unsigned int nbint, const int * ids, int * 
         printf("nothing received\n");
         return;
     }
-
-    printf("init from fac %d\n",nbint);fflush(stdout);
+    // printf("init from fac %d\n",nbint);fflush(stdout);
 
     updatedIntervals = 1;
 
@@ -229,10 +228,6 @@ matrix_controller::explore_multicore()
         bbb[id]->setWorkState(false);
     }
 
-    // stick_this_thread_to_core(id);
-
-    //reset thread local
-    // bbb[id]->reset();
     bbb[id]->reset_requestQueue();
 
     FILE_LOG(logDEBUG1) << std::flush;
@@ -243,15 +238,8 @@ matrix_controller::explore_multicore()
     {
         updatedIntervals = 0;
         FILE_LOG(logDEBUG) << "=== start "<<M<<" exploration threads ===";
-        std::cout<<"counter:\t"<<end_counter<<std::endl;
     }
     ret = pthread_barrier_wait(&barrier);
-
-    // std::cout<<"NNNN 0 "<<dynamic_cast<ivmthread*>(bbb[id])->ivmbb->count_decomposed<<" "<<pbb->stats.totDecomposed<<"\n";
-    // FILE_LOG(logDEBUG1) << std::flush;
-    // pthread_barrier_wait(&barrier);
-
-    // bool continuer = false;
 
     int req=0;
     int rep=0;

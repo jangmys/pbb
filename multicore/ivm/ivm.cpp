@@ -76,7 +76,6 @@ void ivm::goUp()
         int pos = posVect[line];
         jobMat[line*size + pos] = negative(jobMat[line*size + pos]);
     }else{
-        // printf("\n\n\n\n+++++++++++++++++++++++++++++++++++++++++\n\n\n\n");
         posVect[line]++;
     }
 }

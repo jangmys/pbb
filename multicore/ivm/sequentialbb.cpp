@@ -97,8 +97,8 @@ sequentialbb::initAtInterval(int * pos, int * end)
         IVM->endVect[i] = end[i];
     }
 
-    IVM->displayVector(IVM->posVect);
-    IVM->displayVector(IVM->endVect);
+    // IVM->displayVector(IVM->posVect);
+    // IVM->displayVector(IVM->endVect);
 
     if (IVM->beforeEnd()) {
         unfold(arguments::boundMode);

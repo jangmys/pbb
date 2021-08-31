@@ -1,3 +1,3 @@
 FILE(GLOB MyCppSources *.cpp)
 
-target_sources(multicore PRIVATE ${MyCppSources})
+target_sources(bb PRIVATE ${MyCppSources})

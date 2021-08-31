@@ -20,7 +20,7 @@ set(CMAKE_VERBOSE_MAKEFILE ON)
 get_filename_component(PARENT_DIR ${CMAKE_CURRENT_SOURCE_DIR} DIRECTORY)
 
 
-add_executable(multicore main.cpp)
+add_executable(bb main.cpp)
 add_subdirectory(base)
 add_subdirectory(operators)
 add_subdirectory(ivm)
@@ -30,21 +30,21 @@ add_subdirectory(${PARENT_DIR}/common/src ${PARENT_DIR}/common/build)
     # add_subdirectory("${CMAKE_SOURCE_DIR}/common/libplugin")
 # endif()
 
-target_include_directories(multicore PUBLIC ${PARENT_DIR}/evaluation)
+target_include_directories(bb PUBLIC ${PARENT_DIR}/evaluation)
 
-target_include_directories(multicore PUBLIC ${PARENT_DIR}/common/include)
-target_include_directories(multicore PUBLIC ${PARENT_DIR}/common/src)
+target_include_directories(bb PUBLIC ${PARENT_DIR}/common/include)
+target_include_directories(bb PUBLIC ${PARENT_DIR}/common/src)
 
-target_include_directories(multicore PUBLIC ${PROJECT_SOURCE_DIR}/base/)
-target_include_directories(multicore PUBLIC ${PROJECT_SOURCE_DIR}/ivm/)
-target_include_directories(multicore PUBLIC ${PROJECT_SOURCE_DIR}/operators/)
-# target_include_directories(multicore PUBLIC ${PROJECT_SOURCE_DIR}/include/)
-# target_include_directories(multicore PUBLIC ${PROJECT_SOURCE_DIR}/src/)
+target_include_directories(bb PUBLIC ${PROJECT_SOURCE_DIR}/base/)
+target_include_directories(bb PUBLIC ${PROJECT_SOURCE_DIR}/ivm/)
+target_include_directories(bb PUBLIC ${PROJECT_SOURCE_DIR}/operators/)
+# target_include_directories(bb PUBLIC ${PROJECT_SOURCE_DIR}/include/)
+# target_include_directories(bb PUBLIC ${PROJECT_SOURCE_DIR}/src/)
 
 message(STATUS ${SOURCES})
 
-target_link_libraries(multicore PUBLIC Threads::Threads)
-target_link_libraries(multicore PUBLIC bounds)
-# target_link_libraries(multicore PUBLIC common)
+target_link_libraries(bb PUBLIC Threads::Threads)
+target_link_libraries(bb PUBLIC bounds)
+# target_link_libraries(bb PUBLIC common)
 
-# target_link_libraries(multicore PRIVATE ${PARENT_DIR}/evaluation/lib/libbounds.a)
+# target_link_libraries(bb PRIVATE ${PARENT_DIR}/evaluation/lib/libbounds.a)

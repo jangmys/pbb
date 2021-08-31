@@ -47,8 +47,7 @@ main(int argc, char ** argv)
     }
     *(pbb->root_sltn) = *(pbb->sltn);
 
-	std::cout<<"Initial solution:\n"<<*(pbb->sltn)<<"\n";
-
+	std::cout<<" === Starting with initial solution:\n"<<*(pbb->sltn)<<"\n";
 
     enum algo{
         ivm_seqbb,
@@ -65,7 +64,7 @@ main(int argc, char ** argv)
     switch(choice){
         case ivm_seqbb:
         {
-            std::cout<<"=== Single-threaded IVM-BB\n";
+            std::cout<<" === Run single-threaded IVM-BB"<<std::endl;
             sequentialbb *sbb=new sequentialbb(pbb,pbb->size);
 
             sbb->setRoot(pbb->root_sltn->perm);
@@ -80,7 +79,7 @@ main(int argc, char ** argv)
         }
 		case ivm_multicore:
 		{
-			std::cout<<"=== Multi-core IVM ...\n";
+			std::cout<<" === Run multi-core IVM-based BB ..."<<std::endl;
 
 			matrix_controller *mc = new matrix_controller(pbb);
 			mc->initFullInterval();

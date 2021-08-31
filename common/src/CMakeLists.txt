@@ -1,5 +1,5 @@
 FILE(GLOB MyCppSources *.cpp)
 
-if (TARGET multicore)
-    target_sources(multicore PUBLIC ${MyCppSources})
+if (TARGET bb)
+    target_sources(bb PUBLIC ${MyCppSources})
 endif()

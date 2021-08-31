@@ -12,9 +12,7 @@ thread_controller::thread_controller(pbab * _pbb) : pbb(_pbb)
     // //set number of BB-explorers (threads)
     M = (arguments::nbivms_mc < 1) ? get_nprocs_conf() : arguments::nbivms_mc;
 
-    std::cout<<M<<" threads"<<std::endl;
-    std::cout<<"counter:\t"<<end_counter<<std::endl;
-    printf("... %d threads\n",M);
+    std::cout<<" === Using "<<M<<" threads"<<std::endl;
 
     //barrier for syncing all explorer threads
     pthread_barrier_init(&barrier, NULL, M);
@@ -33,8 +31,6 @@ thread_controller::thread_controller(pbab * _pbb) : pbb(_pbb)
 
     atom_nb_explorers.store(0);// id_generator
     allEnd.store(false);
-
-    // hasWork = std::vector<bool>(M,false);
 }
 
 void
