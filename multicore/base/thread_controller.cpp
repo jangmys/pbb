@@ -21,6 +21,8 @@ thread_controller::thread_controller(pbab * _pbb) : pbb(_pbb)
     pthread_mutexattr_init(&attr);
     pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_ERRORCHECK);
 
+    pthread_mutex_init(&mutex_end, &attr);
+
     //work stealing victim-list (only for "honest" strategy)
     pthread_mutex_init(&mutex_steal_list, &attr);
     for (unsigned i = 0; i < M; i++) {
@@ -44,18 +46,14 @@ thread_controller::counter_increment(unsigned id)
 {
     end_counter++;
 
-    // pthread_mutex_lock_check(&mutex_end);
-    if (end_counter == M) {
+    pthread_mutex_lock_check(&mutex_end);
+    if (end_counter.load() == M) {
         allEnd.store(true);
-        // FILE_LOG(logDEBUG4) << "++END COUNTER " << id << " " <<end_counter<<" "<<M<<std::flush;
-
-        // pthread_mutex_unlock(&mutex_end);
-        return true;
+        FILE_LOG(logDEBUG) << "++END COUNTER " << id << " " <<end_counter.load()<<" "<<M<<std::flush;
     }
-    // FILE_LOG(logDEBUG4) << "+END COUNTER " << id << " " <<end_counter<<" "<<M<<std::flush;
+    pthread_mutex_unlock(&mutex_end);
 
-    // pthread_mutex_unlock(&mutex_end);
-    return false;
+    return allEnd.load();
 }
 
 unsigned
@@ -181,14 +179,14 @@ thread_controller::request_work(unsigned id)
         }
 
         counter_decrement();
-        FILE_LOG(logDEBUG4) << id << " cancel " << thief << " count: "<<end_counter;
+        FILE_LOG(logDEBUG4) << id << " cancel " << thief << " count: "<<end_counter.load();
 
         unlock_waiting_thread(thief);
     }
 
     unsigned victim = select_victim(id); // select victim
 
-    FILE_LOG(logDEBUG4) << id << " select " << victim << "\tcounter: "<<end_counter;
+    FILE_LOG(logDEBUG4) << id << " select " << victim << "\tcounter: "<<end_counter.load() << std::flush;
 
     if (victim != id) {
         pthread_mutex_lock_check(&bbb[id]->mutex_shared);
@@ -235,7 +233,7 @@ thread_controller::try_answer_request(unsigned id)
     pthread_mutex_unlock(&bbb[thief]->mutex_ivm);
 
     counter_decrement();
-    FILE_LOG(logDEBUG4) << id << " answer " << thief << " counter: " << end_counter;
+    FILE_LOG(logDEBUG4) << id << " answer " << thief << " counter: " << end_counter.load() << std::flush;
 
     unlock_waiting_thread(thief);
 

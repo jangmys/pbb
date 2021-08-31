@@ -13,8 +13,6 @@ sequentialbb::sequentialbb(pbab *_pbb, int _size)
 
     count_iters=0;
     count_decomposed=0;
-
-    FILE_LOG(logDEBUG) << " === seqbb constr " << size ;
 }
 
 sequentialbb::~sequentialbb()
@@ -32,19 +30,12 @@ sequentialbb::clear()
 void
 sequentialbb::setRoot(const int *varOrder)
 {
-    FILE_LOG(logDEBUG) << " === set root";
-
     clear();
 
-    FILE_LOG(logDEBUG) << " === clear "<<size;
     for(int i=0; i<size; i++){
         IVM->jobMat[i] = varOrder[i];
     }
     IVM->line=0;
-
-    FILE_LOG(logDEBUG) << " === bound root";
-    // node->limit1=-1;
-    // node->limit2=size;
 
     bd->prepareSchedule(IVM);
     bd->boundRoot(IVM);

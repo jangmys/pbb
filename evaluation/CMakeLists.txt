@@ -19,6 +19,5 @@ add_library(bounds ${SOURCES})
 add_subdirectory(flowshop)
 target_include_directories(bounds PUBLIC ${PROJECT_SOURCE_DIR}/)
 
-
 add_executable(testBounds test/testBounds.cpp)
 target_link_libraries(testBounds bounds)

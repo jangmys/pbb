@@ -31,10 +31,14 @@ protected:
     std::atomic<unsigned int>end_counter{0};
     std::atomic<bool> allEnd;
 
+    // std::atomic_flag stop_exploring = ATOMIC_FLAG_INIT;
+
     // std::vector<bool>hasWork;
     pbab* pbb;
     int size;
     unsigned M;
+
+    pthread_mutex_t mutex_end;
 
     pthread_barrier_t barrier;
     pthread_mutex_t mutex_steal_list;
