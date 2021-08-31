@@ -1,0 +1,28 @@
+### Check the CMake version
+cmake_minimum_required(VERSION 3.10 FATAL_ERROR)
+
+### Define project
+project("PBB"
+    VERSION 1.0.0
+    DESCRIPTION "Branch-and-Bound for permutation problems"
+    LANGUAGES C CXX)
+
+set(CMAKE_CXX_STANDARD 14)
+
+set(CMAKE_VERBOSE_MAKEFILE ON)
+
+######################################################################################
+### 3) Include CMake files
+######################################################################################
+
+## Configuration file for building type and flags
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Config.cmake)
+
+## Macro file
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Macro.cmake)
+
+## Custom Targets file
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Target.cmake)
+
+add_subdirectory(evaluation)
+add_subdirectory(multicore)

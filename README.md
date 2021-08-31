@@ -1,3 +1,4 @@
-# PermutationBB
+# Multi-core B&B for Permutation Flow-shop Scheduling Problem (PFSP)
 
-A massively parallel Branch&Bound algorithm for the exact resolution of permutation-based optimization problems, like Permutation Flow-shop Scheduling
+### Quick Start
+ 

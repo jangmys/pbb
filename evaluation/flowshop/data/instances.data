@@ -1,0 +1,135 @@
+=========================================
+N°	jobs	machines	optimal
+=========================================
+instance1i	20	5	1278
+instance2i	20	5	1359
+instance3i	20	5	1081
+instance4i	20	5	1293
+instance5i	20	5	1235
+instance6i	20	5	1195
+instance7i	20	5	1234
+instance8i	20	5	1206
+instance9i	20	5	1230
+instance10i	20	5	1108
+=========================================
+instance11i	20	10	1582
+instance12i	20	10	1659
+instance13i	20	10	1496
+instance14i	20	10	1377
+instance15i	20	10	1419
+instance16i	20	10	1397
+instance17i	20	10	1484
+instance18i	20	10	1538
+instance19i	20	10	1593
+instance20i	20	10	1591
+=========================================
+instance21i	20	20	2297
+instance22i	20	20	2099
+instance23i	20	20	2326
+instance24i	20	20	2223
+instance25i	20	20	2291
+instance26i	20	20	2226
+instance27i	20	20	2273
+instance28i	20	20	2200
+instance29i	20	20	2237
+instance30i	20	20	2178
+=========================================
+instance31i	50	5	2724
+instance32i	50	5	2834
+instance33i	50	5	2621
+instance34i	50	5	2751
+instance35i	50	5	2863
+instance36i	50	5	2829
+instance37i	50	5	2725
+instance38i	50	5	2683
+instance39i	50	5	2552
+instance40i	50	5	2782
+=========================================
+instance41i	50	10	2991
+instance42i	50	10	2867
+instance43i	50	10	2839
+instance44i	50	10	3063
+instance45i	50	10	2976
+instance46i	50	10	3006
+instance47i	50	10	3093
+instance48i	50	10	3037
+instance49i	50	10	2897
+instance50i	50	10	3065
+=========================================
+instance51i	50	20	3850
+instance52i	50	20	3704
+instance53i	50	20	3603
+instance54i	50	20	3733
+instance55i	50	20	3574
+instance56i	50	20	3679
+instance57i	50	20	3704
+instance58i	50	20	3691
+instance59i	50	20	3670
+instance60i	50	20	3756
+=========================================
+instance61i	100	5	5493
+instance62i	100	5	5268
+instance63i	100	5	5175
+instance64i	100	5	5014
+instance65i	100	5	5250
+instance66i	100	5	5135
+instance67i	100	5	5246
+instance68i	100	5	5094
+instance69i	100	5	5448
+instance70i	100	5	5322
+=========================================
+instance71i	100	10	5770
+instance72i	100	10	5349
+instance73i	100	10	5676
+instance74i	100	10	5781
+instance75i	100	10	5467
+instance76i	100	10	5303
+instance77i	100	10	5595
+instance78i	100	10	5617
+instance79i	100	10	5871
+instance80i	100	10	5845
+=========================================
+instance81i	100	20	6202
+instance82i	100	20	6183
+instance83i	100	20	6252
+instance84i	100	20	6254
+instance85i	100	20	6314
+instance86i	100	20	6331
+instance87i	100	20	6286
+instance88i	100	20	6327
+instance89i	100	20	6225
+instance90i	100	20	6434
+=========================================
+instance91i	200	10	10862
+instance92i	200	10	10480
+instance93i	200	10	10922
+instance94i	200	10	10889
+instance95i	200	10	10524
+instance96i	200	10	10329
+instance97i	200	10	10854
+instance98i	200	10	10730
+instance99i	200	10	10438
+instance100i	200	10	10654
+=========================================
+instance101i	200	20	11159
+instance102i	200	20	11203
+instance103i	200	20	11281
+instance104i	200	20	11275
+instance105i	200	20	11259
+instance106i	200	20	11176
+instance107i	200	20	11338
+instance108i	200	20	11301
+instance109i	200	20	11146
+instance110i	200	20	11284
+=========================================
+instance111i	500	20	26040
+instance112i	500	20	26500
+instance113i	500	20	26371
+instance114i	500	20	26456
+instance115i	500	20	26334
+instance116i	500	20	26469
+instance117i	500	20	26389
+instance118i	500	20	26560
+instance119i	500	20	26005
+instance120i	500	20	26457
+=========================================
