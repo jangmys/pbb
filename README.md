@@ -25,6 +25,8 @@ Several PFSP instances are provided in the `/evaluation` folder:
 
 Let's go! (assuming you're in `/build/multicore` now)
 
+_______________
+
 ##### Example 1 : Solve Taillard's instance Ta31 (50 jobs, 5 machines):
 
 `./bb -f ../../multicore/mcconfig.ini -z p=fsp,i=ta31`
