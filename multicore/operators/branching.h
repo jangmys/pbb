@@ -4,8 +4,8 @@
 #include <limits.h>
 #include <memory>
 
-#define FRONT (0)
-#define BACK (1)
+// #define FRONT (0)
+// #define BACK (1)
 
 class pbab;
 class ivm;
@@ -89,9 +89,6 @@ public:
     int operator()(const int*cb, const int* ce, const int line){
         int ub = initialUB;
 
-        // int ub=local_best;
-        // if(!arguments::singleNode)ub=initialUB;
-
         int elim = 0;
         int sum = 0;
 
@@ -147,35 +144,5 @@ public:
 private:
     int initialUB;
 };
-
-static std::unique_ptr<branching> create_branching(int choice, int size, int initialUB)
-{
-    switch (choice) {
-        case -3:{
-            return std::make_unique<alternateBranching>(size);
-        }
-        case -2:{
-            return std::make_unique<forwardBranching>(size);
-        }
-        case -1:{
-            return std::make_unique<backwardBranching>(size);
-        }
-        case 1:{
-            return std::make_unique<maxSumBranching>(size);
-        }
-        case 2:{
-            return std::make_unique<minBranchBranching>(size,initialUB);
-        }
-        case 3:{
-            return std::make_unique<minMinBranching>(size,initialUB);
-        }
-        default:{
-            printf("branching rule not defined\n");
-            break;
-        }
-    }
-    return nullptr;
-}
-
 
 #endif

@@ -54,14 +54,14 @@ public:
     }
 };
 
-static std::unique_ptr<pruning> create_pruning(bool findAll)
-{
-    if(!findAll)
-    {
-        return std::make_unique<keepSmaller>();
-    }else{
-        return std::make_unique<keepEqualOrSmaller>();
-    }
-}
+// static std::unique_ptr<pruning> create_pruning(bool findAll)
+// {
+//     if(!findAll)
+//     {
+//         return std::make_unique<keepSmaller>();
+//     }else{
+//         return std::make_unique<keepEqualOrSmaller>();
+//     }
+// }
 
 #endif

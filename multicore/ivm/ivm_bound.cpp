@@ -10,17 +10,19 @@
 
 #include "branching.h"
 
+#include "operator_factory.h"
+
 template<typename T>
 ivm_bound<T>::ivm_bound(pbab* _pbb) : pbb(_pbb){
     size=pbb->size;
 
     node=new subproblem(size);
 
-    bound.push_back(std::move(pbb->createBound(0)));
-    bound.push_back(std::move(pbb->createBound(1)));
+    bound.push_back(std::move(OperatorFactory::createBound(pbb->instance,0)));
+    bound.push_back(std::move(OperatorFactory::createBound(pbb->instance,1)));
 
-    branch = create_branching(arguments::branchingMode,size,pbb->initialUB);
-    prune = create_pruning(arguments::findAll);
+    branch = OperatorFactory::createBranching(arguments::branchingMode,size,pbb->initialUB);
+    prune = OperatorFactory::createPruning(arguments::findAll);
 
     costsBegin = std::vector<std::vector<T>>(2,std::vector<T>(size,0));
     costsEnd = std::vector<std::vector<T>>(2,std::vector<T>(size,0));
@@ -74,14 +76,17 @@ ivm_bound<T>::prepareSchedule(const ivm* IVM)
 template<typename T>
 void
 ivm_bound<T>::computeStrongBounds(const int be){
-    int _limit1 = node->limit1 + (be==FRONT?1:0);
-    int _limit2 = node->limit2 - (be==BACK?1:0);
+    int _limit1 = node->limit1 + (be==branching::Front?1:0);
+    int _limit2 = node->limit2 - (be==branching::Back?1:0);
+
+    // int _limit1 = node->limit1 + (be==FRONT?1:0);
+    // int _limit2 = node->limit2 - (be==BACK?1:0);
 
     std::vector<T> costsFirst;
     std::vector<T> costsSecond;
     std::vector<T> priority;
 
-    if(be==FRONT){
+    if(be==branching::Front){
         costsFirst = costsBegin[STRONG];
         costsSecond = costsBegin[WEAK];
         priority = priorityBegin;
@@ -94,7 +99,7 @@ ivm_bound<T>::computeStrongBounds(const int be){
     std::fill(costsFirst.begin(),costsFirst.end(),0);
     std::fill(priority.begin(),priority.end(),0);
 
-    int fillPos = (be==FRONT?_limit1:_limit2);
+    int fillPos = (be==branching::Front?_limit1:_limit2);
     int costs[2];
 
     //for all unscheduled jobs
@@ -131,13 +136,13 @@ ivm_bound<T>::boundNode(const ivm* IVM)
     int dir=IVM->dirVect[IVM->line];
 
     if (dir == 1){
-        computeStrongBounds(BACK);
+        computeStrongBounds(branching::Back);
     }else if(dir == 0){
-        computeStrongBounds(FRONT);
+        computeStrongBounds(branching::Front);
     }else if(dir == -1){
         // printf("eval BE johnson\n");
-        computeStrongBounds(FRONT);
-        computeStrongBounds(BACK);
+        computeStrongBounds(branching::Front);
+        computeStrongBounds(branching::Back);
     }else{
         perror("boundNode");exit(-1);
     }
@@ -293,36 +298,7 @@ ivm_bound<T>::eliminateJobs(ivm* IVM, std::vector<T> cost1, std::vector<T> cost2
         {
             jm[i] = negative(job);
         }
-        // if(job<0 || job>=size){
-        //     printf("ivm_bound:invalid job %d (line %d %d)\n",job,_line,IVM->line);
-        //
-        //     IVM->displayVector(cost1);
-        //     IVM->displayVector(cost2);
-        //
-        //     IVM->displayVector(IVM->posVect);
-        //     IVM->displayVector(IVM->endVect);
-        //     IVM->displayMatrix();//Vector(jm);
-        //
-        //     return -1;
-        // }
-
-        // if(prio[job]<local_best)
-        //     printf("%d\n",prio[job]);
-
-        // printf("%d %d -- %d \n",cost1[job],cost2[job],prune->local_best);
-        // printf("%d %d -- ",cost1[job],prio[job]);
-
     }
-
-    // printf("\n");
-
-    // if(arguments::truncateSearch && _line >= arguments::truncateDepth)
-    // {
-    //     for (int i = 0; i < size-_line; i++) {
-    //         job = jm[i];
-    //         jm[i] = negative(job);
-    //     }
-    // }
 
     return 0;
 }
@@ -345,13 +321,9 @@ ivm_bound<T>::completeSchedule(const int job,const int order)
         j=node->schedule[i];
         fixedJobs[j]=1;
     }
-    // for(int j=0; j<size; j++){
-    //     std::cout<<fixedJobs[j]<<" ";
-    // }
-    // std::cout<<"\n";
 
     //==============
-    if(order == FRONT)
+    if(order == branching::Front)
     {
         i=node->limit1+1;
 
@@ -362,7 +334,7 @@ ivm_bound<T>::completeSchedule(const int job,const int order)
             node->schedule[i++]=j;
         }
     }
-    if(order == BACK)
+    if(order == branching::Back)
     {
         i=node->limit1+1;
 
