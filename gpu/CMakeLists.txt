@@ -41,6 +41,8 @@ get_filename_component(PARENT_DIR ${CMAKE_CURRENT_SOURCE_DIR} DIRECTORY)
 file(GLOB cuSources *.cu)
 add_executable(gpubb main.cpp ${cuSources})
 
+add_definitions(-DFSP)
+
 add_subdirectory(${PARENT_DIR}/common/src ./build_common_gpu)
 target_include_directories(gpubb PUBLIC ${PARENT_DIR}/evaluation)
 target_include_directories(gpubb PUBLIC ${PARENT_DIR}/common/include)

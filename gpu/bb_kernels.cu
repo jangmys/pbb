@@ -22,7 +22,7 @@
 
 // GPU:bounds
 #ifdef FSP
-# include "gpu_fsp_bound.cuh"
+#include "gpu_fsp_bound.cuh"
 #endif /* ifdef FSP */
 #ifdef TEST
 # include "gpu_test_bound.cuh"
