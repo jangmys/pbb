@@ -45,7 +45,7 @@ public:
 
     executionmode execmode;
 
-    bound_abstract * bound;
+    bound_abstract<int> * bound;
 
     int topoDimensions;
     int topoA[MAX_HYPERCUBE_DIMS];
