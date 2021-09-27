@@ -22,7 +22,7 @@ target_include_directories(gpubb PUBLIC ${PARENT_DIR}/common/include)
 target_include_directories(gpubb PUBLIC ${PROJECT_SOURCE_DIR}/include)
 target_include_directories(gpubb PUBLIC ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
 
-target_link_libraries(bb PUBLIC ${CUDA_LIBRARIES})
+target_link_libraries(gpubb PUBLIC ${CUDA_LIBRARIES})
 
 
 if(TARGET dbb)
