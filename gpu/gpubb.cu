@@ -35,16 +35,16 @@ gpubb::gpubb(pbab * _pbb)
         bd->init(pbb->instance);
         // bd->set_instance(pbb->instance);
         // bd->init();
-        bd->branchingMode=arguments::branchingMode;
+        // bd->branchingMode=arguments::branchingMode;
         bound=bd;
     }
-    if (arguments::problem[0] == 't' || arguments::problem[0] == 'n') {
-        bound_nqueens *bd=new bound_nqueens();
-        bd->set_instance(pbb->instance);
-        bd->init();
-        bd->branchingMode=arguments::branchingMode;
-        bound=bd;
-    }
+    // if (arguments::problem[0] == 't' || arguments::problem[0] == 'n') {
+    //     bound_nqueens *bd=new bound_nqueens();
+    //     bd->set_instance(pbb->instance);
+    //     bd->init();
+    //     bd->branchingMode=arguments::branchingMode;
+    //     bound=bd;
+    // }
 
     initialUB = INT_MAX;
     pbb->sltn->getBest(initialUB);
@@ -558,7 +558,7 @@ gpubb::boundLeaves(bool reached, int& best)
 
 				localFoundNew = true;
 
-                pbb->foundSolution=true;
+                // pbb->foundSolution=true;
 
 				// std::cout << "Worker found " << cost << "\n";
                 //print new best solution
