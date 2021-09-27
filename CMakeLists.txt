@@ -30,3 +30,4 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Target.cmake)
 
 add_subdirectory(evaluation)
 add_subdirectory(multicore)
+add_subdirectory(distributed)
