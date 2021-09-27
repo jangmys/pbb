@@ -14,7 +14,7 @@
 #include "ttime.h"
 #include "log.h"
 
-#include "../../bounds/include/libbounds.h"
+#include "libbounds.h"
 
 #include "gpubb.h"
 
