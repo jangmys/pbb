@@ -5,8 +5,7 @@
 #include "log.h"
 
 //INCLUDE INSTANCES
-#include "../../bounds/include/libbounds.h"
-
+#include "libbounds.h"
 #include "gpubb.h"
 
 int
