@@ -1,5 +1,5 @@
 ### Check the CMake version
-cmake_minimum_required(VERSION 3.17 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.10 FATAL_ERROR)
 
 ### Define project
 project(gpubb
@@ -12,8 +12,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_CXX_FLAGS "-Wall -Wno-unused-function -O2")
 set(CMAKE_VERBOSE_MAKEFILE ON)
 
-FindCUDAToolkit()
-# find_package(CUDA 10.0 REQUIRED)
+
+find_package(CUDA 10.0 REQUIRED)
 
 message(STATUS "cudalib" ${CUDA_LIBRARIES})
 
@@ -27,8 +27,8 @@ target_include_directories(gpubb PUBLIC ${PARENT_DIR}/common/include)
 target_include_directories(gpubb PUBLIC ${PROJECT_SOURCE_DIR}/include)
 target_include_directories(gpubb PUBLIC ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
 
-target_link_libraries(gpubb PUBLIC CUDA::cuda})
-target_link_libraries(gpubb PUBLIC CUDA::cudart})
+# target_link_libraries(gpubb PUBLIC CUDA::cuda})
+target_link_libraries(gpubb PUBLIC cuda})
 
 
 if(TARGET dbb)
