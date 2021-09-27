@@ -1,9 +1,10 @@
 #ifndef IVM_BOUND_H
 #define IVM_BOUND_H
 
+#include <vector>
+
 #include "branching.h"
 #include "pruning.h"
-#include <vector>
 
 class ivm;
 class pbab;

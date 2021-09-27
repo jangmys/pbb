@@ -434,11 +434,6 @@ ivm_bound<T>::weakBoundPrune(ivm* IVM){
     //make branching decision
     IVM->dirVect[IVM->line] = (*branch)(costsBegin[WEAK].data(),costsEnd[WEAK].data(),IVM->line);
 
-    //sort sibling nodes
-
-
-    // chooseChildrenSet(IVM,costsBegin[WEAK],costsEnd[WEAK],arguments::branchingMode);
-
     sortSiblingNodes(IVM);
 
     applyPruning(IVM,WEAK,WEAK);
