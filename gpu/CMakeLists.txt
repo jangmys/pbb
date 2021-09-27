@@ -12,6 +12,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_CXX_FLAGS "-Wall -Wno-unused-function -O2")
 set(CMAKE_VERBOSE_MAKEFILE ON)
 
+message(STATUS "cudalib" ${CUDA_LIBRARIES})
+
 get_filename_component(PARENT_DIR ${CMAKE_CURRENT_SOURCE_DIR} DIRECTORY)
 
 add_executable(gpubb main.cpp)

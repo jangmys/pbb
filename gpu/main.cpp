@@ -32,7 +32,7 @@ main(int argc, char ** argv)
     clock_gettime(CLOCK_MONOTONIC, &tstart);
 
 	pbab * pbb = new pbab();//, bound1, bound2);
-    pbb->buildInitialUB();
+    // pbb->buildInitialUB();
 
     // ###############################
     // ###### SINGLE NODE ######## (no MPI)
