@@ -32,8 +32,9 @@ gpubb::gpubb(pbab * _pbb)
     // as in 'ivm_bound' constructor (should make a function...)
     if (arguments::problem[0] == 'f') {
         bound_fsp_weak *bd=new bound_fsp_weak();
-        bd->set_instance(pbb->instance);
-        bd->init();
+        bd->init(pbb->instance);
+        // bd->set_instance(pbb->instance);
+        // bd->init();
         bd->branchingMode=arguments::branchingMode;
         bound=bd;
     }
