@@ -1,5 +1,5 @@
 ### Check the CMake version
-cmake_minimum_required(VERSION 3.10 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.17 FATAL_ERROR)
 
 ### Define project
 project(gpubb
@@ -12,7 +12,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_CXX_FLAGS "-Wall -Wno-unused-function -O2")
 set(CMAKE_VERBOSE_MAKEFILE ON)
 
-find_package(CUDA 10.0 REQUIRED)
+FindCUDAToolkit()
+# find_package(CUDA 10.0 REQUIRED)
 
 message(STATUS "cudalib" ${CUDA_LIBRARIES})
 
