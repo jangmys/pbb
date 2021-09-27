@@ -21,10 +21,24 @@
 int
 main(int argc, char ** argv)
 {
+    int provided;
+    MPI_Init_thread(&argc, &argv, MPI_THREAD_SERIALIZED, &provided);
+    if (provided != MPI_THREAD_SERIALIZED){
+        printf("need at least MPI_THREAD_SERIALIZED support \n");
+        exit(-1);
+    }
+
+    int nProc;
+    int myrank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
+    MPI_Comm_size(MPI_COMM_WORLD, &nProc);
+
     // initializions...
     // arguments::readIniFile();
     arguments::parse_arguments(argc, argv);
-    std::cout<<" === solving "<<arguments::problem<<" - instance "<<arguments::inst_name<<std::endl;
+    if(myrank == 0){
+        std::cout<<" === solving "<<arguments::problem<<" - instance "<<arguments::inst_name<<std::endl;
+    }
 
     //by default initial upper bound in INFTY
     arguments::initial_ub = INT_MAX;
@@ -47,18 +61,6 @@ main(int argc, char ** argv)
 
     pbab * pbb = new pbab();//, bound1, bound2);
 
-    int nProc;
-    int provided;
-    int myrank;
-
-    // MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &provided);
-    MPI_Init_thread(&argc, &argv, MPI_THREAD_SERIALIZED, &provided);
-    MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
-    MPI_Comm_size(MPI_COMM_WORLD, &nProc);
-    if (provided != MPI_THREAD_SERIALIZED){
-        printf("need >MPI_THREAD_SERIALIZED support \n");
-        exit(-1);
-    }
 
     int bbmode=0;
 

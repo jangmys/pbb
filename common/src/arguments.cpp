@@ -7,6 +7,7 @@
 
 //initialization files
 char arguments::inifile[50] = "./bbconfig.ini";
+char arguments::work_directory[50] = "../../bbworks/";
 
 //instance / problem
 // int arguments::instancev;

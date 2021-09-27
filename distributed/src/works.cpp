@@ -68,7 +68,7 @@ works::init_infile(pbab * _pbb)
 
     // std::ifstream stream((std::string(arguments::directory) + "bab.works").c_str());
 
-    std::ifstream stream(("./bbworks/bab" + std::string(arguments::inst_name) + ".save").c_str());
+    std::ifstream stream((std::string(arguments::work_directory) + "bab" + std::string(arguments::inst_name) + ".save").c_str());
     // std::ifstream stream("./bbworks/bab.wrks");
     stream.seekg(0);
 
@@ -174,23 +174,22 @@ void works::save()
     if (!pbb->ttm->period_passed(CHECKPOINT_TTIME))return;// || (size == 0)) //continue
     // else return;
 
+    std::cout<<"SAVE"<<std::endl;
+
     // std::ofstream stream("./bbworks/bab.save");
     // std::ofstream stream(("./bbworks/bab" + std::to_string(arguments::inst_name) + ".save").c_str());
-    std::ofstream stream(("./bbworks/bab" + std::string(arguments::inst_name) + ".save").c_str());
+    std::ofstream stream((std::string(arguments::work_directory) + "bab" + std::string(arguments::inst_name) + ".save").c_str());
     FILE_LOG(logINFO) << "SAVED TO DISK";
 
-    stream << *(pbb->root_sltn);
-
-    stream << pbb->stats.simpleBounds << " ";
-    stream << *(pbb->sltn);
-
-    stream << *this;
-
-
-
+    if(stream){
+        stream << *(pbb->root_sltn);
+        stream << pbb->stats.simpleBounds << " ";
+        stream << *(pbb->sltn);
+        stream << *this;
+        stream.close();
+    }
 
     // std::cout<<"SAVE "<<totalNodes<<std::endl;
-    stream.close();
     // savenb++;
 }
 
