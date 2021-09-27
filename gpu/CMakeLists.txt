@@ -47,8 +47,8 @@ target_include_directories(gpubb PUBLIC ${PARENT_DIR}/common/include)
 target_include_directories(gpubb PUBLIC ${PROJECT_SOURCE_DIR}/include)
 target_include_directories(gpubb PUBLIC ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
 
-target_include_directories(gpubb PRIVATE ${CUDA_INCLUDE_DIRS})
-target_link_libraries(gpubb PRIVATE ${CUDA_LIBRARIES} ${CUDA_DRIVER_LIBRARY})
+target_include_directories(gpubb PUBLIC ${CUDA_INCLUDE_DIRS})
+target_link_libraries(gpubb PUBLIC ${CUDA_LIBRARIES} ${CUDA_DRIVER_LIBRARY})
 
 
 # target_link_libraries(gpubb PUBLIC CUDA::cuda})
