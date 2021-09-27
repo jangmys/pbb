@@ -39,7 +39,7 @@ mark_as_advanced(CUDA_DRIVER_LIBRARY)
 get_filename_component(PARENT_DIR ${CMAKE_CURRENT_SOURCE_DIR} DIRECTORY)
 
 file( GLOB  cu  *.cu)
-cuda_add_executable( preProcess main.cpp ${cu} )
+cuda_add_executable(gpubb main.cpp ${cu} )
 
 add_subdirectory(${PARENT_DIR}/common/src ./build_common_gpu)
 target_include_directories(gpubb PUBLIC ${PARENT_DIR}/evaluation)
