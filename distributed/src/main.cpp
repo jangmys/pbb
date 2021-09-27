@@ -36,9 +36,6 @@ main(int argc, char ** argv)
     // initializions...
     // arguments::readIniFile();
     arguments::parse_arguments(argc, argv);
-    if(myrank == 0){
-        std::cout<<" === solving "<<arguments::problem<<" - instance "<<arguments::inst_name<<std::endl;
-    }
 
     //by default initial upper bound in INFTY
     arguments::initial_ub = INT_MAX;
@@ -88,7 +85,6 @@ main(int argc, char ** argv)
             if (myrank == 0) {
                 printf(" === Master + %d workers\n", nProc - 1);
                 printf(" === solving %s / instance %s\n",arguments::problem,arguments::inst_name);
-                printf(" =================\n");
                 fflush(stdout);
 
                 master* mstr = new master(pbb);
