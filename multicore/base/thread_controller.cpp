@@ -35,6 +35,9 @@ thread_controller::thread_controller(pbab * _pbb) : pbb(_pbb)
     allEnd.store(false);
 }
 
+thread_controller::~thread_controller()
+{}
+
 void
 thread_controller::counter_decrement()
 {

@@ -18,7 +18,7 @@ static pthread_mutex_t instance_mutex = PTHREAD_MUTEX_INITIALIZER;
 class thread_controller{
 public:
     thread_controller(pbab * _pbb);
-    virtual ~thread_controller(){};
+    virtual ~thread_controller();
 
 protected:
     virtual bbthread* make_bbexplorer(unsigned _id) = 0;
