@@ -31,9 +31,8 @@ if (NOT CUDA_DRIVER_LIBRARY)
                  PATH_SUFFIXES lib64/stubs lib/x64/stubs lib/stubs stubs)
 endif ()
 mark_as_advanced(CUDA_DRIVER_LIBRARY)
-##
-# set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} -gencode arch=compute_30,code=sm_30)
 
+# set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} -gencode arch=compute_30,code=sm_30)
 # message(STATUS "cudalib" ${CUDA_LIBRARIES})
 
 get_filename_component(PARENT_DIR ${CMAKE_CURRENT_SOURCE_DIR} DIRECTORY)
@@ -48,7 +47,8 @@ target_include_directories(gpubb PUBLIC ${PROJECT_SOURCE_DIR}/include)
 target_include_directories(gpubb PUBLIC ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
 
 target_include_directories(gpubb PUBLIC ${CUDA_INCLUDE_DIRS})
-target_link_libraries(gpubb PUBLIC ${CUDA_LIBRARIES} ${CUDA_DRIVER_LIBRARY})
+target_link_libraries(gpubb PUBLIC ${CUDA_LIBRARIES})
+target_link_libraries(gpubb PUBLIC ${CUDA_DRIVER_LIBRARY})
 
 
 # target_link_libraries(gpubb PUBLIC CUDA::cuda})
