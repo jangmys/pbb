@@ -8,15 +8,18 @@
 #include "libbounds.h"
 #include "gpubb.h"
 
+#include <cuda.h>
+
 int
 main(int argc, char ** argv)
 {
+    arguments::parse_arguments(argc, argv);
+
 	strcpy(arguments::inifile,"./gpuconfig.ini");
 
     // initializions...
-    arguments::readIniFile();
-    arguments::parse_arguments(argc, argv);
-    arguments::initialize();
+    // arguments::readIniFile();
+    // arguments::initialize();
 
 	arguments::singleNode=true;
 
