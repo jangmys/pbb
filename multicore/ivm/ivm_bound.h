@@ -23,8 +23,6 @@ public:
     ~ivm_bound();
 
     void completeSchedule(const int job,const int order);
-
-    // void allocate();
     void prepareSchedule(const ivm* IVM);
 
     void computeWeakBounds();
@@ -66,8 +64,6 @@ private:
     void sortSiblingNodes(ivm* IVM);
 
     std::vector<std::unique_ptr<bound_abstract<T>>> bound;
-
-    // bound_abstract<T> *bound[2];
     std::unique_ptr<branching> branch;
 };
 

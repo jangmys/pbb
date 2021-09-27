@@ -79,9 +79,6 @@ ivm_bound<T>::computeStrongBounds(const int be){
     int _limit1 = node->limit1 + (be==branching::Front?1:0);
     int _limit2 = node->limit2 - (be==branching::Back?1:0);
 
-    // int _limit1 = node->limit1 + (be==FRONT?1:0);
-    // int _limit2 = node->limit2 - (be==BACK?1:0);
-
     std::vector<T> costsFirst;
     std::vector<T> costsSecond;
     std::vector<T> priority;
@@ -185,9 +182,6 @@ ivm_bound<T>::boundLeaf(ivm* IVM)
             solution tmp = solution(size);
             tmp.update(node->schedule.data(),cost);
             tmp.print();
-
-            // IVM->displayVector(IVM->posVect);
-            // pbb->sltn->print();
         }
     }
     //mark solution as visited
@@ -211,44 +205,26 @@ ivm_bound<T>::boundRoot(ivm* IVM){
         for(auto i : rootRow)
             IVM->jobMat[c++]=i;
 
-        // std::cout<<"jobMat\t";
-        // IVM->displayVector(IVM->jobMat);
-
-        // memcpy(IVM->jobMat, rootRow, size*sizeof(int));
         IVM->dirVect[0] = rootDir;
     }else{
         first = false;
-        // std::cout<<"FIRST"<<std::endl;
 
         //first line of Matrix
         for(int i=0; i<size; i++){
             node->schedule[i] = pbb->root_sltn->perm[i];
             IVM->jobMat[i] = pbb->root_sltn->perm[i];
-            // node->schedule[i] = i;
-            // IVM->jobMat[i] = i;
         }
         IVM->line=0;
         node->limit1=-1;
         node->limit2=size;
 
-        // if(arguments::problem[0]=='f')
-        //     strongBoundPrune(IVM);
-        // else
-            weakBoundPrune(IVM);
-
-        // IVM->displayVector(costsBegin[WEAK]);
-        // IVM->displayVector(costsEnd[WEAK]);
+        weakBoundPrune(IVM);
 
         //save first line of matrix (bounded root decomposition)
         rootDir = IVM->dirVect[0];
         int c=0;
         for(auto &i : rootRow)
             i=IVM->jobMat[c++];
-
-        // std::cout<<"rootRow\t";
-        // IVM->displayVector(rootRow.data());
-
-        // IVM->displayMatrix();
     }
 
     std::fill(costsBegin[STRONG].begin(),costsBegin[STRONG].end(),0);
