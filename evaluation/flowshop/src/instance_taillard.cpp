@@ -131,7 +131,7 @@ instance_taillard::get_initial_ub_from_file(const char* inst_name, int init_mode
 {
     std::stringstream rubrique;
     std::string tmp;
-    int jobs, machines, valeur, no, lb;
+    int jobs, machines, valeur;
     std::ifstream infile;
     int initial_ub = INT_MAX;
 
