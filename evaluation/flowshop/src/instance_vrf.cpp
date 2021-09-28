@@ -92,7 +92,6 @@ instance_vrf::get_initial_ub_from_file(const char* inst_name,int init_mode)
     struct stat buffer;
 
     std::ifstream infile;
-    int initial_ub = INT_MAX;
 
     if (stat("./parameters/instancesVRF.data", &buffer) == 0){
         infile = std::ifstream("./parameters/instancesVRF.data");
@@ -106,20 +105,13 @@ instance_vrf::get_initial_ub_from_file(const char* inst_name,int init_mode)
         std::string str;
         getline(infile, str);
 
-        // std::cout<<str<<std::endl;
-        //            std::cout<<str.substr(0, rubrique.str().length())<<std::endl;
-        //            break;
-
         if (str.substr(0, rubrique.str().length()).compare(rubrique.str()) == 0) {
             std::stringstream buffer;
             buffer << str << std::endl;
             buffer >> tmp >> jobs >> machines >> no >> valeur >> lb;
-            //                std::cout<<tmp<<" "<<jobs<<" "<<machines<<" "<<valeur<<std::endl;
             break;
         }
     }
 
     infile.close();
-
-    initial_ub = (init_mode == 0) ? valeur : INT_MAX;
 }
