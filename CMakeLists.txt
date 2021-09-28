@@ -9,7 +9,7 @@ project("PBB"
 
 set(CMAKE_CXX_STANDARD 14)
 
-set(CMAKE_VERBOSE_MAKEFILE ON)
+set(CMAKE_VERBOSE_MAKEFILE OFF)
 
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
@@ -30,4 +30,16 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Target.cmake)
 
 add_subdirectory(evaluation)
 add_subdirectory(multicore)
-add_subdirectory(distributed)
+add_subdirectory(heuristics)
+
+if(GPU)
+    message(STATUS "build GPU")
+    add_definitions(-DUSE_GPU)
+    add_subdirectory(gpu)
+endif()
+
+if(MPI)
+    message(STATUS "build distributed")
+    add_definitions(-DWITH_MPI)
+    add_subdirectory(distributed)
+endif()
