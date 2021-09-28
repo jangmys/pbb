@@ -52,6 +52,7 @@ target_include_directories(gpubb PUBLIC ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES
 target_include_directories(gpubb PUBLIC ${CMAKE_CUDA_INCLUDE_DIRS})
 target_link_libraries(gpubb PUBLIC ${CMAKE_CUDA_LIBRARIES})
 target_link_libraries(gpubb PUBLIC ${CUDA_DRIVER_LIBRARY})
+target_link_libraries(gpubb PUBLIC ${PARENT_DIR}/evaluation/build/libbounds.a)
 
 if(TARGET dbb)
     FILE(GLOB CppSources *.cpp)
