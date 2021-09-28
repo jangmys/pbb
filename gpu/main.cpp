@@ -34,10 +34,10 @@ main(int argc, char ** argv)
         }
     }
 
+    pbab * pbb = new pbab();//, bound1, bound2);
+
 	strcpy(arguments::inifile,"./gpuconfig.ini");
-
 	arguments::singleNode=true;
-
 
     FILELog::ReportingLevel() = logINFO;
     FILE* log_fd = fopen( "./logs/bblog.txt", "w" );
@@ -46,14 +46,11 @@ main(int argc, char ** argv)
     struct timespec tstart, tend;
     clock_gettime(CLOCK_MONOTONIC, &tstart);
 
-	pbab * pbb = new pbab();//, bound1, bound2);
     // pbb->buildInitialUB();
 
     // ###############################
     // ###### SINGLE NODE ######## (no MPI)
     // ###############################
-    printf("=== solving %s / instance %s\n", arguments::problem, arguments::inst_name);
-
     cudaFree(0);
 
     int device_nb = 0;
