@@ -38,7 +38,7 @@ mark_as_advanced(CUDA_DRIVER_LIBRARY)
 
 get_filename_component(PARENT_DIR ${CMAKE_CURRENT_SOURCE_DIR} DIRECTORY)
 
-file(GLOB cuSources *.cu)
+file(GLOB cuSources gpubb.cu)
 add_executable(gpubb main.cpp ${cuSources})
 
 add_definitions(-DFSP)
