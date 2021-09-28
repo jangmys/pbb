@@ -4,7 +4,6 @@
 #include "ttime.h"
 #include "log.h"
 
-//INCLUDE INSTANCES
 #include "libbounds.h"
 #include "gpubb.h"
 
@@ -14,12 +13,28 @@ int
 main(int argc, char ** argv)
 {
     arguments::parse_arguments(argc, argv);
+    std::cout<<" === solving "<<arguments::problem<<" - instance "<<arguments::inst_name<<std::endl;
+
+    //by default initial upper bound in INFTY
+    arguments::initial_ub = INT_MAX;
+    //if set, read initial UB from file
+    if(arguments::init_mode == 0){
+        std::cout<<"Get initial upper bound from file"<<std::endl;
+        switch (arguments::inst_name[0]) {
+            case 't':
+            {
+                arguments::initial_ub = instance_taillard::get_initial_ub_from_file(arguments::inst_name,arguments::init_mode);
+                break;
+            }
+            case 'V':
+            {
+                arguments::initial_ub = instance_vrf::get_initial_ub_from_file(arguments::inst_name,arguments::init_mode);
+                break;
+            }
+        }
+    }
 
 	strcpy(arguments::inifile,"./gpuconfig.ini");
-
-    // initializions...
-    // arguments::readIniFile();
-    // arguments::initialize();
 
 	arguments::singleNode=true;
 
