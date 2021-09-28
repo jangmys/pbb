@@ -1,3 +1,6 @@
+#ifndef GPU_HELPER_H
+#define GPU_HELPER_H
+
 #include <cuda.h>
 #include <cuda_runtime.h>
 #include <cuda_runtime_api.h>
@@ -149,3 +152,5 @@ get_available_devices(int& nb_block, int& block_size)
     // freemem();
     return count;
 } // get_available_devices
+
+#endif
