@@ -18,7 +18,7 @@ struct instance_taillard : public instance_abstract {
     void
     generate_instance(int id, std::ostream& stream);
 
-    static int
+    int
     get_initial_ub_from_file(const char * inst_name, int init_mode);
 };
 

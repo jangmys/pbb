@@ -14,7 +14,7 @@ instance_vrf::instance_vrf(const char * inst_name)
     data = new std::stringstream();
 
     char *vrfdirname;//[30];
-    vrfdirname = (char*)"../../evaluation/flowshop/data/vrf_parameters/";
+    vrfdirname = (char*)"../evaluation/flowshop/data/vrf_parameters/";
 
     // struct stat buffer;
     // if (stat(vrfdirname, &buffer) != 0){
@@ -94,10 +94,10 @@ instance_vrf::get_initial_ub_from_file(const char* inst_name,int init_mode)
     std::ifstream infile;
     int initial_ub = INT_MAX;
 
-    if (stat("./parameters/instancesVRF.data", &buffer) == 0){
-        infile = std::ifstream("./parameters/instancesVRF.data");
-    } else if (stat("../parameters/instancesVRF.data", &buffer) == 0)  {
-        infile = std::ifstream("../parameters/instancesVRF.data");
+    if (stat("../evaluation/flowshop/data/instancesVRF.data", &buffer) == 0){
+        infile = std::ifstream("./evaluation/flowshop/data/instancesVRF.data");
+    } else if (stat("../evaluation/flowshop/data/instancesVRF.data", &buffer) == 0)  {
+        infile = std::ifstream("../evaluation/flowshop/data/instancesVRF.data");
     } else  {
         std::cout << "Trying to read best-known solution from ./parameters/instancesVRF.data failed\n";
     }

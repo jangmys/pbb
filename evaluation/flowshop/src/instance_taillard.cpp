@@ -135,10 +135,15 @@ instance_taillard::get_initial_ub_from_file(const char* inst_name, int init_mode
     std::ifstream infile;
     int initial_ub = INT_MAX;
 
-    if (f_exists("../../evaluation/flowshop/data/instances.data")) {
-        infile = std::ifstream("../../evaluation/flowshop/data/instances.data");
+    std::cout << "aaaa\n"<<std::endl;
+    return initial_ub;
+
+
+    if (f_exists("../evaluation/flowshop/data/instances.data")) {
+        infile = std::ifstream("../evaluation/flowshop/data/instances.data");
     } else  {
-        std::cout << "Trying to read best-known solution from ../../evaluation/flowshop/data/instances.data failed\n";
+        std::cout << "aaaa\n";
+        std::cout << "Trying to read best-known solution from ../evaluation/flowshop/data/instances.data failed\n";
     }
 
     int id = atoi(&inst_name[2]);
