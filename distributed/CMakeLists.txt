@@ -40,7 +40,9 @@ if(GPU)
     message(STATUS "CUDART " ${CUDA_CUDART_LIBRARY})
 
     target_link_libraries(dbb PUBLIC ${CMAKE_CUDA_LIBRARIES})
+
     target_link_libraries(dbb PUBLIC ${CUDA_DRIVER_LIBRARY})
+    target_link_libraries(dbb PUBLIC ${CUDA_CUDART_LIBRARY})
 endif()
 
     # add_subdirectory(${PARENT_DIR}/common/src ./build_common)
