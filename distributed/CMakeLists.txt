@@ -33,6 +33,7 @@ add_subdirectory(${PARENT_DIR}/multicore/base ./build_mcbase)
 add_subdirectory(${PARENT_DIR}/multicore/ivm ./build_mcivm)
 if(GPU)
     enable_language(CUDA)
+    add_definitions(-DFSP)
 
     add_subdirectory(${PARENT_DIR}/gpu ./build_gpu)
 
