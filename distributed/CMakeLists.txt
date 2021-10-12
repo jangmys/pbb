@@ -50,6 +50,9 @@ target_include_directories(dbb PUBLIC ${PARENT_DIR}/multicore/base)
 target_include_directories(dbb PUBLIC ${PARENT_DIR}/multicore/ivm)
 if(GPU)
     target_include_directories(dbb PUBLIC ${PARENT_DIR}/gpu ${PARENT_DIR}/gpu/include)
+
+    find_package(CUDA 10.0 REQUIRED)
+    target_include_directories(gpubb PUBLIC ${CMAKE_CUDA_INCLUDE_DIRS})
 endif()
 
 
