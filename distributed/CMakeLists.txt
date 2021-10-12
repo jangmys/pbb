@@ -32,6 +32,8 @@ add_subdirectory(${PARENT_DIR}/common/src ./build_common)
 add_subdirectory(${PARENT_DIR}/multicore/base ./build_mcbase)
 add_subdirectory(${PARENT_DIR}/multicore/ivm ./build_mcivm)
 if(GPU)
+    enable_language(CUDA)
+
     add_subdirectory(${PARENT_DIR}/gpu ./build_gpu)
 
     target_include_directories(dbb PUBLIC ${PARENT_DIR}/gpu)
