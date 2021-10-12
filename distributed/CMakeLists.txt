@@ -35,8 +35,9 @@ if(GPU)
     add_subdirectory(${PARENT_DIR}/gpu ./build_gpu)
 
     message(STATUS "HELLO Link")
-    message(STATUS "CMAKE_CUDA" ${CMAKE_CUDA_LIBRARIES})
-    message(STATUS "CUDA_DRIVER" ${CUDA_DRIVER_LIBRARY})
+    message(STATUS "CMAKE_CUDA " ${CMAKE_CUDA_LIBRARIES})
+    message(STATUS "CUDA_DRIVER " ${CUDA_DRIVER_LIBRARY})
+    message(STATUS "CUDART " ${CUDA_CUDART_LIBRARY})
 
     target_link_libraries(dbb PUBLIC ${CMAKE_CUDA_LIBRARIES})
     target_link_libraries(dbb PUBLIC ${CUDA_DRIVER_LIBRARY})
