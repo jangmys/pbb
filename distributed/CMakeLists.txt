@@ -51,8 +51,14 @@ target_include_directories(dbb PUBLIC ${PARENT_DIR}/multicore/ivm)
 if(GPU)
     target_include_directories(dbb PUBLIC ${PARENT_DIR}/gpu ${PARENT_DIR}/gpu/include)
 
+    enable_language(CUDA)
     find_package(CUDA 10.0 REQUIRED)
-    target_include_directories(gpubb PUBLIC ${CMAKE_CUDA_INCLUDE_DIRS})
+    target_include_directories(dbb PUBLIC ${CMAKE_CUDA_INCLUDE_DIRS})
+    target_include_directories(dbb PUBLIC ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
+    target_include_directories(dbb PUBLIC ${CMAKE_CUDA_INCLUDE_DIRS})
+    target_link_libraries(dbb PUBLIC ${CMAKE_CUDA_LIBRARIES})
+    target_link_libraries(dbb PUBLIC ${CUDA_DRIVER_LIBRARY})
+
 endif()
 
 
