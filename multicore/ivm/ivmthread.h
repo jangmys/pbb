@@ -38,8 +38,6 @@ public:
     bool isEmpty(){
         return !ivmbb->IVM->beforeEnd();
     }
-
-
 };
 
 #endif

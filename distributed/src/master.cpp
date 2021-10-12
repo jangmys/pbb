@@ -25,7 +25,7 @@ master::master(pbab* _pbb) : pbb(_pbb)
     comm = new communicator(MAX_INTERVALS,pbb->size);
     wrks = new works();
 
-    wrk = std::make_shared<work>();//(new work(pbb));
+    wrk = std::make_shared<work>();
 
     reset();
 }
@@ -127,12 +127,6 @@ bool master::processRequest(std::shared_ptr<work> w){ //, bool &terminate) {
 
     //if result of intersection is empty...
     if (steal) {
-        //almost no work left, send worker to sleep...
-        // if(wrks->nearEmpty()){
-        //     FILE_LOG(logDEBUG1) << "NEARLY DONE";
-        //     stopSharing=true;
-        //     return false;
-        // }
         if(wrks->isEmpty()){
             FILE_LOG(logDEBUG1) << "SHUTDOWN";
             end = true;
@@ -158,55 +152,32 @@ bool master::processRequest(std::shared_ptr<work> w){ //, bool &terminate) {
     FILE_LOG(logINFO) << "ActiveSize: "<<wrks->size<<"\t Remain#: "<<wrks->unassigned.size()
 	<<"\t Active#: "<<wrks->ids.size();
 
-	// wrks->save();
-
-	// for(auto i:wrks->sizes){
-	// 	std::cout<<i.second->nb_updates<<"\t"<<i.second->id<<"\t"<<i.second->size<<std::endl;
-	// }
-
     //DEBUG
     if (debug) {
         printf("%s", updateWorker ? "changed...\n" : "unchanged...\n");
                 std::cout << "work out : " << (w->Uinterval).size() << " items | ID=" << w->id << std::endl; w->displayUinterval();
     }
 
-    // pbb->ttm->off(pbb->ttm->processRequest);
     return updateWorker;
 }
 
 //static bool first=true;
 void master::shutdown() {
     if(first){
-		printf("shutting down\n");
-		printf("============================\n");
+        std::cout<<" = master:\t shutting down\n";
+
         first=false;
         end = true;
 
-        std::cout << "processed work in: "<<work_in<<"\t work out:"<<work_out<<std::endl;
+        std::cout << " = master:\t #processed work-in messages: "<<work_in<<"\n";
+        std::cout << " = master:\t #processed work-out messages: "<<work_out<<std::endl;
 
-        std::cout<<"TOT-BRANCHED:\t"<<pbb->stats.totDecomposed<<std::endl;
-        std::cout<<"TOT-LEAVES:\t"<<pbb->stats.leaves<<std::endl;
-
-        pbb->ttm->printElapsed(pbb->ttm->wall,"TotalElapsed\t");
-		pbb->ttm->printElapsed(pbb->ttm->masterWalltime,"MasterWalltime\t");
-
-		std::cout<<"MASTER %\t\t:\t"<<pbb->ttm->masterLoadPerc()<<std::endl;
-
+        std::cout<<"MASTER %\t\t:\t"<<pbb->ttm->masterLoadPerc()<<std::endl;
         pbb->ttm->printElapsed(pbb->ttm->processRequest,"ProcessREQUEST\t");
 
-        if(pbb->foundAtLeastOneSolution)
-        {
-            std::cout<<"Found optimal solution."<<std::endl;
-			std::cout<<*(pbb->sltn);
-            // std::cout<<"Optimal makespan:\t"<<pbb->sltn->bestcost<<std::endl;
-            // for(int i=0;i<pbb->size;i++){
-            //     printf("%3d ",pbb->sltn->bestpermut[i]);
-            // }
-        }else{
-        	std::cout<<"Not improved..."<<std::endl;
-        	std::cout<<"Optimal makespan is >= "<<pbb->sltn->cost<<" (initial solution) "<<std::endl;
-        }
+        pbb->printStats();
     }else{
+        std::cout<<" = master:\t shutting down\n";
         return;
     }
 }
@@ -224,18 +195,10 @@ master::run()
     int iter=0;
 
     work_in=0; work_out=0;
-    // int best_msg=0,remain_msg=0;
-
 	solution* sol_buf=new solution(pbb->size);
 
     do{
-		// FILE_LOG(logINFO) << "State\t" << 1;
-        // FILE_LOG(logINFO) << "State\t" << 0;
-        // FILE_LOG(logDEBUG4) << "Waiting.......";
         MPI_Probe(MPI_ANY_SOURCE,MPI_ANY_TAG,MPI_COMM_WORLD,&status);
-
-        // FILE_LOG(logINFO) << "State\t" << 0;
-		// FILE_LOG(logINFO) << "State\t" << 1;
 
         iter++;
         pbb->ttm->on(pbb->ttm->masterWalltime);
@@ -250,8 +213,6 @@ master::run()
                 FILE_LOG(logDEBUG1) << "Receive node count: " << wrk->exploredNodes;
                 pbb->stats.totDecomposed += wrk->exploredNodes;
                 pbb->stats.leaves += wrk->nbLeaves;
-
-                // bool shutdownWorker=false;
 
                 pbb->ttm->on(pbb->ttm->processRequest);
                 bool modified=processRequest(wrk);//,shutdownWorker);
@@ -291,7 +252,7 @@ master::run()
                 if(pbb->sltn->update(candidate->perm,candidate->cost))
                 {
                     pbb->foundAtLeastOneSolution.store(true);
-                    printf("\t\tmaster_sol: %d\n",pbb->sltn->cost);
+                    // printf("\t\tmaster_sol: %d\n",pbb->sltn->cost);
 					pbb->sltn->save();
                 }
                 if(end){

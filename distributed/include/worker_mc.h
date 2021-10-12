@@ -27,12 +27,9 @@ public:
         worker(_pbb),
         mc(new matrix_controller(pbb))
     {
-        // mc = new matrix_controller(pbb);
         M    = mc->getNbIVM();
 
-        // TODO make a setter fucntion;;
         comm = new communicator(M, size);
-        printf("construct workermc %d %d\n",M,size);
 
         work_buf = std::make_shared<fact_work>(M, size);
         work_buf->max_intervals = M;

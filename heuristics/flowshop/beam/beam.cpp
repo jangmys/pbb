@@ -10,7 +10,7 @@ Beam::Beam(instance_abstract* inst)
     branch= OperatorFactory::createBranching(arguments::branchingMode,inst->size,99999);
     lb.push_back(std::move(OperatorFactory::createBound(inst,0)));
 
-    bestSolution = std::make_unique<solution>(inst->size);
+    bestSolution = std::make_unique<subproblem>(inst->size);
 }
 
 int
@@ -44,7 +44,9 @@ Beam::step(int beamWidth,int localBest)
         if(!(*prune)(n)){
             if (n->leaf()) {
                 prune->local_best = n->cost;
-                bestSolution->update(n->schedule.data(),n->cost);
+
+                *bestSolution = *n;
+                // bestSolution->update(n->schedule.data(),n->cost);
 
                 std::cout<<prune->local_best<<" === > \n";
             }else{

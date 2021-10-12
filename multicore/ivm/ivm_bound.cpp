@@ -181,6 +181,7 @@ ivm_bound<T>::boundLeaf(ivm* IVM)
         if(arguments::printSolutions){
             solution tmp = solution(size);
             tmp.update(node->schedule.data(),cost);
+            std::cout<<"New Best:\n";
             tmp.print();
         }
     }
@@ -377,12 +378,6 @@ ivm_bound<T>::applyPruning(ivm* IVM, const int first, const int second)
 getters, setters, ...
 
 ***/
-
-
-
-
-
-
 template<typename T>
 void
 ivm_bound<T>::getSchedule(int *sch)
@@ -395,14 +390,15 @@ ivm_bound<T>::getSchedule(int *sch)
 
 
 
+
+
+
+
 template<typename T>
 void
 ivm_bound<T>::weakBoundPrune(ivm* IVM){
     std::fill(costsBegin[STRONG].begin(),costsBegin[STRONG].end(),0);
     std::fill(costsEnd[STRONG].begin(),costsEnd[STRONG].end(),0);
-
-    // memset(costsBegin[STRONG], 0, size*sizeof(int));
-    // memset(costsEnd[STRONG], 0, size*sizeof(int));
 
     //get lower bounds
     bound[WEAK]->boundChildren(node->schedule.data(),node->limit1,node->limit2,costsBegin[WEAK].data(),costsEnd[WEAK].data(),priorityBegin.data(),priorityEnd.data());
@@ -411,11 +407,7 @@ ivm_bound<T>::weakBoundPrune(ivm* IVM){
     IVM->dirVect[IVM->line] = (*branch)(costsBegin[WEAK].data(),costsEnd[WEAK].data(),IVM->line);
 
     sortSiblingNodes(IVM);
-
     applyPruning(IVM,WEAK,WEAK);
-
-    // IVM->displayVector(&IVM->jobMat[IVM->line*size]);
-    // std::cout<<*node<<"\n";
 }
 
 template<typename T>
@@ -424,9 +416,6 @@ ivm_bound<T>::mixedBoundPrune(ivm* IVM){
     std::fill(costsBegin[STRONG].begin(),costsBegin[STRONG].end(),0);
     std::fill(costsEnd[STRONG].begin(),costsEnd[STRONG].end(),0);
 
-    // memset(costsBegin[STRONG], 0, size*sizeof(int));
-    // memset(costsEnd[STRONG], 0, size*sizeof(int));
-
     bound[WEAK]->boundChildren(node->schedule.data(),node->limit1,node->limit2,costsBegin[WEAK].data(),costsEnd[WEAK].data(),priorityBegin.data(),priorityEnd.data());
 
     IVM->dirVect[IVM->line]=(*branch)(costsBegin[WEAK].data(),costsEnd[WEAK].data(),IVM->line);
@@ -434,7 +423,6 @@ ivm_bound<T>::mixedBoundPrune(ivm* IVM){
     boundNode(IVM);
 
     sortSiblingNodes(IVM);
-
     applyPruning(IVM,WEAK,STRONG);
 }
 
@@ -444,13 +432,11 @@ ivm_bound<T>::strongBoundPrune(ivm* IVM){
     IVM->dirVect[IVM->line]=-1;
     std::fill(costsBegin[WEAK].begin(),costsBegin[WEAK].end(),0);
     std::fill(costsEnd[WEAK].begin(),costsEnd[WEAK].end(),0);
-    // memset(costsBegin[WEAK],INT_MAX,size*sizeof(int));
-    // memset(costsEnd[WEAK],INT_MAX,size*sizeof(int));
+
     boundNode(IVM);
     IVM->dirVect[IVM->line]=(*branch)(costsBegin[STRONG].data(),costsEnd[STRONG].data(),IVM->line);
 
     sortSiblingNodes(IVM);
-
     applyPruning(IVM,STRONG,STRONG);
 }
 

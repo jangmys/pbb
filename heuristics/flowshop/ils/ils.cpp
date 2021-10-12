@@ -113,7 +113,8 @@ void IG::destruction(int *perm, int *permOut, int k, int a, int b)
 
 	std::vector<int>v;
 
-	for(int i=a;i<b;i++)v.push_back(i);
+	for(int i=a; i<b; i++)
+        v.push_back(i);
 
   	std::random_device rd;
     std::mt19937 g(rd());
@@ -146,22 +147,21 @@ void IG::destruction(int *perm, int *permOut, int k, int a, int b)
 
 void IG::perturbation(int *perm, int k, int a, int b)
 {
+    //SELECT k RANDOM positions
     std::vector<int>sel1(b-a);
-
-	//SELECT k RANDOM
     for(int i=0;i<b-a;i++){
         sel1[i]=a+i;
     }
     shuffle(sel1.data(),(b-a));
-
     std::vector<int>sel2(k);
-
     for(int i=0;i<k;i++){
         sel2[i]=sel1[i];
-        sel1[i]=perm[sel1[i]];
     }
 
-    shuffle(sel2.data(),k);
+    for(int i=0;i<k;i++){
+        sel1[i]=perm[sel2[i]];
+    }
+    shuffle(sel1.data(),k);
 
     for(int i=0;i<k;i++){
         perm[sel2[i]]=sel1[i];
@@ -188,24 +188,6 @@ void IG::construction(std::vector<int>& perm, int *permOut, int k,int a, int b)
 		nhood->m->bestInsert(perm.data(), len, permOut[j], cost);
     }
 }
-
-
-// void IG::blockConstruction(int *perm, int *permOut, int k)
-// {
-//     // int cmax;
-//     // int cost,bestpos;
-//
-//     // int len=nbJob-k;
-//
-//     for(int i=0;i<=nbJob-k;i++){
-//         //
-//     }
-// }
-
-
-
-
-
 
 bool IG::acceptance(int tempcost, int cost,float param)
 {
@@ -387,95 +369,12 @@ int IG::runIG(subproblem* current, int l1, int l2)
         }
     }
 
-	// std::cout<<"found: "<<*best<<"\n";
-
-    // bestcost=neh->evalMakespan(best->schedule, nbJob);
-	// current->copy(best);
-	// current->cost=bestcost;
-
-    // best->print();
-    // printf("%d\n",bestcost);
-
     delete temp;
     delete best;
     delete reduced;
 
     return bestcost;
 }
-
-// int IG::runIG(subproblem* current,subproblem* guide)
-// {
-//     subproblem* temp=new subproblem(nbJob);
-//     subproblem* best=new subproblem(nbJob);
-//     subproblem* reduced=new subproblem(nbJob);
-//
-//     int currentcost=0;
-//     int bestcost=0;
-//
-//     // temp->copy(current);
-// 	*best=*current;
-//     bestcost=neh->evalMakespan(best->schedule, nbJob);
-// 	currentcost=bestcost;
-//
-// 	printf("curr %d\n",currentcost);
-//     // current->print();
-//
-//     int l1=current->limit1+1;
-//     int l2=current->limit2;
-//
-// 	currentcost=ris(current,guide);
-// 	// currentcost=localSearchBRE(current->schedule);
-//
-// 	int tempcost;
-//     int perturb=destructStrength;
-//     //
-//     for(int iter=0;iter<igiter;iter++){
-// 		*temp=*current;
-//         // temp->copy(current);
-//
-// 		// perturbation(temp->schedule, perturb, l1, l2);
-//
-//         destruction(temp->schedule, reduced->schedule, perturb,l1,l2);
-// 		tempcost=localSearch(temp->schedule,l1,l2-perturb);
-//
-//         construction(temp->schedule, reduced->schedule, perturb,l1,l2);
-//
-// 		// tempcost=localSearchBRE(temp->schedule);
-//         // tempcost=localSearch(temp->schedule,l1,l2);
-//
-// 		// int kmax=(int)sqrt(nbJob);
-//
-// 		tempcost=ris(temp,guide);
-// 		// tempcost=localSearchKI(temp->schedule,kmax);
-//
-// 		// printf(" aaa === %d %d\n",tempcost,bestcost);
-// 		// temp->print();
-//
-//         if(acceptance(tempcost, currentcost, acceptanceParameter)){
-// 			currentcost=tempcost;
-// 			*current=*temp;
-//
-// 			// printf("%d\t",currentcost);
-// 			// current->print();
-//         }
-//         if(tempcost < bestcost){
-//             bestcost=tempcost;
-// 			*best=*temp;
-//         }
-//     }
-//
-//     // bestcost=neh->evalMakespan(best->schedule, nbJob);
-// 	*current=*best;
-//
-//     // best->print();
-//     // printf("%d\n",bestcost);
-//
-//     delete temp;
-//     delete best;
-//     delete reduced;
-//
-//     return bestcost;
-// }
 
 int
 IG::localSearch(int* const arr, int l1, int l2)
@@ -538,7 +437,6 @@ IG::localSearchBRE(int *arr, int l1, int l2)
     return best;
 }
 
-
 int
 IG::localSearchKI(int *arr,const int kmax)
 {
@@ -575,9 +473,6 @@ IG::localSearchKI(int *arr,const int kmax)
 
     return best;
 }
-
-
-
 
 int
 IG::localSearchPartial(int *arr,const int N)
@@ -617,156 +512,3 @@ IG::localSearchPartial(int *arr,const int N)
 
     return best;
 }
-
-//======================================================
-
-// int
-// IG::vbih(subproblem* current, subproblem* guiding)
-// {
-// 	subproblem* best=new subproblem(*current);
-// 	subproblem* temp=new subproblem(*current);
-//     subproblem* reduced=new subproblem(nbJob);
-//
-//     int bestcost=neh->evalMakespan(best->schedule, nbJob);
-// 	int currentcost=bestcost;
-//
-// 	int min_bsize=2;
-// 	int bsize=2;
-//
-// 	int tempcost;
-// 	// int len=nbJob;
-//
-// 	int kmax=sqrt(nbJob);
-// 	currentcost=localSearchKI(current->schedule,kmax);
-//
-//
-//     for(int k=1;k<igiter;k++){
-// 	    min_bsize=1;
-// 	    bsize=1;
-//         while(true)
-//         {
-//             *temp=*current;
-//
-//             destruction(temp->schedule, reduced->schedule, bsize);
-//
-//             // for(int i=0;i<bsize;i++){
-//             //     printf("%3d ",reduced->schedule[i]);
-//             // }
-//             // printf("\t|\t");
-//
-//             // temp->print();
-//             // reduced->print();
-//
-//             //localsearch on partial schedule
-//             localSearchPartial(temp->schedule,nbJob-bsize);
-//             // localSearchPartial(reduced->schedule,bsize);
-//
-//             // temp->print();
-//             // reduced->print();
-//
-//             //insert removed
-//             tempcost=nhood->m->bestBlockInsert(temp->schedule,nbJob-bsize,reduced->schedule,bsize);
-//
-//             // len=nbJob;
-//
-//             // temp->print();
-//
-//             //local search on complete solution
-//     		// int kmax=(int)sqrt(nbJob);
-//     		// tempcost=localSearchKI(temp->schedule,kmax);
-//
-// 		    // tempcost=localSearchBRE(temp->schedule);
-//             // tempcost=localSearch(temp->schedule,0,nbJob);
-//
-//             tempcost=ris(temp, guiding);
-//
-//             // printf("%d %d %d\n",tempcost,currentcost,bsize);
-//
-//             if(acceptance(tempcost, currentcost, acceptanceParameter)){
-//                 bsize=min_bsize;
-//                 currentcost=tempcost;
-// 				*current=*temp;
-//                 // printf("%d\t",currentcost);
-//                 // current->print();
-//             }
-//             else{
-//                 bsize++;
-//                 // break;
-//             }
-//             if(tempcost < bestcost){
-//                 *guiding = *temp;
-//                 bestcost=tempcost;
-// 				*best=*temp;
-//             }
-//             if(bsize>3)break;
-//         }
-//     }
-//
-//
-//     // printf("\n\n\n %d \n",bestcost);
-//     // best->print();
-//
-// 	delete best;
-// 	delete temp;
-//     delete reduced;
-//
-//     return bestcost;
-// }
-
-
-
-
-
-
-// int
-// IG::ris(subproblem* current, subproblem* guiding)
-// {
-// 	subproblem* temp=new subproblem(*current);
-//     subproblem* star=new subproblem(*guiding);
-//
-//     int best=nhood->m->computeHeads(temp->schedule, nbJob);
-//
-//     int len=nbJob;
-//     int cmax=0;
-//
-//     int i=0;
-//     int h=0;
-//
-//     while(i<nbJob)
-//     {
-//         *temp=*current;
-//
-//         int job1,rpos;
-//         // do{
-//             h = h%nbJob;
-//             // h = visitOrder[h];
-//             job1=star->schedule[h];//job at position h in guiding solution
-//             rpos=temp->locate(job1);//position of this job in current
-//             h++;
-//         // }while(rpos==h);
-//
-//         if(rpos<0){printf("notfound\n");exit(-1);}
-//
-//         int rjob=nhood->m->remove(temp->schedule, len, rpos);
-//         nhood->m->bestInsert(temp->schedule, len, rjob, cmax);
-//
-//         if(cmax<best){
-//             *current=*temp;
-//             best=cmax;
-//             i=1;
-//         }else{
-//             i++;
-//         }
-//     }
-//
-// 	// *current=*temp;
-//
-//     // printf("current %d\n",best);
-// 	// current->print();
-//
-// 	delete star;
-// 	delete temp;
-//
-//
-//     return best;
-// }

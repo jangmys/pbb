@@ -13,7 +13,7 @@ set(CMAKE_VERBOSE_MAKEFILE OFF)
 
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
-set(CMAKE_CXX_FLAGS "-Wall -Wno-unused-function -Wunused-variable -O2")
+set(CMAKE_CXX_FLAGS "-Wall -Wno-unused-function -Wnounused-variable -O2")
 
 ######################################################################################
 ### 3) Include CMake files

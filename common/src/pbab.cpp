@@ -5,6 +5,7 @@
 
 #include <memory>
 
+#include "libbounds.h"
 #include "../include/subproblem.h"
 #include "../include/solution.h"
 #include "../include/ttime.h"
@@ -62,23 +63,20 @@ void pbab::set_initial_solution()
     switch (arguments::init_mode) {
         case 0:
         {
-            if(arguments::init_mode == 0){
-                std::cout<<"Get initial upper bound from file..."<<std::endl;
-                switch (arguments::inst_name[0]) {
-                    case 't':
-                    {
-                        std::cout<<"here\n";
-                        sltn->cost = (static_cast<instance_taillard*>(instance))->get_initial_ub_from_file(arguments::inst_name,arguments::init_mode);
-                        break;
-                    }
-                    case 'V':
-                    {
-                        sltn->cost = (static_cast<instance_vrf*>(instance))->get_initial_ub_from_file(arguments::inst_name,arguments::init_mode);
-                        break;
-                    }
+            std::cout<<" === Get initial upper bound from file..."<<std::endl;
+            switch (arguments::inst_name[0]) {
+                case 't':
+                {
+                    sltn->cost = (static_cast<instance_taillard*>(instance))->read_initial_ub_from_file(arguments::inst_name,arguments::init_mode);
+                    break;
                 }
+                case 'V':
+                {
+                    sltn->cost = (static_cast<instance_vrf*>(instance))->get_initial_ub_from_file(arguments::inst_name,arguments::init_mode);
+                    break;
+                }
+                break;
             }
-            break;
         }
         case 1:
         {

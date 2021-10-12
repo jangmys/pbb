@@ -195,7 +195,6 @@ arguments::parse_arguments(int argc, char ** argv)
         switch (c) {
             case 'f': {
                 strcpy(inifile, argv[optind]);
-                std::cout<<"inifile:\t"<<inifile<<std::endl;
                 readIniFile();
                 break;
             }

@@ -15,8 +15,6 @@
 class pbab;
 class bbthread;
 
-// static pthread_mutex_t instance_mutex = PTHREAD_MUTEX_INITIALIZER;
-
 class matrix_controller : public thread_controller{
 public:
     ivmthread* make_bbexplorer(unsigned _id){
@@ -46,7 +44,6 @@ public:
             pos.emplace_back(std::vector<int>(size,0));
             end.emplace_back(std::vector<int>(size,0));
         }
-        // std::cout<<"+++ done \n"<<std::endl;
     };
 
     ~matrix_controller()

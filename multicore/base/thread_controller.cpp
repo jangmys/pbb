@@ -12,7 +12,8 @@ thread_controller::thread_controller(pbab * _pbb) : pbb(_pbb)
     // //set number of BB-explorers (threads)
     M = (arguments::nbivms_mc < 1) ? get_nprocs_conf() : arguments::nbivms_mc;
 
-    std::cout<<" === Using "<<M<<" threads"<<std::endl;
+    if(arguments::singleNode)
+        std::cout<<" === Using "<<M<<" threads"<<std::endl;
 
     //barrier for syncing all explorer threads
     pthread_barrier_init(&barrier, NULL, M);
@@ -262,7 +263,6 @@ thread_controller::stop(unsigned id)
 
     int ret=pthread_barrier_wait(&barrier);
     if(ret==PTHREAD_BARRIER_SERIAL_THREAD){
-        std::cout<<"STOP "<<id<<"\n";
         FILE_LOG(logDEBUG1) << "=== stop "<<M<<" ===";
     }
 }

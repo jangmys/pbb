@@ -11,6 +11,17 @@
 
 int main(int argc, char* argv[])
 {
+    //==========================================================================
+    if(argc != 4)
+    {
+        std::cout<<"Usage: -z p=fsp,i=ta20 <N> with N=...\n";
+
+        std::cout<<"... 0 : NEH\n";
+        std::cout<<"... 1 : NEH\n";
+        std::cout<<"... 2 : NEH\n";
+        std::cout<<"... 3 : NEH\n";
+    }
+
     arguments::parse_arguments(argc, argv);
     std::cout<<" === solving "<<arguments::problem<<" - instance "<<arguments::inst_name<<std::endl;
 
@@ -34,75 +45,69 @@ int main(int argc, char* argv[])
         }
     }
 
+    std::cout<<argv[3]<<std::endl;
 
-    //==========================================================================
-    fastNEH neh(instance);
-
-    std::vector<int>perm(instance->size);
-
-    std::generate(perm.begin(), perm.end(), [n = 0] () mutable { return n++; });
-
-    neh.initialSort(perm);
-
-    for(auto &e : perm)
-    {
-        std::cout<<e<<" ";
-    }
-    std::cout<<std::endl;
-
-    int cost;
-
-    neh.runNEH(perm,cost);
-
-    for(auto &e : perm)
-    {
-        std::cout<<e<<" ";
-    }
-    std::cout<<std::endl;
-    std::cout<<cost<<std::endl;
-    //==========================================================================
-
-    //==========================================================================
-
-    //==========================================================================
-    IG ils(instance);
-
+    //initial solution
+    // int cost;
+    // std::vector<int>perm(instance->size);
+    // std::generate(perm.begin(), perm.end(), [n = 0] () mutable { return n++; });
     subproblem *p = new subproblem(instance->size);
 
-    int c = ils.runIG(p);
+    switch(atoi(argv[3]))
+    {
+        case 0:
+        {
+            fastNEH neh(instance);
 
-    p->print();
+            neh.initialSort(p->schedule);
+            neh.runNEH(p->schedule,p->cost);
 
-    std::cout<<c<<std::endl;
+            std::cout<<" = NEH :\t";
+            break;
+        }
+        case 1:
+        {
+            IG ils(instance);
 
+            p->cost = ils.runIG(p);
 
-    LocalSearch ls(instance);
+            std::cout<<" = ILS :\t";
+            break;
+        }
+        case 2:
+        {
+            LocalSearch ls(instance);
 
-    cost = ls(perm,-1,perm.size());
+            p->cost = ls(p->schedule,-1,p->size);
 
-    for(auto &e : perm)
+            std::cout<<" = LS :\t";
+            break;
+        }
+        case 3:
+        {
+            Beam bs(instance);
+
+            // subproblem *q = new subproblem(instance->size);
+            bs.run(1<<12,p);
+            *p = *(bs.bestSolution);
+
+            std::cout<<" = BEAM :\t";
+            break;
+        }
+        case 4:
+        {
+            Treeheuristic th(instance);
+
+            th.run(p,0);
+
+            std::cout<<" = DFLS :\t";
+            break;
+        }
+    }
+
+    for(auto &e : p->schedule)
     {
         std::cout<<e<<" ";
     }
-    std::cout<<std::endl;
-    std::cout<<cost<<std::endl;
-
-
-    // Beam bs(instance);
-    // subproblem *q = new subproblem(instance->size);
-    // bs.run(1<<12,q);
-    // bs.bestSolution->print();
-
-
-    Treeheuristic th(instance);
-    subproblem *q2 = new subproblem(instance->size);
-
-    th.run(q2,99999);
-
-    // Tree tr(instance,0,instance->size);
-    //
-    //
-    // tr.beamRun(2<<12,q);
-
-
+    std::cout<<" === "<<p->ub<<std::endl;
 }

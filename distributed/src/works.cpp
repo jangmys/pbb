@@ -60,23 +60,13 @@ works::init_infile(pbab * _pbb)
 {
     pbb = _pbb;
 
-        // char buf[100];
-        // snprintf(buf, sizeof(buf), "./logs/log_worker%d.txt", myrank);
-        // FILE* log_fd = fopen( buf, "w" );
-
-
-
-    // std::ifstream stream((std::string(arguments::directory) + "bab.works").c_str());
-
     std::ifstream stream((std::string(arguments::work_directory) + "bab" + std::string(arguments::inst_name) + ".save").c_str());
-    // std::ifstream stream("./bbworks/bab.wrks");
     stream.seekg(0);
 
     if (stream) {
         stream >> *(pbb->root_sltn);
 
         std::cout<<"Root: "<<*(pbb->root_sltn)<<"\n";
-
 
         uint64_t nbdecomposed;
         stream >> nbdecomposed;
@@ -85,9 +75,6 @@ works::init_infile(pbab * _pbb)
         stream >> *(pbb->sltn);
         stream >> *this;
         stream.close();
-
-        // std::cout<<*this;
-
     }else{
         printf("trying to read from file\n");
     }
@@ -107,7 +94,7 @@ works::init_complete_split(pbab * _pbb, const int nParts)
         b *= i;
     b -= 1;
 
-    std::cout << a << " " << b << std::endl;
+    // std::cout << a << " " << b << std::endl;
 
     (w->Uinterval).emplace_back(new interval(a, b, 0));
     w->split(nParts);
@@ -156,13 +143,7 @@ works::init_complete_split_lop(pbab * _pbb, const int nParts)
     }
 
     std::reverse(unassigned.begin(),unassigned.end());
-    // for(auto i: unassigned)
-    // {
-    //     std::cout<<*i;
-    // }
 
-
-    //    std::cout<<"nProc\t"<<pbb->mstr->nProc<<std::endl;
     FILE_LOG(logINFO)<<"INITIAL WORK UNITS: "<<unassigned.size();
 } // works::init_complete_split
 

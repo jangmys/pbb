@@ -59,7 +59,7 @@ worker_mc::doWork()
 void
 worker_mc::updateWorkUnit()
 {
-    printf("update work unit\n");
+    // printf("update work unit\n");
 
     pthread_mutex_lock_check(&mutex_wunit);
     mc->initFromFac(

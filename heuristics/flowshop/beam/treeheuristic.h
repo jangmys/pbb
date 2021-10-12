@@ -26,7 +26,7 @@ public:
 
     int run(subproblem *s, int _ub);
 
-    void exploreNeighborhood(subproblem* s);
+    void exploreNeighborhood(subproblem* s, long long int cutoff);
 
     std::vector<subproblem*> decompose(subproblem& n);
     void insert(std::vector<subproblem *>&ns);

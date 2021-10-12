@@ -581,14 +581,8 @@ worker::run()
         if(arguments::heuristic_threads)
             getSolutions();
 
-        //        pbb->ttm->off(pbb->ttm->workerExploretime);
-
-        //        bool isReady=false;
-
-        // printf("rrrrrrrr : %d\t",comm->rank);
-        // if (pbb->sltn->newBest) {
         if(foundNewBest()){
-            printf("try send best %d \n",pbb->sltn->cost);
+            // std::cout<<"try send best :\t"<<pbb->sltn->cost<<std::endl;
             FILE_LOG(logDEBUG) << "Try launch best-communication";
             tryLaunchCommBest();
         }

@@ -19,6 +19,8 @@ Treeheuristic::Treeheuristic(instance_abstract* inst)
 int
 Treeheuristic::run(subproblem *s, int _ub)
 {
+    ig->shuffle(s->schedule.data(), s->size);
+
     subproblem *bsol=new subproblem(*s);
     bsol->ub = lb[SIMPLE]->evalSolution(bsol->schedule.data());
 
@@ -27,47 +29,38 @@ Treeheuristic::run(subproblem *s, int _ub)
         prune->local_best = bsol->ub; //if no upper bound provided
 
     subproblem *tmpsol = new subproblem(*bsol);
-    // subproblem *currsol = new subproblem(*bsol);
-
-    std::cout<<*tmpsol<<std::endl;
-    // std::cout<<*currsol<<std::endl;
+    subproblem *currsol = new subproblem(*bsol);
 
     int c=0;
-
+    long long int cutoff = 100000;
     bool perturb = false;
 
     while(1){
         if(perturb){
-            ig->perturbation(tmpsol->schedule.data(), 4, -1,tmpsol->size);
-
-			// *tmpsol = *bsol;
-            // int cost = (*ls)(tmpsol->schedule,-1,tmpsol->size);
-            //
-            // std::cout<<tmpsol->ub<<" "<<cost<<" ";
-            //
-			// tmpsol->ub = lb[SIMPLE]->evalSolution(tmpsol->schedule.data());
-            //
-            // std::cout<<tmpsol->ub<<std::endl;
-            //
-			// perturb=false;
-			// // restarts++;
+            int l = helper::intRand(2, tmpsol->size/5);
+            int r = helper::intRand(0, tmpsol->size - l);
+            ig->shuffle(tmpsol->schedule.data()+r, l);
+			perturb=false;
 		}
 
         tmpsol->limit1=-1;
 		tmpsol->limit2=s->size;
 
-        exploreNeighborhood(tmpsol);
+        exploreNeighborhood(tmpsol,cutoff);
 
-		// if(tmpsol->ub < currsol->ub){
-            // *currsol = *tmpsol;
-
+		if(tmpsol->ub < currsol->ub){
+            *currsol = *tmpsol;
+        }
         if(tmpsol->ub < bsol->ub){
+            // std::cout<<"improved "<<tmpsol->ub<<std::endl;
             *bsol = *tmpsol;
         }else{
+            *tmpsol = *currsol;
             perturb = true;
+            c++;
         }
-        // }
-        if(c++ > 1000)
+
+        if(c > 100)
             break;
     }
 
@@ -77,14 +70,12 @@ Treeheuristic::run(subproblem *s, int _ub)
 }
 
 void
-Treeheuristic::exploreNeighborhood(subproblem* s)
+Treeheuristic::exploreNeighborhood(subproblem* s,long long int cutoff)
 {
-    // std::cout<<"explore neighborhood\n";
-
     tr->clearPool();
     tr->setRoot(s->schedule, s->limit1, s->limit2);
-
-    // std::cout<<"root\n "<<*s<<std::endl;
+    (tr->top())->cost = 0;
+    (tr->top())->ub = lb[SIMPLE]->evalSolution(tr->top()->schedule.data());
 
     bool foundSolution = false;
 
@@ -93,31 +84,26 @@ Treeheuristic::exploreNeighborhood(subproblem* s)
         if (!tr->empty()) {
             subproblem *n = tr->take();
 
-			// std::cout<<tr->size()<<"\ttake\t"<<*n<<"\t"<<" "<<prune->local_best<<"\n";
-
             if(!(*prune)(n)){
                 if(n->leaf()){
                     prune->local_best = n->cost;
                     *bestSolution = *n;
-                    // bestSolution->update(n->schedule.data(),n->cost);
                     foundSolution = true;
-                    std::cout<<prune->local_best<<" <=== \n";
                 }else{
-                    // std::cout<<"decompose"<<std::endl;
-
                     std::vector<subproblem*>ns;
                     ns = decompose(*n);
 
-                    // tr->insert(ns);
+                    float alpha = (float)(n->depth)/n->size;
+                    for(auto &c : ns){
+                        c->prio = (1.0f-alpha)*(c->cost)*c->prio + alpha*(c->cost);
+                    }
+
                     insert(ns);
 
                     if(tr->top()->ub < bestSolution->ub)
                     {
                         prune->local_best = tr->top()->ub;
-                        std::cout<<prune->local_best<<" <=== \n";
-
                         *bestSolution = *(tr->top());
-
                         foundSolution = true;
                     }
                 }
@@ -128,10 +114,10 @@ Treeheuristic::exploreNeighborhood(subproblem* s)
         if(tr->empty()){
             break;
         }
-        if(tr->size() > 100000){
+        if(foundSolution){
             break;
         }
-        if(foundSolution){
+        if(tr->size() > cutoff){
             break;
         }
     }

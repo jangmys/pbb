@@ -37,29 +37,7 @@ main(int argc, char ** argv)
     // arguments::readIniFile();
     arguments::parse_arguments(argc, argv);
 
-    //by default initial upper bound in INFTY
-    arguments::initial_ub = INT_MAX;
-    //if set, read initial UB from file
-    if(arguments::init_mode == 0){
-        std::cout<<"Get initial upper bound from file"<<std::endl;
-        switch (arguments::inst_name[0]) {
-            case 't':
-            {
-                arguments::initial_ub = instance_taillard::get_initial_ub_from_file(arguments::inst_name,arguments::init_mode);
-                break;
-            }
-            case 'V':
-            {
-                arguments::initial_ub = instance_vrf::get_initial_ub_from_file(arguments::inst_name,arguments::init_mode);
-                break;
-            }
-        }
-    }
 
-    pbab * pbb = new pbab();//, bound1, bound2);
-
-
-    int bbmode=0;
 
     if (myrank == 0) {
         FILELog::ReportingLevel() = logDEBUG;
@@ -67,7 +45,6 @@ main(int argc, char ** argv)
         char buf[100];
         snprintf(buf, sizeof(buf), "./logs/%s_master.txt", arguments::inst_name);
         FILE* log_fd = fopen( buf, "w" );
-        // FILE* log_fd = fopen( "./logs/%s_master.txt", "w" );
         Output2FILE::Stream() = log_fd;
     }else{
         FILELog::ReportingLevel() = logDEBUG;
@@ -79,22 +56,23 @@ main(int argc, char ** argv)
         FILE_LOG(logINFO) << "Worker start logging";
     }
 
+    pbab * pbb = new pbab();//, bound1, bound2);
+    pbb->set_initial_solution();
+
+    int bbmode=0;
     switch (bbmode) {
         case 0:
         {
             if (myrank == 0) {
-                printf(" === Master + %d workers\n", nProc - 1);
-                printf(" === solving %s / instance %s\n",arguments::problem,arguments::inst_name);
-                fflush(stdout);
+                std::cout<<" === Master + "<<nProc-1<<" workers\n";
+                std::cout<<" === Solving "<<arguments::problem<<" / instance "<<arguments::inst_name<<"\n";
+                std::cout<<" === Problem Size:\t"<<pbb->size<<std::endl;
 
                 master* mstr = new master(pbb);
-
-                // pbb->buildInitialUB();
 
                 struct timespec tstart, tend;
                 clock_gettime(CLOCK_MONOTONIC, &tstart);
 
-                // mstr->initWorks(2);//2 = read from file
                 mstr->initWorks(arguments::initial_work);//3 = cut initial interval in nProc pieces
 
                 MPI_Barrier(MPI_COMM_WORLD);
@@ -105,10 +83,11 @@ main(int argc, char ** argv)
                 MPI_Bcast(pbb->sltn->perm, pbb->size, MPI_INT, 0, MPI_COMM_WORLD);
                 MPI_Bcast(&pbb->sltn->cost, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
+                std::cout<<" = master:\t run ..."<<std::endl;
                 mstr->run();
 
                 clock_gettime(CLOCK_MONOTONIC, &tend);
-                printf("\nWalltime :\t %2.8f\n", (tend.tv_sec - tstart.tv_sec) + (tend.tv_nsec - tstart.tv_nsec) / 1e9f);
+                printf("\n = Walltime :\t %2.8f\n", (tend.tv_sec - tstart.tv_sec) + (tend.tv_nsec - tstart.tv_nsec) / 1e9f);
             }
             else
             {
@@ -128,7 +107,6 @@ main(int argc, char ** argv)
                 // worker *wrkr = new worker_mc(pbb);
 
                 FILE_LOG(logDEBUG) << "Worker running";
-                printf("=== R = U = N =========\n"); fflush(stdout);
                 wrkr->run();
             }
             break;
@@ -142,34 +120,8 @@ main(int argc, char ** argv)
                 printf("Initial Solution:\n");
                 pbb->sltn->print();
 
-                //get lower bound
-                // bound_abstract *bd=new bound_fsp_weak();
-                // bd->set_instance(pbb->instance);
-                // bd->init();
-                //
-                // int *perm=new int[pbb->size];
-                // for(int i=0;i<pbb->size;i++)perm[i]=i;
-                // int c[2];
-                // bd->bornes_calculer(perm,-1,pbb->size, c, 9999999);
-                // std::cout<<c[0]<<" +++++ ";
-                // delete perm;
-                // delete bd;
-
-                // mstr->initWorks(2);//2 = read from file
-                // mstr->initWorks(4);//3 = cut initial interval in nProc pieces
-
                 struct timespec tstart, tend;
                 clock_gettime(CLOCK_MONOTONIC, &tstart);
-
-                // if(arguments::init_mode==0){
-                //     FILE_LOG(logINFO) << "Initializing at optimum " << arguments::initial_ub;
-                //     FILE_LOG(logINFO) << "Guiding solution " << *(pbb->sltn);
-                //     pbb->sltn->cost = arguments::initial_ub;
-                // }else{
-                //     FILE_LOG(logINFO) << "Start search with heuristic solution\n" << *(pbb->sltn);
-                // }
-
-                // pbb->sltn->cost = 11250;
 
                 int continueBB=1;
                 while(continueBB){

@@ -15,7 +15,6 @@ public:
     int size;
     int limit1;
     int limit2;
-    // int * schedule;
 
     std::vector<int> schedule;
     std::vector<bool> mask;
