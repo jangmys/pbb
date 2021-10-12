@@ -33,6 +33,8 @@ if (NOT CUDA_DRIVER_LIBRARY)
 endif ()
 mark_as_advanced(CUDA_DRIVER_LIBRARY)
 
+get_filename_component(PARENT_DIR ${CMAKE_CURRENT_SOURCE_DIR} DIRECTORY)
+
 if(TARGET dbb)
     FILE(GLOB CppSources worker_gpu.cpp)
     target_sources(dbb PRIVATE ${CppSources})
@@ -49,8 +51,6 @@ if(TARGET dbb)
     # target_link_libraries(dbb PUBLIC ${CMAKE_CUDA_LIBRARIES})
     # target_link_libraries(dbb PUBLIC ${CUDA_DRIVER_LIBRARY})
 else()
-    get_filename_component(PARENT_DIR ${CMAKE_CURRENT_SOURCE_DIR} DIRECTORY)
-
     file(GLOB cuSources gpubb.cu)
     add_executable(gpubb main.cpp ${cuSources})    # target_link_libraries(dbb PUBLIC ${CMAKE_CUDA_LIBRARIES})
     # target_link_libraries(dbb PUBLIC ${CUDA_DRIVER_LIBRARY})
