@@ -33,6 +33,11 @@ add_subdirectory(${PARENT_DIR}/multicore/base ./build_mcbase)
 add_subdirectory(${PARENT_DIR}/multicore/ivm ./build_mcivm)
 if(GPU)
     add_subdirectory(${PARENT_DIR}/gpu ./build_gpu)
+
+    message(STATUS "HELLO Link")
+    message(STATUS ${CMAKE_CUDA_LIBRARIES})
+    message(STATUS ${CUDA_DRIVER_LIBRARY})
+
     target_link_libraries(dbb PUBLIC ${CMAKE_CUDA_LIBRARIES})
     target_link_libraries(dbb PUBLIC ${CUDA_DRIVER_LIBRARY})
 endif()

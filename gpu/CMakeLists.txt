@@ -45,8 +45,8 @@ if(TARGET dbb)
 
     target_include_directories(dbb PUBLIC ${PARENT_DIR}/gpu ${PARENT_DIR}/gpu/include)
 
-    target_include_directories(dbb PUBLIC ${CMAKE_CUDA_INCLUDE_DIRS})
     target_include_directories(dbb PUBLIC ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
+    target_include_directories(dbb PUBLIC ${CMAKE_CUDA_INCLUDE_DIRS})
     target_include_directories(dbb PUBLIC ${CMAKE_CUDA_INCLUDE_DIRS})
     # target_link_libraries(dbb PUBLIC ${CMAKE_CUDA_LIBRARIES})
     # target_link_libraries(dbb PUBLIC ${CUDA_DRIVER_LIBRARY})
