@@ -33,6 +33,8 @@ add_subdirectory(${PARENT_DIR}/multicore/base ./build_mcbase)
 add_subdirectory(${PARENT_DIR}/multicore/ivm ./build_mcivm)
 if(GPU)
     add_subdirectory(${PARENT_DIR}/gpu ./build_gpu)
+    target_link_libraries(dbb PUBLIC ${CMAKE_CUDA_LIBRARIES})
+    target_link_libraries(dbb PUBLIC ${CUDA_DRIVER_LIBRARY})
 endif()
 
     # add_subdirectory(${PARENT_DIR}/common/src ./build_common)

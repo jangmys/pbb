@@ -46,13 +46,14 @@ if(TARGET dbb)
     target_include_directories(dbb PUBLIC ${CMAKE_CUDA_INCLUDE_DIRS})
     target_include_directories(dbb PUBLIC ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
     target_include_directories(dbb PUBLIC ${CMAKE_CUDA_INCLUDE_DIRS})
-    target_link_libraries(dbb PUBLIC ${CMAKE_CUDA_LIBRARIES})
-    target_link_libraries(dbb PUBLIC ${CUDA_DRIVER_LIBRARY})
+    # target_link_libraries(dbb PUBLIC ${CMAKE_CUDA_LIBRARIES})
+    # target_link_libraries(dbb PUBLIC ${CUDA_DRIVER_LIBRARY})
 else()
     get_filename_component(PARENT_DIR ${CMAKE_CURRENT_SOURCE_DIR} DIRECTORY)
 
     file(GLOB cuSources gpubb.cu)
-    add_executable(gpubb main.cpp ${cuSources})
+    add_executable(gpubb main.cpp ${cuSources})    # target_link_libraries(dbb PUBLIC ${CMAKE_CUDA_LIBRARIES})
+    # target_link_libraries(dbb PUBLIC ${CUDA_DRIVER_LIBRARY})
 
     add_definitions(-DFSP)
 
