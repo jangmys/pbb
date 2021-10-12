@@ -49,7 +49,7 @@ target_include_directories(dbb PUBLIC ${PARENT_DIR}/multicore/operators)
 target_include_directories(dbb PUBLIC ${PARENT_DIR}/multicore/base)
 target_include_directories(dbb PUBLIC ${PARENT_DIR}/multicore/ivm)
 if(GPU)
-    target_include_directories(dbb PUBLIC ${PARENT_DIR}/gpu)
+    target_include_directories(dbb PUBLIC ${PARENT_DIR}/gpu ${PARENT_DIR}/gpu/include)
 endif()
 
 
