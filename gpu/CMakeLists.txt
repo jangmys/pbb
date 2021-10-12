@@ -36,8 +36,8 @@ mark_as_advanced(CUDA_DRIVER_LIBRARY)
 get_filename_component(PARENT_DIR ${CMAKE_CURRENT_SOURCE_DIR} DIRECTORY)
 
 if(TARGET dbb)
-    FILE(GLOB CppSources worker_gpu.cpp)
-    target_sources(dbb PRIVATE ${CppSources})
+    FILE(GLOB CppSources worker_gpu.cpp gpubb.cu)
+    target_sources(dbb PUBLIC ${CppSources})
 
     add_definitions(-DFSP)
 
