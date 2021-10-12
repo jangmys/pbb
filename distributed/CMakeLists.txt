@@ -48,6 +48,10 @@ target_include_directories(dbb PUBLIC ${PARENT_DIR}/common/src)
 target_include_directories(dbb PUBLIC ${PARENT_DIR}/multicore/operators)
 target_include_directories(dbb PUBLIC ${PARENT_DIR}/multicore/base)
 target_include_directories(dbb PUBLIC ${PARENT_DIR}/multicore/ivm)
+if(GPU)
+    target_include_directories(dbb PUBLIC ${PARENT_DIR}/gpu)
+endif()
+
 
 target_include_directories(dbb PUBLIC ${PROJECT_SOURCE_DIR}/include/)
 target_include_directories(dbb PUBLIC ${MPI_CXX_INCLUDE_PATH})
