@@ -1,6 +1,8 @@
 #ifndef WORKER_GPU_H
 #define WORKER_GPU_H
 
+#include <cuda.h>
+
 #include <atomic>
 #include <memory>
 
