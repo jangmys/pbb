@@ -64,6 +64,10 @@ else()
     target_include_directories(gpubb PUBLIC ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
 
     target_include_directories(gpubb PUBLIC ${CMAKE_CUDA_INCLUDE_DIRS})
+
+    message(STATUS "CMAKE_CUDA" ${CMAKE_CUDA_LIBRARIES})
+    message(STATUS "CUDA_DRIVER" ${CUDA_DRIVER_LIBRARY})
+
     target_link_libraries(gpubb PUBLIC ${CMAKE_CUDA_LIBRARIES})
     target_link_libraries(gpubb PUBLIC ${CUDA_DRIVER_LIBRARY})
     target_link_libraries(gpubb PUBLIC ${PARENT_DIR}/evaluation/build/libbounds.a)
