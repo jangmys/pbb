@@ -41,6 +41,12 @@ if(TARGET dbb)
 
     add_definitions(-DFSP)
 
+    # if(THREADS_HAVE_PTHREAD_ARG)
+    #     set_property(TARGET Threads::Threads PROPERTY INTERFACE_COMPILE_OPTIONS $<$<COMPILE_LANGUAGE:CUDA>:-Xcompiler -pthread> $<$<NOT:$<COMPILE_LANGUAGE:CUDA>>:-pthread>)
+# endif()
+
+
+
     message(STATUS "HELLO cuda")
 
     target_include_directories(dbb PUBLIC ${PARENT_DIR}/gpu ${PARENT_DIR}/gpu/include)
@@ -52,7 +58,19 @@ if(TARGET dbb)
     # target_link_libraries(dbb PUBLIC ${CUDA_DRIVER_LIBRARY})
 else()
     file(GLOB cuSources gpubb.cu)
-    add_executable(gpubb main.cpp ${cuSources})    # target_link_libraries(dbb PUBLIC ${CMAKE_CUDA_LIBRARIES})
+    add_executable(gpubb main.cpp ${cuSources})
+
+    set_property(TARGET Threads::Threads PROPERTY INTERFACE_COMPILE_OPTIONS $<$<COMPILE_LANGUAGE:CUDA>:-Xcompiler -pthread> $<$<NOT:$<COMPILE_LANGUAGE:CUDA>>:-pthread>)
+
+    #
+    # set(FLAG0 "$<$<COMPILE_LANGUAGE:CUDA>:SHELL:-Xcompiler -pthread>"
+    # 	"$<$<NOT:$<COMPILE_LANGUAGE:CUDA>>:-pthread>")
+    # set(FLAG1 "$<IF:$<COMPILE_LANGUAGE:CUDA>,:SHELL:-Xcompiler -pthread,-pthread>")
+    #
+    # target_compile_options(gpubb PRIVATE ${FLAG0})
+
+
+      # target_link_libraries(dbb PUBLIC ${CMAKE_CUDA_LIBRARIES})
     # target_link_libraries(dbb PUBLIC ${CUDA_DRIVER_LIBRARY})
 
     add_definitions(-DFSP)

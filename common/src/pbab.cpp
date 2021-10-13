@@ -83,16 +83,16 @@ void pbab::set_initial_solution()
         }
         case 1:
         {
-            // Beam bs(instance);
-            //
-            // subproblem *p = new subproblem(instance->size);
-            //
-            // bs.run(1<<14,p);
-            //
-            // for(int i=0; i<instance->size; i++){
-            //     sltn->perm[i] = bs.bestSolution->schedule[i];
-            // }
-            // sltn->cost = p->ub;
+            Beam bs(instance);
+
+            subproblem *p = new subproblem(instance->size);
+
+            bs.run(1<<14,p);
+
+            for(int i=0; i<instance->size; i++){
+                sltn->perm[i] = bs.bestSolution->schedule[i];
+            }
+            sltn->cost = p->ub;
 
             break;
         }
@@ -108,8 +108,8 @@ void pbab::set_initial_solution()
 
     *(root_sltn) = *(sltn);
 
-    FILE_LOG(logDEBUG) << "Initializing at optimum " << sltn->cost;
-    FILE_LOG(logDEBUG) << "Guiding solution " << *(root_sltn);
+    // FILE_LOG(logDEBUG) << "Initializing at optimum " << sltn->cost;
+    // FILE_LOG(logDEBUG) << "Guiding solution " << *(root_sltn);
 }
 
 
@@ -127,8 +127,8 @@ pbab::printStats()
     if(foundAtLeastOneSolution)
     {
         std::cout<<"Found optimal solution:\n"<<std::endl;
-        std::cout<<"Optimal-Cmax\t"<<sltn->cost<<std::endl;
-        std::cout<<"Solution:\n"<<*sltn;
+        std::cout<<"Min Cmax:\t"<<sltn->cost<<std::endl;
+        std::cout<<"Argmin Cmax:\t"; sltn->print();
     }else{
         std::cout<<"Not improved..."<<std::endl;
         std::cout<<"Cmax\t"<<sltn->cost<<std::endl;

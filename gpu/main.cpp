@@ -12,27 +12,25 @@
 int
 main(int argc, char ** argv)
 {
+    strcpy(arguments::inifile,"./gpuconfig.ini");
     arguments::parse_arguments(argc, argv);
     std::cout<<" === solving "<<arguments::problem<<" - instance "<<arguments::inst_name<<std::endl;
 
-    pbab * pbb = new pbab();//, bound1, bound2);
-    pbb->set_initial_solution();
+    /*SET UP LOGGING*/
+    FILE* log_fd = fopen(arguments::logfile, "w" );
+    Output2FILE::Stream() = log_fd;
 
-	// strcpy(arguments::inifile,"./gpuconfig.ini");
+    pbab * pbb = new pbab();
+    pbb->set_initial_solution();
+    std::cout<<*(pbb->sltn);
+
 	arguments::singleNode=true;
 
     FILELog::ReportingLevel() = logINFO;
-    FILE* log_fd = fopen( "./logs/bblog.txt", "w" );
-    Output2FILE::Stream() = log_fd;
 
     struct timespec tstart, tend;
     clock_gettime(CLOCK_MONOTONIC, &tstart);
 
-    // pbb->buildInitialUB();
-
-    // ###############################
-    // ###### SINGLE NODE ######## (no MPI)
-    // ###############################
     cudaFree(0);
 
     int device_nb = 0;
@@ -41,18 +39,16 @@ main(int argc, char ** argv)
     int device,count;
     cudaGetDeviceCount(&count);
     cudaGetDevice(&device);
-    printf("=== Device %d/%d ==\n", device, count-1);
+    printf(" === Device %d/%d ==\n", device+1, count);
 
     cudaDeviceSetCacheConfig(cudaFuncCachePreferShared);
 
     gpubb* gbb = new gpubb(pbb);//%numDevices);
     gbb->initialize();// allocate IVM on host/device
 #ifdef FSP
-    printf("=== FSP\n");fflush(stdout);
     gbb->initializeBoundFSP();
 #endif
 #ifdef TEST
-    printf("\n=== TEST\n");fflush(stdout);
     gbb->initializeBoundTEST();
 #endif
     gbb->copyH2D();

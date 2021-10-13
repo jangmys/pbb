@@ -33,18 +33,8 @@ gpubb::gpubb(pbab * _pbb)
     if (arguments::problem[0] == 'f') {
         bound_fsp_weak *bd=new bound_fsp_weak();
         bd->init(pbb->instance);
-        // bd->set_instance(pbb->instance);
-        // bd->init();
-        // bd->branchingMode=arguments::branchingMode;
         bound=bd;
     }
-    // if (arguments::problem[0] == 't' || arguments::problem[0] == 'n') {
-    //     bound_nqueens *bd=new bound_nqueens();
-    //     bd->set_instance(pbb->instance);
-    //     bd->init();
-    //     bd->branchingMode=arguments::branchingMode;
-    //     bound=bd;
-    // }
 
     initialUB = INT_MAX;
     pbb->sltn->getBest(initialUB);
@@ -546,7 +536,7 @@ gpubb::boundLeaves(bool reached, int& best)
         if (flags[k] == 1) {
             int cost=bound->evalSolution(schedule_h+k*size);
             pbb->stats.leaves++;
-            FILE_LOG(logINFO) << "Evaluated Leaf\t" << cost;
+            FILE_LOG(logINFO) << "Evaluated Leaf\t" << cost << " vs. Best "<<best;
 
             bool update;
             if(arguments::findAll)update=(cost<=best);
@@ -558,7 +548,7 @@ gpubb::boundLeaves(bool reached, int& best)
 
 				localFoundNew = true;
 
-                // pbb->foundSolution=true;
+                pbb->foundAtLeastOneSolution=true;
 
 				// std::cout << "Worker found " << cost << "\n";
                 //print new best solution
@@ -789,7 +779,7 @@ gpubb::setHypercubeConfig()
 void
 gpubb::allocate_on_host()
 {
-	FILE_LOG(logINFO) << "size: " << size << "nbIVM: " << nbIVM;
+	FILE_LOG(logINFO) << "Allocate memory for "<<nbIVM<<" IVM of size " << size;
 
     int size_m = size * size * nbIVM;
     int size_v = size * nbIVM;

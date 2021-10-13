@@ -31,11 +31,14 @@ add_subdirectory(src)
 add_subdirectory(${PARENT_DIR}/common/src ./build_common)
 add_subdirectory(${PARENT_DIR}/multicore/base ./build_mcbase)
 add_subdirectory(${PARENT_DIR}/multicore/ivm ./build_mcivm)
+
 if(GPU)
     enable_language(CUDA)
     add_definitions(-DFSP)
 
     add_subdirectory(${PARENT_DIR}/gpu ./build_gpu)
+
+    # set_property(TARGET Threads::Threads PROPERTY INTERFACE_COMPILE_OPTIONS $<$<COMPILE_LANGUAGE:CUDA>:-Xcompiler -pthread> $<$<NOT:$<COMPILE_LANGUAGE:CUDA>>:-pthread>)
 
     target_include_directories(dbb PUBLIC ${PARENT_DIR}/gpu)
     target_include_directories(dbb PUBLIC ${PARENT_DIR}/gpu/include)
@@ -78,6 +81,7 @@ target_include_directories(dbb PUBLIC ${PARENT_DIR}/multicore/ivm)
 #     target_link_libraries(dbb PUBLIC ${CUDA_DRIVER_LIBRARY})
 #
 # endif()
+
 
 
 target_include_directories(dbb PUBLIC ${PROJECT_SOURCE_DIR}/include/)

@@ -95,7 +95,7 @@ void
 solution::print()
 {
     pthread_mutex_lock_check(&print_mutex);
-    std::cout<<"Cost: "<<cost<<"\t|\t";
+    std::cout<<cost<<"\t|\t";
     for (int i = 0; i < size; i++) {
         std::cout<<perm[i]<<" ";
     }

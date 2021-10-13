@@ -1,11 +1,11 @@
 ### Check the CMake version
-cmake_minimum_required(VERSION 3.10 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.13 FATAL_ERROR)
 
 ### Define project
 project("PBB"
     VERSION 1.0.0
     DESCRIPTION "Branch-and-Bound for permutation problems"
-    LANGUAGES C CXX)
+LANGUAGES C CXX CUDA)
 
 set(CMAKE_CXX_STANDARD 14)
 
