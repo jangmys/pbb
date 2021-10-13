@@ -40,7 +40,6 @@ if(GPU)
     target_include_directories(dbb PUBLIC ${PARENT_DIR}/gpu)
     target_include_directories(dbb PUBLIC ${PARENT_DIR}/gpu/include)
 
-
     message(STATUS "HELLO Link")
     message(STATUS "CMAKE_CUDA " ${CMAKE_CUDA_LIBRARIES})
     message(STATUS "CUDA_DRIVER " ${CUDA_DRIVER_LIBRARY})
@@ -94,6 +93,7 @@ target_compile_options(dbb PUBLIC ${MPI_CXX_COMPILE_FLAGS})
 
 target_link_libraries(dbb PUBLIC Threads::Threads)
 target_link_libraries(dbb PUBLIC bounds)
+target_link_libraries(dbb PUBLIC fspHeuristic)
 target_link_libraries(dbb PUBLIC gmp gmpxx)
 target_link_libraries(dbb PUBLIC MPI::MPI_CXX)
 # target_link_libraries(bb PUBLIC common)

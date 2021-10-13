@@ -71,6 +71,7 @@ else()
 
     target_link_libraries(gpubb PUBLIC ${CMAKE_CUDA_LIBRARIES})
     target_link_libraries(gpubb PUBLIC ${CUDA_DRIVER_LIBRARY})
-    target_link_libraries(gpubb PUBLIC ${PARENT_DIR}/evaluation/build/libbounds.a)
+#    target_link_libraries(gpubb PUBLIC ${PARENT_DIR}/evaluation/build/libbounds.a)
+    target_link_libraries(gpubb PUBLIC bounds)
     target_link_libraries(gpubb PUBLIC fspHeuristic)
 endif()
