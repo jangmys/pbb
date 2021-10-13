@@ -508,10 +508,10 @@ chooseBranchingSortAndPrune(int *jobMats_d,int *dirVecs_d,const int *posVecs_d,i
         dir=tile_branchMaxSum<32>(tile32, jmrow, &costsBE_d[2 * ivm * size_d], &dirVecs_d[ivm*size_d], line[warpID]);
         break;}
     case 2:{
-        dir=tile_branchMinMin(tile32, jmrow, &costsBE_d[2 * ivm * size_d], &dirVecs_d[ivm*size_d], line[warpID]);
+        dir=tile_branchMinMin<32>(tile32, jmrow, &costsBE_d[2 * ivm * size_d], &dirVecs_d[ivm*size_d], line[warpID]);
         break;}
     case 3:{
-        dir=tile_MinBranch(tile32, jmrow, &costsBE_d[2 * ivm * size_d], &dirVecs_d[ivm*size_d], line[warpID],initialUB);
+        dir=tile_MinBranch<32>(tile32, jmrow, &costsBE_d[2 * ivm * size_d], &dirVecs_d[ivm*size_d], line[warpID],initialUB);
         break;}
     }
 
@@ -547,7 +547,7 @@ chooseBranchingSortAndPrune(int *jobMats_d,int *dirVecs_d,const int *posVecs_d,i
     }
 
     tile32.sync();
-    tile_prune(tile32, jmrow, costsBE_d+2*ivm*size_d, dir, line[warpID], best);
+    tile_prune<32>(tile32, jmrow, costsBE_d+2*ivm*size_d, dir, line[warpID], best);
 
     if(_boundMode>=1){
         if (thPos == 0) {
