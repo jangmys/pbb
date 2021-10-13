@@ -16,9 +16,9 @@
 
 // don't change order of following includes! (I should set up separate compilation...)
 // GPU:common
-#include "gpu_helper.cuh"
-#include "reductions.cuh"
-#include "gpu_ivm_navi.cuh"
+#include "../include/gpu_helper.cuh"
+#include "../include/reductions.cuh"
+#include "../include/gpu_ivm_navi.cuh"
 
 // GPU:bounds
 #ifdef FSP
