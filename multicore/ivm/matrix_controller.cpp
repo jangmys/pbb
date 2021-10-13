@@ -112,18 +112,13 @@ matrix_controller::getIntervals(int * pos, int * end, int * ids, int &nb_interva
     for (unsigned int k = 0; k < M; k++) {
         pthread_mutex_lock_check(&bbb[k]->mutex_ivm);//don't need it...
         if (!bbb[k]->isEmpty()) {
-        // if (dynamic_cast<ivmthread*>(bbb[k])->ivmbb->IVM->beforeEnd()) {
             ids[nbActive] = k;
             dynamic_cast<ivmthread*>(bbb[k])->ivmbb->IVM->getInterval(&pos[nbActive * size],&end[nbActive * size]);
-
-            // memcpy(&pos[nbActive * pbb->size],dynamic_cast<ivmthread*>(bbb[k])->ivmbb->IVM->posVect, pbb->size*sizeof(int));
-            // memcpy(&end[nbActive * pbb->size],dynamic_cast<ivmthread*>(bbb[k])->ivmbb->IVM->endVect, pbb->size*sizeof(int));
             nbActive++;
         }
         pthread_mutex_unlock(&bbb[k]->mutex_ivm);
     }
-
-    std::cout<<"got "<<nbActive<<" intervals.\n";
+    // std::cout<<"got "<<nbActive<<" intervals.\n";
 
 
 
@@ -150,40 +145,10 @@ matrix_controller::work_share(unsigned id, unsigned thief)
         perror("invalid thief ID (mc)\n"); exit(-1);
     }
 
-    int ret = dynamic_cast<ivmthread*>(bbb[id])->shareWork(1, 2, dynamic_cast<ivmthread*>(bbb[thief])->ivmbb);// ->IVM);//, matrices[thief]->state, matrices[thief]->bestcost);
+    int ret = dynamic_cast<ivmthread*>(bbb[id])->shareWork(1, 2, dynamic_cast<ivmthread*>(bbb[thief])->ivmbb);
 
     return ret;
 }
-
-
-// void
-// matrix_controller::unlockWaiting(int id)
-// {
-//     FILE_LOG(logDEBUG1) << "Unlock all waiting";
-//
-//     // unlock threads waiting for work
-//     for (int i = 0; i < M; i++) {
-//         if (i == id) continue;
-//         pthread_mutex_lock_check(&bbb[i]->mutex_shared);
-//         bbb[i]->receivedWork=true;
-//         pthread_cond_signal(&bbb[i]->cond_shared);
-//         pthread_mutex_unlock(&bbb[i]->mutex_shared);
-//         // sem_post(&bbb[i]->sema_wait);
-//     }
-// }
-
-// void
-// matrix_controller::stop(int id)
-// {
-//     unlockWaiting(id);
-//
-//     int ret=pthread_barrier_wait(&barrier);
-//     if(ret==PTHREAD_BARRIER_SERIAL_THREAD){
-//         std::cout<<"STOP "<<id<<"\n";
-//         FILE_LOG(logDEBUG1) << "=== stop "<<M<<" ===";
-//     }
-//     // sem_destroy(&bbb[id]->sema_wait);
-// }
 
 void
 matrix_controller::interruptExploration()
@@ -248,14 +213,14 @@ matrix_controller::explore_multicore()
     int bestCost=INT_MAX;
 
     while (1) {
+        //get best UB
         pbb->sltn->getBest(bestCost);
-        dynamic_cast<ivmthread*>(bbb[id])->ivmbb->setBest(bestCost);//
+        //set best UB for multi-core BB
+        dynamic_cast<ivmthread*>(bbb[id])->ivmbb->setBest(bestCost);
 
-        pthread_mutex_lock_check(&bbb[id]->mutex_ivm);
-
+        // pthread_mutex_lock_check(&bbb[id]->mutex_ivm);
         bool continuer = bbb[id]->bbStep();
-
-        pthread_mutex_unlock(&bbb[id]->mutex_ivm);
+        // pthread_mutex_unlock(&bbb[id]->mutex_ivm);
 
         if (allEnd.load(std::memory_order_relaxed)) {
             FILE_LOG(logDEBUG) << "=== ALL END";
@@ -284,9 +249,7 @@ matrix_controller::explore_multicore()
         }
     }
 
-    int nnodes = dynamic_cast<ivmthread*>(bbb[id])->ivmbb->count_decomposed;
-
-    pbb->stats.totDecomposed+=nnodes;
+    pbb->stats.totDecomposed += dynamic_cast<ivmthread*>(bbb[id])->ivmbb->count_decomposed;
 
     allEnd.store(true);
     stop(id);
@@ -316,8 +279,6 @@ bool
 matrix_controller::next()
 {
     resetExplorationState();
-    // foundNew.store(0);
-
 	FILE_LOG(logDEBUG) << "start next " << end_counter;
 
     pthread_t threads[100];

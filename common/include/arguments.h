@@ -49,6 +49,7 @@ public:
     static char problem[50];
     static char inst_name[50];
     static char inifile[50];
+    static char work_directory[50];
 
     static char logfile[50];
     static int logLevel;

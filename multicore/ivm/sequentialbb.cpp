@@ -13,6 +13,7 @@ sequentialbb::sequentialbb(pbab *_pbb, int _size)
 
     count_iters=0;
     count_decomposed=0;
+    count_lbs=0;
 }
 
 sequentialbb::~sequentialbb()

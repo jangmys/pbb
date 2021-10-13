@@ -7,6 +7,7 @@
 
 //initialization files
 char arguments::inifile[50] = "./bbconfig.ini";
+char arguments::work_directory[50] = "../../bbworks/";
 
 //instance / problem
 // int arguments::instancev;
@@ -194,7 +195,6 @@ arguments::parse_arguments(int argc, char ** argv)
         switch (c) {
             case 'f': {
                 strcpy(inifile, argv[optind]);
-                std::cout<<"inifile:\t"<<inifile<<std::endl;
                 readIniFile();
                 break;
             }

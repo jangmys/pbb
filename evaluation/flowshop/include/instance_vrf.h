@@ -16,7 +16,7 @@ struct instance_vrf : public instance_abstract {
     void
     generate_instance(const char * file, std::ostream& stream);
 
-    static int
+    int
     get_initial_ub_from_file(const char * inst_name, int init_mode);
 };
 

@@ -29,8 +29,9 @@ public:
 
     ivm* IVM;
 
-    int count_iters;
-    int count_decomposed;
+    long long int count_iters;
+    long long int count_decomposed;
+    long long int count_lbs;
 
     ivm_bound<int>* bd;
 protected:

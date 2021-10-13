@@ -1,12 +1,33 @@
-# Multi-core B&B for Permutation Flow-shop Scheduling Problem (PFSP)
+# Parallel B&B for Permutation Flow-shop Scheduling Problem (PFSP)
 
-### Quick Start
+The following targets can be build separately.
+
+- multi-core PBB (Pthreads)
+- GPU PBB (Cuda)
+- distributed/no GPU (MPI+Pthreads)
+- distributed/GPU (MPI+Pthreads+Cuda)
 
 #### Compilation
 1. `mkdir build`
 2. `cd build`
-3. `cmake ..`
+3. `cmake <options> ..` where <options> are
+    - `-DMPI=true`
+    - `-DGPU=true`
 4. `make`
+
+## 1) multi-core PBB
+From the build/ folder run ...
+
+[link to multicore README.md]
+
+## 2) GPU PBB
+
+## 3) Distributed
+mpirun -np 4 ./distributed/dbb -z p=fsp,i=ta20
+
+### Quick Start
+
+
 _______________
 
 #### Solving PFSP instances with PBB@Multi-multicore

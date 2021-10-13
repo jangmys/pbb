@@ -13,7 +13,7 @@ set(CMAKE_VERBOSE_MAKEFILE ON)
 
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
-set(CMAKE_CXX_FLAGS "-Wall -Wno-unused-function -Wunused-variable -O2")
+set(CMAKE_CXX_FLAGS "-Wall -Wno-unused-function -Wnounused-variable -O2")
 
 ######################################################################################
 ### 3) Include CMake files
@@ -30,3 +30,16 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Target.cmake)
 
 add_subdirectory(evaluation)
 add_subdirectory(multicore)
+add_subdirectory(heuristics)
+
+if(GPU)
+    message(STATUS "build GPU")
+    add_definitions(-DUSE_GPU)
+    add_subdirectory(gpu)
+endif()
+
+if(MPI)
+    message(STATUS "build distributed")
+    add_definitions(-DWITH_MPI)
+    add_subdirectory(distributed)
+endif()
