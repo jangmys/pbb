@@ -42,10 +42,6 @@ void fastNEH::runNEH(std::vector<int>& perm, int &cost){
     int len=2;
     for(int k=0;k<nbJob-2;k++){
 		m->bestInsert(perm.data(), len, permOut[k], cost);
-		// for(int j=0;j<len;j++){
-	    //     std::cout<<perm[j]<<" ";
-	    // }
-		// std::cout<<cost<<"\n";
     }
 
     delete[]permOut;

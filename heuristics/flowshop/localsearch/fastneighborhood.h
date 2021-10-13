@@ -2,7 +2,7 @@
 #define FSPNHOODS_H_
 
 #include "libbounds.h"
-#include "fastinsertremove.h"
+#include "../neh/fastinsertremove.h"
 
 #include <memory>
 

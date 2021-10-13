@@ -19,7 +19,8 @@ public:
     std::unique_ptr<pruning> prune;
     std::unique_ptr<branching> branch;
     std::unique_ptr<subproblem> bestSolution;
-    std::vector<std::unique_ptr<bound_abstract<int>>> lb;
+
+    std::unique_ptr<bound_fsp_weak_idle> eval;
 
     int run(const int maxBeamWidth, subproblem* p);
     bool step(int beamWidth,int localBest);

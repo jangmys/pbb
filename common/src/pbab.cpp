@@ -6,11 +6,13 @@
 #include <memory>
 
 #include "libbounds.h"
-#include "../include/subproblem.h"
-#include "../include/solution.h"
-#include "../include/ttime.h"
-#include "../include/pbab.h"
-#include "../include/log.h"
+#include "subproblem.h"
+#include "solution.h"
+#include "ttime.h"
+#include "pbab.h"
+#include "log.h"
+
+#include "libheuristic.h"
 
 pbab::pbab() : stats()
 {
@@ -75,11 +77,22 @@ void pbab::set_initial_solution()
                     sltn->cost = (static_cast<instance_vrf*>(instance))->get_initial_ub_from_file(arguments::inst_name,arguments::init_mode);
                     break;
                 }
-                break;
             }
+            break;
         }
         case 1:
         {
+            // Beam bs(instance);
+            //
+            // subproblem *p = new subproblem(instance->size);
+            //
+            // bs.run(1<<14,p);
+            //
+            // for(int i=0; i<instance->size; i++){
+            //     sltn->perm[i] = bs.bestSolution->schedule[i];
+            // }
+            // sltn->cost = p->ub;
+
             break;
         }
         case 2:

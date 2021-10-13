@@ -58,10 +58,12 @@ endif()
 
 # message(STATUS ${PROJECT_SOURCE_DIR})
 
+
 target_include_directories(dbb PUBLIC ${PARENT_DIR}/evaluation)
 target_include_directories(dbb PUBLIC ${PARENT_DIR}/common/include)
 target_include_directories(dbb PUBLIC ${PARENT_DIR}/common/src)
 
+target_include_directories(dbb PUBLIC ${PARENT_DIR}/heuristics)
 target_include_directories(dbb PUBLIC ${PARENT_DIR}/multicore/operators)
 target_include_directories(dbb PUBLIC ${PARENT_DIR}/multicore/base)
 target_include_directories(dbb PUBLIC ${PARENT_DIR}/multicore/ivm)

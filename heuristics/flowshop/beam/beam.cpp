@@ -5,10 +5,13 @@ Beam::Beam(instance_abstract* inst)
 {
     tr = std::make_unique<Tree>(inst,inst->size);
     tr->strategy = DEQUE;
+    // tr->strategy = PRIOQ;
 
     prune = OperatorFactory::createPruning(arguments::findAll);
     branch= OperatorFactory::createBranching(arguments::branchingMode,inst->size,99999);
-    lb.push_back(std::move(OperatorFactory::createBound(inst,0)));
+
+    eval = std::make_unique<bound_fsp_weak_idle>( );
+    eval->init(inst);
 
     bestSolution = std::make_unique<subproblem>(inst->size);
 }
@@ -20,7 +23,6 @@ Beam::run(const int maxBeamWidth, subproblem* p)
 
     prune->local_best = 999999;
 
-
     int beamWidth = 1;
     do{
         tr->setRoot(p->schedule,p->limit1,p->limit2);
@@ -29,6 +31,8 @@ Beam::run(const int maxBeamWidth, subproblem* p)
 
         beamWidth *=2;
     }while(beamWidth < maxBeamWidth);
+
+    *p = *bestSolution;
  }
 
 bool
@@ -43,14 +47,13 @@ Beam::step(int beamWidth,int localBest)
         n = tr->take();
         if(!(*prune)(n)){
             if (n->leaf()) {
-                prune->local_best = n->cost;
-
+                n->ub = n->cost;
+                prune->local_best = n->ub;
                 *bestSolution = *n;
-                // bestSolution->update(n->schedule.data(),n->cost);
 
-                std::cout<<prune->local_best<<" === > \n";
+                std::cout<<"new best "<<*bestSolution<<" "<<prune->local_best<<"\n";
             }else{
-                //expand
+                //expand (compute lower bounds, priorities and generate surviving successors)
                 std::vector<subproblem*>ns;
                 ns = decompose(*n);
 
@@ -67,7 +70,7 @@ Beam::step(int beamWidth,int localBest)
         delete(n);
 	}
 
-    //sort slice (or make it pqueue...)
+    //sort slice (or make tr a pqueue insert directly with check on length...)
     std::sort(children.begin(),children.end(),
         [](subproblem* a,subproblem* b){
             return a->prio > b->prio;
@@ -97,21 +100,21 @@ Beam::decompose(subproblem& n)
 
     if (n.simple()) { //2 solutions ...
         tmp        = new subproblem(n, n.limit1 + 1, BEGIN_ORDER);
-        tmp->cost=lb[SIMPLE]->evalSolution(tmp->schedule.data());
+        tmp->cost=eval->evalSolution(tmp->schedule.data());
         children.push_back(tmp);
 
         tmp        = new subproblem(n, n.limit1+2 , BEGIN_ORDER);
-        tmp->cost=lb[SIMPLE]->evalSolution(tmp->schedule.data());
+        tmp->cost=eval->evalSolution(tmp->schedule.data());
         children.push_back(tmp);
     } else {
         std::vector<int> costFwd(n.size);
         std::vector<int> costBwd(n.size);
 
-        std::vector<int> prioFwd(n.size);
-        std::vector<int> prioBwd(n.size);
+        std::vector<float> prioFwd(n.size);
+        std::vector<float> prioBwd(n.size);
 
         //evaluate lower bounds and priority
-        lb[SIMPLE]->boundChildren(n.schedule.data(),n.limit1,n.limit2,costFwd.data(),costBwd.data(),prioFwd.data(),prioBwd.data());
+        eval->boundChildren(n.schedule.data(),n.limit1,n.limit2, costFwd.data(),costBwd.data(), prioFwd.data(),prioBwd.data());
         //branching heuristic
         int dir = (*branch)(costFwd.data(),costBwd.data(),n.depth);
 
@@ -136,7 +139,7 @@ Beam::decompose(subproblem& n)
                     tmp = new subproblem(n, j, END_ORDER);
 
                     tmp->cost=costBwd[job];
-                    tmp->prio=prioFwd[job];
+                    tmp->prio=prioBwd[job];
 
                     children.push_back(tmp);
                 }

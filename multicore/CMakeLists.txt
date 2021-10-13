@@ -30,9 +30,11 @@ target_include_directories(bb PUBLIC ${PARENT_DIR}/evaluation)
 target_include_directories(bb PUBLIC ${PARENT_DIR}/common/include)
 target_include_directories(bb PUBLIC ${PARENT_DIR}/common/src)
 
-target_include_directories(bb PUBLIC ${PROJECT_SOURCE_DIR}/base/)
-target_include_directories(bb PUBLIC ${PROJECT_SOURCE_DIR}/ivm/)
-target_include_directories(bb PUBLIC ${PROJECT_SOURCE_DIR}/operators/)
+target_include_directories(bb PUBLIC ${PROJECT_SOURCE_DIR}/base)
+target_include_directories(bb PUBLIC ${PROJECT_SOURCE_DIR}/ivm)
+target_include_directories(bb PUBLIC ${PROJECT_SOURCE_DIR}/operators)
+
+target_include_directories(bb PUBLIC ${PARENT_DIR}/heuristics)
 # target_include_directories(bb PUBLIC ${PROJECT_SOURCE_DIR}/include/)
 # target_include_directories(bb PUBLIC ${PROJECT_SOURCE_DIR}/src/)
 

@@ -17,9 +17,10 @@ int main(int argc, char* argv[])
         std::cout<<"Usage: -z p=fsp,i=ta20 <N> with N=...\n";
 
         std::cout<<"... 0 : NEH\n";
-        std::cout<<"... 1 : NEH\n";
-        std::cout<<"... 2 : NEH\n";
-        std::cout<<"... 3 : NEH\n";
+        std::cout<<"... 1 : ILS\n";
+        std::cout<<"... 2 : LS\n";
+        std::cout<<"... 3 : BEAM\n";
+        std::cout<<"... 4 : DFS-LS\n";
     }
 
     arguments::parse_arguments(argc, argv);
@@ -60,7 +61,7 @@ int main(int argc, char* argv[])
             fastNEH neh(instance);
 
             neh.initialSort(p->schedule);
-            neh.runNEH(p->schedule,p->cost);
+            neh.runNEH(p->schedule,p->ub);
 
             std::cout<<" = NEH :\t";
             break;
@@ -69,7 +70,7 @@ int main(int argc, char* argv[])
         {
             IG ils(instance);
 
-            p->cost = ils.runIG(p);
+            p->ub = ils.runIG(p);
 
             std::cout<<" = ILS :\t";
             break;
@@ -78,7 +79,7 @@ int main(int argc, char* argv[])
         {
             LocalSearch ls(instance);
 
-            p->cost = ls(p->schedule,-1,p->size);
+            p->ub = ls(p->schedule,-1,p->size);
 
             std::cout<<" = LS :\t";
             break;
@@ -88,7 +89,7 @@ int main(int argc, char* argv[])
             Beam bs(instance);
 
             // subproblem *q = new subproblem(instance->size);
-            bs.run(1<<12,p);
+            bs.run(1<<14,p);
             *p = *(bs.bestSolution);
 
             std::cout<<" = BEAM :\t";
@@ -103,6 +104,21 @@ int main(int argc, char* argv[])
             std::cout<<" = DFLS :\t";
             break;
         }
+        case 5:
+        {
+            Beam bs(instance);
+            Treeheuristic th(instance);
+
+            bs.run(1<<14,p);
+            *p = *(bs.bestSolution);
+
+            th.run(p,p->ub);
+
+            std::cout<<" = BS + DFLS :\t";
+
+            break;
+        }
+
     }
 
     for(auto &e : p->schedule)

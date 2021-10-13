@@ -7,9 +7,9 @@
 #include "subproblem.h"
 
 
-#include "fastneighborhood.h"
-#include "fastNEH.h"
-#include "ls.h"
+#include "../neh/fastNEH.h"
+#include "../localsearch/fastneighborhood.h"
+#include "../localsearch/ls.h"
 
 // #include "crossover.h"
 

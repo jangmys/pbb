@@ -51,7 +51,7 @@ struct ub_compare {
         //depth first
         if(p1->depth < p2->depth)return true;
         if(p1->depth > p2->depth)return false;
-        //higher priority
+        //smaller (weighted) idle time
         if(p1->prio > p2->prio)return true;
         if(p1->prio < p2->prio)return false;
         //smaller bound first

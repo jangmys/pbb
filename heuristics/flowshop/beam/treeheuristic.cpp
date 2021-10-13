@@ -8,21 +8,25 @@ Treeheuristic::Treeheuristic(instance_abstract* inst)
 
     prune = OperatorFactory::createPruning(arguments::findAll);
     branch= OperatorFactory::createBranching(arguments::branchingMode,inst->size,99999);
-    lb.push_back(std::move(OperatorFactory::createBound(inst,0)));
+
+    eval = std::make_unique<bound_fsp_weak_idle>( );
+    eval->init(inst);
 
     bestSolution = std::make_unique<subproblem>(inst->size);
 
     ls = std::make_unique<LocalSearch>(inst);
     ig = std::make_unique<IG>(inst);
+    beam = std::make_unique<Beam>(inst);
+
 }
 
 int
 Treeheuristic::run(subproblem *s, int _ub)
 {
-    ig->shuffle(s->schedule.data(), s->size);
+    // ig->shuffle(s->schedule.data(), s->size);
 
     subproblem *bsol=new subproblem(*s);
-    bsol->ub = lb[SIMPLE]->evalSolution(bsol->schedule.data());
+    bsol->ub = eval->evalSolution(bsol->schedule.data());
 
 	prune->local_best=_ub;//ub used for pruning
     if(prune->local_best == 0)
@@ -75,7 +79,7 @@ Treeheuristic::exploreNeighborhood(subproblem* s,long long int cutoff)
     tr->clearPool();
     tr->setRoot(s->schedule, s->limit1, s->limit2);
     (tr->top())->cost = 0;
-    (tr->top())->ub = lb[SIMPLE]->evalSolution(tr->top()->schedule.data());
+    (tr->top())->ub = eval->evalSolution(tr->top()->schedule.data());
 
     bool foundSolution = false;
 
@@ -105,6 +109,8 @@ Treeheuristic::exploreNeighborhood(subproblem* s,long long int cutoff)
                         prune->local_best = tr->top()->ub;
                         *bestSolution = *(tr->top());
                         foundSolution = true;
+
+                        std::cout<<"new th  "<<*bestSolution<<"\n";
                     }
                 }
             }
@@ -136,23 +142,25 @@ Treeheuristic::decompose(subproblem& n)
 
     if (n.simple()) { //2 solutions ...
         tmp        = new subproblem(n, n.limit1 + 1, BEGIN_ORDER);
-        tmp->cost=lb[SIMPLE]->evalSolution(tmp->schedule.data());
+        tmp->cost=eval->evalSolution(tmp->schedule.data());
         children.push_back(tmp);
 
         tmp        = new subproblem(n, n.limit1+2 , BEGIN_ORDER);
-        tmp->cost=lb[SIMPLE]->evalSolution(tmp->schedule.data());
+        tmp->cost=eval->evalSolution(tmp->schedule.data());
         children.push_back(tmp);
     } else {
         std::vector<int> costFwd(n.size);
         std::vector<int> costBwd(n.size);
 
-        std::vector<int> prioFwd(n.size);
-        std::vector<int> prioBwd(n.size);
+        std::vector<float> prioFwd(n.size);
+        std::vector<float> prioBwd(n.size);
 
         //evaluate lower bounds and priority
-        lb[SIMPLE]->boundChildren(n.schedule.data(),n.limit1,n.limit2,costFwd.data(),costBwd.data(),prioFwd.data(),prioBwd.data());
+        eval->boundChildren(n.schedule.data(),n.limit1,n.limit2, costFwd.data(),costBwd.data(), prioFwd.data(),prioBwd.data());
         //branching heuristic
-        int dir = (*branch)(costFwd.data(),costBwd.data(),n.depth);
+        int dir = (*branch)(
+            costFwd.data(),costBwd.data(),n.depth
+        );
 
         //generate children nodes
         if(dir==BEGIN_ORDER){
@@ -196,7 +204,7 @@ Treeheuristic::insert(std::vector<subproblem *>&ns)
     //children inserted with push_back [ 1 2 3 ... ]
     //for left->right exploration, insert (push) in reverse order
     for (auto i = ns.rbegin(); i != ns.rend(); i++) {
-        (*i)->ub = lb[SIMPLE]->evalSolution((*i)->schedule.data());
+        (*i)->ub = eval->evalSolution((*i)->schedule.data());
         tr->push(std::move(*i));
     }
 }

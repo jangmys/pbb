@@ -10,6 +10,7 @@
 #include "flowshop/include/instance_filename.h"
 
 #include "flowshop/include/bound_fsp_weak.h"
+#include "flowshop/include/bound_fsp_weak_idle.h"
 #include "flowshop/include/bound_fsp_strong.h"
 
 #endif // ifndef LIBBOUNDS_H

@@ -18,6 +18,16 @@ set(CMAKE_VERBOSE_MAKEFILE ON)
 
 get_filename_component(PARENT_DIR ${CMAKE_CURRENT_SOURCE_DIR} DIRECTORY)
 
+# if(TARGET dbb)
+#     FILE(GLOB CppSources beam/*.cpp ils/*.cpp localsearch/*.cpp neh/*.cpp)
+#     target_sources(dbb PUBLIC ${CppSources})
+# elseif(TARGET bb)
+#     FILE(GLOB CppSources beam/*.cpp ils/*.cpp localsearch/*.cpp neh/*.cpp)
+#     target_sources(bb PUBLIC ${CppSources})
+#
+#     target_include_directories(bb PUBLIC ./flowshop/beam)
+#     target_include_directories(bb PUBLIC ./)
+# else()
 file(GLOB MyCppSources
         ${PROJECT_SOURCE_DIR}/*.cpp
         ${PROJECT_SOURCE_DIR}/flowshop/neh/*.cpp
@@ -40,7 +50,6 @@ target_include_directories(fspHeuristic PUBLIC ${PROJECT_SOURCE_DIR}/flowshop/lo
 target_include_directories(fspHeuristic PUBLIC ${PROJECT_SOURCE_DIR}/flowshop/beam)
 
 target_link_libraries(fspHeuristic ${PARENT_DIR}/build/evaluation/libbounds.a)
-
 
 add_executable(testHeuristic test/testHeuristic.cpp)
 
