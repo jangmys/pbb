@@ -59,6 +59,7 @@ else()
 
     add_subdirectory(${PARENT_DIR}/common/src ./build_common_gpu)
     target_include_directories(gpubb PUBLIC ${PARENT_DIR}/evaluation)
+    target_include_directories(gpubb PUBLIC ${PARENT_DIR}/heuristics)
     target_include_directories(gpubb PUBLIC ${PARENT_DIR}/common/include)
     target_include_directories(gpubb PUBLIC ${PROJECT_SOURCE_DIR}/include)
     target_include_directories(gpubb PUBLIC ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
