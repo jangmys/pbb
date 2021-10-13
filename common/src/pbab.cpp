@@ -6,13 +6,14 @@
 #include <memory>
 
 #include "libbounds.h"
+#include "libheuristic.h"
+
 #include "subproblem.h"
 #include "solution.h"
 #include "ttime.h"
 #include "pbab.h"
 #include "log.h"
 
-#include "libheuristic.h"
 
 pbab::pbab() : stats()
 {
