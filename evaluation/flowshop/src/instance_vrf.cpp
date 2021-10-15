@@ -114,4 +114,6 @@ instance_vrf::get_initial_ub_from_file(const char* inst_name,int init_mode)
     }
 
     infile.close();
+
+    return valeur;
 }

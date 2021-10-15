@@ -34,11 +34,6 @@ public:
 
     std::vector<subproblem*> decompose(subproblem& n);
     void insert(std::vector<subproblem *>&ns);
-
-    // int run(const int maxBeamWidth, subproblem* p);
-    // bool step(int beamWidth,int localBest);
-
-    // std::vector<subproblem*> decompose(subproblem& n);
 };
 
 #endif

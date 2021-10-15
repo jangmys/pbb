@@ -8,38 +8,37 @@ project("PBB"
 LANGUAGES C CXX CUDA)
 
 set(CMAKE_CXX_STANDARD 14)
-
-set(CMAKE_VERBOSE_MAKEFILE ON)
-
-set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
-set(CMAKE_CXX_FLAGS "-Wall -Wno-unused-function -Wnounused-variable -O2")
+set(CMAKE_CXX_FLAGS "-Wall -Wno-unused-function -Wno-unused-variable -O2")
 
 ######################################################################################
 ### 3) Include CMake files
 ######################################################################################
 
 ## Configuration file for building type and flags
-include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Config.cmake)
+#include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Config.cmake)
 
 ## Macro file
-include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Macro.cmake)
+#include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Macro.cmake)
 
 ## Custom Targets file
-include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Target.cmake)
+#include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Target.cmake)
 
+#add lower bounds library
 add_subdirectory(evaluation)
+#add multicore IVM-based BB
 add_subdirectory(multicore)
+#add heuristics library
 add_subdirectory(heuristics)
 
+#optional : add GPUBB (requires CUDA)
 if(GPU)
-    message(STATUS "build GPU")
     add_definitions(-DUSE_GPU)
     add_subdirectory(gpu)
 endif()
 
+#optional : add distributed BB (requires MPI and GMP)
 if(MPI)
-    message(STATUS "build distributed")
     add_definitions(-DWITH_MPI)
     add_subdirectory(distributed)
 endif()
