@@ -11,20 +11,16 @@
 #include "operator_factory.h"
 
 
-Tree::Tree(instance_abstract* inst, int _size)
+Tree::Tree(instance_abstract* inst, int _size) : psize(_size)
 {
-    psize = _size;
     //data structure used for pool of subproblems (default)
     strategy = DEQUE;
-
-    FILE_LOG(logINFO)<<"Tree constructed";
 }
 
 Tree::~Tree()
 {
 
 }
-
 
 void
 Tree::setRoot(std::vector<int> perm, int l1, int l2)
@@ -39,8 +35,6 @@ Tree::setRoot(std::vector<int> perm, int l1, int l2)
     root->limit2=l2;
 
     push(root);
-    // FILE_LOG(logINFO)<<size()<<" nodes:\t"<<*top();
-
 }
 
 //=============================================================================================

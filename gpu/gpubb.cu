@@ -524,11 +524,8 @@ gpubb::boundLeaves(bool reached, int& best)
 
     int flags[nbIVM];
 
-    cudaMemcpy(flags, flagLeaf, nbIVM * sizeof(int), cudaMemcpyDeviceToHost);
-
-    // cudaMemcpy(line_h, line_d, nbIVM * sizeof(int), cudaMemcpyDeviceToHost);
-    cudaMemcpy(schedule_h, schedule_d, nbIVM * size * sizeof(int), cudaMemcpyDeviceToHost);
-    // cudaMemcpy(pos_h, pos_d, nbIVM * size * sizeof(int), cudaMemcpyDeviceToHost);
+    gpuErrchk( cudaMemcpy(flags, flagLeaf, nbIVM * sizeof(int), cudaMemcpyDeviceToHost) );
+    gpuErrchk( cudaMemcpy(schedule_h, schedule_d, nbIVM * size * sizeof(int), cudaMemcpyDeviceToHost) );
 
     bool newUB = false;
 
@@ -536,7 +533,7 @@ gpubb::boundLeaves(bool reached, int& best)
         if (flags[k] == 1) {
             int cost=bound->evalSolution(schedule_h+k*size);
             pbb->stats.leaves++;
-            FILE_LOG(logINFO) << "Evaluated Leaf\t" << cost << " vs. Best "<<best;
+            // FILE_LOG(logINFO) << "Evaluated Leaf\t" << cost << " vs. Best "<<best;
 
             bool update;
             if(arguments::findAll)update=(cost<=best);
@@ -547,13 +544,9 @@ gpubb::boundLeaves(bool reached, int& best)
                 pbb->sltn->update(schedule_h+k*size,cost);
 
 				localFoundNew = true;
-
                 pbb->foundAtLeastOneSolution=true;
 
-				// std::cout << "Worker found " << cost << "\n";
-                //print new best solution
-                FILE_LOG(logINFO) << "Worker found " << cost;
-                FILE_LOG(logINFO) << *(pbb->sltn);
+                FILE_LOG(logINFO) << "GPUBB found " << *(pbb->sltn);
 
                 newUB = true;
             }
