@@ -3,7 +3,7 @@
 #include "solution.h"
 
 #include "libbounds.h"
-#include "../libheuristic.h"
+#include "libheuristic.h"
 
 #include <vector>
 #include <algorithm>
