@@ -25,9 +25,7 @@ message(STATUS ${PARENT_DIR})
 
 add_executable(dbb src/main.cpp)
 add_subdirectory(src)
-# add_subdirectory(operators)
-# add_subdirectory(ivm)
-# add_subdirectory(src)
+
 add_subdirectory(${PARENT_DIR}/common/src ./build_common)
 add_subdirectory(${PARENT_DIR}/multicore/base ./build_mcbase)
 add_subdirectory(${PARENT_DIR}/multicore/ivm ./build_mcivm)
@@ -44,22 +42,17 @@ if(GPU)
     target_include_directories(dbb PUBLIC ${PARENT_DIR}/gpu/include)
 
     message(STATUS "HELLO Link")
-    message(STATUS "CMAKE_CUDA " ${CMAKE_CUDA_LIBRARIES})
-    message(STATUS "CUDA_DRIVER " ${CUDA_DRIVER_LIBRARY})
-    message(STATUS "CUDART " ${CUDA_CUDART_LIBRARY})
+    message(STATUS "dbb CUDA_LIBS " ${CMAKE_CUDA_LIBRARIES})
+    message(STATUS "dbb CUDA_DRIVER " ${CUDA_DRIVER_LIBRARY})
+    message(STATUS "dbb CUDART " ${CUDA_CUDART_LIBRARY})
+
+    set_target_properties(dbb PROPERTIES CUDA_ARCHITECTURES "35;50;72")
+    set_property(TARGET dbb PROPERTY CUDA_ARCHITECTURES OFF)
 
     target_link_libraries(dbb PUBLIC ${CMAKE_CUDA_LIBRARIES})
-
     target_link_libraries(dbb PUBLIC ${CUDA_DRIVER_LIBRARY})
     target_link_libraries(dbb PUBLIC ${CUDA_CUDART_LIBRARY})
 endif()
-
-    # add_subdirectory(${PARENT_DIR}/common/src ./build_common)
-    # add_subdirectory("${CMAKE_SOURCE_DIR}/common/libplugin")
-# endif()
-
-# message(STATUS ${PROJECT_SOURCE_DIR})
-
 
 target_include_directories(dbb PUBLIC ${PARENT_DIR}/evaluation)
 target_include_directories(dbb PUBLIC ${PARENT_DIR}/common/include)
