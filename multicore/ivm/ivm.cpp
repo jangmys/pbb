@@ -28,6 +28,9 @@ ivm::~ivm()
     free(dirVect);
 }
 
+/**
+* \brief TODO
+*/
 void ivm::clearInterval()
 {
     memset(jobMat, 0, size*size*sizeof(int));
@@ -36,10 +39,11 @@ void ivm::clearInterval()
     posVect[0]=size;
 }
 
+/**
+* \brief getter for an interval in factoradic form
+*/
 void ivm::getInterval(int* pos, int* end)
 {
-    // displayVector(posVect);
-    // displayVector(endVect);
     memcpy(pos,posVect, size*sizeof(int));
     memcpy(end,endVect, size*sizeof(int));
 }

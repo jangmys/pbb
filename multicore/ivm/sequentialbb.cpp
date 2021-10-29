@@ -5,7 +5,6 @@
 
 sequentialbb::sequentialbb(pbab *_pbb, int _size)
 {
-    // pbb=_pbb;
     size=_size;
 
     IVM = new ivm(size);

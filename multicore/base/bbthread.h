@@ -13,9 +13,6 @@ class bbthread
 public:
     bbthread(pbab * _pbb) : pbb(_pbb),receivedWork(false),got_work(false)
     {
-        // FILE_LOG(logDEBUG) << " === bbthd constr0";
-        // pbb=_pbb;
-
         pthread_mutexattr_t attr;
         pthread_mutexattr_init(&attr);
         pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_ERRORCHECK);
@@ -67,14 +64,11 @@ public:
     void setWorkState(const bool _b)
     {
         has_work.store(_b);
-        // receivedWork = _b;
     }
     bool getWorkState()
     {
         return has_work.load();
-        // return receivedWork;
     }
-
 
     std::atomic<bool> has_work;
 protected:
