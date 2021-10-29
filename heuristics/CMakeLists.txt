@@ -19,4 +19,4 @@ target_include_directories(fspHeuristic PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/flows
 target_link_libraries(fspHeuristic ${PARENT_DIR}/build/evaluation/libbounds.a)
 
 
-add_subdirectory(test)
+# add_subdirectory(test)
