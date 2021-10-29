@@ -16,7 +16,7 @@ target_include_directories(fspHeuristic PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/flows
 target_include_directories(fspHeuristic PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/flowshop/localsearch)
 target_include_directories(fspHeuristic PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/flowshop/beam)
 
-target_link_libraries(fspHeuristic ${PARENT_DIR}/build/evaluation/libbounds.a)
+target_link_libraries(fspHeuristic PUBLIC ${PARENT_DIR}/build/evaluation/libbounds.a)
 
 
 # add_subdirectory(test)
