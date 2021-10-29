@@ -2,6 +2,7 @@
 #include "pbab.h"
 #include "solution.h"
 #include "log.h"
+#include "ttime.h"
 
 #include "libbounds.h"
 #include "matrix_controller.h"
@@ -29,8 +30,7 @@ main(int argc, char ** argv)
 	if(arguments::nbivms_mc==1)
 		choice=ivm_seqbb;
 
-	struct timespec tstart, tend;
-	clock_gettime(CLOCK_MONOTONIC, &tstart);
+    pbb->ttm->on(pbb->ttm->wall);
 
     switch(choice){
         case ivm_seqbb:
@@ -60,12 +60,10 @@ main(int argc, char ** argv)
 			break;
 		}
     }
-	clock_gettime(CLOCK_MONOTONIC, &tend);
-
 	pbb->printStats();
 
-    // clock_gettime(CLOCK_MONOTONIC, &tend);
-    printf("\nWalltime :\t %2.8f\n", (tend.tv_sec - tstart.tv_sec) + (tend.tv_nsec - tstart.tv_nsec) / 1e9f);
+    pbb->ttm->off(pbb->ttm->wall);
+    pbb->ttm->printElapsed(pbb->ttm->wall,"Walltime");
 
     return EXIT_SUCCESS;
 } // main
