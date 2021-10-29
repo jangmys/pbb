@@ -6,6 +6,7 @@
 
 #include <memory>
 
+/// \brief neighborhoods based on the fast insert-remove operations
 template<typename T>
 class fspnhood{
 public:

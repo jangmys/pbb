@@ -1,10 +1,4 @@
-#include "fastinsertremove.h"
-
-//fast job insertion and removal
-//
-//cf. Deroussi,Gourgand,Norre "New effective neighborhoods for the permutation flow shop problem", 2006
 #include <iostream>
-
 #include <float.h>
 #include <limits.h>
 #include <random>
@@ -264,105 +258,6 @@ int fastInsertRemove<T>::bestRemove(int *perm,int &len,int& remjob, int &cmax)
 }
 
 
-
-
-
-
-
-template<typename T>
-void fastInsertRemove<T>::computeInserBlock(int *perm, int len, int * block, int bl)
-{
-    // printf("blocksize: %d\n",bl);
-    std::vector<int> tmp(nbMachines, 0);
-    int job;
-
-    //  #insert before (position 1)
-    for(int b=0;b<bl;b++){
-        job=block[b];
-
-        tmp[0]+=PTM[0][job];
-        for(int k=1;k<nbMachines;k++){
-            tmp[k]=std::max(tmp[k-1],tmp[k])+PTM[k][job];
-        }
-    }
-    for(int k=0;k<nbMachines;k++){
-        inser[k][0]=tmp[k];
-    }
-    //============================
-
-    //  #insert 2nd pos to last
-    for(int j=1;j<=len;j++){
-        for(int k=0;k<nbMachines;k++)tmp[k]=0;
-
-
-        for(int k=0;k<nbMachines;k++){
-            tmp[k]=head[k][j-1];
-        }
-
-        for(int b=0;b<bl;b++){
-            job=block[b];
-            tmp[0]+=PTM[0][job];
-            for(int k=1;k<nbMachines;k++){
-                tmp[k]=std::max(tmp[k-1],tmp[k])+PTM[k][job];
-            }
-        }
-
-        for(int k=0;k<nbMachines;k++){
-            inser[k][j]=tmp[k];
-        }
-    }
-}
-
-//get len+1 makespans obtained by inserting "job" into positions 0,1,...,len of partial permuation of length len
-//returns cmax before job insertion
-template<typename T>
-int fastInsertRemove<T>::insertBlockMakespans(int* perm, int len, int* block, int bl, int* makespans)
-{
-    computeHeads(perm, len);
-    computeTails(perm, len);
-    computeInserBlock(perm, len, block, bl);
-
-    for(int i=0;i<len;i++){
-        makespans[i]=0;
-        for(int j=0;j<nbMachines;j++){
-            int val=inser[j][i]+tail[j][i];
-            makespans[i]=std::max(makespans[i],val);
-        }
-    }
-    for(int j=0;j<nbMachines;j++){
-        makespans[len]=std::max(makespans[len],inser[j][len]);
-    }
-
-    return head[nbMachines-1][len-1];//return makespan before insertion
-}
-
-
-
-
-//insert block of length bl at position pos in partial permutation of length len
-template<typename T>
-void fastInsertRemove<T>::blockInsert(int* perm, int &len, int pos, int*block, int bl)
-{
-    if(len>=nbJob){
-        for(int i=0;i<nbJob;i++)printf("%d ",perm[i]);
-        printf("\n");
-        printf("permutation full %d %d\n",len,nbJob);
-    }
-
-    int job;
-    for(int b=0;b<bl;b++)
-    {
-        job=block[b];
-        for(int p=len;p>pos+b;p--){
-            perm[p]=perm[p-1];
-        }
-        perm[pos+b]=job;
-        len++;
-    }
-}
-
-
-
 //insert in position which gives best cmax
 template<typename T>
 int fastInsertRemove<T>::bestInsert2(int *perm, int &len, int job, int &cmax)
@@ -392,35 +287,6 @@ int fastInsertRemove<T>::bestInsert2(int *perm, int &len, int job, int &cmax)
     return number;
 }
 
-//insert in position which gives best cmax
-template<typename T>
-int fastInsertRemove<T>::bestBlockInsert(int *perm, int len, int* block, int bl)
-{
-    //block can be inserted at len+1 positions
-    int *makespans=(int*)malloc((len+1)*sizeof(int));
-
-    insertBlockMakespans(perm, len, block, bl, makespans);
-
-    int minpos=-1;
-    int mini=INT_MAX;
-    for(int i=0;i<=len;i++){
-        if(tabupos->isTabu(i))continue;
-
-        if(makespans[i]<mini){
-            mini=makespans[i];
-            minpos=i;
-        }
-    }
-
-    if(minpos>=0){
-        blockInsert(perm, len, minpos, block, bl);
-    }
-
-    // cmax = mini;
-    free(makespans);
-
-    return mini;//return makespan
-}
 
 
 

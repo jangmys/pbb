@@ -7,7 +7,6 @@
 
 #include "libbounds.h"
 
-// #include "../../bounds/include/instance_abstract.h"
 
 struct tabulist
 {
@@ -59,12 +58,18 @@ struct tabulist
     };
 };
 
+///
+// \brief Fast insertion and fast removal (allows to know the best position for inserting a given job (indexed k ) in a partial permutation of k −1 jobs. More precisely, it allows to compute the k makespans obtained by inserting job k at the i^th position (1≤i≤k) in O(km) (as for the makespan calculation). Same for removal
+//
+// Taillard, E. (1990). Some efficient heuristic methods for the flow shop sequencing problem.
+// European Journal of Operational Research, 47, 67-74.
+//
+// Laurent Deroussi, Michel Gourgand, Sylvie Norre, New effective neighborhoods for the permutation flow shop problem, Research Report LIMOS/RR-06-09
 template<typename T>
 class fastInsertRemove{
 public:
     fastInsertRemove(instance_abstract* inst);
     ~fastInsertRemove();
-    // instance_abstract * instance;
 
     int nbJob;
     int nbMachines;
@@ -94,11 +99,6 @@ public:
 
     int bestInsert2(int *perm, int &len, int job, int &cmax);
     int bestRemove2(int *perm, int &len, int &remjob, int &cmax);
-
-    void computeInserBlock(int *perm, int len, int * block, int bl);
-    int insertBlockMakespans(int* perm, int len, int* block, int bl, int* makespans);
-    void blockInsert(int* perm, int &len, int pos, int*block, int bl);
-    int bestBlockInsert(int* perm, int len, int*block, int bl);
 };
 
 #endif

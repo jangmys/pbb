@@ -1,13 +1,11 @@
 #include "arguments.h"
 #include "subproblem.h"
-#include "solution.h"
 
 #include "libbounds.h"
 #include "libheuristic.h"
 
-#include <vector>
-#include <algorithm>
-
+#include <memory>
+#include <iostream>
 
 int main(int argc, char* argv[])
 {
@@ -26,22 +24,23 @@ int main(int argc, char* argv[])
     arguments::parse_arguments(argc, argv);
     std::cout<<" === solving "<<arguments::problem<<" - instance "<<arguments::inst_name<<std::endl;
 
-    instance_abstract *instance;
+    std::shared_ptr<instance_abstract> instance;
+
     switch (arguments::inst_name[0]) {//DIFFERENT INSTANCES...
         case 't': {
-            instance = new instance_taillard(arguments::inst_name);
+            instance = std::make_shared<instance_taillard>(arguments::inst_name);
             break;
         }
         case 'V': {
-            instance = new instance_vrf(arguments::inst_name);
+            instance = std::make_shared<instance_vrf>(arguments::inst_name);
             break;
         }
         case 'r': {
-            instance = new instance_random(arguments::inst_name);
+            instance = std::make_shared<instance_random>(arguments::inst_name);
             break;
         }
         case '.': {
-            instance = new instance_filename(arguments::inst_name);
+            instance = std::make_shared<instance_filename>(arguments::inst_name);
             break;
         }
     }
@@ -52,13 +51,13 @@ int main(int argc, char* argv[])
     // int cost;
     // std::vector<int>perm(instance->size);
     // std::generate(perm.begin(), perm.end(), [n = 0] () mutable { return n++; });
-    subproblem *p = new subproblem(instance->size);
+    std::shared_ptr<subproblem> p = std::make_shared<subproblem>(instance->size);
 
     switch(atoi(argv[3]))
     {
         case 0:
         {
-            fastNEH neh(instance);
+            fastNEH neh(instance.get());
 
             neh.initialSort(p->schedule);
             neh.runNEH(p->schedule,p->ub);
@@ -68,16 +67,16 @@ int main(int argc, char* argv[])
         }
         case 1:
         {
-            IG ils(instance);
+            IG ils(instance.get());
 
-            p->ub = ils.runIG(p);
+            p->ub = ils.runIG(p.get());
 
             std::cout<<" = ILS :\t";
             break;
         }
         case 2:
         {
-            LocalSearch ls(instance);
+            LocalSearch ls(instance.get());
 
             p->ub = ls(p->schedule,-1,p->size);
 
@@ -86,10 +85,10 @@ int main(int argc, char* argv[])
         }
         case 3:
         {
-            Beam bs(instance);
+            Beam bs(instance.get());
 
             // subproblem *q = new subproblem(instance->size);
-            bs.run(1<<14,p);
+            bs.run(1<<14,p.get());
             *p = *(bs.bestSolution);
 
             std::cout<<" = BEAM :\t";
@@ -97,28 +96,13 @@ int main(int argc, char* argv[])
         }
         case 4:
         {
-            Treeheuristic th(instance);
+            Treeheuristic th(instance.get());
 
-            th.run(p,0);
+            th.run(p.get(),0);
 
             std::cout<<" = DFLS :\t";
             break;
         }
-        case 5:
-        {
-            Beam bs(instance);
-            Treeheuristic th(instance);
-
-            bs.run(1<<14,p);
-            *p = *(bs.bestSolution);
-
-            th.run(p,p->ub);
-
-            std::cout<<" = BS + DFLS :\t";
-
-            break;
-        }
-
     }
 
     for(auto &e : p->schedule)

@@ -26,6 +26,8 @@ int fspnhood<T>::fastBREmove(int* perm, int pos)
     //remove job from position pos...
     int rjob=m->remove(perm,len,pos);
 
+
+
     int cmax1;
     m->tabupos->add(pos);//position
     m->bestInsert(perm, len, rjob, cmax1); //insert at best other position
@@ -46,7 +48,7 @@ int fspnhood<T>::fastBREmove(int* perm, int pos)
     return cmax1;
 }
 
-//Deroussi et al...
+
 template<typename T>
 int fspnhood<T>::fastBREmove(int* perm, int pos, int l1, int l2)
 {

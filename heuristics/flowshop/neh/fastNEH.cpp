@@ -2,8 +2,6 @@
 #include <iostream>
 #include <algorithm>
 
-// #include "../../common/include/misc.h"
-
 #include "fastNEH.h"
 #include "fastinsertremove.h"
 
@@ -34,7 +32,7 @@ void fastNEH::runNEH(std::vector<int>& perm, int &cost){
     int c2=m->computeHeads(perm.data(), 2);
     if(c1<c2)std::swap(perm[0],perm[1]);
 
-    int *permOut = new int[nbJob];
+    std::vector<int> permOut(nbJob);
     for(int k=0;k<nbJob-2;k++){
         permOut[k]=perm[2+k];
     }
@@ -43,6 +41,4 @@ void fastNEH::runNEH(std::vector<int>& perm, int &cost){
     for(int k=0;k<nbJob-2;k++){
 		m->bestInsert(perm.data(), len, permOut[k], cost);
     }
-
-    delete[]permOut;
 }
