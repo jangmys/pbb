@@ -45,13 +45,16 @@ int main(int argc, char* argv[])
         }
     }
 
-    std::cout<<argv[3]<<std::endl;
-
     //initial solution
     // int cost;
     // std::vector<int>perm(instance->size);
     // std::generate(perm.begin(), perm.end(), [n = 0] () mutable { return n++; });
     std::shared_ptr<subproblem> p = std::make_shared<subproblem>(instance->size);
+
+    std::cout<<argv[3]<<std::endl;
+
+    struct timespec t1,t2;
+    clock_gettime(CLOCK_MONOTONIC,&t1);
 
     switch(atoi(argv[3]))
     {
@@ -104,6 +107,11 @@ int main(int argc, char* argv[])
             break;
         }
     }
+
+    clock_gettime(CLOCK_MONOTONIC,&t2);
+    std::cout<<
+        (t2.tv_sec - t1.tv_sec) +
+        (t2.tv_nsec - t1.tv_nsec)/1e9 << std::endl ;
 
     for(auto &e : p->schedule)
     {

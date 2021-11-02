@@ -10,20 +10,20 @@
 template<typename T>
 class fspnhood{
 public:
-    fspnhood(instance_abstract* inst);
-    ~fspnhood();
+    fspnhood(instance_abstract* inst) :
+        m(std::make_unique<fastInsertRemove>(inst)),
+        N(m->nbJob)
+    {    };
 
-    std::unique_ptr<fastInsertRemove<T>> m;
-
+    std::unique_ptr<fastInsertRemove> m;
     int N;
 
-    int fastBREmove(int* perm, int pos);
-    int fastBREmove(int* perm, int pos, int l1, int l2);
+    int fastBREmove(std::vector<int>& perm, int pos);
+    int fastBREmove(std::vector<int>& perm, int pos, int l1, int l2);
 
-    int kImove(int* perm,int pos, int kmax);
-    int fastkImove(int* perm,int kmax);
-    int fastkImove(int* perm,int kmax,int l1,int l2);
-
+    int kImove(std::vector<int>& perm,int pos, int kmax);
+    int fastkImove(std::vector<int>& perm,int kmax);
+    int fastkImove(std::vector<int>& perm,int kmax,int l1,int l2);
 };
 
 

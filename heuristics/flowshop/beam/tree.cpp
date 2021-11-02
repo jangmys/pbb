@@ -16,10 +16,10 @@ Tree::Tree(instance_abstract* inst, int _size) : psize(_size)
     strategy = DEQUE;
 }
 
-Tree::~Tree()
-{
-
-}
+// Tree::~Tree()
+// {
+//
+// }
 
 void
 Tree::setRoot(std::vector<int> perm, int l1, int l2)

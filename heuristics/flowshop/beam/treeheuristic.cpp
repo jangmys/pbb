@@ -43,7 +43,11 @@ Treeheuristic::run(subproblem *s, int _ub)
         if(perturb){
             int l = helper::intRand(2, tmpsol->size/5);
             int r = helper::intRand(0, tmpsol->size - l);
-            ig->shuffle(tmpsol->schedule.data()+r, l);
+
+            std::random_device rd;
+            std::mt19937 g(rd());
+
+            std::shuffle(tmpsol->schedule.begin()+r, tmpsol->schedule.begin()+r+l, g);
 			perturb=false;
 		}
 

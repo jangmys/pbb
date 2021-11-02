@@ -69,7 +69,7 @@ private:
 
 public:
     Tree(instance_abstract* inst, int _size);
-    ~Tree();
+    // ~Tree();
 
     int strategy;
 

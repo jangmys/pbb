@@ -2,7 +2,7 @@
 
 LocalSearch::LocalSearch(instance_abstract* _inst)
 {
-    nhood=new fspnhood<int>(_inst);
+    nhood = std::make_unique<fspnhood<int>>(_inst);
 }
 
 
@@ -10,17 +10,19 @@ int LocalSearch::operator()(std::vector<int>& perm, int l1, int l2)
 {
     std::vector<int>tmp(perm);
 
-    int best=nhood->m->computeHeads(perm.data(), perm.size());
-
-    int c;
+    int best=nhood->m->computeHeads(perm, perm.size());
 
     // int depth = sqrt(nbJob);
     int depth = sqrt(l2-l1);
 
-    for(int k=0;k<100;k++){
+    std::cout<<"size:\t"<<tmp.size()<<std::endl;
+
+    for(int k=0;k<1000;k++){
         tmp = perm;
 
-        c=nhood->fastkImove(tmp.data(), depth,l1,l2);
+        int c=nhood->fastkImove(tmp, depth,l1,l2);
+
+        std::cout<<c<<std::endl;
 
         if(c<best){
             best=c;
@@ -42,7 +44,7 @@ LocalSearch::localSearchBRE(std::vector<int>& perm, int l1, int l2)
 
     std::vector<int>tmp(nbJob);
 
-    int best=nhood->m->computeHeads(perm.data(), nbJob);
+    int best=nhood->m->computeHeads(perm, nbJob);
 
     bool found;
     int c;
@@ -51,7 +53,7 @@ LocalSearch::localSearchBRE(std::vector<int>& perm, int l1, int l2)
         found=false;
         for(int i=l1+1;i<l2;i++){
             memcpy(tmp.data(), perm.data(), nbJob*sizeof(int));
-            c=nhood->fastBREmove(tmp.data(), i, l1, l2);
+            c=nhood->fastBREmove(tmp, i, l1, l2);
 
             if(c<best){
                 found=true;
@@ -76,7 +78,7 @@ LocalSearch::localSearchKI(std::vector<int>& perm,const int kmax)
 
     std::vector<int>tmp(nbJob);
 
-    int best=nhood->m->computeHeads(perm.data(), nbJob);
+    int best=nhood->m->computeHeads(perm, nbJob);
 
     bool found;
     int c;
@@ -89,8 +91,10 @@ LocalSearch::localSearchKI(std::vector<int>& perm,const int kmax)
         for(int j=0;j<nbJob;j++){
 			i=j;
 
+            // std::cout<<tmp.size()<<" "<<perm.size()<<std::endl;
+
             memcpy(tmp.data(), perm.data(), nbJob*sizeof(int));
-            c=nhood->kImove(tmp.data(), i, kmax);//fastBREmove(tmp, i);
+            c=nhood->kImove(tmp, i, kmax);//fastBREmove(tmp, i);
 
 			//accept first improvement...
             if(c<best){

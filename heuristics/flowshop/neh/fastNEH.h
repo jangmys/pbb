@@ -8,14 +8,15 @@
 
 class fastNEH{
 public:
-    fastInsertRemove<int>* m;
-
-    fastNEH(instance_abstract*_inst);
-    ~fastNEH();
+    fastNEH(instance_abstract*_inst) :
+        m(std::make_unique<fastInsertRemove>(_inst)),
+        nbJob(m->nbJob)
+    {};
 
     void initialSort(std::vector<int>& perm);
     void runNEH(std::vector<int>& perm, int &cost);
 private:
+    std::unique_ptr<fastInsertRemove> m;
     int nbJob;
     // instance_abstract * instance;
 };

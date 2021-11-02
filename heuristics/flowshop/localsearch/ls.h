@@ -5,18 +5,15 @@
 #include "libbounds.h"
 
 class LocalSearch{
-    public:
-        LocalSearch(instance_abstract* inst);
+public:
+    LocalSearch(instance_abstract* inst);
 
-        int a;
+    int operator()(std::vector<int>& perm, int l1, int l2);
 
-        int operator()(std::vector<int>& perm, int l1, int l2);
+    int localSearchBRE(std::vector<int>& perm, int l1, int l2);
+    int localSearchKI(std::vector<int>& perm,const int kmax);
 
-        int localSearchBRE(std::vector<int>& perm, int l1, int l2);
-        int localSearchKI(std::vector<int>& perm,const int kmax);
-
-        fspnhood<int> * nhood;
-
+    std::unique_ptr<fspnhood<int>> nhood;
 };
 
 

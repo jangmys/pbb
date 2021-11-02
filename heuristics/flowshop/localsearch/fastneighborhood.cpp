@@ -4,29 +4,20 @@
 #include <memory>
 #include <iostream>
 
-template<typename T>
-fspnhood<T>::fspnhood(instance_abstract* inst){
-    m = std::make_unique<fastInsertRemove<T>>(inst);
-
-    N=m->nbJob;
-}
-
-template<typename T>
-fspnhood<T>::~fspnhood()
-{
-}
-
 //Deroussi et al...
+//1D move (parametrized by "pos")
+//1) remove job at position "pos"
+//2) insert at best other position
+//3.1) if improved, accept
+//3.2) if not improved, bestRemove (except pos) and bestInsert (elsewhere)
 template<typename T>
-int fspnhood<T>::fastBREmove(int* perm, int pos)
+int fspnhood<T>::fastBREmove(std::vector<int>& perm, int pos)
 {
     int len=N;
 
     int cmax0=m->computeHeads(perm, len);
     //remove job from position pos...
     int rjob=m->remove(perm,len,pos);
-
-
 
     int cmax1;
     m->tabupos->add(pos);//position
@@ -50,7 +41,7 @@ int fspnhood<T>::fastBREmove(int* perm, int pos)
 
 
 template<typename T>
-int fspnhood<T>::fastBREmove(int* perm, int pos, int l1, int l2)
+int fspnhood<T>::fastBREmove(std::vector<int>& perm, int pos, int l1, int l2)
 {
     int len=N;
 
@@ -92,7 +83,7 @@ int fspnhood<T>::fastBREmove(int* perm, int pos, int l1, int l2)
 }
 
 template<typename T>
-int fspnhood<T>::kImove(int* perm,int pos, int kmax)
+int fspnhood<T>::kImove(std::vector<int>& perm,int pos, int kmax)
 {
     bool found=false;
     int k=0;
@@ -149,7 +140,7 @@ int fspnhood<T>::kImove(int* perm,int pos, int kmax)
 }
 
 template<typename T>
-int fspnhood<T>::fastkImove(int* perm,int kmax)
+int fspnhood<T>::fastkImove(std::vector<int>& perm,int kmax)
 {
     bool found=false;
     int k=0;
@@ -195,7 +186,7 @@ int fspnhood<T>::fastkImove(int* perm,int kmax)
 }
 
 template<typename T>
-int fspnhood<T>::fastkImove(int* perm,int kmax,int l1,int l2)
+int fspnhood<T>::fastkImove(std::vector<int>& perm,int kmax,int l1,int l2)
 {
     bool found=false;
     int k=0;
