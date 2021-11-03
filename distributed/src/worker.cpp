@@ -15,7 +15,7 @@
 #include "log.h"
 
 // #include "../../beamSearch/include/tree.h"
-// #include "../../beamSearch/include/treeheuristic.h"
+#include "libheuristic.h"
 
 // #include "../../multicoreLL/include/tree.h"
 // #include "../../multicoreLL/include/treeheuristic.h"
@@ -338,21 +338,22 @@ void worker::setNewBest(bool _v){
 
 
 
-//performs heuristic in parallel to exploration process
-// void *
-// heu_thread2(void * arg)
-// {
-//     pthread_detach(pthread_self());
-//
-//     worker * w = (worker *) arg;
-//
-//     pthread_mutex_lock_check(&w->pbb->mutex_instance);
-//     treeheuristic *th=new treeheuristic(0,w->pbb);
-//     // std::cout<<"contructed TH\n";
-//
-//     IG* ils=new IG(w->pbb->instance);
-//     th->strategy=PRIOQ;
-//     pthread_mutex_unlock(&w->pbb->mutex_instance);
+// performs heuristic in parallel to exploration process
+void *
+heu_thread2(void * arg)
+{
+    pthread_detach(pthread_self());
+
+    worker * w = (worker *) arg;
+
+    pthread_mutex_lock_check(&w->pbb->mutex_instance);
+    IG ils(w->pbb->instance);
+    // std::unique_ptr<Treeheuristic> th = std::make_unique<Treeheuristic>(w->pbb->instance);
+
+
+// //     IG* ils=new IG(w->pbb->instance);
+// //     th->strategy=PRIOQ;
+    pthread_mutex_unlock(&w->pbb->mutex_instance);
 //
 //     int N=w->pbb->size;
 //     subproblem *s=new subproblem(N);
@@ -440,7 +441,7 @@ void worker::setNewBest(bool _v){
 //
 //     pthread_exit(0);
 //     // return NULL;
-// }
+}
 //
 // //performs heuristic in parallel to exploration process
 // void *

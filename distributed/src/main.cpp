@@ -34,10 +34,8 @@ main(int argc, char ** argv)
     MPI_Comm_size(MPI_COMM_WORLD, &nProc);
 
     // initializions...
-    // arguments::readIniFile();
+    // ==> pass ini file with -f <path-to-ini-file> option !
     arguments::parse_arguments(argc, argv);
-
-
 
     if (myrank == 0) {
         FILELog::ReportingLevel() = logDEBUG;
