@@ -4,6 +4,7 @@
 #include <iostream>
 #include <random>
 #include <numeric>
+#include <algorithm>
 
 #include "../../common/include/misc.h"
 #include "../include/subproblem.h"
@@ -15,17 +16,11 @@ subproblem::subproblem(int _size) :
     size(_size),limit1(-1),limit2(_size),
     schedule(std::vector<int>(size))
 {
-    // schedule = std::vector<int>(size);
     std::iota(schedule.begin(),schedule.end(),0);
 
     cost = 0;
 	ub=0;
 	depth=0;
-	// prio = 0;
-
-    // mask = std::vector<bool>(size);
-
-    // for (int j = 0; j < size; j++) schedule[j] = j;
 }
 
 subproblem::~subproblem()
@@ -47,16 +42,12 @@ subproblem::subproblem(const subproblem& s)
     cost = s.cost;
 	ub = s.ub;
 	depth= s.depth;
-	// prio = s.prio;
-    // limites_set(father, begin_end);
-    // permutation_set(father, indice, begin_end);
 }
 
 subproblem::subproblem(const subproblem& father, int indice, int begin_end)
 {
     size = father.size;
     schedule = std::vector<int>(size);
-    // schedule = (int*)malloc(sizeof(int) * size);
 
     limites_set(father, begin_end);
     permutation_set(father, indice, begin_end);
@@ -184,41 +175,13 @@ subproblem::print()
     printf("\t %d\n",cost);
 }
 
-
-
-// void
-// subproblem::copy(subproblem *p)
-// {
-//     for(int i=0;i<size;i++){
-//         schedule[i]=p->schedule[i];
-//     }
-//     limit1=p->limit1;
-//     limit2=p->limit2;
-// }
-
-//for debugging
-
-// int
-// subproblem::intRand(const int & min, const int & max) {
-//     static thread_local std::mt19937 generator;
-//     std::uniform_int_distribution<int> distribution(min,max);//closed [min,max]
-//     return distribution(generator);
-// }
-
 void
 subproblem::shuffle()
 {
-    int n=size;
-    if (n > 1) {
-	    for (int i = 0; i < n - 1; i++) {
-	        size_t j = helper::intRand(i,n-1);
-			// printf("%d %d\n",j,n);
-			// i + drand48() / (RAND_MAX / (n - i) + 1);
-	        int t = schedule[j];
-	        schedule[j] = schedule[i];
-	        schedule[i] = t;
-	    }
-    }
+    std::random_device rd;
+    std::mt19937 g(rd());
+
+    std::shuffle(schedule.begin(), schedule.end(), g);
 }
 
 subproblem&
