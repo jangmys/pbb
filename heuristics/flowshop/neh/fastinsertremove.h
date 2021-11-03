@@ -12,7 +12,7 @@ struct forbidden_list
 {
     std::vector<int>flags;
 
-    forbidden_list(size_t _len) : flags(_len,0) { }
+    explicit forbidden_list(size_t _len) : flags(_len,0) { }
 
     bool isTabu(int a){
         return flags[a];

@@ -1,16 +1,20 @@
 #include "beam.h"
 #include "operator_factory.h"
 
-Beam::Beam(instance_abstract* inst)
+Beam::Beam(instance_abstract* inst) :
+    tr(std::make_unique<Tree>(inst,inst->size)),
+    prune(OperatorFactory::createPruning(arguments::findAll)),
+    branch(OperatorFactory::createBranching(arguments::branchingMode,inst->size,99999)),
+    eval(std::make_unique<bound_fsp_weak_idle>())
 {
-    tr = std::make_unique<Tree>(inst,inst->size);
+    // tr = std::make_unique<Tree>(inst,inst->size);
     tr->strategy = DEQUE;
     // tr->strategy = PRIOQ;
 
-    prune = OperatorFactory::createPruning(arguments::findAll);
-    branch= OperatorFactory::createBranching(arguments::branchingMode,inst->size,99999);
+    // prune = OperatorFactory::createPruning(arguments::findAll);
+    // branch= OperatorFactory::createBranching(arguments::branchingMode,inst->size,99999);
 
-    eval = std::make_unique<bound_fsp_weak_idle>( );
+    // eval = std::make_unique<bound_fsp_weak_idle>();
     eval->init(inst);
 
     bestSolution = std::make_unique<subproblem>(inst->size);
@@ -50,8 +54,7 @@ Beam::step(int beamWidth,int localBest)
                 n->ub = n->cost;
                 prune->local_best = n->ub;
                 *bestSolution = *n;
-
-                std::cout<<"new best "<<*bestSolution<<" "<<prune->local_best<<"\n";
+                // std::cout<<"new best "<<*bestSolution<<" "<<prune->local_best<<"\n";
             }else{
                 //expand (compute lower bounds, priorities and generate surviving successors)
                 std::vector<subproblem*>ns;

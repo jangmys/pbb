@@ -4,12 +4,11 @@
 #include "ils.h"
 #include "ls.h"
 
-IG::IG(instance_abstract * inst)
+IG::IG(instance_abstract * inst) :
+    neh(std::make_unique<fastNEH>(inst)),
+    nhood(std::make_unique<fspnhood<int>>(inst)),
+    ls(std::make_unique<LocalSearch>(inst))
 {
-    neh = std::make_unique<fastNEH>(inst);
-    nhood = std::make_unique<fspnhood<int>>(inst);
-    ls = std::make_unique<LocalSearch>(inst);
-
     nbJob=nhood->m->nbJob;
     nbMachines=nhood->m->nbMachines;
 
@@ -38,27 +37,7 @@ IG::IG(instance_abstract * inst)
 		visitOrder[ind]=i;
 		ind+=2;
 	}
-
-
-    // ls = new LocalSearch(inst);
 }
-
-// IG::~IG()
-// {
-//
-// }
-
-// void IG::shuffle(int *array, int n)
-// {
-//     if (n > 1) {
-// 	    for (int i = 0; i < n - 1; i++) {
-// 			int j = helper::intRand(i, n-1);
-// 	        int t = array[j];
-// 	        array[j] = array[i];
-// 	        array[i] = t;
-// 	    }
-//     }
-// }
 
 int IG::makespan(subproblem* s)
 {
@@ -186,8 +165,6 @@ int IG::runIG(subproblem* current)
 	// std::cout<<"cccc "<<currentcost<<std::endl;
 	// currentcost=localSearchBRE(current->schedule);
 
-    // return currentcost;
-	int tempcost;
     int perturb=destructStrength;
     std::vector<int> removedJobs(perturb);
 
@@ -200,7 +177,7 @@ int IG::runIG(subproblem* current)
 		destruction(temp->schedule, removedJobs, perturb, l1, l2);
 		construction(temp->schedule, removedJobs, perturb,l1,l2);
 
-		tempcost=ls->localSearchKI(temp->schedule,kmax);
+		int tempcost=ls->localSearchKI(temp->schedule,kmax);
 
 		temp->ub=tempcost;
 
@@ -241,7 +218,6 @@ int IG::runIG(subproblem* current, int l1, int l2)
 	bestcost=nhood->m->computeHeads(best->schedule, nbJob);
 	currentcost=bestcost;
 
-	int tempcost;
     int perturb=destructStrength;
     std::vector<int> removedJobs(perturb);
 
@@ -251,7 +227,7 @@ int IG::runIG(subproblem* current, int l1, int l2)
 		destruction(temp->schedule, removedJobs, perturb, l1, l2);
 		construction(temp->schedule, removedJobs, perturb,l1,l2);
 
-        tempcost=(*ls)(temp->schedule,l1,l2);
+        int tempcost=(*ls)(temp->schedule,l1,l2);
 
         if(acceptance(tempcost, currentcost, acceptanceParameter)){
 			currentcost=tempcost;

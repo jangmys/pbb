@@ -6,8 +6,6 @@
 #include "tree.h"
 #include "branching.h"
 #include "pruning.h"
-
-#include "solution.h"
 #include "beam.h"
 
 class Tree;
@@ -20,9 +18,10 @@ public:
     std::unique_ptr<Tree> tr;
     std::unique_ptr<pruning> prune;
     std::unique_ptr<branching> branch;
+    std::unique_ptr<bound_fsp_weak_idle> eval;
+
     std::unique_ptr<subproblem> bestSolution;
 
-    std::unique_ptr<bound_fsp_weak_idle> eval;
 
     std::unique_ptr<LocalSearch> ls;
     std::unique_ptr<IG> ig;

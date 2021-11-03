@@ -23,8 +23,5 @@ add_executable(testHeuristic testHeuristic.cpp ${outSources})
 target_include_directories(testHeuristic PUBLIC ${ROOT_DIR}/common/include)
 target_include_directories(testHeuristic PUBLIC ${ROOT_DIR}/heuristics)
 
-# target_include_directories(testHeuristic PUBLIC ${ROOT_DIR}/common/include)
-
 target_link_libraries(testHeuristic PUBLIC fspHeuristic)
-
-message(STATUS ${ROOT_DIR})
+target_link_libraries(testHeuristic PUBLIC Threads::Threads)

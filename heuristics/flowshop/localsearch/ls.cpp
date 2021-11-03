@@ -15,14 +15,10 @@ int LocalSearch::operator()(std::vector<int>& perm, int l1, int l2)
     // int depth = sqrt(nbJob);
     int depth = sqrt(l2-l1);
 
-    std::cout<<"size:\t"<<tmp.size()<<std::endl;
-
     for(int k=0;k<1000;k++){
         tmp = perm;
 
         int c=nhood->fastkImove(tmp, depth,l1,l2);
-
-        std::cout<<c<<std::endl;
 
         if(c<best){
             best=c;
@@ -46,14 +42,11 @@ LocalSearch::localSearchBRE(std::vector<int>& perm, int l1, int l2)
 
     int best=nhood->m->computeHeads(perm, nbJob);
 
-    bool found;
-    int c;
-
     for(int k=0;k<10000;k++){
-        found=false;
+        bool found=false;
         for(int i=l1+1;i<l2;i++){
             memcpy(tmp.data(), perm.data(), nbJob*sizeof(int));
-            c=nhood->fastBREmove(tmp, i, l1, l2);
+            int c=nhood->fastBREmove(tmp, i, l1, l2);
 
             if(c<best){
                 found=true;
@@ -80,18 +73,15 @@ LocalSearch::localSearchKI(std::vector<int>& perm,const int kmax)
 
     int best=nhood->m->computeHeads(perm, nbJob);
 
-    bool found;
     int c;
 	int i;
 
 	//ls iterations ... 10000 = 'infinity' (likely getting trapped in local min much earlier)
     for(int k=0;k<10000;k++){
-        found=false;
+        bool found=false;
 		//for all neighbors
         for(int j=0;j<nbJob;j++){
 			i=j;
-
-            // std::cout<<tmp.size()<<" "<<perm.size()<<std::endl;
 
             memcpy(tmp.data(), perm.data(), nbJob*sizeof(int));
             c=nhood->kImove(tmp, i, kmax);//fastBREmove(tmp, i);

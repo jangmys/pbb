@@ -1,5 +1,4 @@
 #include "macros.h"
-#include "solution.h"
 #include "subproblem.h"
 #include "log.h"
 
