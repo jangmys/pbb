@@ -12,6 +12,9 @@ public:
 
     ~subproblem();
 
+    subproblem&
+    operator = (const subproblem& s);
+
     int size;
     int limit1;
     int limit2;
@@ -52,8 +55,6 @@ public:
     void
     copy(subproblem * p);
 
-    subproblem&
-    operator = (const subproblem& s);
 };
 
 std::ostream&

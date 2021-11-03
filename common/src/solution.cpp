@@ -4,6 +4,7 @@
 
 #include "../include/log.h"
 
+#include <pthread.h>
 
 
 solution::solution(int _size)
