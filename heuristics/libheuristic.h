@@ -1,3 +1,6 @@
+#ifndef LIBHEURISTIC_H_
+#define LIBHEURISTIC_H_
+
 #include "flowshop/neh/fastinsertremove.h"
 #include "flowshop/neh/fastNEH.h"
 
@@ -9,3 +12,5 @@
 #include "flowshop/beam/tree.h"
 #include "flowshop/beam/beam.h"
 #include "flowshop/beam/treeheuristic.h"
+
+#endif

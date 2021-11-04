@@ -14,11 +14,7 @@
 #include "ttime.h"
 #include "log.h"
 
-// #include "../../beamSearch/include/tree.h"
 #include "libheuristic.h"
-
-// #include "../../multicoreLL/include/tree.h"
-// #include "../../multicoreLL/include/treeheuristic.h"
 
 #include "worker.h"
 #include "fact_work.h"
@@ -347,58 +343,57 @@ heu_thread2(void * arg)
     worker * w = (worker *) arg;
 
     pthread_mutex_lock_check(&w->pbb->mutex_instance);
-    IG ils(w->pbb->instance);
-    // std::unique_ptr<Treeheuristic> th = std::make_unique<Treeheuristic>(w->pbb->instance);
-
-
-// //     IG* ils=new IG(w->pbb->instance);
-// //     th->strategy=PRIOQ;
+    // std::unique_ptr<fastNEH> neh = std::make_unique<fastNEH>(w->pbb->instance);
+    std::unique_ptr<IG> ils = std::make_unique<IG>(w->pbb->instance);
+    // IG ils(w->pbb->instance);
+//     IG* ils=new IG(w->pbb->instance);
+//     th->strategy=PRIOQ;
     pthread_mutex_unlock(&w->pbb->mutex_instance);
 //
-//     int N=w->pbb->size;
-//     subproblem *s=new subproblem(N);
+    int N=w->pbb->size;
+    subproblem *s=new subproblem(N);
 //
-//     int gbest;
+    int gbest;
 //     int cost;
 //
-//     bool take=false;
+    bool take=false;
 //     std::cout<<"1 heuristic thread\n";
 //
-//     while(!w->checkEnd()){
-//         w->pbb->sltn->getBestSolution(s->schedule,gbest);// lock on pbb->sltn
+    while(!w->checkEnd()){
+        w->pbb->sltn->getBestSolution(s->schedule.data(),gbest);// lock on pbb->sltn
 //         // cost = gbest;
 //
 //         int c;
 //         // w->local_sol->getBestSolution(s->schedule,c);
 //
-//         int r=helper::intRand(0,100);
+        int r=helper::intRand(0,100);
 //
 //         take=false;
-//         pthread_mutex_lock_check(&w->mutex_solutions);
-//         if(w->sol_ind_begin < w->sol_ind_end && r<80){
-//             take=true;
+        pthread_mutex_lock_check(&w->mutex_solutions);
+        if(w->sol_ind_begin < w->sol_ind_end && r<80){
+            take=true;
+
+            if(w->sol_ind_begin >= w->max_sol_ind){
+                FILE_LOG(logERROR) << "Index out of bounds";
+                exit(-1);
+            }
+            for(int i=0;i<N;i++){
+                s->schedule[i]=w->solutions[w->sol_ind_begin*N+i];
+            }
+
+            // std::cout<<*s<<std::endl;
 //
-//             if(w->sol_ind_begin >= w->max_sol_ind){
-//                 FILE_LOG(logERROR) << "Index out of bounds";
-//                 exit(-1);
-//             }
-//             for(int i=0;i<N;i++){
-//                 s->schedule[i]=w->solutions[w->sol_ind_begin*N+i];
-//             }
-//
-//             // std::cout<<*s<<std::endl;
-//
-//             w->sol_ind_begin++;
-//         }
-//         pthread_mutex_unlock(&w->mutex_solutions);
-//
-//         s->limit1=-1;
-//         s->limit2=w->pbb->size;
+            w->sol_ind_begin++;
+        }
+        pthread_mutex_unlock(&w->mutex_solutions);
+
+        s->limit1=-1;
+        s->limit2=w->pbb->size;
 //
 //         // ils->perturbation(s->schedule, 3, 0, w->pbb->size);
 //         // ils->igiter=100;
 //         // ils->acceptanceParameter=1.6;
-//         // cost=ils->runIG(s);
+        int cost=ils->runIG(s);
 //         // }
 //         if(!take){
 //             ils->perturbation(s->schedule, 3, 0, w->pbb->size);
@@ -426,105 +421,22 @@ heu_thread2(void * arg)
 //         cost=th->ITS(s,ccc);
 //         // printf("heueuhh %d %d %d\n",ccc,cost,w->pbb->sltn->getBest());
 //
-//         if (cost<w->pbb->sltn->getBest()){
-//             w->pbb->sltn->update(s->schedule,cost);
-//             w->tryLaunchCommBest();
-//         }
-//         if(cost<w->local_sol->cost){
-//             w->local_sol->update(s->schedule,cost);
-//             FILE_LOG(logINFO)<<"LocalBest "<<cost<<"\t"<<*(w->local_sol);
-//         }
-//     }
+        if (cost<w->pbb->sltn->getBest()){
+            w->pbb->sltn->update(s->schedule.data(),cost);
+            w->tryLaunchCommBest();
+        }
+        if(cost<w->local_sol->cost){
+            w->local_sol->update(s->schedule.data(),cost);
+            FILE_LOG(logINFO)<<"LocalBest "<<cost<<"\t"<<*(w->local_sol);
+        }
+    }
 //
 //     delete ils;
 //     delete th;
 //
-//     pthread_exit(0);
+    pthread_exit(0);
 //     // return NULL;
 }
-//
-// //performs heuristic in parallel to exploration process
-// void *
-// heu_thread(void * arg)
-// {
-//     pthread_detach(pthread_self());
-//
-//     worker * w = (worker *) arg;
-//
-//     pthread_mutex_lock_check(&w->pbb->mutex_instance);
-//     IG* ils=new IG(w->pbb->instance);
-//     pthread_mutex_unlock(&w->pbb->mutex_instance);
-//
-//     //how many iterations in ILS heuristic:
-//     ils->igiter=arguments::heuristic_iters;
-//
-//     int N=w->pbb->size;
-//     subproblem *s=new subproblem(N);
-//     subproblem *s2=new subproblem(N);
-//
-//     s->limit1=-1;
-//     s->limit2=N;
-//     int cost;
-//     // int cost2;
-//
-//     while(!w->checkEnd()){
-//         // w->local_sol->getBestSolution(s->schedule,cost);// lock on pbb->sltn
-//         w->pbb->sltn->getBestSolution(s->schedule,cost);// lock on pbb->sltn
-//
-//         int r=helper::intRand(0,10);
-//
-//         pthread_mutex_lock_check(&w->mutex_solutions);
-//         if(w->sol_ind_begin<w->sol_ind_end && r<8){
-//             if(w->sol_ind_begin >= w->max_sol_ind){
-//                 FILE_LOG(logDEBUG1) << "Index out of bounds";
-//                 exit(-1);
-//             }
-//
-//             for(int i=0;i<N;i++){
-//                 s->schedule[i]=w->solutions[w->sol_ind_begin*N+i];
-//             }
-//             w->sol_ind_begin++;
-//
-//         }
-//         pthread_mutex_unlock(&w->mutex_solutions);
-//
-//         int c=999999999;
-//         // w->local_sol->getBestSolution(s2->schedule,cost2);
-//         // c=ils->vbih(s,s2);
-//         c=ils->runIG(s); //ils->makespan(s);
-//
-//         pthread_mutex_lock_check(&w->mutex_solutions);
-//         FILE_LOG(logINFO)<<"Heuristic Sol "<<c<<" Best: "<<w->pbb->sltn->cost;
-//         // for(int i=0;i<N;i++)
-//             // FILE_LOG(logINFO)<<s->schedule[i];
-//
-//         // printf("%d ",s->schedule[i]);
-//         // // printf("\t %d %d\n",c,w->local_sol->cost);
-//         // printf("\t %d %d\n",c,w->pbb->sltn->cost);
-//         pthread_mutex_unlock(&w->mutex_solutions);
-//
-//         if (c<w->pbb->sltn->cost){
-//             w->pbb->sltn->update(s->schedule,c);
-//             // printf("hhh %d\t",c);
-//             // s->print();
-//             FILE_LOG(logINFO)<<"HeuristicBest "<<c<<"\t"<<*(w->pbb->sltn);
-//             // w->tryLaunchCommBest();
-//             w->setNewBest(true);
-//         }
-//         if(c<w->local_sol->cost){
-//             w->local_sol->update(s->schedule,c);
-//             FILE_LOG(logINFO)<<"LocalBest "<<c<<"\t"<<*(w->local_sol);
-//         }
-//     }
-//
-//     delete s;
-//     delete s2;
-//     delete ils;
-//
-//     pthread_exit(0);
-//     // return NULL;
-// }
-
 
 // worker main thread : spawn communicator
 void
@@ -542,12 +454,12 @@ worker::run()
     pthread_barrier_wait(&barrier);// synchronize with communication thread
 
     //heuristic threads
-    // int nbHeuThds=arguments::heuristic_threads;
-    // pthread_t heur_thd[100];
-    // for(int i=0;i<nbHeuThds;i++)
-    // {
-    //     pthread_create(&heur_thd[i], NULL, heu_thread2, (void *) this);
-    // }
+    int nbHeuThds=arguments::heuristic_threads;
+    pthread_t heur_thd[100];
+    for(int i=0;i<nbHeuThds;i++)
+    {
+        pthread_create(&heur_thd[i], NULL, heu_thread2, (void *) this);
+    }
     // FILE_LOG(logDEBUG) << "Created " << nbHeuThds << " heuristic threads.";
     int workeriter = 0;
 
