@@ -26,7 +26,10 @@ find_package(CUDA 10.0 REQUIRED)
 get_filename_component(PARENT_DIR ${CMAKE_CURRENT_SOURCE_DIR} DIRECTORY)
 
 if(TARGET dbb)
-    FILE(GLOB CppSources worker_gpu.cpp gpubb.cu)
+    set(CppSources
+        worker_gpu.cpp
+        gpubb.cu
+    )
     target_sources(dbb PUBLIC ${CppSources})
 
     add_definitions(-DFSP)
@@ -39,7 +42,7 @@ if(TARGET dbb)
     # target_link_libraries(dbb PUBLIC ${CMAKE_CUDA_LIBRARIES})
     # target_link_libraries(dbb PUBLIC ${CUDA_DRIVER_LIBRARY})
 else()
-    file(GLOB cuSources gpubb.cu)
+    set(cuSources gpubb.cu)
     add_executable(gpubb main.cpp ${cuSources})
 
     set_target_properties(gpubb PROPERTIES CUDA_ARCHITECTURES "35;50;72")

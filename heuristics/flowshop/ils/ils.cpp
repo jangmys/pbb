@@ -9,6 +9,8 @@ IG::IG(instance_abstract * inst) :
     nhood(std::make_unique<fspnhood<int>>(inst)),
     ls(std::make_unique<LocalSearch>(inst))
 {
+    // std::cout<<"here\n"<<std::endl;
+
     nbJob=nhood->m->nbJob;
     nbMachines=nhood->m->nbMachines;
 
@@ -25,6 +27,8 @@ IG::IG(instance_abstract * inst) :
     igiter=200;
 
     visitOrder = std::vector<int>(nbJob);
+
+    // std::cout<<"heeeree\n"<<std::endl;
 
 	int start=nbJob/2;
 	int ind=0;

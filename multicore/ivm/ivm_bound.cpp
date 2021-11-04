@@ -4,12 +4,9 @@
 #include "../../common/include/subproblem.h"
 
 #include "libbounds.h"
-
 #include "ivm.h"
 #include "ivm_bound.h"
-
 #include "branching.h"
-
 #include "operator_factory.h"
 
 template<typename T>
@@ -18,8 +15,10 @@ ivm_bound<T>::ivm_bound(pbab* _pbb) : pbb(_pbb){
 
     node=new subproblem(size);
 
+    pthread_mutex_lock_check(&pbb->mutex_instance);
     bound.push_back(std::move(OperatorFactory::createBound(pbb->instance,0)));
     bound.push_back(std::move(OperatorFactory::createBound(pbb->instance,1)));
+    pthread_mutex_unlock(&pbb->mutex_instance);
 
     branch = OperatorFactory::createBranching(arguments::branchingMode,size,pbb->initialUB);
     prune = OperatorFactory::createPruning(arguments::findAll);
