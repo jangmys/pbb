@@ -347,6 +347,7 @@ heu_thread2(void * arg)
     worker * w = (worker *) arg;
 
     pthread_mutex_lock_check(&w->pbb->mutex_instance);
+<<<<<<< HEAD
     IG ils(w->pbb->instance);
     // std::unique_ptr<Treeheuristic> th = std::make_unique<Treeheuristic>(w->pbb->instance);
 
@@ -524,6 +525,102 @@ heu_thread2(void * arg)
 //     pthread_exit(0);
 //     // return NULL;
 // }
+=======
+    // treeheuristic *th=new treeheuristic(0,w->pbb);
+    // std::cout<<"contructed TH\n";
+
+    IG ils(w->pbb->instance);
+    // th->strategy=PRIOQ;
+    pthread_mutex_unlock(&w->pbb->mutex_instance);
+
+    // int N=w->pbb->size;
+    // subproblem *s=new subproblem(N);
+    //
+    // int gbest;
+    // int cost;
+    //
+    // bool take=false;
+    // std::cout<<"1 heuristic thread\n";
+    //
+    // while(!w->checkEnd()){
+    //     w->pbb->sltn->getBestSolution(s->schedule,gbest);// lock on pbb->sltn
+    //     // cost = gbest;
+    //
+    //     int c;
+    //     // w->local_sol->getBestSolution(s->schedule,c);
+    //
+    //     int r=helper::intRand(0,100);
+    //
+    //     take=false;
+    //     pthread_mutex_lock_check(&w->mutex_solutions);
+    //     if(w->sol_ind_begin < w->sol_ind_end && r<80){
+    //         take=true;
+    //
+    //         if(w->sol_ind_begin >= w->max_sol_ind){
+    //             FILE_LOG(logERROR) << "Index out of bounds";
+    //             exit(-1);
+    //         }
+    //         for(int i=0;i<N;i++){
+    //             s->schedule[i]=w->solutions[w->sol_ind_begin*N+i];
+    //         }
+    //
+    //         // std::cout<<*s<<std::endl;
+    //
+    //         w->sol_ind_begin++;
+    //     }
+    //     pthread_mutex_unlock(&w->mutex_solutions);
+    //
+    //     s->limit1=-1;
+    //     s->limit2=w->pbb->size;
+    //
+    //     // ils->perturbation(s->schedule, 3, 0, w->pbb->size);
+    //     // ils->igiter=100;
+    //     // ils->acceptanceParameter=1.6;
+    //     // cost=ils->runIG(s);
+    //     // }
+    //     if(!take){
+    //         ils->perturbation(s->schedule, 3, 0, w->pbb->size);
+    //         ils->igiter=200;
+    //         ils->acceptanceParameter=1.5;
+    //         cost=ils->runIG(s);
+    // 		// subproblem reduced(w->pbb->size);
+    //         // int destroy=5;
+    //         // ils->destruction(s->schedule, reduced.schedule, destroy);
+    // 		// ils->localSearchPartial(s->schedule,w->pbb->size-destroy);
+    //         // ils->construction(s->schedule, reduced.schedule, destroy, 0, w->pbb->size);
+    //         // cost = ils->makespan(s);
+    //     }
+    //     // else{
+    //     //     ils->igiter=100;
+    //     //     // ils->acceptanceParameter=1.0;
+    //     //     cost=ils->runIG(s);
+    //     //     // cost = ils->makespan(s);
+    //     //     // ils->perturbation(s->schedule, 2, 0, w->pbb->size);
+    //     //
+    //     // }
+    //
+    //     int ccc = cost;// + helper::intRand(-10,10);
+    //
+    //     cost=th->ITS(s,ccc);
+    //     // printf("heueuhh %d %d %d\n",ccc,cost,w->pbb->sltn->getBest());
+    //
+    //     if (cost<w->pbb->sltn->getBest()){
+    //         w->pbb->sltn->update(s->schedule,cost);
+    //         w->tryLaunchCommBest();
+    //     }
+    //     if(cost<w->local_sol->cost){
+    //         w->local_sol->update(s->schedule,cost);
+    //         FILE_LOG(logINFO)<<"LocalBest "<<cost<<"\t"<<*(w->local_sol);
+    //     }
+    // }
+    //
+    // delete ils;
+    // delete th;
+
+    pthread_exit(0);
+    // return NULL;
+}
+>>>>>>> mpibb
 
 
 // worker main thread : spawn communicator
@@ -542,12 +639,12 @@ worker::run()
     pthread_barrier_wait(&barrier);// synchronize with communication thread
 
     //heuristic threads
-    // int nbHeuThds=arguments::heuristic_threads;
-    // pthread_t heur_thd[100];
-    // for(int i=0;i<nbHeuThds;i++)
-    // {
-    //     pthread_create(&heur_thd[i], NULL, heu_thread2, (void *) this);
-    // }
+    int nbHeuThds=arguments::heuristic_threads;
+    pthread_t heur_thd[100];
+    for(int i=0;i<nbHeuThds;i++)
+    {
+        pthread_create(&heur_thd[i], NULL, heu_thread2, (void *) this);
+    }
     // FILE_LOG(logDEBUG) << "Created " << nbHeuThds << " heuristic threads.";
     int workeriter = 0;
 
