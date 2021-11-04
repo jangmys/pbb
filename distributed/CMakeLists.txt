@@ -94,6 +94,7 @@ target_compile_options(dbb PUBLIC ${MPI_CXX_COMPILE_FLAGS})
 
 target_link_libraries(dbb PUBLIC Threads::Threads)
 target_link_libraries(dbb PUBLIC bounds)
+target_link_libraries(dbb PUBLIC fspHeuristic)
 target_link_libraries(dbb PUBLIC gmp gmpxx)
 target_link_libraries(dbb PUBLIC MPI::MPI_CXX)
 # target_link_libraries(bb PUBLIC common)
