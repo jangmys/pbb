@@ -11,18 +11,20 @@ set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_CXX_FLAGS "-Wall -Wno-unused-function -Wno-unused-variable -O2")
 
+
 ######################################################################################
-### 3) Include CMake files
+### googletest
+######################################################################################
+include(FetchContent)
+FetchContent_Declare(
+    googletest
+    URL https://github.com/google/googletest/archive/609281088cfefc76f9d0ce82e1ff6c30cc3591e5.zip
+)
+FetchContent_MakeAvailable(googletest)
+
 ######################################################################################
 
-## Configuration file for building type and flags
-#include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Config.cmake)
 
-## Macro file
-#include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Macro.cmake)
-
-## Custom Targets file
-#include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Target.cmake)
 
 #add lower bounds library
 add_subdirectory(evaluation)
@@ -41,4 +43,30 @@ endif()
 if(MPI)
     add_definitions(-DWITH_MPI)
     add_subdirectory(distributed)
+endif()
+
+
+######################################################################################
+
+if(TESTS)
+    enable_testing()
+
+    add_executable(
+        test_test
+        tests/test_ivm.cpp
+        multicore/ivm/ivm.cpp
+    )
+    target_include_directories(
+        test_test
+        PUBLIC
+        evaluation
+    )
+
+    target_link_libraries(
+        test_test
+        gtest_main
+    )
+
+    include(GoogleTest)
+    gtest_discover_tests(test_test)
 endif()
