@@ -5,8 +5,8 @@ get_filename_component(PARENT_DIR ${CMAKE_CURRENT_SOURCE_DIR} DIRECTORY)
 
 if(TARGET dbb)
     set(CppSources
-        worker_gpu.cpp
-        gpubb.cu
+        ${CMAKE_CURRENT_SOURCE_DIR}/worker_gpu.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/gpubb.cu
     )
 
     message(STATUS "add to dbb target" ${CppSources})
