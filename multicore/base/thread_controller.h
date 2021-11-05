@@ -21,6 +21,10 @@ public:
     virtual ~thread_controller();
 
 protected:
+    pbab* pbb;
+    int size;
+    unsigned M;
+
     virtual bbthread* make_bbexplorer(unsigned _id) = 0;
     virtual int work_share(unsigned id, unsigned dest) = 0;
     // bbthread *sbb[MAX_EXPLORERS];
@@ -34,9 +38,6 @@ protected:
     // std::atomic_flag stop_exploring = ATOMIC_FLAG_INIT;
 
     // std::vector<bool>hasWork;
-    pbab* pbb;
-    int size;
-    unsigned M;
 
     pthread_mutex_t mutex_end;
 

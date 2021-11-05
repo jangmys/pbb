@@ -5,15 +5,15 @@
 #include "pbab.h"
 #include "thread_controller.h"
 
-thread_controller::thread_controller(pbab * _pbb) : pbb(_pbb)
+thread_controller::thread_controller(pbab * _pbb) : pbb(_pbb), size(pbb->size)
 {
-    size = pbb->size;
-
     // //set number of BB-explorers (threads)
     M = (arguments::nbivms_mc < 1) ? get_nprocs_conf() : arguments::nbivms_mc;
 
-    if(arguments::singleNode)
+    if(arguments::singleNode){
         std::cout<<" === Single-node multi-core : Using "<<M<<" threads"<<std::endl;
+        std::cout<<" === Problem size : "<<size<<std::endl;
+    }
 
     //barrier for syncing all explorer threads
     pthread_barrier_init(&barrier, NULL, M);
