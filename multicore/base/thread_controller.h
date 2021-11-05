@@ -8,7 +8,7 @@
 
 #include "bbthread.h"
 
-#define MAX_EXPLORERS 50
+#define MAX_EXPLORERS 100
 
 class pbab;
 class bbthread;
