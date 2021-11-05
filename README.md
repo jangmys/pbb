@@ -16,9 +16,8 @@ The following targets can be build separately.
 4. `make`
 
 ## 1) multi-core PBB
-From the build/ folder run ...
 
-[link to multicore README.md]
+[Instructions for PBB@multicore](./multicore/README.md)
 
 ## 2) GPU PBB
 
