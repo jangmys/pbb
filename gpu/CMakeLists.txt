@@ -8,6 +8,9 @@ if(TARGET dbb)
         worker_gpu.cpp
         gpubb.cu
     )
+
+    message(STATUS "add to dbb target" ${CppSources})
+
     target_sources(dbb PUBLIC ${CppSources})
 
     add_definitions(-DFSP)
