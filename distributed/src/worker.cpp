@@ -280,9 +280,6 @@ worker::tryLaunchCommBest()
 void
 worker::tryLaunchCommWork()
 {
-    // printf("mmmm\n");
-    // printf("get %d intervals\n",work_buf->nb_intervals); fflush(stdout);
-
     if (commIsReady()) {
         pthread_mutex_lock_check(&mutex_wunit);
         getIntervals();// fill buffer (prepare SEND)
