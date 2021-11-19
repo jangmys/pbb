@@ -18,8 +18,8 @@ public:
     void setRoot(const int* varOrder);
     bool solvedAtRoot();
 
-    void run();
-    void run(int* firstRow);
+    // void run();
+    // void run(int* firstRow);
 
     bool next();
     void clear();
@@ -34,9 +34,7 @@ public:
 
     ivm_bound<int>* bd;
 protected:
-
     int size;
-
     void unfold(int mode);
 };
 

@@ -19,7 +19,7 @@ public:
     static int rootDir;
     static int first;
 
-    ivm_bound(pbab* _pbb);
+    explicit ivm_bound(pbab* _pbb);
     ~ivm_bound();
 
     void completeSchedule(const int job,const int order);

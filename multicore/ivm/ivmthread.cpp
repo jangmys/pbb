@@ -1,5 +1,15 @@
 #include "ivmthread.h"
 
+ivmthread::ivmthread(pbab* _pbb) :
+    bbthread(_pbb),
+    ivmbb(new sequentialbb(_pbb,_pbb->size))
+{
+};
+
+
+ivmthread::~ivmthread()
+{   };
+
 
 int
 ivmthread::shareWork(int numerator, int denominator, sequentialbb *thief_thread)

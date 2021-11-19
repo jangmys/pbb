@@ -1,3 +1,5 @@
+#include "arguments.h"
+
 #include "evaluator.h"
 #include "branching.h"
 #include "pruning.h"
@@ -95,8 +97,4 @@ class OperatorFactory
     	std::cout<<"CreateBound: unknown problem\n";
     	return nullptr;
     }
-
-    // Factory Method
-    // static Stooge *make_stooge(int choice);
-    // virtual void slap_stick() = 0;
 };

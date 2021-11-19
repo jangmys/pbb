@@ -117,7 +117,6 @@ bool sequentialbb::next()
             IVM->goRight();
             continue;
         } else if (!IVM->pruningCellState()) {
-
             state = 1;// exploring
 
             count_decomposed++;
@@ -137,11 +136,9 @@ bool sequentialbb::next()
         }
     }
 
-    int bdmode = arguments::boundMode;
-
     if(state == 1)
     {
-        switch (bdmode) {
+        switch (arguments::boundMode) {
             case 0:
                 bd->weakBoundPrune(IVM);
                 break;

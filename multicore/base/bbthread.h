@@ -10,31 +10,14 @@ class pbab;
 
 class bbthread
 {
+protected:
+    pbab *pbb;
+
+    bool receivedWork;
+    bool got_work;
 public:
-    bbthread(pbab * _pbb) : pbb(_pbb),receivedWork(false),got_work(false)
-    {
-        pthread_mutexattr_t attr;
-        pthread_mutexattr_init(&attr);
-        pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_ERRORCHECK);
-
-        pthread_mutex_init(&mutex_ivm, &attr);
-        pthread_mutex_init(&mutex_workRequested, &attr);
-        pthread_mutex_init(&mutex_workState, &attr);
-
-        requestQueue.clear();
-
-        pthread_mutex_init(&mutex_shared, &attr);
-        pthread_cond_init(&cond_shared, NULL);
-
-        FILE_LOG(logDEBUG) << " === bbthd constr1";
-    };
-
-    ~bbthread()
-    {
-        pthread_mutex_destroy(&mutex_ivm);
-        pthread_mutex_destroy(&mutex_workRequested);
-        pthread_mutex_destroy(&mutex_workState);
-    }
+    bbthread(pbab * _pbb);
+    ~bbthread();
 
     virtual bool isEmpty() = 0;
     virtual bool bbStep() = 0;
@@ -45,8 +28,8 @@ public:
     pthread_mutex_t mutex_ivm;
     pthread_mutex_t mutex_workState;
     pthread_mutex_t mutex_workRequested;
-
     pthread_mutex_t mutex_shared;
+
     pthread_cond_t cond_shared;
 
     bool has_request();
@@ -71,11 +54,6 @@ public:
     }
 
     std::atomic<bool> has_work;
-protected:
-    pbab *pbb;
-
-    bool receivedWork;
-    bool got_work;
 };
 
 #endif // ifndef BBTHREAD_H_
