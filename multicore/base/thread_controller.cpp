@@ -37,7 +37,11 @@ thread_controller::thread_controller(pbab * _pbb) : pbb(_pbb), size(pbb->size)
 }
 
 thread_controller::~thread_controller()
-{}
+{
+    pthread_mutex_destroy(&mutex_steal_list);
+    pthread_mutex_destroy(&mutex_end);
+
+}
 
 void
 thread_controller::counter_decrement()

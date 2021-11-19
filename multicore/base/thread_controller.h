@@ -13,8 +13,6 @@
 class pbab;
 class bbthread;
 
-static pthread_mutex_t instance_mutex = PTHREAD_MUTEX_INITIALIZER;
-
 class thread_controller{
 public:
     thread_controller(pbab * _pbb);
@@ -27,20 +25,15 @@ protected:
 
     virtual bbthread* make_bbexplorer(unsigned _id) = 0;
     virtual int work_share(unsigned id, unsigned dest) = 0;
-    // bbthread *sbb[MAX_EXPLORERS];
+
     bbthread *bbb[MAX_EXPLORERS];
 
     std::atomic<unsigned int> atom_nb_explorers{0};
     std::atomic<unsigned int> atom_nb_steals{0};
     std::atomic<unsigned int>end_counter{0};
-    std::atomic<bool> allEnd;
-
-    // std::atomic_flag stop_exploring = ATOMIC_FLAG_INIT;
-
-    // std::vector<bool>hasWork;
+    std::atomic<bool> allEnd{false};
 
     pthread_mutex_t mutex_end;
-
     pthread_barrier_t barrier;
     pthread_mutex_t mutex_steal_list;
     std::list<int> victim_list;
@@ -59,6 +52,7 @@ protected:
 
     void stop(unsigned id);
     void unlockWaiting(unsigned id);
+private:
 };
 
 #endif

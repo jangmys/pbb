@@ -1,58 +1,40 @@
-### Check the CMake version
-cmake_minimum_required(VERSION 3.10 FATAL_ERROR)
-
-### Define project
-project(main
-    VERSION 1.0.0
-    DESCRIPTION "Branch-and-Bound for permutation problems"
-    LANGUAGES C CXX)
-
-set(CMAKE_CXX_STANDARD 14)
-set(CMAKE_CXX_STANDARD_REQUIRED True)
-set(CMAKE_CXX_FLAGS "-Wall -Wno-unused-function -O2")
-
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
 find_package(MPI REQUIRED)
-# find_package(GMP REQUIRED)
 
-set(CMAKE_VERBOSE_MAKEFILE ON)
+if(GPU)
+    enable_language(CUDA)
+    add_definitions(-DFSP)
+endif()
+
 
 get_filename_component(PARENT_DIR ${CMAKE_CURRENT_SOURCE_DIR} DIRECTORY)
 
-
-message(STATUS ${PARENT_DIR})
-
 add_executable(dbb src/main.cpp)
-add_subdirectory(src)
 
+add_subdirectory(src)
 add_subdirectory(${PARENT_DIR}/common/src ./build_common)
 add_subdirectory(${PARENT_DIR}/multicore/base ./build_mcbase)
 add_subdirectory(${PARENT_DIR}/multicore/ivm ./build_mcivm)
 
 if(GPU)
-    enable_language(CUDA)
-    add_definitions(-DFSP)
-
     add_subdirectory(${PARENT_DIR}/gpu ./build_gpu)
+endif()
 
-    # set_property(TARGET Threads::Threads PROPERTY INTERFACE_COMPILE_OPTIONS $<$<COMPILE_LANGUAGE:CUDA>:-Xcompiler -pthread> $<$<NOT:$<COMPILE_LANGUAGE:CUDA>>:-pthread>)
 
+if(GPU)
     target_include_directories(dbb PUBLIC ${PARENT_DIR}/gpu)
     target_include_directories(dbb PUBLIC ${PARENT_DIR}/gpu/include)
 
-    # message(STATUS "HELLO Link")
-    # message(STATUS "dbb CUDA_LIBS " ${CMAKE_CUDA_LIBRARIES})
-    # message(STATUS "dbb CUDA_DRIVER " ${CUDA_DRIVER_LIBRARY})
-    # message(STATUS "dbb CUDART " ${CUDA_CUDART_LIBRARY})
-
-    set_target_properties(dbb PROPERTIES CUDA_ARCHITECTURES "35;50;72")
-    set_property(TARGET dbb PROPERTY CUDA_ARCHITECTURES OFF)
-
-    target_link_libraries(dbb PUBLIC ${CMAKE_CUDA_LIBRARIES})
-    target_link_libraries(dbb PUBLIC ${CUDA_DRIVER_LIBRARY})
-    target_link_libraries(dbb PUBLIC ${CUDA_CUDART_LIBRARY})
+    # set_target_properties(dbb PROPERTIES CUDA_ARCHITECTURES "35;50;72")
+    # set_property(TARGET dbb PROPERTY CUDA_ARCHITECTURES OFF)
+    #
+    # target_link_libraries(dbb PUBLIC ${CMAKE_CUDA_LIBRARIES})
+    # target_link_libraries(dbb PUBLIC ${CUDA_DRIVER_LIBRARY})
+    # target_link_libraries(dbb PUBLIC ${CUDA_CUDART_LIBRARY})
 endif()
+
+target_include_directories(dbb PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 target_include_directories(dbb PUBLIC ${PARENT_DIR}/evaluation)
 target_include_directories(dbb PUBLIC ${PARENT_DIR}/common/include)
@@ -62,37 +44,23 @@ target_include_directories(dbb PUBLIC ${PARENT_DIR}/heuristics)
 target_include_directories(dbb PUBLIC ${PARENT_DIR}/multicore/operators)
 target_include_directories(dbb PUBLIC ${PARENT_DIR}/multicore/base)
 target_include_directories(dbb PUBLIC ${PARENT_DIR}/multicore/ivm)
-# if(GPU)
-#     target_include_directories(dbb PUBLIC ${PARENT_DIR}/gpu ${PARENT_DIR}/gpu/include)
-#
-#     enable_language(CUDA)
-#     find_package(CUDA 10.0 REQUIRED)
-#     target_include_directories(dbb PUBLIC ${CMAKE_CUDA_INCLUDE_DIRS})
-#     target_include_directories(dbb PUBLIC ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
-#     target_include_directories(dbb PUBLIC ${CMAKE_CUDA_INCLUDE_DIRS})
-#     target_link_libraries(dbb PUBLIC ${CMAKE_CUDA_LIBRARIES})
-#     target_link_libraries(dbb PUBLIC ${CUDA_DRIVER_LIBRARY})
-#
-# endif()
-
-
 
 target_include_directories(dbb PUBLIC ${PROJECT_SOURCE_DIR}/include/)
 target_include_directories(dbb PUBLIC ${MPI_CXX_INCLUDE_PATH})
 
 target_compile_options(dbb PUBLIC ${MPI_CXX_COMPILE_FLAGS})
-# target_include_directories(bb PUBLIC ${PROJECT_SOURCE_DIR}/ivm/)
-# target_include_directories(bb PUBLIC ${PROJECT_SOURCE_DIR}/operators/)
-# target_include_directories(bb PUBLIC ${PROJECT_SOURCE_DIR}/include/)
-# target_include_directories(bb PUBLIC ${PROJECT_SOURCE_DIR}/src/)
-
-# message(STATUS "The sources" ${SOURCES})
 
 target_link_libraries(dbb PUBLIC Threads::Threads)
 target_link_libraries(dbb PUBLIC bounds)
 target_link_libraries(dbb PUBLIC fspHeuristic)
 target_link_libraries(dbb PUBLIC gmp gmpxx)
 target_link_libraries(dbb PUBLIC MPI::MPI_CXX)
-# target_link_libraries(bb PUBLIC common)
 
-# target_link_libraries(bb PRIVATE ${PARENT_DIR}/evaluation/lib/libbounds.a)
+if(GPU)
+    set_target_properties(dbb PROPERTIES CUDA_ARCHITECTURES "35;50;72")
+    set_property(TARGET dbb PROPERTY CUDA_ARCHITECTURES OFF)
+
+    target_link_libraries(dbb PUBLIC ${CMAKE_CUDA_LIBRARIES})
+    target_link_libraries(dbb PUBLIC ${CUDA_DRIVER_LIBRARY})
+    target_link_libraries(dbb PUBLIC ${CUDA_CUDART_LIBRARY})
+endif()

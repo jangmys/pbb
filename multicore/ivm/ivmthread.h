@@ -9,12 +9,8 @@ class pbab;
 class ivmthread : public bbthread
 {
 public:
-    ivmthread(pbab* _pbb) :
-        bbthread(_pbb),
-        ivmbb(new sequentialbb(_pbb,_pbb->size))
-    {
-    };
-    ~ivmthread(){   };
+    ivmthread(pbab* _pbb);
+    ~ivmthread();
 
     sequentialbb* ivmbb;
 

@@ -20,6 +20,47 @@
 #include "sequentialbb.h"
 #include "matrix_controller.h"
 
+matrix_controller::matrix_controller(pbab* _pbb) : thread_controller(_pbb){
+    for (int i = 0; i < (int) M; i++){
+        // victim_list.push_back(i);
+        bbb[i]=NULL;
+        // sbb[i]=NULL;
+    }
+
+    resetExplorationState();
+
+    size = _pbb->size;
+
+    state = std::vector<int>(M,0);
+    root = std::vector<int>(_pbb->size,0);
+
+    for(int i=0;i<_pbb->size;i++){
+        root[i]=pbb->root_sltn->perm[i];
+    }
+    for(unsigned i=0;i<M;i++){
+        pos.emplace_back(std::vector<int>(_pbb->size,0));
+        end.emplace_back(std::vector<int>(_pbb->size,0));
+    }
+};
+
+matrix_controller::~matrix_controller()
+{
+    // pthread_mutex_destroy(&mutex_steal_list);
+    // pthread_mutex_destroy(&mutex_end);
+};
+
+
+
+ivmthread*
+matrix_controller::make_bbexplorer(unsigned _id){
+    //initialize local (sequential) BB
+    pthread_mutex_lock_check(&pbb->mutex_instance);
+    ivmthread* ibb = new ivmthread(pbb);
+    pthread_mutex_unlock(&pbb->mutex_instance);
+    return ibb;
+}
+
+
 void
 matrix_controller::initFullInterval()
 {
@@ -162,8 +203,7 @@ matrix_controller::explore_multicore()
 {
     // get unique ID
     int id = explorer_get_new_id();
-
-    FILE_LOG(logDEBUG) << id << " === got ID";
+    FILE_LOG(logDEBUG) << " === got ID" << id;
 
     if(!bbb[id]){
         bbb[id] = make_bbexplorer(id);

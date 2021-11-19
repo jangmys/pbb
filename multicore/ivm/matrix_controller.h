@@ -9,6 +9,7 @@
 #include <list>
 #include <deque>
 
+#include "macros.h"
 #include "ivmthread.h"
 #include "thread_controller.h"
 
@@ -17,40 +18,11 @@ class bbthread;
 
 class matrix_controller : public thread_controller{
 public:
-    ivmthread* make_bbexplorer(unsigned _id){
-        //initialize local (sequential) BB
-        pthread_mutex_lock(&instance_mutex);
-        ivmthread* ibb = new ivmthread(pbb);
-        pthread_mutex_unlock(&instance_mutex);
-        return ibb;
-    }
+    ivmthread* make_bbexplorer(unsigned _id);
     int work_share(unsigned id, unsigned thief);
 
-    matrix_controller(pbab* _pbb) : thread_controller(_pbb){
-        for (int i = 0; i < (int) M; i++){
-            // victim_list.push_back(i);
-            bbb[i]=NULL;
-            // sbb[i]=NULL;
-        }
-
-        resetExplorationState();
-
-        state = std::vector<int>(M,0);
-        root = std::vector<int>(size,0);
-        for(int i=0;i<size;i++){
-            root[i]=pbb->root_sltn->perm[i];
-        }
-        for(unsigned i=0;i<M;i++){
-            pos.emplace_back(std::vector<int>(size,0));
-            end.emplace_back(std::vector<int>(size,0));
-        }
-    };
-
-    ~matrix_controller()
-    {
-        pthread_mutex_destroy(&mutex_steal_list);
-        // pthread_mutex_destroy(&mutex_end);
-    };
+    matrix_controller(pbab* _pbb);
+    ~matrix_controller();
 
 	std::vector<int> ids;
 	std::vector<int> state;
@@ -62,8 +34,6 @@ public:
     int updatedIntervals = 1;
 
 	static bool first;
-
-    // std::atomic<int> foundNew{0};
 
     void initFullInterval();
     void initFromFac(const unsigned int nbint, const int* ids, int*pos, int* end);
@@ -79,7 +49,6 @@ public:
     void unlockWaiting(unsigned id);
     void resetExplorationState();
     void interruptExploration();
-
 
     bool next();
     void printStats();
