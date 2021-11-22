@@ -44,11 +44,5 @@ ivmthread::shareWork(int numerator, int denominator, sequentialbb<int> *thief_th
         thief->line = l;
     }
 
-    // IVM->displayVector(IVM->posVect);
-    // IVM->displayVector(IVM->endVect);
-    // IVM->displayVector(thief->posVect);
-    // IVM->displayVector(thief->endVect);
-    // std::cout<<"numShared: "<<numShared<<"\n";
-
     return numShared;
 }

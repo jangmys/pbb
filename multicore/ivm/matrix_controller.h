@@ -33,8 +33,6 @@ public:
 
     int updatedIntervals = 1;
 
-	static bool first;
-
     void initFullInterval();
     void initFromFac(const unsigned int nbint, const int* ids, int*pos, int* end);
 
@@ -44,7 +42,6 @@ public:
 
     bool solvedAtRoot();
 
-    void allocate();
 
     void unlockWaiting(unsigned id);
     void resetExplorationState();

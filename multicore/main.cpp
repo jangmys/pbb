@@ -36,27 +36,22 @@ main(int argc, char ** argv)
         case ivm_seqbb:
         {
             std::cout<<" === Run single-threaded IVM-BB"<<std::endl;
-            sequentialbb<int> *sbb=new sequentialbb<int>(pbb,pbb->size);
 
-            sbb->setRoot(pbb->root_sltn->perm);
-            sbb->initFullInterval();
+            sequentialbb<int> sbb(pbb,pbb->size);
+            sbb.setRoot(pbb->root_sltn->perm);
+            sbb.initFullInterval();
+            sbb.run();
 
-			// bool foundNew=false;
-
-            while(sbb->next());
-
-            delete sbb;
             break;
         }
 		case ivm_multicore:
 		{
 			std::cout<<" === Run multi-core IVM-based BB ..."<<std::endl;
 
-			matrix_controller *mc = new matrix_controller(pbb);
-			mc->initFullInterval();
-			mc->next();
+            matrix_controller mc(pbb);
+			mc.initFullInterval();
+			mc.next();
 
-			delete mc;
 			break;
 		}
     }

@@ -130,8 +130,18 @@ template<typename T>
 void sequentialbb<T>::setBest(const int bestCost)
 {
     prune->local_best = bestCost;
-    // bd->prune->local_best = bestCost;
 }
+
+template<typename T>
+void sequentialbb<T>::run()
+{
+    while(next());
+
+    pbb->stats.totDecomposed += count_decomposed;
+    pbb->stats.leaves += count_leaves;
+}
+
+
 
 template<typename T>
 bool sequentialbb<T>::next()

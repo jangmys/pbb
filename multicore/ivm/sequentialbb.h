@@ -21,6 +21,7 @@ public:
     void setRoot(const int* varOrder);
     bool solvedAtRoot();
 
+    void run();
     bool next();
     void clear();
 

@@ -23,7 +23,6 @@
 #include "../../multicore/ivm/matrix_controller.h"
 
 
-
 void
 worker_mc::interrupt()
 {
@@ -35,11 +34,7 @@ worker_mc::doWork()
 {
     pbb->ttm->on(pbb->ttm->workerExploretime);
 
-    // printf("dowork///\n");
-    // bool triggerComm = false;
-
     FILE_LOG(logDEBUG) << "=== dowork== " << comm->rank;
-    // printf("donework== %d =\n",comm->rank);
 
     pbb->foundNewSolution.store(false);
     pthread_mutex_lock_check(&mutex_wunit);
@@ -49,9 +44,6 @@ worker_mc::doWork()
     pbb->ttm->off(pbb->ttm->workerExploretime);
 
     setNewBest(pbb->foundNewSolution);
-    // setNewBest(mc->foundNew);
-
-    // std::cout<<"MCFOUNDNEW "<<mc->foundNew<<" "<<pbb->foundNewSolution<<std::endl;
 
     return true; //triggerComm;// comm condition met
 }
@@ -59,8 +51,6 @@ worker_mc::doWork()
 void
 worker_mc::updateWorkUnit()
 {
-    // printf("update work unit\n");
-
     pthread_mutex_lock_check(&mutex_wunit);
     mc->initFromFac(
         work_buf->nb_intervals,
@@ -92,17 +82,13 @@ worker_mc::getIntervals()
     dwrk->nbLeaves           = pbb->stats.leaves;
     pbb->stats.totDecomposed = 0;
     pbb->stats.leaves        = 0;
-
-    // printf("%d get %d intervals\n",comm->rank,work_buf->nb_intervals); fflush(stdout);
 }
 
 
 void
 worker_mc::getSolutions()
 {
-    // printf("%d %d\n",sol_ind_begin,sol_ind_end);
     pthread_mutex_lock_check(&mutex_solutions);
-
     if(sol_ind_begin >= sol_ind_end){
         int nb=mc->getSubproblem(solutions,max_sol_ind);
         if(nb>0){
@@ -111,6 +97,5 @@ worker_mc::getSolutions()
         }
 
     }
-
     pthread_mutex_unlock(&mutex_solutions);
 }

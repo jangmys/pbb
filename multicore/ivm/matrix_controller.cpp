@@ -64,6 +64,11 @@ matrix_controller::make_bbexplorer(unsigned _id){
 void
 matrix_controller::initFullInterval()
 {
+    //all empty
+    for(int i=0;i<M;i++){
+        state[i]=0;
+    }
+    //explorer 0 gets complete interval [0,n![
     for (int i = 0; i < size; i++) {
         pos[0][i] = 0;
         end[0][i]  = size - i - 1;
@@ -71,13 +76,6 @@ matrix_controller::initFullInterval()
     state[0]=1;
 
     sequentialbb<int>::first=true;
-
-    FILE_LOG(logDEBUG) << "WS list ";
-    for(auto i:victim_list)
-    {
-        FILE_LOG(logDEBUG) << i;
-    }
-    FILE_LOG(logDEBUG) << "MC initialized";
 }
 
 bool
@@ -98,15 +96,7 @@ matrix_controller::initFromFac(const unsigned int nbint, const int * ids, int * 
         printf("nothing received\n");
         return;
     }
-    // printf("init from fac %d\n",nbint);fflush(stdout);
-
     updatedIntervals = 1;
-
-    // for (int k = 0; k < M; k++) {
-    //     pthread_mutex_lock_check(&bbb[k]->mutex_ivm);
-    //     bbb[k]->clear();//zero IVM, intreval..
-    //     pthread_mutex_unlock(&bbb[k]->mutex_ivm);
-    // }
 
     for (unsigned int k = 0; k < nbint; k++) {
         pthread_mutex_lock_check(&bbb[k]->mutex_ivm);
@@ -117,23 +107,16 @@ matrix_controller::initFromFac(const unsigned int nbint, const int * ids, int * 
             exit(-1);
         }
 
-        FILE_LOG(logDEBUG) << "initFromFac " << id;
-
         victim_list.remove(id);
         victim_list.push_front(id);// put in front
 
         state[id]=1;
 
-        // initialize at interval [begin,end]
         bbb[id]->setRoot(pbb->root_sltn->perm);
-
         for (int i = 0; i < size; i++) {
             pos[id][i] = _pos[k * size + i];
             end[id][i] = _end[k * size + i];
         }
-
-        state[0]=1;
-        // bbb[id]->initAtInterval(pos + k * size, end + k * size);
         pthread_mutex_unlock(&bbb[k]->mutex_ivm);
     }
 }
@@ -159,10 +142,6 @@ matrix_controller::getIntervals(int * pos, int * end, int * ids, int &nb_interva
         }
         pthread_mutex_unlock(&bbb[k]->mutex_ivm);
     }
-    // std::cout<<"got "<<nbActive<<" intervals.\n";
-
-
-
 
     nb_intervals = nbActive;
 }
@@ -179,11 +158,8 @@ int
 matrix_controller::work_share(unsigned id, unsigned thief)
 {
     if(id==thief){perror("can't share with myself (mc)\n"); exit(-1);}
-    if(id > M){
+    if(id > M || thief > M){
         perror("invalid victim ID (mc)\n"); exit(-1);
-    }
-    if(thief > M){
-        perror("invalid thief ID (mc)\n"); exit(-1);
     }
 
     int ret = dynamic_cast<ivmthread*>(bbb[id])->shareWork(1, 2, dynamic_cast<ivmthread*>(bbb[thief])->ivmbb);
@@ -232,9 +208,6 @@ matrix_controller::explore_multicore()
     }
 
     bbb[id]->reset_requestQueue();
-
-    // int ret = pthread_barrier_wait(&barrier);
-    // FILE_LOG(logDEBUG) << "===" << std::flush;
     dynamic_cast<ivmthread*>(bbb[id])->ivmbb->count_decomposed = 0;
 
     int ret = pthread_barrier_wait(&barrier);
@@ -245,10 +218,6 @@ matrix_controller::explore_multicore()
     }
     ret = pthread_barrier_wait(&barrier);
 
-    int req=0;
-    int rep=0;
-    int iter=0;
-
     int bestCost=INT_MAX;
 
     while (1) {
@@ -257,22 +226,16 @@ matrix_controller::explore_multicore()
         //set best UB for multi-core BB
         dynamic_cast<ivmthread*>(bbb[id])->ivmbb->setBest(bestCost);
 
-        // pthread_mutex_lock_check(&bbb[id]->mutex_ivm);
         bool continuer = bbb[id]->bbStep();
-        // pthread_mutex_unlock(&bbb[id]->mutex_ivm);
 
         if (allEnd.load(std::memory_order_relaxed)) {
             FILE_LOG(logDEBUG) << "=== ALL END";
             break;
-        }else if (!continuer){ // && !allEnd.load(std::memory_order_relaxed)) {
-            req++;
+        }else if (!continuer){
             request_work(id);
         }else{
-            rep++;
             try_answer_request(id);
         }
-
-        iter++;
 
         if(!arguments::singleNode)
         {
@@ -281,7 +244,6 @@ matrix_controller::explore_multicore()
             {
                 break;
             }
-
             if(pbb->foundNewSolution){
                 break;
             }
@@ -289,6 +251,7 @@ matrix_controller::explore_multicore()
     }
 
     pbb->stats.totDecomposed += dynamic_cast<ivmthread*>(bbb[id])->ivmbb->count_decomposed;
+    pbb->stats.leaves += dynamic_cast<ivmthread*>(bbb[id])->ivmbb->count_leaves;
 
     allEnd.store(true);
     stop(id);
@@ -298,9 +261,7 @@ void *
 mcbb_thread(void * _mc)
 {
     matrix_controller * mc = (matrix_controller *) _mc;
-
     mc->explore_multicore();
-
     return NULL;
 }
 
@@ -311,7 +272,7 @@ matrix_controller::resetExplorationState()
     end_counter.store(0);// termination counter
     allEnd.store(false);
     atom_nb_explorers.store(0);// id_generator
-    atom_nb_steals.store(0);// termination counter
+    atom_nb_steals.store(0);//count work thefts
 }
 
 bool
@@ -327,7 +288,6 @@ matrix_controller::next()
 
     for (unsigned i = 0; i < M; i++)
     {
-        // int err = pthread_join(threadId, &ptr);
         int err = pthread_join(threads[i], NULL);
         if (err)
         {
@@ -335,29 +295,22 @@ matrix_controller::next()
             return err;
         }
     }
-
-    return allEnd.load();// || periodPassed);
+    return allEnd.load();
 }
 
 
 int
 matrix_controller::getSubproblem(int *ret, const int N)
 {
-    // printf("get\n");
-
-    // gpuErrchk(cudaMemcpy(depth_histo_h,depth_histo_d,size*sizeof(int int),cudaMemcpyDeviceToHost));
-
     int count=0;
 
     for (unsigned i = 0; i < M; i++){
         if( !bbb[i]->isEmpty() ){
-        // if( dynamic_cast<ivmthread*>(bbb[i])->ivmbb->IVM->beforeEnd() ){
             count++;
         }
     }
 
     if(count==0)return 0;
-
 
     int nb=std::min(count,N);
     count=0;
@@ -367,16 +320,13 @@ matrix_controller::getSubproblem(int *ret, const int N)
         if(count>=nb)break;
 
         if(!bbb[i]->isEmpty())
-        // if(dynamic_cast<ivmthread*>(bbb[i])->ivmbb->IVM->beforeEnd())
         {
             for(int k=0;k<size;k++){
                 dynamic_cast<ivmthread*>(bbb[i])->getSchedule(&ret[count*size]);
-                // ret[count*size+k]=bbb[i]->bd->node->schedule[k];
             }
             count++;
         }
     }
 
-    // printf(";;; %d %d %d\n",count,N,nb);
     return nb;
 }

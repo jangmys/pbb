@@ -28,8 +28,6 @@ public:
      freeMem() = 0;
     virtual int
      evalSolution(int * permut) = 0;
-    // virtual
-    // ~bound_abstract() = 0;
 protected:
     // instance_abstract * instance;
 };
