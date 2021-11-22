@@ -3,6 +3,7 @@
 
 #include "pbab.h"
 #include "bbthread.h"
+#include "sequentialbb.h"
 
 class pbab;
 
@@ -12,16 +13,16 @@ public:
     ivmthread(pbab* _pbb);
     ~ivmthread();
 
-    sequentialbb* ivmbb;
+    sequentialbb<int>* ivmbb;
 
     void
     getSchedule(int *sch)
     {
-        ivmbb->bd->getSchedule(sch);
+        ivmbb->IVM->getSchedule(sch);
     }
 
     int
-    shareWork(int numerator, int denominator, sequentialbb *thief_thread);
+    shareWork(int numerator, int denominator, sequentialbb<int> *thief_thread);
 
     bool bbStep(){
         return ivmbb->next();

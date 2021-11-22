@@ -1,6 +1,8 @@
 #ifndef IVM_H
 #define IVM_H
 
+#include <subproblem.h>
+
 class ivm{
 private:
     int size;
@@ -11,6 +13,8 @@ public:
     int* posVect;
     int* endVect;
     int* dirVect;
+
+    std::unique_ptr<subproblem> node;
 
     ivm(int _size);
     ~ivm();
@@ -38,6 +42,15 @@ public:
 
     int countExplorableSubtrees(const int line);
     int cuttingPosition(const int line, const int division);
+
+    void decodeIVM();
+
+    template<typename T>
+    void sortSiblingNodes(std::vector<T> lb,std::vector<T> prio);
+
+    bool intervalValid();
+    void getSchedule(int *sch);
 };
+
 
 #endif

@@ -73,7 +73,12 @@ class OperatorFactory
                     return bd2;
                 }
                 if(nb==1){
-                    return nullptr;
+                    auto bd2 = std::make_unique<bound_fsp_strong>( );
+                    bd2->init(instance);
+                    bd2->earlyExit=arguments::earlyStopJohnson;
+                    bd2->machinePairs=arguments::johnsonPairs;
+                    return bd2;
+                    // return nullptr;
                 }
             }
             if(arguments::boundMode == 2){
@@ -96,5 +101,45 @@ class OperatorFactory
 
     	std::cout<<"CreateBound: unknown problem\n";
     	return nullptr;
+    }
+
+    static std::unique_ptr<evaluator<int>> createEvaluator(instance_abstract* instance, int nb)
+    {
+        switch (arguments::boundMode) {
+            case 0:{
+                auto ev = std::make_unique<evaluator<int>>(
+                    std::make_unique<bound_fsp_weak>()
+                );
+                ev->lb->init(instance);
+                return ev;
+            }
+            case 1:{
+                auto bd2 = std::make_unique<bound_fsp_strong>( );
+                bd2->init(instance);
+                bd2->earlyExit=arguments::earlyStopJohnson;
+                bd2->machinePairs=arguments::johnsonPairs;
+
+                auto ev = std::make_unique<evaluator<int>>(
+                    std::move(bd2)
+                );
+                return ev;
+            }
+            case 2:{
+                auto bd = std::make_unique<bound_fsp_weak>();
+                bd->init(instance);
+
+                auto bd2 = std::make_unique<bound_fsp_strong>( );
+                bd2->init(instance);
+                bd2->earlyExit=arguments::earlyStopJohnson;
+                bd2->machinePairs=arguments::johnsonPairs;
+
+                auto ev = std::make_unique<evaluator<int>>(
+                    std::move(bd),
+                    std::move(bd2)
+                );
+                return ev;
+            }
+
+        }
     }
 };

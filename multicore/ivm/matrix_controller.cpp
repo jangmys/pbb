@@ -70,7 +70,7 @@ matrix_controller::initFullInterval()
     }
     state[0]=1;
 
-    ivm_bound<int>::first=true;
+    sequentialbb<int>::first=true;
 
     FILE_LOG(logDEBUG) << "WS list ";
     for(auto i:victim_list)
@@ -211,7 +211,7 @@ matrix_controller::explore_multicore()
         FILE_LOG(logDEBUG) << id << " === allocated";
     }
 
-    FILE_LOG(logDEBUG) << id << " === state " << state[id];
+    // int ret = pthread_barrier_wait(&barrier);
 
     if(state[id]==1){
         FILE_LOG(logDEBUG) << id << " === state 1";
@@ -235,10 +235,11 @@ matrix_controller::explore_multicore()
 
     bbb[id]->reset_requestQueue();
 
-    FILE_LOG(logDEBUG1) << std::flush;
+    ret = pthread_barrier_wait(&barrier);
+    FILE_LOG(logDEBUG) << "===" << std::flush;
     dynamic_cast<ivmthread*>(bbb[id])->ivmbb->count_decomposed = 0;
 
-    int ret = pthread_barrier_wait(&barrier);
+    ret = pthread_barrier_wait(&barrier);
     if(ret==PTHREAD_BARRIER_SERIAL_THREAD)
     {
         updatedIntervals = 0;

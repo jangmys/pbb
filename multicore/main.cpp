@@ -36,7 +36,7 @@ main(int argc, char ** argv)
         case ivm_seqbb:
         {
             std::cout<<" === Run single-threaded IVM-BB"<<std::endl;
-            sequentialbb *sbb=new sequentialbb(pbb,pbb->size);
+            sequentialbb<int> *sbb=new sequentialbb<int>(pbb,pbb->size);
 
             sbb->setRoot(pbb->root_sltn->perm);
             sbb->initFullInterval();

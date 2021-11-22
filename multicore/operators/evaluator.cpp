@@ -1,6 +1,45 @@
 #include <limits>
+#include <algorithm>
 
+#include "branching.h"
 #include "evaluator.h"
+
+
+template<typename T>
+void
+evaluator<T>::get_children_bounds_strong(subproblem& node, std::vector<int> mask, int begin_end, int fillPos, std::vector<T>& lower_bounds, std::vector<T>& priority,int best)
+{
+    int _limit1 = node.limit1;
+    int _limit2 = node.limit2;
+    if(begin_end == branching::Front){
+        _limit1++;
+    }
+    if(begin_end == branching::Back){
+        _limit2--; 
+    }
+
+    T costs[2];
+
+    for (int i = node.limit1 + 1; i < node.limit2; i++) {
+        int job = node.schedule[i];
+        if(mask[job]){
+            std::swap(node.schedule[fillPos], node.schedule[i]);
+            lb2->bornes_calculer(node.schedule.data(), _limit1, _limit2, costs, best);
+            lower_bounds[job] = costs[0];
+            priority[job]=costs[1];
+            std::swap(node.schedule[fillPos], node.schedule[i]);
+        }
+    }
+};
+
+template<typename T>
+void
+evaluator<T>::get_children_bounds_weak(subproblem& node, std::vector<T>& lower_bound_begin, std::vector<T>& lower_bound_end, std::vector<T>& priority_begin, std::vector<T>& priority_end)
+{
+    lb->boundChildren(node.schedule.data(),node.limit1,node.limit2,lower_bound_begin.data(),lower_bound_end.data(),priority_begin.data(),priority_end.data());
+};
+
+
 
 
 template <typename T>

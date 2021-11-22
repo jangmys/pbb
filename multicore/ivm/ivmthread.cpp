@@ -2,7 +2,7 @@
 
 ivmthread::ivmthread(pbab* _pbb) :
     bbthread(_pbb),
-    ivmbb(new sequentialbb(_pbb,_pbb->size))
+    ivmbb(new sequentialbb<int>(_pbb,_pbb->size))
 {
 };
 
@@ -12,7 +12,7 @@ ivmthread::~ivmthread()
 
 
 int
-ivmthread::shareWork(int numerator, int denominator, sequentialbb *thief_thread)
+ivmthread::shareWork(int numerator, int denominator, sequentialbb<int> *thief_thread)
 {
     int numShared = 0;
     int l         = 0;

@@ -7,6 +7,8 @@ ivm::ivm(int _size) : size(_size){
     endVect = (int*)calloc(size,sizeof(int));
     dirVect = (int*)calloc(size,sizeof(int));
 
+    node = std::make_unique<subproblem>(size);
+
     // posix_memalign((void **) &jobMat, ALIGN, size * size * sizeof(int));
     // posix_memalign((void **) &posVect, ALIGN, size * sizeof(int));
     // posix_memalign((void **) &endVect, ALIGN, size * sizeof(int));
@@ -87,35 +89,8 @@ void ivm::goUp()
 //"branch"
 void ivm::goDown()
 {
-    // if(line == size-1){
-    //     std::cout << "After last line " << line << std::endl;
-    //     exit(-1);
-    // }
-    // int pos = posVect[line];
-    // if(pos<0 || pos>=size)
-    // {
-    //     std::cout << "Position " << pos << " outside matrix" << std::endl;
-    //     exit(-1);
-    // }
-    // if(jobMat[line*size + pos] < 0)
-    // {
-    //     std::cout  << "Already explored position " << pos << " for line " << line << std::endl;
-    //     exit(-1);
-    // }
     line++;
     generateLine(line, true);
-
-    // for (int i = 0; i < size-line; i++) {
-    //     int job = jobMat[line*size+i];
-    //     if(job<0 || job>=size){
-    //         printf("MORE WEIRDNESS:invalid job %d (line %d)\n",job,line);
-    //         displayVector(posVect);
-    //         displayVector(endVect);
-    //         displayMatrix();//Vector(jm);
-    //         // break;
-    //         exit(-1);
-    //     }
-    // }
 }
 
 int removeFlag(int a)
@@ -160,18 +135,6 @@ ivm::isLastLine() const
 bool
 ivm::pruningCellState() const
 {
-	// int nonzero=0;
-	// for(int i=0;i<size;++i){
-	// 	if(posVect[i]>0)nonzero+=(size-i);
-	// }
-	// if(nonzero>200)return true;
-
-	// int disc=0;
-	// for(int i=0;i<size;++i){
-	// 	disc += posVect[i];
-	// }
-	// if(disc>50)return true;
-
 	int pos = posVect[line];
 
     return jobMat[line * size + pos] < 0;
@@ -186,6 +149,95 @@ ivm::beforeEnd() const
     }
     return true;
 }
+
+
+
+
+
+//reads IVM and sets current subproblem
+void
+ivm::decodeIVM()
+{
+    const int* const jM  = jobMat;
+    const int* const pV  = posVect;
+    int _line = line;
+
+    node->limit1 = -1;
+    node->limit2 = size;
+
+    for (int l = 0; l < _line; l++) {
+        int pointed = pV[l];
+        int job     = absolute(jM[l * size + pointed]);
+
+        if (dirVect[l] == 0) {
+            node->schedule[++node->limit1] = job;
+        } else {
+            node->schedule[--node->limit2] = job;
+        }
+    }
+    for (int l = 0; l < size - _line; l++){
+        node->schedule[node->limit1 + 1 + l] = absolute(jM[_line * size + l]);
+    }
+} // prepareSchedule
+
+template<typename T>
+void ivm::sortSiblingNodes(std::vector<T> lb,std::vector<T> prio)
+{
+    int _line=line;
+
+    switch (arguments::sortNodes) {
+        case 0:
+        {
+            int *jm = jobMat + _line * size;
+            int prev_dir=(_line>0)?dirVect[_line-1]:0;
+            if(prev_dir!=dirVect[_line])
+            {
+                // std::cout<<"line "<<_line<<" dir "<<IVM->dirVect[_line]<<" reverse\n";
+                int i1=0;
+                int i2=size-_line-1;
+                while(i1<i2){
+                    swap(&jm[i1], &jm[i2]);
+                    i1++; i2--;
+                }
+            }
+            if(prev_dir==1 && dirVect[_line]==0){
+                for (int l = 0; l < size - _line; l++){
+                    node->schedule[node->limit1 + 1 + l] = absolute(jm[l]);
+                }
+            }
+            break;
+        }
+        case 1://non-decreasing cost1
+        {
+            int *jm = jobMat + _line * size;
+            gnomeSortByKeyInc(jm, lb.data(), 0, size-_line-1);
+            break;
+        }
+        case 2://non-decreasing cost1, break ties by priority (set in chooseChildrenSet)
+        {
+            int *jm = jobMat + _line * size;
+            gnomeSortByKeysInc(jm, lb.data(), prio.data(), 0, size-_line-1);
+            break;
+        }
+        case 3:
+        {
+            int *jm = jobMat + _line * size;
+            gnomeSortByKeyInc(jm, prio.data(), 0, size-_line-1);
+            break;
+        }
+        case 4:
+        {
+            int *jm = jobMat + _line * size;
+            gnomeSortByKeysInc(jm, lb.data(), prio.data(), 0, size-_line-1);
+            break;
+        }
+    }
+}
+
+
+
+
+
 
 void
 ivm::displayVector(int *ptr) const
@@ -263,3 +315,30 @@ int ivm::cuttingPosition(const int line, const int division)
 
 	return pos;
 }
+
+bool ivm::intervalValid(){
+    for (int i = 0; i < size; i++) {
+        if ((posVect[i] < 0) || (posVect[i] >= size - i)) {
+            std::cout << " incorrect position vector " << i << " " << posVect[i] << std::endl;
+            exit(-1);
+        }
+        if ((endVect[i] < 0) || (endVect[i] >= size - i)) {
+            std::cout << " incorrect end vector " << i << " " << endVect[i] << std::endl;
+            std::cout << " pos " << i << " " << posVect[i] << std::endl;
+            exit(-1);
+        }
+    }
+}
+
+
+void
+ivm::getSchedule(int *sch)
+{
+    for (int i = 0; i < size; i++) {
+        sch[i]=node->schedule[i];
+    }
+}
+
+
+
+template void ivm::sortSiblingNodes<int>(std::vector<int> lb,std::vector<int> prio);
