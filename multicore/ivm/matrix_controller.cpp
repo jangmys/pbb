@@ -211,8 +211,6 @@ matrix_controller::explore_multicore()
         FILE_LOG(logDEBUG) << id << " === allocated";
     }
 
-    // int ret = pthread_barrier_wait(&barrier);
-
     if(state[id]==1){
         FILE_LOG(logDEBUG) << id << " === state 1";
 
@@ -235,11 +233,11 @@ matrix_controller::explore_multicore()
 
     bbb[id]->reset_requestQueue();
 
-    ret = pthread_barrier_wait(&barrier);
-    FILE_LOG(logDEBUG) << "===" << std::flush;
+    // int ret = pthread_barrier_wait(&barrier);
+    // FILE_LOG(logDEBUG) << "===" << std::flush;
     dynamic_cast<ivmthread*>(bbb[id])->ivmbb->count_decomposed = 0;
 
-    ret = pthread_barrier_wait(&barrier);
+    int ret = pthread_barrier_wait(&barrier);
     if(ret==PTHREAD_BARRIER_SERIAL_THREAD)
     {
         updatedIntervals = 0;
