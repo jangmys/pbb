@@ -16,6 +16,7 @@ add_subdirectory(src)
 add_subdirectory(${PARENT_DIR}/common/src ./build_common)
 add_subdirectory(${PARENT_DIR}/multicore/base ./build_mcbase)
 add_subdirectory(${PARENT_DIR}/multicore/ivm ./build_mcivm)
+add_subdirectory(${PARENT_DIR}/multicore/operators ./build_mcoperators)
 
 if(GPU)
     add_subdirectory(${PARENT_DIR}/gpu ./build_gpu)
