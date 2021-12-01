@@ -6,13 +6,32 @@
 class ivm{
 private:
     int size;
-
-public:
     int line = 0;
-    int* jobMat;
     int* posVect;
     int* endVect;
     int* dirVect;
+
+public:
+    int* jobMat;
+
+    //operate on line
+    int getDepth() const;
+    void setDepth(int _line);
+    void incrDepth();
+    //operate on position vector
+    void alignLeft();
+    void setPosition(int* pos);
+    void setPosition(int depth, int pos);
+    int getPosition(const int _d) const;
+    //operate on end vector
+    void setEnd(int* end);
+    void setEnd(int depth, int end);
+    int getEnd(const int _d) const;
+
+    int getDirection(const int _d) const;
+    void setDirection(int depth, int dir);
+
+
 
     std::unique_ptr<subproblem> node;
 

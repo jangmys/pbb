@@ -30,6 +30,64 @@ ivm::~ivm()
     free(dirVect);
 }
 
+int ivm::getDepth() const{
+    return line;
+}
+
+void ivm::setDepth(int _line){
+    line = _line;
+};
+
+void ivm::incrDepth(){
+    line++;
+};
+
+void ivm::alignLeft(){
+    for (int i = getDepth() + 1; i < size; i++) {
+        posVect[i] = 0;
+    }
+};
+
+void ivm::setPosition(int* pos){
+    for(int i=0;i<size;i++){
+        posVect[i] = pos[i];
+    }
+}
+
+void ivm::setPosition(int depth, int pos){
+    posVect[depth] = pos;
+}
+
+int ivm::getPosition(const int _d) const{
+    return posVect[_d];
+}
+
+
+
+void ivm::setEnd(int* end){
+    for(int i=0;i<size;i++){
+        endVect[i] = end[i];
+    }
+}
+
+void ivm::setEnd(int depth,int end){
+    endVect[depth] = end;
+}
+
+int ivm::getEnd(const int _d) const{
+    return endVect[_d];
+}
+
+
+
+void ivm::setDirection(int depth, int dir){
+    dirVect[depth] = dir;
+};
+
+int ivm::getDirection(const int _d) const{
+    return dirVect[_d];
+}
+
 /**
 * \brief TODO
 */
