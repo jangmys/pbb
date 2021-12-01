@@ -61,7 +61,8 @@ sequentialbb<T>::setRoot(const int *varOrder)
     for(int i=0; i<size; i++){
         IVM->jobMat[i] = varOrder[i];
     }
-    IVM->line=0;
+
+    IVM->setDepth(0);
 
     IVM->decodeIVM();
     boundRoot();
@@ -82,7 +83,6 @@ sequentialbb<T>::solvedAtRoot()
             std::cout<<IVM->jobMat[i]<<" ";
         }
         std::cout<<std::endl;
-        // IVM->posVect[0]=size;
     }
     return solved;
 }
@@ -91,18 +91,14 @@ template<typename T>
 void
 sequentialbb<T>::initFullInterval()
 {
-    int * zeroFact = (int *) malloc(size * sizeof(int));
-    int * endFact  = (int *) malloc(size * sizeof(int));
+    std::vector<int> zeroFact(size,0);
+    std::vector<int> endFact(size,0);
 
     for (int i = 0; i < size; i++) {
-        zeroFact[i] = 0;
         endFact[i]  = size - i - 1;
     }
 
-    initAtInterval(zeroFact, endFact);
-
-    free(zeroFact);
-    free(endFact);
+    initAtInterval(zeroFact.data(), endFact.data());
 }
 
 
@@ -110,13 +106,10 @@ template<typename T>
 bool
 sequentialbb<T>::initAtInterval(int * pos, int * end)
 {
-    int l = 0;
-    IVM->line = l;
+    IVM->setDepth(0);
 
-    for (int i = 0; i < size; i++) {
-        IVM->posVect[i] = pos[i];
-        IVM->endVect[i] = end[i];
-    }
+    IVM->setPosition(pos);
+    IVM->setEnd(end);
 
     if (IVM->beforeEnd()) {
         unfold(arguments::boundMode);
@@ -187,11 +180,6 @@ bool sequentialbb<T>::next()
                 mixedBoundPrune();
                 break;
         }
-
-        if (IVM->line >= size - 1) {
-            printf("too deeep\n");
-            exit(0);
-        }
     }
 
     return (state == 1);
@@ -206,19 +194,17 @@ sequentialbb<T>::unfold(int mode)
         exit(-1);
     }
 
-    while (IVM->line < size - 2) {
+    while (IVM->getDepth() < size - 2) {
         if (IVM->pruningCellState()) {
-            for (int i = IVM->line + 1; i < size; i++) {
-                IVM->posVect[i] = 0;
-            }
+            IVM->alignLeft();
             break;
         }
 
-        IVM->line++;
-        IVM->generateLine(IVM->line, false);
+        IVM->incrDepth();
+        IVM->generateLine(IVM->getDepth(), false);
         IVM->decodeIVM();
 
-        FILE_LOG(logDEBUG) << " === Line: "<<IVM->line<<"\n";
+        FILE_LOG(logDEBUG) << " === Line: "<<IVM->getDepth()<<"\n";
 
         switch (mode) {
             case 0:
@@ -243,12 +229,13 @@ sequentialbb<T>::weakBoundPrune()
     // get lower bounds
     eval->get_children_bounds_weak(*(IVM->node.get()),lower_bound_begin,lower_bound_end,priority_begin,priority_end);
     //make branching decision
-    IVM->dirVect[IVM->line] = (*branch)(lower_bound_begin.data(),lower_bound_end.data(),IVM->line);
+    int dir = (*branch)(lower_bound_begin.data(),lower_bound_end.data(),IVM->getDepth());
+    IVM->setDirection(IVM->getDepth(),dir);
 
-    if(IVM->dirVect[IVM->line] == branching::Front){
+    if(IVM->getDirection(IVM->getDepth()) == branching::Front){
         IVM->sortSiblingNodes(lower_bound_begin,priority_begin);
         eliminateJobs(lower_bound_begin);
-    }else if(IVM->dirVect[IVM->line] == branching::Back){
+    }else if(IVM->getDirection(IVM->getDepth()) == branching::Back){
         IVM->sortSiblingNodes(lower_bound_end,priority_end);
         eliminateJobs(lower_bound_end);
     }
@@ -260,14 +247,15 @@ sequentialbb<T>::mixedBoundPrune(){
     // get lower bounds
     eval->get_children_bounds_weak(*(IVM->node.get()),lower_bound_begin,lower_bound_end,priority_begin,priority_end);
     //make branching decision
-    IVM->dirVect[IVM->line]=(*branch)(lower_bound_begin.data(),lower_bound_end.data(),IVM->line);
+    int dir = (*branch)(lower_bound_begin.data(),lower_bound_end.data(),IVM->getDepth());
+    IVM->setDirection(IVM->getDepth(),dir);
 
     boundNode(IVM,lower_bound_begin,lower_bound_end);
 
-    if(IVM->dirVect[IVM->line] == branching::Front){
+    if(IVM->getDirection(IVM->getDepth()) == branching::Front){
         IVM->sortSiblingNodes(lower_bound_begin,priority_begin);
         eliminateJobs(lower_bound_begin);
-    }else if(IVM->dirVect[IVM->line] == branching::Back){
+    }else if(IVM->getDirection(IVM->getDepth()) == branching::Back){
         IVM->sortSiblingNodes(lower_bound_begin,priority_end);
         eliminateJobs(lower_bound_end);
     }
@@ -276,17 +264,19 @@ sequentialbb<T>::mixedBoundPrune(){
 template<typename T>
 void
 sequentialbb<T>::strongBoundPrune(){
-    IVM->dirVect[IVM->line]=-1;
+    IVM->setDirection(IVM->getDepth(),-1);
+
     std::fill(lower_bound_begin.begin(),lower_bound_begin.end(),0);
     std::fill(lower_bound_end.begin(),lower_bound_end.end(),0);
 
     boundNode(IVM,lower_bound_begin,lower_bound_end);
-    IVM->dirVect[IVM->line]=(*branch)(lower_bound_begin.data(),lower_bound_end.data(),IVM->line);
+    int dir = (*branch)(lower_bound_begin.data(),lower_bound_end.data(),IVM->getDepth());
+    IVM->setDirection(IVM->getDepth(),dir);
 
-    if(IVM->dirVect[IVM->line] == branching::Front){
+    if(IVM->getDirection(IVM->getDepth()) == branching::Front){
         IVM->sortSiblingNodes(lower_bound_begin,priority_begin);
         eliminateJobs(lower_bound_begin);
-    }else if(IVM->dirVect[IVM->line] == branching::Back){
+    }else if(IVM->getDirection(IVM->getDepth()) == branching::Back){
         IVM->sortSiblingNodes(lower_bound_end,priority_end);
         eliminateJobs(lower_bound_end);
     }
@@ -321,7 +311,7 @@ template<typename T>
 void
 sequentialbb<T>::boundNode(const ivm* IVM, std::vector<T>& lb_begin, std::vector<T>& lb_end)
 {
-    int dir=IVM->dirVect[IVM->line];
+    int dir=IVM->getDirection(IVM->getDepth());
 
     FILE_LOG(logDEBUG) << " === Bound: "<<dir<<"\n";
 
@@ -371,9 +361,9 @@ sequentialbb<T>::boundLeaf()
         }
     }
     //mark solution as visited
-    int pos = IVM->posVect[IVM->line];
-    int job = IVM->jobMat[IVM->line * size + pos];
-    IVM->jobMat[IVM->line * size + pos] = negative(job);
+    int pos = IVM->getPosition(IVM->getDepth());
+    int job = IVM->jobMat[IVM->getDepth() * size + pos];
+    IVM->jobMat[IVM->getDepth() * size + pos] = negative(job);
 
     return better;
 }
@@ -390,7 +380,7 @@ sequentialbb<T>::boundRoot(){
         int c=0;
         for(auto i : rootRow)
             IVM->jobMat[c++]=i;
-        IVM->dirVect[0] = rootDir;
+        IVM->setDirection(0,rootDir);
     }else{
         first = false;
 
@@ -399,14 +389,15 @@ sequentialbb<T>::boundRoot(){
             IVM->node->schedule[i] = pbb->root_sltn->perm[i];
             IVM->jobMat[i] = pbb->root_sltn->perm[i];
         }
-        IVM->line=0;
+
+        IVM->setDepth(0);
         IVM->node->limit1=-1;
         IVM->node->limit2=size;
 
         weakBoundPrune();
 
         //save first line of matrix (bounded root decomposition)
-        rootDir = IVM->dirVect[0];
+        rootDir = IVM->getDirection(0);
         int c=0;
         for(auto &i : rootRow)
             i=IVM->jobMat[c++];
@@ -420,7 +411,7 @@ template<typename T>
 void
 sequentialbb<T>::eliminateJobs(std::vector<T> lb)
 {
-    int _line=IVM->line;
+    int _line=IVM->getDepth();
     int * jm = IVM->jobMat + _line * size;
 
     // eliminate

@@ -109,7 +109,6 @@ matrix_controller::initFromFac(const unsigned int nbint, const int * ids, int * 
 
         victim_list.remove(id);
         victim_list.push_front(id);// put in front
-
         state[id]=1;
 
         bbb[id]->setRoot(pbb->root_sltn->perm);
