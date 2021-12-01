@@ -31,14 +31,14 @@ public:
     fillMinHeadsTails();
 
     void
-    computePartial(int * permut, int limit1, int limit2);
+    computePartial(const int * permut, int limit1, int limit2, std::vector<int>& front, std::vector<float>& idleFront, std::vector<int>& back, std::vector<float>& idleBack, std::vector<int>& remain);
     int
-    addFrontAndBound(int job, float &prio);
+    addFrontAndBound(int job, float &prio, const std::vector<int>& front, const std::vector<float>& idleFront, const std::vector<int>& back, const std::vector<float>& idleBack, const std::vector<int>& remain);
     int
-    addBackAndBound(int job, float &prio);
+    addBackAndBound(int job, float &prio, const std::vector<int>& front, const std::vector<float>& idleFront, const std::vector<int>& back, const std::vector<float>& idleBack, const std::vector<int>& remain);
 
     void
-    boundChildren(int * permut, int limit1, int limit2, int * costsBegin, int * costsEnd, float * prioBegin, float * prioEnd);
+    boundChildren(const int * permut, int limit1, int limit2, int * costsBegin, int * costsEnd, float * prioBegin, float * prioEnd);
 
     int
     evalSolution(int * permut);
@@ -51,19 +51,12 @@ public:
     void
     freeMem(){};
 private:
-    std::vector<int> front;
-    std::vector<int> back;
-    std::vector<int> remain;
-
-    std::vector<float> idleFront;
-    std::vector<float> idleBack;
-
     void
-    scheduleFront(int * permut, int limit1);
+    scheduleFront(const int * permut, int limit1, std::vector<int>& front, std::vector<float>& idleFront);
     void
-    scheduleBack(int * permut, int limit2);
+    scheduleBack(const int * permut, int limit2, std::vector<int>& back, std::vector<float>& idleBack);
     void
-    sumUnscheduled(int * permut, int limit1, int limit2);
+    sumUnscheduled(const int * permut, int limit1, int limit2, std::vector<int>& remain);
 };
 
 #endif
