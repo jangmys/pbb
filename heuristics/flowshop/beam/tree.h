@@ -4,12 +4,15 @@
 #define DEQUE       'd'
 #define STACK       's'
 #define PRIOQ       'p'
+#define VECTOR      'v'
 
 #define BEGIN_ORDER 0
 #define END_ORDER   1
 
 #define SIMPLE      0
 #define JOHNSON     1
+
+#include <memory>
 
 #include "../../common/inih/INIReader.h"
 
@@ -31,19 +34,18 @@ class pbab;
 
 struct lb_compare {
     bool
-    operator () (subproblem const * p1, subproblem const * p2) const
+    operator () (std::shared_ptr<subproblem> p1, std::shared_ptr<subproblem> p2) const
     {
         if(p1->cost > p2->cost)return true;
         if(p1->cost < p2->cost)return false;
         return (p1->depth < p2->depth);
-        // return p1->cost < p2->cost;
     }
 };
 
 //p1 "greater" p2 --> smallest on top
 struct ub_compare {
     bool
-    operator () (subproblem const * p1, subproblem const * p2) const
+    operator () (std::shared_ptr<subproblem> p1, std::shared_ptr<subproblem> p2) const
     {
         //smaller cost first
         if(p1->ub > p2->ub)return true;
@@ -51,9 +53,9 @@ struct ub_compare {
         //depth first
         if(p1->depth < p2->depth)return true;
         if(p1->depth > p2->depth)return false;
-        //smaller (weighted) idle time
-        if(p1->prio > p2->prio)return true;
-        if(p1->prio < p2->prio)return false;
+        // //smaller (weighted) idle time
+        // if(p1->prio > p2->prio)return true;
+        // if(p1->prio < p2->prio)return false;
         //smaller bound first
         if(p1->cost > p2->cost)return true;
         if(p1->cost < p2->cost)return false;
@@ -69,28 +71,28 @@ private:
 
 public:
     Tree(instance_abstract* inst, int _size);
-    // ~Tree();
 
     int strategy;
 
     // gestion pool
-    std::deque<subproblem *> deq;
-    std::stack<subproblem *> pile;
-    std::priority_queue<subproblem *, std::vector<subproblem *>, ub_compare> pque;
+    std::vector<std::shared_ptr<subproblem>> activeSet;
+    std::deque<std::shared_ptr<subproblem>> deq;
+    std::stack<std::shared_ptr<subproblem>> pile;
+    std::priority_queue<std::shared_ptr<subproblem>, std::vector<std::shared_ptr<subproblem>>, ub_compare> pque;
 
     void
     setRoot(std::vector<int> root, int l1, int l2);
 
     int size();
-    void push_back(subproblem * p);
-    void push(subproblem * p);
+    void push_back(std::shared_ptr<subproblem> p);
+    void push(std::shared_ptr<subproblem> p);
     void pop();
-    subproblem* top();
+    std::shared_ptr<subproblem> top();
     bool empty();
-    subproblem* take();
+    std::shared_ptr<subproblem> take();
     void clearPool();
 
-    void insert(std::vector<subproblem*>& ns);
+    void insert(std::vector<std::shared_ptr<subproblem>>& ns);
 };
 
 #endif // ifndef TREE_H

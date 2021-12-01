@@ -27,12 +27,12 @@ public:
     std::unique_ptr<IG> ig;
     std::unique_ptr<Beam> beam;
 
-    int run(subproblem *s, int _ub);
+    int run(std::shared_ptr<subproblem>& s, int _ub);
 
-    void exploreNeighborhood(subproblem* s, long long int cutoff);
+    void exploreNeighborhood(std::shared_ptr<subproblem> s, long long int cutoff);
 
-    std::vector<subproblem*> decompose(subproblem& n);
-    void insert(std::vector<subproblem *>&ns);
+    std::vector<std::shared_ptr<subproblem>> decompose(subproblem& n);
+    void insert(std::vector<std::shared_ptr<subproblem>>&ns);
 };
 
 #endif

@@ -9,9 +9,20 @@
 
 class Tree;
 
+struct prio_compare {
+    bool
+    operator () (const std::unique_ptr<subproblem>& p1, const std::unique_ptr<subproblem>& p2) const
+    {
+        return p1->prio < p2->prio;
+    }
+};
+
+
 class Beam{
 public:
     Beam(instance_abstract* inst);
+
+    std::vector<std::unique_ptr<subproblem>>activeSet;
 
     std::unique_ptr<Tree> tr;
     std::unique_ptr<pruning> prune;
@@ -22,9 +33,15 @@ public:
 
 
     int run(const int maxBeamWidth, subproblem* p);
-    bool step(int beamWidth,int localBest);
+    int run_loop(const int maxBeamWidth, subproblem* p);
 
-    std::vector<subproblem*> decompose(subproblem& n);
+    bool step(int beamWidth,int localBest);
+    bool step_loop(int beamWidth,int localBest);
+    bool step_loop_pq(int beamWidth,int localBest);
+    bool step_loop_local_pq(int beamWidth,int localBest);
+
+    void decompose(const subproblem& n, std::vector<std::unique_ptr<subproblem>>& ns);
+    // std::vector<subproblem*> decompose(const subproblem& n);
 };
 
 #endif

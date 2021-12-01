@@ -23,7 +23,7 @@ Tree::Tree(instance_abstract* inst, int _size) : psize(_size)
 void
 Tree::setRoot(std::vector<int> perm, int l1, int l2)
 {
-    subproblem * root = new subproblem(psize);
+    std::shared_ptr<subproblem> root = std::make_shared<subproblem>(psize);
 
     for(int i=0;i<psize;i++){
         root->schedule[i]=perm[i];
@@ -56,13 +56,13 @@ Tree::size()
 }
 
 void
-Tree::push_back(subproblem * p)
+Tree::push_back(std::shared_ptr<subproblem> p)
 {
     deq.push_back(p);
 }
 
 void
-Tree::push(subproblem * p)
+Tree::push(std::shared_ptr<subproblem> p)
 {
     switch (strategy) {
         case DEQUE:
@@ -99,7 +99,7 @@ Tree::pop()
     }
 }
 
-subproblem *
+std::shared_ptr<subproblem>
 Tree::top()
 {
     switch (strategy) {
@@ -131,17 +131,17 @@ Tree::empty()
     }
 }
 
-subproblem *
+std::shared_ptr<subproblem>
 Tree::take()//take problem from top
 {
-    subproblem *n=(empty()) ? NULL : top();
+    std::shared_ptr<subproblem> n=(empty()) ? NULL : top();
     if(n) pop();
 
     return n;
 }
 
 void
-Tree::insert(std::vector<subproblem *>&ns)
+Tree::insert(std::vector<std::shared_ptr<subproblem>>&ns)
 {
     //no children (decomposition avoid generation of unpromising children)
     if (!ns.size())
@@ -159,7 +159,6 @@ void
 Tree::clearPool()
 {
     while(!empty()){
-        delete top();
         pop();
     }
 }

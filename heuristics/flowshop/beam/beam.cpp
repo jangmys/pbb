@@ -1,5 +1,27 @@
+#include <algorithm>
+
+#include "omp.h"
 #include "beam.h"
 #include "operator_factory.h"
+
+// std::vector<std::unique_ptr<subproblem>> q1;
+//
+// auto push = [&q1](std::unique_ptr<subproblem> p) {
+//     q1.push_back(std::move(p));
+//     std::push_heap(q1.begin(), q1.end());
+// };
+//
+// auto pop = [&q1]() {
+//     std::pop_heap(q1.begin(), q1.end());
+//     auto result = std::move(q1.back());
+//     q1.pop_back();
+//     return result;
+// };
+
+// push(std::make_unique<MyStruct>(10));
+// std::deque<std::unique_ptr<MyStruct>> q2;
+// q2.push_back(pop());
+
 
 Beam::Beam(instance_abstract* inst) :
     tr(std::make_unique<Tree>(inst,inst->size)),
@@ -7,14 +29,7 @@ Beam::Beam(instance_abstract* inst) :
     branch(OperatorFactory::createBranching(arguments::branchingMode,inst->size,99999)),
     eval(std::make_unique<bound_fsp_weak_idle>())
 {
-    // tr = std::make_unique<Tree>(inst,inst->size);
     tr->strategy = DEQUE;
-    // tr->strategy = PRIOQ;
-
-    // prune = OperatorFactory::createPruning(arguments::findAll);
-    // branch= OperatorFactory::createBranching(arguments::branchingMode,inst->size,99999);
-
-    // eval = std::make_unique<bound_fsp_weak_idle>();
     eval->init(inst);
 
     bestSolution = std::make_unique<subproblem>(inst->size);
@@ -31,7 +46,7 @@ Beam::run(const int maxBeamWidth, subproblem* p)
     do{
         tr->setRoot(p->schedule,p->limit1,p->limit2);
 
-        while(step(beamWidth,localBest));
+        // while(step(beamWidth,localBest));
 
         beamWidth *=2;
     }while(beamWidth < maxBeamWidth);
@@ -39,76 +54,378 @@ Beam::run(const int maxBeamWidth, subproblem* p)
     *p = *bestSolution;
  }
 
-bool
-Beam::step(int beamWidth,int localBest)
-{
-    //current state
-    subproblem * n;
-    //next slice
-    std::vector<subproblem*>children;
+ int
+ Beam::run_loop(const int maxBeamWidth, subproblem* p)
+ {
+     int localBest = 999999;
 
-    while (!tr->empty()) {
-        n = tr->take();
-        if(!(*prune)(n)){
-            if (n->leaf()) {
-                n->ub = n->cost;
-                prune->local_best = n->ub;
-                *bestSolution = *n;
-                // std::cout<<"new best "<<*bestSolution<<" "<<prune->local_best<<"\n";
-            }else{
-                //expand (compute lower bounds, priorities and generate surviving successors)
-                std::vector<subproblem*>ns;
-                ns = decompose(*n);
+     prune->local_best = 999999;
+
+     int beamWidth = 1;
+     do{
+        activeSet.clear();
+
+        std::unique_ptr<subproblem> root = std::make_unique<subproblem>(*p);
+        root->cost = 0;
+        activeSet.push_back(std::move(root));
+
+        // while(step_loop(beamWidth,localBest));
+        // while(step_loop_pq(beamWidth,localBest));
+        while(step_loop_local_pq(beamWidth,localBest));
+
+        beamWidth *=2;
+     }while(beamWidth < maxBeamWidth);
+
+     *p = *bestSolution;
+}
+
+bool
+Beam::step_loop_local_pq(int beamWidth,int localBest){
+    int n_parents = activeSet.size();
+
+    if(n_parents>0 && activeSet[0]->depth == bestSolution->size-1){
+        std::unique_ptr<subproblem> slice_min(std::move(activeSet[0]));
+        for(int i=1;i<n_parents;i++){
+            if(activeSet[i]->cost < slice_min->cost){
+                slice_min = std::move(activeSet[i]);
+            }
+        }
+        activeSet.clear();
+
+        if(slice_min->cost < prune->local_best){
+            slice_min->ub = slice_min->cost;
+            prune->local_best = slice_min->ub;
+            bestSolution = std::move(slice_min);
+            std::cout<<"best\t"<<*bestSolution<<"\n";
+        }
+
+        return false;
+    }
+
+    std::priority_queue<
+        std::unique_ptr<subproblem>,
+        std::vector<std::unique_ptr<subproblem>>,
+        prio_compare>pq;
+
+
+         // auto(*)(std::unique_ptr<subproblem>,std::unique_ptr<subproblem>)->bool > pq{
+         //    []( const std::unique_ptr<subproblem> a, const std::unique_ptr<subproblem> b )->bool {
+         //        return a->prio < b->prio;
+         //    }
+         //    };
+//
+    struct timespec t1,t2;
+     clock_gettime(CLOCK_MONOTONIC,&t1);
+
+    if(n_parents>0 && activeSet[0]->depth < bestSolution->size-1){
+        #pragma omp parallel
+        {
+            std::priority_queue<
+                std::unique_ptr<subproblem>,
+                std::vector<std::unique_ptr<subproblem>>,
+                prio_compare>local_pq;
+
+            #pragma omp for schedule(static) nowait
+            for(int i=0;i<n_parents;i++){
+                std::unique_ptr<subproblem> n(std::move(activeSet[i]));
+                std::vector<std::unique_ptr<subproblem>>ns;
+                decompose(*n,ns);
+
+                //compute priorities
+                float alpha = (float)(n->depth+1)/n->size;
+                for(auto &c : ns){
+                    c->prio = (1.0f-alpha)*(c->cost)*c->prio + alpha*(c->cost);
+                }
+                for(auto it=std::make_move_iterator(ns.begin());
+                    it!=std::make_move_iterator(ns.end());it++){
+                    if(local_pq.size()<beamWidth){
+                        local_pq.push(std::move(*it));
+                    }else if((*it)->prio < local_pq.top()->prio){
+                        local_pq.pop();
+                        local_pq.push(std::move(*it));
+                    }
+                }
+            }
+
+            //merging pqueues
+            #pragma omp critical
+            {
+                while(!local_pq.empty()) {
+                    if(pq.size()<beamWidth){
+                        pq.push(std::move(const_cast<std::unique_ptr<subproblem>&>(local_pq.top())));
+                    }else if(local_pq.top()->prio < pq.top()->prio){
+                        pq.pop();
+                        pq.push(std::move(const_cast<std::unique_ptr<subproblem>&>(local_pq.top())));
+                    }
+                    local_pq.pop();
+                }
+            }
+        }
+    }
+
+    if(pq.empty()){
+        return false;
+    }
+
+    activeSet.clear();
+
+    while(!pq.empty()) {
+        activeSet.push_back(
+            std::move(const_cast<std::unique_ptr<subproblem>&>(pq.top()))
+        );
+        pq.pop();
+    }
+//
+    return true;
+}
+
+
+
+
+bool
+Beam::step_loop_pq(int beamWidth,int localBest){
+    int n_parents = activeSet.size();
+
+    if(n_parents>0 && activeSet[0]->depth == bestSolution->size-1){
+        std::unique_ptr<subproblem> slice_min(std::move(activeSet[0]));
+        for(int i=1;i<n_parents;i++){
+            if(activeSet[i]->cost < slice_min->cost){
+                slice_min = std::move(activeSet[i]);
+            }
+        }
+        activeSet.clear();
+
+        if(slice_min->cost < prune->local_best){
+            slice_min->ub = slice_min->cost;
+            prune->local_best = slice_min->ub;
+            bestSolution = std::move(slice_min);
+            std::cout<<"best\t"<<*bestSolution<<"\n";
+        }
+
+        return false;
+    }
+
+    //largest (cutoff-value) is on top
+    std::priority_queue<
+        std::unique_ptr<subproblem>,
+        std::vector<std::unique_ptr<subproblem>>,
+        prio_compare>pq;
+
+    struct timespec t1,t2;
+    clock_gettime(CLOCK_MONOTONIC,&t1);
+
+    if(n_parents>0 && activeSet[0]->depth < bestSolution->size-1){
+        #pragma omp parallel
+        {
+            std::vector<std::unique_ptr<subproblem>>local_children;
+            #pragma omp for schedule(static)
+            for(int i=0;i<n_parents;i++){
+                std::unique_ptr<subproblem> n(std::move(activeSet[i]));
+                std::vector<std::unique_ptr<subproblem>>ns;
+                decompose(*n,ns);
+
+                //compute priorities
+                float alpha = (float)(n->depth+1)/n->size;
+                for(auto &c : ns){
+                    c->prio = (1.0f-alpha)*(c->cost)*c->prio + alpha*(c->cost);
+                }
+                //insert in next slice
+                local_children.insert(local_children.end(), make_move_iterator(ns.begin()), make_move_iterator(ns.end()));
+            }
+
+
+            #pragma omp critical
+            {
+                // std::cout<<"thread "<<omp_get_thread_num()<<" "<<local_children.size()<<"/"<<beamWidth<<"\n";
+                for(auto &c: local_children){
+                    if(pq.size()<beamWidth){
+                        pq.push(std::move(c));
+                    }else if(c->prio < pq.top()->prio){
+                        pq.pop();
+                        pq.push(std::move(c));
+                    }
+                }
+                // std::cout<<"PQ SIZE\t"<<pq.size()<<"/"<<beamWidth<<"\n";
+            }
+        }
+    }
+
+    if(pq.empty()){
+        return false;
+    }
+
+    clock_gettime(CLOCK_MONOTONIC,&t2);
+    activeSet.clear();
+
+    while(!pq.empty()) {
+        activeSet.push_back(
+            std::move(const_cast<std::unique_ptr<subproblem>&>(pq.top()))
+        );
+        pq.pop();
+    }
+
+    return true;
+}
+
+bool
+Beam::step_loop(int beamWidth,int localBest){
+    int n_parents = activeSet.size();
+
+    if(n_parents>0 && activeSet[0]->depth == bestSolution->size-1){
+        std::unique_ptr<subproblem> slice_min(std::move(activeSet[0]));
+        for(int i=1;i<n_parents;i++){
+            if(activeSet[i]->cost < slice_min->cost){
+                slice_min = std::move(activeSet[i]);
+            }
+        }
+        activeSet.clear();
+
+        if(slice_min->cost < prune->local_best){
+            slice_min->ub = slice_min->cost;
+            prune->local_best = slice_min->ub;
+            bestSolution = std::move(slice_min);
+            std::cout<<"best\t"<<*bestSolution<<"\n";
+        }
+
+        return false;
+    }
+
+    //next slice
+    std::vector<std::unique_ptr<subproblem>>children;
+
+    struct timespec t1,t2;
+    clock_gettime(CLOCK_MONOTONIC,&t1);
+
+    if(n_parents>0 && activeSet[0]->depth < bestSolution->size-1){
+        #pragma omp parallel
+        {
+            std::vector<std::unique_ptr<subproblem>>local_children;
+            #pragma omp for schedule(static)
+            for(int i=0;i<n_parents;i++){
+                std::unique_ptr<subproblem> n(std::move(activeSet[i]));
+                std::vector<std::unique_ptr<subproblem>>ns;
+                decompose(*n,ns);
 
                 //compute priorities
                 float alpha = (float)(n->depth)/n->size;
                 for(auto &c : ns){
                     c->prio = (1.0f-alpha)*(c->cost)*c->prio + alpha*(c->cost);
                 }
-
                 //insert in next slice
-                children.insert(children.end(), make_move_iterator(ns.begin()), make_move_iterator(ns.end()));
+                local_children.insert(local_children.end(), make_move_iterator(ns.begin()), make_move_iterator(ns.end()));
+            }
+
+            #pragma omp critical
+            {
+                // std::cout<<"thread "<<omp_get_thread_num()<<" insert "<<ns.size()<<"\n";
+                children.insert(children.end(), make_move_iterator(local_children.begin()), make_move_iterator(local_children.end()));
             }
         }
-        delete(n);
-	}
+    }
 
+    if(children.empty()){
+        return false;
+    }
+    //
+    clock_gettime(CLOCK_MONOTONIC,&t2);
+    // std::cout<<"FillSlice\t"<<children.size()<<"/"<<beamWidth<<"\t"<<(t2.tv_sec - t1.tv_sec) + (t2.tv_nsec - t1.tv_nsec)/1e9<<"\t"<<std::flush;
+
+    activeSet.clear();
+    //
+    // clock_gettime(CLOCK_MONOTONIC,&t1);
+    //
     //sort slice (or make tr a pqueue insert directly with check on length...)
     std::sort(children.begin(),children.end(),
-        [](subproblem* a,subproblem* b){
+        [](const std::unique_ptr<subproblem>& a,const std::unique_ptr<subproblem>& b){
             return a->prio > b->prio;
         }
     );
-
-    //truncate
+    //
+    // clock_gettime(CLOCK_MONOTONIC,&t2);
+    // // std::cout<<"Sort\t"<<(t2.tv_sec - t1.tv_sec) + (t2.tv_nsec - t1.tv_nsec)/1e9<<"\t"<<std::flush;
+    //
+    // clock_gettime(CLOCK_MONOTONIC,&t1);
+    //
     for (auto i = children.rbegin(); i != children.rend(); i++) {
-    	if(tr->size()<beamWidth){
-			tr->push(std::move(*i));
-	    }else{
-            delete (*i);
-    	}
+        // delete (*i);
+    	if(activeSet.size()<beamWidth){
+            activeSet.push_back(std::move(*i));
+	    }
 	}
-
-    return !tr->empty();
+    //
+    // clock_gettime(CLOCK_MONOTONIC,&t2);
+    // // std::cout<<"Insert\t"<<(t2.tv_sec - t1.tv_sec) + (t2.tv_nsec - t1.tv_nsec)/1e9<<std::endl;
+    //
+    return true;
 }
 
-std::vector<subproblem*>
-Beam::decompose(subproblem& n)
+
+// bool
+// Beam::step(int beamWidth,int localBest)
+// {
+//     //current state
+//     std::shared_ptr<subproblem> n;
+//     //next slice
+//     std::vector<std::shared_ptr<subproblem>>children;
+//
+//     while (!tr->empty()) {
+//         n = tr->take();
+//         if(!(*prune)(n.get())){
+//             if (n->leaf()) {
+//                 n->ub = n->cost;
+//                 prune->local_best = n->ub;
+//                 *bestSolution = *n;
+//             }else{
+//                 //expand (compute lower bounds, priorities and generate surviving successors)
+//                 std::vector<std::unique_ptr<subproblem>>ns;
+//                 ns = decompose(*n);
+//
+//                 //compute priorities
+//                 float alpha = (float)(n->depth)/n->size;
+//                 for(auto &c : ns){
+//                     c->prio = (1.0f-alpha)*(c->cost)*c->prio + alpha*(c->cost);
+//                 }
+//
+//                 //insert in next slice
+//                 children.insert(children.end(), make_move_iterator(ns.begin()), make_move_iterator(ns.end()));
+//             }
+//         }
+// 	}
+//
+//     //sort slice (or make tr a pqueue insert directly with check on length...)
+//     std::sort(children.begin(),children.end(),
+//         [](std::shared_ptr<subproblem> a,std::shared_ptr<subproblem> b){
+//             return a->prio > b->prio;
+//         }
+//     );
+//
+//     //truncate
+//     for (auto i = children.rbegin(); i != children.rend(); i++) {
+//     	if(tr->size()<beamWidth){
+// 			tr->push(std::move(*i));
+// 	    }
+// 	}
+//
+//     return !tr->empty();
+// }
+
+void
+Beam::decompose(const subproblem& n, std::vector<std::unique_ptr<subproblem>>& children)
 {
     //offspring nodes
-    std::vector<subproblem *>children;
+    // std::vector<std::unique_ptr<subproblem>>children;
 
     //temporary used in evaluation
-    subproblem * tmp;
+    std::unique_ptr<subproblem> tmp;
 
     if (n.simple()) { //2 solutions ...
-        tmp        = new subproblem(n, n.limit1 + 1, BEGIN_ORDER);
+        tmp        = std::make_unique<subproblem>(n, n.limit1 + 1, BEGIN_ORDER);
         tmp->cost=eval->evalSolution(tmp->schedule.data());
-        children.push_back(tmp);
+        children.push_back(std::move(tmp));
 
-        tmp        = new subproblem(n, n.limit1+2 , BEGIN_ORDER);
+        tmp        = std::make_unique<subproblem>(n, n.limit1+2 , BEGIN_ORDER);
         tmp->cost=eval->evalSolution(tmp->schedule.data());
-        children.push_back(tmp);
+        children.push_back(std::move(tmp));
     } else {
         std::vector<int> costFwd(n.size);
         std::vector<int> costBwd(n.size);
@@ -127,27 +444,27 @@ Beam::decompose(subproblem& n)
                 int job = n.schedule[j];
 
                 if(!(*prune)(costFwd[job])){
-                    tmp = new subproblem(n, j, BEGIN_ORDER);
+                    tmp = std::make_unique<subproblem>(n, j, BEGIN_ORDER);
 
                     tmp->cost=costFwd[job];
                     tmp->prio=prioFwd[job];
 
-                    children.push_back(tmp);
+                    children.push_back(std::move(tmp));
                 }
             }
         }else{
             for (int j = n.limit2 - 1; j > n.limit1; j--) {
                 int job = n.schedule[j];
                 if(!(*prune)(costBwd[job])){
-                    tmp = new subproblem(n, j, END_ORDER);
+                    tmp = std::make_unique<subproblem>(n, j, END_ORDER);
 
                     tmp->cost=costBwd[job];
                     tmp->prio=prioBwd[job];
 
-                    children.push_back(tmp);
+                    children.push_back(std::move(tmp));
                 }
             }
         }
     }
-    return children;
+    // return children;
 }

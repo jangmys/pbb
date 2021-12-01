@@ -1,42 +1,36 @@
 #include "treeheuristic.h"
 #include "operator_factory.h"
 
+
 Treeheuristic::Treeheuristic(instance_abstract* inst) :
     tr(std::make_unique<Tree>(inst,inst->size)),
     prune(OperatorFactory::createPruning(arguments::findAll)),
     branch(OperatorFactory::createBranching(arguments::branchingMode,inst->size,99999)),
     eval(std::make_unique<bound_fsp_weak_idle>())
 {
-    // tr = std::make_unique<Tree>(inst,inst->size);
     tr->strategy = PRIOQ;
 
-    // prune = OperatorFactory::createPruning(arguments::findAll);
-    // branch= OperatorFactory::createBranching(arguments::branchingMode,inst->size,99999);
-    // eval = std::make_unique<bound_fsp_weak_idle>( );
     eval->init(inst);
-
     bestSolution = std::make_unique<subproblem>(inst->size);
 
     ls = std::make_unique<LocalSearch>(inst);
     ig = std::make_unique<IG>(inst);
     beam = std::make_unique<Beam>(inst);
-
 }
 
-int
-Treeheuristic::run(subproblem *s, int _ub)
-{
-    // ig->shuffle(s->schedule.data(), s->size);
 
-    subproblem *bsol=new subproblem(*s);
+int
+Treeheuristic::run(std::shared_ptr<subproblem>& s, int _ub)
+{
+    std::shared_ptr<subproblem> bsol = std::make_shared<subproblem>(*s);
     bsol->ub = eval->evalSolution(bsol->schedule.data());
 
 	prune->local_best=_ub;//ub used for pruning
     if(prune->local_best == 0)
         prune->local_best = bsol->ub; //if no upper bound provided
 
-    subproblem *tmpsol = new subproblem(*bsol);
-    subproblem *currsol = new subproblem(*bsol);
+    std::shared_ptr<subproblem> tmpsol = std::make_shared<subproblem>(*bsol);
+    std::shared_ptr<subproblem> currsol = std::make_shared<subproblem>(*bsol);
 
     int c=0;
     long long int cutoff = 100000;
@@ -81,7 +75,7 @@ Treeheuristic::run(subproblem *s, int _ub)
 }
 
 void
-Treeheuristic::exploreNeighborhood(subproblem* s,long long int cutoff)
+Treeheuristic::exploreNeighborhood(std::shared_ptr<subproblem> s,long long int cutoff)
 {
     tr->clearPool();
     tr->setRoot(s->schedule, s->limit1, s->limit2);
@@ -93,21 +87,21 @@ Treeheuristic::exploreNeighborhood(subproblem* s,long long int cutoff)
     while(true)
     {
         if (!tr->empty()) {
-            subproblem *n = tr->take();
+            std::shared_ptr<subproblem> n = tr->take();
 
-            if(!(*prune)(n)){
+            if(!(*prune)(n.get())){
                 if(n->leaf()){
                     prune->local_best = n->cost;
                     *bestSolution = *n;
                     foundSolution = true;
                 }else{
-                    std::vector<subproblem*>ns;
+                    std::vector<std::shared_ptr<subproblem>>ns;
                     ns = decompose(*n);
 
-                    float alpha = (float)(n->depth)/n->size;
-                    for(auto &c : ns){
-                        c->prio = (1.0f-alpha)*(c->cost)*c->prio + alpha*(c->cost);
-                    }
+                    // float alpha = (float)(n->depth)/n->size;
+                    // for(auto &c : ns){
+                    //     c->prio = (1.0f-alpha)*(c->cost)*c->prio + alpha*(c->cost);
+                    // }
 
                     insert(ns);
 
@@ -121,7 +115,6 @@ Treeheuristic::exploreNeighborhood(subproblem* s,long long int cutoff)
                     }
                 }
             }
-            delete n;
         }
 
         if(tr->empty()){
@@ -138,21 +131,21 @@ Treeheuristic::exploreNeighborhood(subproblem* s,long long int cutoff)
     *s = *bestSolution;
 }
 
-std::vector<subproblem*>
+std::vector<std::shared_ptr<subproblem>>
 Treeheuristic::decompose(subproblem& n)
 {
     //offspring nodes
-    std::vector<subproblem *>children;
+    std::vector<std::shared_ptr<subproblem>>children;
 
     //temporary used in evaluation
-    subproblem * tmp;
+    std::shared_ptr<subproblem> tmp;
 
     if (n.simple()) { //2 solutions ...
-        tmp        = new subproblem(n, n.limit1 + 1, BEGIN_ORDER);
+        tmp        = std::make_shared<subproblem>(n, n.limit1 + 1, BEGIN_ORDER);
         tmp->cost=eval->evalSolution(tmp->schedule.data());
         children.push_back(tmp);
 
-        tmp        = new subproblem(n, n.limit1+2 , BEGIN_ORDER);
+        tmp        = std::make_shared<subproblem>(n, n.limit1+2 , BEGIN_ORDER);
         tmp->cost=eval->evalSolution(tmp->schedule.data());
         children.push_back(tmp);
     } else {
@@ -175,7 +168,7 @@ Treeheuristic::decompose(subproblem& n)
                 int job = n.schedule[j];
 
                 if(!(*prune)(costFwd[job])){
-                    tmp = new subproblem(n, j, BEGIN_ORDER);
+                    tmp = std::make_shared<subproblem>(n, j, BEGIN_ORDER);
 
                     tmp->cost=costFwd[job];
                     tmp->prio=prioFwd[job];
@@ -187,7 +180,7 @@ Treeheuristic::decompose(subproblem& n)
             for (int j = n.limit2 - 1; j > n.limit1; j--) {
                 int job = n.schedule[j];
                 if(!(*prune)(costBwd[job])){
-                    tmp = new subproblem(n, j, END_ORDER);
+                    tmp = std::make_shared<subproblem>(n, j, END_ORDER);
 
                     tmp->cost=costBwd[job];
                     tmp->prio=prioFwd[job];
@@ -202,7 +195,7 @@ Treeheuristic::decompose(subproblem& n)
 
 
 void
-Treeheuristic::insert(std::vector<subproblem *>&ns)
+Treeheuristic::insert(std::vector<std::shared_ptr<subproblem>>&ns)
 {
     //no children (decomposition avoid generation of unpromising children)
     if (!ns.size())
