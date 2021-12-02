@@ -24,12 +24,8 @@ public:
     boundChildren(int * schedule, int limit1, int limit2, T * costsBegin, T * costsEnd, T * prioBegin,
       T * prioEnd) = 0;
 
-    virtual void
-     freeMem() = 0;
     virtual int
      evalSolution(int * permut) = 0;
-protected:
-    // instance_abstract * instance;
 };
 
 #endif // ifndef BOUND_ABSTRACT_H

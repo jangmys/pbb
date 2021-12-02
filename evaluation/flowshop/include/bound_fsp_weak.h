@@ -48,10 +48,8 @@ public:
     bornes_calculer(int permutation[], int limite1, int limite2, int * couts, int best);
     void
     bornes_calculer(int permutation[], int limite1, int limite2);
-
-    void
-    freeMem(){};
 private:
+    //performance vs local + passing into functions ?
     std::vector<int> front;
     std::vector<int> back;
     std::vector<int> remain;

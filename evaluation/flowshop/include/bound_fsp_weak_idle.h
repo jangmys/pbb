@@ -48,8 +48,6 @@ public:
     void
     bornes_calculer(int permutation[], int limite1, int limite2);
 
-    void
-    freeMem(){};
 private:
     void
     scheduleFront(const int * permut, int limit1, std::vector<int>& front, std::vector<float>& idleFront);

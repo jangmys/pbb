@@ -80,8 +80,6 @@ public:
     //
     void
     scheduleBack(int permutation[], int limite2, int * idle);
-    // int
-    // evalMakespan(int permutation[]);
 
     void
     boundChildren(int permutation[], int limite1, int limite2, int * costsBegin, int * costsEnd, int * prioBegin,
@@ -100,10 +98,7 @@ public:
     void
     partial_cost(int permutation[], int limit1, int limit2, int * couts, int jobin, int here);
 
-    void
-    freeMem(){};
     ~bound_fsp_strong(){ };
-
 private:
     std::vector<int> front;
     std::vector<int> back;
