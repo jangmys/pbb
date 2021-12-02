@@ -114,12 +114,16 @@ class OperatorFactory
                 return ev;
             }
             case 1:{
+                auto bd = std::make_unique<bound_fsp_weak>();
+                bd->init(instance);
+
                 auto bd2 = std::make_unique<bound_fsp_strong>( );
                 bd2->init(instance);
                 bd2->earlyExit=arguments::earlyStopJohnson;
                 bd2->machinePairs=arguments::johnsonPairs;
 
                 auto ev = std::make_unique<evaluator<int>>(
+                    std::move(bd),
                     std::move(bd2)
                 );
                 return ev;
