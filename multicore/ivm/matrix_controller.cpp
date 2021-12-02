@@ -181,26 +181,29 @@ matrix_controller::explore_multicore()
     FILE_LOG(logDEBUG) << " === got ID" << id;
 
     if(!bbb[id]){
+        //make sequential bb-explorer
         bbb[id] = make_bbexplorer(id);
+        //set root
         bbb[id]->setRoot(root.data());
         FILE_LOG(logDEBUG) << id << " === allocated";
     }
 
     if(state[id]==1){
+        //has non-empty interval
         FILE_LOG(logDEBUG) << id << " === state 1";
 
         if(updatedIntervals){
-            pthread_mutex_lock(&mutex_steal_list);
             dynamic_cast<ivmthread*>(bbb[id])->ivmbb->initAtInterval(pos[id].data(), end[id].data());
-            pthread_mutex_unlock(&mutex_steal_list);
         }
 
         bbb[id]->setWorkState(true);
+        //only for "honest" ws strategy
         pthread_mutex_lock(&mutex_steal_list);
         victim_list.remove(id);
         victim_list.push_front(id);// put in front
         pthread_mutex_unlock(&mutex_steal_list);
     }else{
+        //has empty interval
         FILE_LOG(logDEBUG) << id << " === state 0";
         dynamic_cast<ivmthread*>(bbb[id])->ivmbb->clear();
         bbb[id]->setWorkState(false);
