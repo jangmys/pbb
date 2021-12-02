@@ -49,17 +49,12 @@ matrix_controller::~matrix_controller()
     // pthread_mutex_destroy(&mutex_end);
 };
 
-
-
 ivmthread*
 matrix_controller::make_bbexplorer(unsigned _id){
     //initialize local (sequential) BB
-    pthread_mutex_lock_check(&pbb->mutex_instance);
     ivmthread* ibb = new ivmthread(pbb);
-    pthread_mutex_unlock(&pbb->mutex_instance);
     return ibb;
 }
-
 
 void
 matrix_controller::initFullInterval()
