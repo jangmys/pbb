@@ -757,14 +757,6 @@ __global__ void sortedPrune(T *jobMats_d, T *dirVecs_d, const T *line_d,
 
     __syncthreads();
 
-    // if (flagLeaf[ivm]) {
-    //     jobMats_d[index3D(size_d - 1, 0, ivm)] =
-    //         negative_d(jobMats_d[index3D(size_d - 1, 0, ivm)]);
-    // }
-    //
-    // __syncthreads();
-
-
     // SORTING (insert sort)
     // int l=0;
     if (state_d[ivm] != 0) {
