@@ -377,7 +377,7 @@ int ivm::cuttingPosition(const int line, const int division)
 bool ivm::intervalValid(){
     for (int i = 0; i < size; i++) {
         if ((posVect[i] < 0) || (posVect[i] >= size - i)) {
-            std::cout << " incorrect position vector " << i << " " << posVect[i] << std::endl;
+            std::cout << " incorrect position vector: pos[" << i << "]=" << posVect[i] << " size="<<size<<std::endl;
             exit(-1);
         }
         if ((endVect[i] < 0) || (endVect[i] >= size - i)) {
