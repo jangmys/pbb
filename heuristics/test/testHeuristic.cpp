@@ -90,22 +90,34 @@ int main(int argc, char* argv[])
         {
             Beam bs(instance.get());
 
+            // // subproblem *q = new subproblem(instance->size);
+            // bs.run(1<<14,p.get());
+            // *p = *(bs.bestSolution);
+            //
+            // std::cout<<" = BEAM :\t";
+            break;
+        }
+        case 4:
+        {
+            Beam bs(instance.get());
+
             // subproblem *q = new subproblem(instance->size);
-            bs.run(1<<14,p.get());
+            bs.run_loop(1<<14,p.get());
             *p = *(bs.bestSolution);
 
             std::cout<<" = BEAM :\t";
             break;
         }
-        case 4:
+        case 5:
         {
             Treeheuristic th(instance.get());
 
-            th.run(p.get(),0);
-
+            th.run(p,0);
+            //
             std::cout<<" = DFLS :\t";
             break;
         }
+
     }
 
     clock_gettime(CLOCK_MONOTONIC,&t2);
