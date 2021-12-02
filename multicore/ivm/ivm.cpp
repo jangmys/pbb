@@ -9,17 +9,8 @@ ivm::ivm(int _size) : size(_size){
 
     node = std::make_unique<subproblem>(size);
 
-    // posix_memalign((void **) &jobMat, ALIGN, size * size * sizeof(int));
-    // posix_memalign((void **) &posVect, ALIGN, size * sizeof(int));
-    // posix_memalign((void **) &endVect, ALIGN, size * sizeof(int));
-    // posix_memalign((void **) &dirVect, ALIGN, size * sizeof(int));
-
     clearInterval();
-
-    // line=0;
     posVect[0]=size; //makes interval empty
-
-    // avgline=0.0;
 }
 
 ivm::~ivm()
@@ -376,16 +367,16 @@ int ivm::cuttingPosition(const int line, const int division)
 
 bool ivm::intervalValid(){
     for (int i = 0; i < size; i++) {
-        if ((posVect[i] < 0) || (posVect[i] >= size - i)) {
+        if ( (posVect[i] < 0) || (posVect[i] >= size - i) ) {
             std::cout << " incorrect position vector: pos[" << i << "]=" << posVect[i] << " size="<<size<<std::endl;
-            exit(-1);
+            return false;
         }
         if ((endVect[i] < 0) || (endVect[i] >= size - i)) {
-            std::cout << " incorrect end vector " << i << " " << endVect[i] << std::endl;
-            std::cout << " pos " << i << " " << posVect[i] << std::endl;
-            exit(-1);
+            std::cout << " incorrect end vector: end[ " << i << "]=" << endVect[i] << " size="<<size<<std::endl;
+            return false;
         }
     }
+    return true;
 }
 
 
