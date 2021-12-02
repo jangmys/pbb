@@ -75,6 +75,8 @@ bound_fsp_strong::fillMinHeadsTails()
         }
     }
 
+
+
     // 2/ min run-out times on each machine
     std::fill(min_tails.begin(), min_tails.end(), INT_MAX);
     // per definition =0 on last machine
@@ -192,10 +194,8 @@ bound_fsp_strong::scheduleFront(int permutation[], int limite1, int limite2, int
         *idle = 0;
         return;
     }
+    std::fill(front.begin(),front.end(),0);
 
-    for (int mm = 0; mm < nbMachines; mm++) {
-        front[mm] = 0;
-    }
     for (int j = 0; j <= limite1; j++) {
         int job      = permutation[j];
         front[0] = front[0] + PTM[0][job];
@@ -213,13 +213,12 @@ bound_fsp_strong::scheduleBack(int permutation[], int limite2, int * idle)
 {
     if (limite2 == nbJob) {
         for (int i = 0; i < nbMachines; i++)
-            front[i] = min_tails[i];
+            back[i] = min_tails[i];
         // memcpy(back, minTempsDep, nbMachines * sizeof(int));
         *idle = 0;
         return;
     }
     std::fill(back.begin(),back.end(),0);
-
 
     for (int k = nbJob - 1; k >= limite2; k--) {
         int jobCour = permutation[k];

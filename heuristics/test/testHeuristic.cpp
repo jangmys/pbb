@@ -113,11 +113,7 @@ int main(int argc, char* argv[])
             Treeheuristic th(instance.get());
 
             th.run(p,0);
-<<<<<<< HEAD
-            //
-=======
 
->>>>>>> multicore
             std::cout<<" = DFLS :\t";
             break;
         }
