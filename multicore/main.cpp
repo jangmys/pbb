@@ -15,8 +15,10 @@ main(int argc, char ** argv)
     std::cout<<" === solving "<<arguments::problem<<" - instance "<<arguments::inst_name<<std::endl;
 
     /*SET UP LOGGING*/
+    FILELog::ReportingLevel() = logINFO;
     FILE* log_fd = fopen(arguments::logfile, "w" );
     Output2FILE::Stream() = log_fd;
+
 
     pbab * pbb = new pbab();
     pbb->set_initial_solution();

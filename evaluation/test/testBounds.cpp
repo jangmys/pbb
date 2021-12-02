@@ -1,4 +1,7 @@
 #include <iostream>
+#include <numeric>
+#include <random>
+#include <algorithm>
 
 //INCLUDE INSTANCES + BOUNDS
 #include "../libbounds.h"
@@ -20,6 +23,7 @@ int main(int argc,char **argv){
     instance_abstract * inst = NULL;
     bound_abstract<int> *bound=NULL;
     bound_abstract<int> *bound2=NULL;
+    bound_fsp_weak_idle* bound3=NULL;
 
     switch(argv[1][0])//DIFFERENT PROBLEMS...
     {
@@ -39,7 +43,6 @@ int main(int argc,char **argv){
             //set bound1
             bound_fsp_weak* bd=new bound_fsp_weak();
             bd->init(inst);
-            // bd->branchingMode = atoi(argv[3]);
             bound=bd;
 
             bound_fsp_weak lowerbound;
@@ -52,10 +55,14 @@ int main(int argc,char **argv){
             //set bound2
             bound_fsp_strong* bd2=new bound_fsp_strong();
             bd2->init(inst);
-            // bd2->branchingMode = atoi(argv[3]);
             bd2->earlyExit = atoi(argv[3]);
             bd2->machinePairs = atoi(argv[4]);
             bound2=bd2;
+
+            bound_fsp_weak_idle* bd3=new bound_fsp_weak_idle();
+            bd3->init(inst);
+
+            bound3=bd3;
 
             break;
         }
@@ -67,17 +74,30 @@ int main(int argc,char **argv){
         }
     }
 
+    if(!bound)
+        return 0;
+
     int costs[2];
 
     //a permutation
     std::vector<int> perm(inst->size);
+    std::iota(perm.begin(),perm.end(),0);
 
-    for(int i=0;i<inst->size;i++){
-        perm[i]=i;
+    std::random_device rd;
+    std::mt19937 g(rd());
+    std::shuffle(perm.begin(), perm.end(), g);
+
+    //evaluate 1000000
+    std::vector<std::vector<int>>solutions(1000000,std::vector<int>(inst->size,0));
+    for(auto &p : solutions){
+        std::iota(p.begin(),p.end(),0);
     }
 
-    if(!bound)
-        return 0;
+
+    struct timespec t1,t2;
+
+
+
 
     //evaluate objective function
     costs[0] = bound->evalSolution(perm.data());
@@ -86,6 +106,61 @@ int main(int argc,char **argv){
     //empty partial schedules
     int l1=-1;
     int l2=inst->size;
+
+
+
+    clock_gettime(CLOCK_MONOTONIC,&t1);
+    for(auto &p : solutions){
+        bound->bornes_calculer(p.data(), l1+5, l2-5, costs, 99999);
+    }
+    clock_gettime(CLOCK_MONOTONIC,&t2);
+    std::cout<<(t2.tv_sec-t1.tv_sec)+(t2.tv_nsec-t1.tv_nsec)/1e9<<"\n";
+
+
+    clock_gettime(CLOCK_MONOTONIC,&t1);
+    for(auto &p : solutions){
+        bound2->bornes_calculer(p.data(), l1+5, l2-5, costs, 99999);
+    }
+    clock_gettime(CLOCK_MONOTONIC,&t2);
+    std::cout<<(t2.tv_sec-t1.tv_sec)+(t2.tv_nsec-t1.tv_nsec)/1e9<<"\n";
+
+
+    clock_gettime(CLOCK_MONOTONIC,&t1);
+    for(auto &p : solutions){
+        bound3->bornes_calculer(p.data(), l1+5, l2-5, costs, 99999);
+    }
+    clock_gettime(CLOCK_MONOTONIC,&t2);
+    std::cout<<(t2.tv_sec-t1.tv_sec)+(t2.tv_nsec-t1.tv_nsec)/1e9<<"\n";
+
+    std::cout<<"=======================\n";
+
+
+    std::vector<int>lb_begin(inst->size,0);
+    std::vector<int>lb_end(inst->size,0);
+    std::vector<float>prio_begin(inst->size,0);
+    std::vector<float>prio_end(inst->size,0);
+    std::vector<int>prio_beginI(inst->size,0);
+    std::vector<int>prio_endI(inst->size,0);
+
+
+
+    clock_gettime(CLOCK_MONOTONIC,&t1);
+    for(auto &p : solutions){
+        bound->boundChildren(p.data(), l1+5, l2-5, lb_begin.data(), lb_end.data(), prio_beginI.data(), prio_endI.data());
+    }
+    clock_gettime(CLOCK_MONOTONIC,&t2);
+    std::cout<<(t2.tv_sec-t1.tv_sec)+(t2.tv_nsec-t1.tv_nsec)/1e9<<"\n";
+
+
+
+    clock_gettime(CLOCK_MONOTONIC,&t1);
+    for(auto &p : solutions){
+        bound3->boundChildren(p.data(), l1+5, l2-5, lb_begin.data(), lb_end.data(), prio_begin.data(), prio_end.data());
+    }
+    clock_gettime(CLOCK_MONOTONIC,&t2);
+    std::cout<<(t2.tv_sec-t1.tv_sec)+(t2.tv_nsec-t1.tv_nsec)/1e9<<"\n";
+
+
 
     //LB
     bound->bornes_calculer(perm.data(), l1, l2, costs, 99999);
