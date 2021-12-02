@@ -61,7 +61,6 @@ int main(int argc,char **argv){
 
             bound_fsp_weak_idle* bd3=new bound_fsp_weak_idle();
             bd3->init(inst);
-
             bound3=bd3;
 
             break;
@@ -83,31 +82,31 @@ int main(int argc,char **argv){
     std::vector<int> perm(inst->size);
     std::iota(perm.begin(),perm.end(),0);
 
+    //evaluate objective function
+    costs[0] = bound->evalSolution(perm.data());
+    printf("Makespan LB1: %d\n",costs[0]);
+
+    //evaluate objective function
+    costs[0] = bound2->evalSolution(perm.data());
+    printf("Makespan LB2: %d\n",costs[0]);
+
+
+
     std::random_device rd;
     std::mt19937 g(rd());
     std::shuffle(perm.begin(), perm.end(), g);
 
     //evaluate 1000000
-    std::vector<std::vector<int>>solutions(1000000,std::vector<int>(inst->size,0));
+    std::vector<std::vector<int>>solutions(100000,std::vector<int>(inst->size,0));
     for(auto &p : solutions){
         std::iota(p.begin(),p.end(),0);
     }
 
-
     struct timespec t1,t2;
-
-
-
-
-    //evaluate objective function
-    costs[0] = bound->evalSolution(perm.data());
-    printf("Makespan: %d\n",costs[0]);
 
     //empty partial schedules
     int l1=-1;
     int l2=inst->size;
-
-
 
     clock_gettime(CLOCK_MONOTONIC,&t1);
     for(auto &p : solutions){
@@ -162,6 +161,7 @@ int main(int argc,char **argv){
 
 
 
+    std::iota(perm.begin(),perm.end(),0);
     //LB
     bound->bornes_calculer(perm.data(), l1, l2, costs, 99999);
     printf("LB1 [root]:\t %d\n",costs[0]);
@@ -172,10 +172,23 @@ int main(int argc,char **argv){
         printf("LB2 [root]:\t %d\n",costs[0]);
     }
 
-    l1=3; //fix first job
-    l2=inst->size-3; //fix last job
+
+
+    l1=0; //fix first job
+    l2=inst->size-1; //fix last job
     bound->bornes_calculer(perm.data(), l1, l2, costs, 99999);
-    printf("LB1 [+4/-3]:\t %d\n",costs[0]);
+    printf("LB1 [+1/-1]:\t %d\n",costs[0]);
+
+    //LB2
+    if(bound2){
+        bound2->bornes_calculer(perm.data(), l1, l2, costs, 99999);
+        printf("LB1 [+1/-1]:\t %d\n",costs[0]);
+        // printf("LB2 [root]:\t %d\n",costs[0]);
+    }
+
+
+
+
 
     l1=-1;
     l2=inst->size;
