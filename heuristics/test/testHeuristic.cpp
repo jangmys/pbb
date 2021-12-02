@@ -101,7 +101,7 @@ int main(int argc, char* argv[])
         {
             Treeheuristic th(instance.get());
 
-            th.run(p.get(),0);
+            th.run(p,0);
 
             std::cout<<" = DFLS :\t";
             break;
