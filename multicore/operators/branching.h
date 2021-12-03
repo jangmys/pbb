@@ -58,7 +58,7 @@ public:
 
     int operator()(const int*cb, const int* ce, const int line)
     {
-        return line%2?Back:Front;
+        return (line%2)?Back:Front;
     }
 };
 

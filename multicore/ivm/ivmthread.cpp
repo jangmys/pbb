@@ -2,7 +2,7 @@
 
 ivmthread::ivmthread(pbab* _pbb) :
     bbthread(_pbb),
-    ivmbb(new sequentialbb<int>(_pbb,_pbb->size))
+    ivmbb(std::make_shared<sequentialbb<int>>(_pbb,_pbb->size))
 {
 };
 
@@ -11,14 +11,23 @@ ivmthread::~ivmthread()
 {   };
 
 
+bool ivmthread::bbStep(){
+    return ivmbb->next();
+}
+
+void ivmthread::setRoot(const int* perm){
+    ivmbb->setRoot(perm);
+}
+
+
 int
-ivmthread::shareWork(int numerator, int denominator, sequentialbb<int> *thief_thread)
+ivmthread::shareWork(std::shared_ptr<sequentialbb<int>> thief_thread)
 {
     int numShared = 0;
     int l         = 0;
 
-    ivm* thief = thief_thread->IVM;
-    ivm* IVM = ivmbb->IVM;
+    std::shared_ptr<ivm> thief(thief_thread->IVM);
+    std::shared_ptr<ivm> IVM(ivmbb->IVM);
 
     while (IVM->getPosition(l) == IVM->getEnd(l) && l < IVM->getDepth() && l < pbb->size - 4) l++;
 
@@ -27,11 +36,12 @@ ivmthread::shareWork(int numerator, int denominator, sequentialbb<int> *thief_th
         numShared++;
         for (int i = 0; i < l; i++) {
             thief->setPosition(i, IVM->getPosition(i));
-            for (int j = 0; j < pbb->size; j++) thief->jobMat[i * pbb->size + j] = IVM->jobMat[i * pbb->size + j];
+            thief->setRow(i,IVM->getRowPtr(i));
             thief->setDirection(i, IVM->getDirection(i));
         }
         for (int i = 0; i < pbb->size; i++) thief->setEnd(i, IVM->getEnd(i));
-        for (int i = 0; i < pbb->size; i++) thief->jobMat[l * pbb->size + i] = IVM->jobMat[l * pbb->size + i];
+
+        thief->setRow(l,IVM->getRowPtr(l));
         thief->setDirection(l, IVM->getDirection(l));
         thief->setPosition(l,IVM->cuttingPosition(l, 2));
         IVM->setEnd(l, thief->getPosition(l) - 1);

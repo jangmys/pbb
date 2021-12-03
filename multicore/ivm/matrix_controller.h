@@ -18,20 +18,16 @@ class bbthread;
 
 class matrix_controller : public thread_controller{
 public:
-    ivmthread* make_bbexplorer(unsigned _id);
+    std::shared_ptr<bbthread> make_bbexplorer();
     int work_share(unsigned id, unsigned thief);
 
-    matrix_controller(pbab* _pbb);
-    ~matrix_controller();
+    explicit matrix_controller(pbab* _pbb);
+    // ~matrix_controller();
 
 	std::vector<int> ids;
 	std::vector<int> state;
 	std::vector<std::vector<int>> pos;
 	std::vector<std::vector<int>> end;
-
-	std::vector<int>root;
-
-    int updatedIntervals = 1;
 
     void initFullInterval();
     void initFromFac(const unsigned int nbint, const int* ids, int*pos, int* end);
@@ -51,6 +47,8 @@ public:
     void printStats();
 
     void explore_multicore();
+private:
+    int updatedIntervals = 1;
 };
 
 #endif

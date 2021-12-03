@@ -1,25 +1,34 @@
+#include <assert.h>
+
 #include "../../common/include/pbab.h"
 #include "ivm.h"
 
-ivm::ivm(int _size) : size(_size){
-    jobMat = (int*)calloc(size*size,sizeof(int));
-    posVect = (int*)calloc(size,sizeof(int));
-    endVect = (int*)calloc(size,sizeof(int));
-    dirVect = (int*)calloc(size,sizeof(int));
+ivm::ivm(int _size) : size(_size),node(_size){
+    jobMat = std::vector<int>(size*size,0);
+    // jobMat = (int*)calloc(size*size,sizeof(int));
 
-    node = std::make_unique<subproblem>(size);
+    posVect = std::vector<int>(size,0);
+    endVect = std::vector<int>(size,0);
+    dirVect = std::vector<int>(size,0);
 
     clearInterval();
     posVect[0]=size; //makes interval empty
+
+#ifndef NDEBUG
+    std::cout<<"debug\n";
+#endif
+
 }
 
 ivm::~ivm()
 {
-    free(jobMat);
-    free(posVect);
-    free(endVect);
-    free(dirVect);
+    // free(jobMat);
 }
+
+subproblem& ivm::getNode(){
+    return node;
+}
+
 
 int ivm::getDepth() const{
     return line;
@@ -79,14 +88,36 @@ int ivm::getDirection(const int _d) const{
     return dirVect[_d];
 }
 
+void
+ivm::setRow(int k, const int *row){
+    for(int i=0;i<size;i++){
+        jobMat[k*size + i] = row[i];
+    }
+};
+
+int*
+ivm::getRowPtr(int i){
+    return jobMat.data()+i*size;
+}
+
+int
+ivm::getCell(int i, int j) const{
+    return jobMat[i*size+j];
+}
+
+
+
 /**
 * \brief TODO
 */
 void ivm::clearInterval()
 {
-    memset(jobMat, 0, size*size*sizeof(int));
-    memset(posVect, 0, size*sizeof(int));
-    memset(endVect, 0, size*sizeof(int));
+    memset(jobMat.data(), 0, size*size*sizeof(int));
+
+    std::fill(std::begin(posVect),std::end(posVect),0);
+    // memset(posVect, 0, size*sizeof(int));
+    std::fill(std::begin(endVect),std::end(endVect),0);
+    // memset(endVect, 0, size*sizeof(int));
     posVect[0]=size;
 }
 
@@ -95,22 +126,8 @@ void ivm::clearInterval()
 */
 void ivm::getInterval(int* pos, int* end)
 {
-    memcpy(pos,posVect, size*sizeof(int));
-    memcpy(end,endVect, size*sizeof(int));
-}
-
-
-void ivm::initEmpty()
-{
-    memset(dirVect, -1, size*sizeof(int));
-    memset(posVect, 0, size*sizeof(int));
-    memset(endVect, 0, size*sizeof(int));
-    memset(jobMat, 0, size*size*sizeof(int));
-
-    line=0;
-    for(int i=0;i<size;i++){
-        jobMat[i]=i;
-    }
+    memcpy(pos,posVect.data(), size*sizeof(int));
+    memcpy(end,endVect.data(), size*sizeof(int));
 }
 
 //"prune"
@@ -126,12 +143,10 @@ void ivm::goUp()
     //pos==end==N!-1 --> beforeEnd == true
     //pos[0]==N
     if(line>0){
-        posVect[line] = 0;
-        line--;
-        int pos = posVect[line];
-        jobMat[line*size + pos] = negative(jobMat[line*size + pos]);
+        posVect[line--] = 0;
+        eliminateCurrent();
     }else{
-        posVect[line]++;
+        goRight();
     }
 }
 
@@ -159,9 +174,9 @@ ivm::generateLine(const int line, const bool explore)
     int i = 0;
 
     for (i = 0; i < column; i++)
-        jobMat[line * size + i] = removeFlag(jobMat[lineMinus1 * size + i]);
+        jobMat[line * size + i] = removeFlag(getCell(lineMinus1,i));
     for (i = column; i < size - line; i++)
-        jobMat[line * size + i] = removeFlag(jobMat[lineMinus1 * size + i + 1]);
+        jobMat[line * size + i] = removeFlag(getCell(lineMinus1,i+1));
 
     if (explore) {
         posVect[line] = 0;
@@ -184,9 +199,7 @@ ivm::isLastLine() const
 bool
 ivm::pruningCellState() const
 {
-	int pos = posVect[line];
-
-    return jobMat[line * size + pos] < 0;
+    return getCurrentCell() < 0;
 }
 
 bool
@@ -207,25 +220,25 @@ ivm::beforeEnd() const
 void
 ivm::decodeIVM()
 {
-    const int* const jM  = jobMat;
-    const int* const pV  = posVect;
+    const int* const jM  = getRowPtr(0);
+    const int* const pV  = posVect.data();
     int _line = line;
 
-    node->limit1 = -1;
-    node->limit2 = size;
+    node.limit1 = -1;
+    node.limit2 = size;
 
     for (int l = 0; l < _line; l++) {
         int pointed = pV[l];
         int job     = absolute(jM[l * size + pointed]);
 
         if (dirVect[l] == 0) {
-            node->schedule[++node->limit1] = job;
+            node.schedule[++node.limit1] = job;
         } else {
-            node->schedule[--node->limit2] = job;
+            node.schedule[--node.limit2] = job;
         }
     }
     for (int l = 0; l < size - _line; l++){
-        node->schedule[node->limit1 + 1 + l] = absolute(jM[_line * size + l]);
+        node.schedule[node.limit1 + 1 + l] = absolute(jM[_line * size + l]);
     }
 } // prepareSchedule
 
@@ -237,7 +250,7 @@ void ivm::sortSiblingNodes(std::vector<T> lb,std::vector<T> prio)
     switch (arguments::sortNodes) {
         case 0:
         {
-            int *jm = jobMat + _line * size;
+            int *jm = getRowPtr(_line);
             int prev_dir=(_line>0)?dirVect[_line-1]:0;
             if(prev_dir!=dirVect[_line])
             {
@@ -251,42 +264,44 @@ void ivm::sortSiblingNodes(std::vector<T> lb,std::vector<T> prio)
             }
             if(prev_dir==1 && dirVect[_line]==0){
                 for (int l = 0; l < size - _line; l++){
-                    node->schedule[node->limit1 + 1 + l] = absolute(jm[l]);
+                    node.schedule[node.limit1 + 1 + l] = absolute(jm[l]);
                 }
             }
             break;
         }
         case 1://non-decreasing cost1
         {
-            int *jm = jobMat + _line * size;
+            int *jm = getRowPtr(_line);
             gnomeSortByKeyInc(jm, lb.data(), 0, size-_line-1);
             break;
         }
         case 2://non-decreasing cost1, break ties by priority (set in chooseChildrenSet)
         {
-            int *jm = jobMat + _line * size;
+            int *jm = getRowPtr(_line);
             gnomeSortByKeysInc(jm, lb.data(), prio.data(), 0, size-_line-1);
             break;
         }
         case 3:
         {
-            int *jm = jobMat + _line * size;
+            int *jm = getRowPtr(_line);
             gnomeSortByKeyInc(jm, prio.data(), 0, size-_line-1);
             break;
         }
         case 4:
         {
-            int *jm = jobMat + _line * size;
+            int *jm = getRowPtr(_line);
             gnomeSortByKeysInc(jm, lb.data(), prio.data(), 0, size-_line-1);
             break;
         }
     }
 }
 
-
-
-
-
+void
+ivm::eliminateCurrent()
+{
+    int pos = getPosition(getDepth());
+    jobMat[getDepth() * size + pos] = negative(getCurrentCell());
+}
 
 void
 ivm::displayVector(int *ptr) const
@@ -304,14 +319,22 @@ ivm::displayMatrix() const
     for(int i=0;i<size;i++){
         printf("%2d%2s",posVect[i],"| ");
         printf("%2d%2s",dirVect[i],(line==i)?"*|":" |");
-        for(int j=0;j<size;j++){
-            printf("%3d ",jobMat[i*size+j]);
-        }
-        printf("\n");
+        printRow(i);
     }
     printf("\n");
     fflush(stdout);
 }
+
+void
+ivm::printRow(const int r) const
+{
+    for(int i=0;i<size;i++){
+        printf("%3d ",getCell(r,i));
+    }
+    printf("\n");
+};
+
+
 
 // count the number of explorable subtrees
 int ivm::countExplorableSubtrees(const int line)
@@ -320,7 +343,7 @@ int ivm::countExplorableSubtrees(const int line)
 
     // for(int i = firstAvailableSubtree(line); i<= endVector[line]; i++)
     for (int i = posVect[line] + 1; i <= endVect[line]; i++)
-        if (jobMat[line*size + i] >= 0) count++;
+        if (getCell(line,i) >= 0) count++;
     return count;
 }
 
@@ -330,10 +353,7 @@ int ivm::cuttingPosition(const int line, const int division)
 	int nbSubtrees  = endVect[line] - posVect[line];
 	int expSubtrees = countExplorableSubtrees(line);
 
-	if (expSubtrees > nbSubtrees) {
-		std::cout << "Explorable subtrees > available subtrees" << std::endl;
-		exit(-1);
-	}
+    assert(expSubtrees <= nbSubtrees);
 
 	// victim thread keeps (expSubtrees / division) subtrees plus the one it is
 	// already exploring
@@ -345,22 +365,12 @@ int ivm::cuttingPosition(const int line, const int division)
 	int keptSubtrees = 0;
 
 	while (keptSubtrees < keep) {
-		if (jobMat[line * size + pos] >= 0) keptSubtrees++;
+		if (getCell(line,pos) >= 0) keptSubtrees++;
 		pos++;
 	}
 
-	if (pos <= posVect[line]) {
-		std::cout << "cutting position (" << pos << ") <= current position (" <<
-		posVect[line] << ")" << std::endl;
-		exit(-1);
-	}
-
-	if (pos > endVect[line]) {
-		std::cout << "cutting position (" << pos << ") > end (" << endVect[line] <<
-		")" <<
-		std::endl;
-		exit(-1);
-	}
+    assert(pos > posVect[line]);
+    assert(pos <= endVect[line]);
 
 	return pos;
 }
@@ -384,7 +394,7 @@ void
 ivm::getSchedule(int *sch)
 {
     for (int i = 0; i < size; i++) {
-        sch[i]=node->schedule[i];
+        sch[i]=node.schedule[i];
     }
 }
 

@@ -15,7 +15,7 @@ evaluator<T>::get_children_bounds_strong(subproblem& node, std::vector<int> mask
         _limit1++;
     }
     if(begin_end == branching::Back){
-        _limit2--; 
+        _limit2--;
     }
 
     T costs[2];

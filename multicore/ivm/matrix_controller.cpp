@@ -6,6 +6,7 @@
  */
 #include <sys/sysinfo.h>
 #include <unistd.h>
+#include <assert.h>
 
 #include <memory>
 
@@ -21,39 +22,32 @@
 #include "matrix_controller.h"
 
 matrix_controller::matrix_controller(pbab* _pbb) : thread_controller(_pbb){
-    for (int i = 0; i < (int) M; i++){
-        // victim_list.push_back(i);
-        bbb[i]=NULL;
-        // sbb[i]=NULL;
-    }
-
     resetExplorationState();
 
     size = _pbb->size;
-
     state = std::vector<int>(M,0);
-    root = std::vector<int>(_pbb->size,0);
 
-    for(int i=0;i<_pbb->size;i++){
-        root[i]=pbb->root_sltn->perm[i];
-    }
+    // root = std::vector<int>(_pbb->size,0);
+    // for(int i=0;i<_pbb->size;i++){
+    //     root[i]=pbb->root_sltn->perm[i];
+    // }
+
     for(unsigned i=0;i<M;i++){
         pos.emplace_back(std::vector<int>(_pbb->size,0));
         end.emplace_back(std::vector<int>(_pbb->size,0));
     }
 };
 
-matrix_controller::~matrix_controller()
-{
-    // pthread_mutex_destroy(&mutex_steal_list);
-    // pthread_mutex_destroy(&mutex_end);
-};
+// matrix_controller::~matrix_controller()
+// {
+//     // pthread_mutex_destroy(&mutex_steal_list);
+//     // pthread_mutex_destroy(&mutex_end);
+// };
 
-ivmthread*
-matrix_controller::make_bbexplorer(unsigned _id){
+std::shared_ptr<bbthread>
+matrix_controller::make_bbexplorer(){
     //initialize local (sequential) BB
-    ivmthread* ibb = new ivmthread(pbb);
-    return ibb;
+    return std::make_shared<ivmthread>(pbb);
 }
 
 void
@@ -76,19 +70,16 @@ matrix_controller::initFullInterval()
 bool
 matrix_controller::solvedAtRoot()
 {
-    return dynamic_cast<ivmthread*>(bbb[0])->ivmbb->solvedAtRoot();
+    return std::dynamic_pointer_cast<ivmthread>(bbb[0])->ivmbb->solvedAtRoot();
 }
 
 //nbint := number received intervals
 void
 matrix_controller::initFromFac(const unsigned int nbint, const int * ids, int * _pos, int * _end)
 {
-    if (nbint > M) {
-        printf("cannot handle more than %d intervals\n", M);
-        exit(-1);
-    }
+    assert(nbint <= M);
+
     if (nbint == 0) {
-        printf("nothing received\n");
         return;
     }
     updatedIntervals = 1;
@@ -97,10 +88,7 @@ matrix_controller::initFromFac(const unsigned int nbint, const int * ids, int * 
         pthread_mutex_lock_check(&bbb[k]->mutex_ivm);
         unsigned int id = ids[k];
 
-        if (id >= M) {
-            printf("ID > nbIVMs!");
-            exit(-1);
-        }
+        assert(id < M);
 
         victim_list.remove(id);
         victim_list.push_front(id);// put in front
@@ -121,17 +109,14 @@ matrix_controller::getIntervals(int * pos, int * end, int * ids, int &nb_interva
     memset(pos, 0, max_intervals * size * sizeof(int));
     memset(end, 0, max_intervals * size * sizeof(int));
 
-    if (max_intervals < M) {
-        FILE_LOG(logERROR)<<"MC:buffer too small";
-        exit(-1);
-    }
+    assert(max_intervals >= M);
 
     int nbActive = 0;
     for (unsigned int k = 0; k < M; k++) {
         pthread_mutex_lock_check(&bbb[k]->mutex_ivm);//don't need it...
         if (!bbb[k]->isEmpty()) {
             ids[nbActive] = k;
-            dynamic_cast<ivmthread*>(bbb[k])->ivmbb->IVM->getInterval(&pos[nbActive * size],&end[nbActive * size]);
+            std::dynamic_pointer_cast<ivmthread>(bbb[k])->ivmbb->IVM->getInterval(&pos[nbActive * size],&end[nbActive * size]);
             nbActive++;
         }
         pthread_mutex_unlock(&bbb[k]->mutex_ivm);
@@ -151,12 +136,11 @@ matrix_controller::getNbIVM()
 int
 matrix_controller::work_share(unsigned id, unsigned thief)
 {
-    if(id==thief){perror("can't share with myself (mc)\n"); exit(-1);}
-    if(id > M || thief > M){
-        perror("invalid victim ID (mc)\n"); exit(-1);
-    }
+    assert(id != thief);
+    assert(id < M);
+    assert(thief < M);
 
-    int ret = dynamic_cast<ivmthread*>(bbb[id])->shareWork(1, 2, dynamic_cast<ivmthread*>(bbb[thief])->ivmbb);
+    int ret = std::dynamic_pointer_cast<ivmthread>(bbb[id])->shareWork(std::dynamic_pointer_cast<ivmthread>(bbb[thief])->ivmbb);
 
     return ret;
 }
@@ -177,18 +161,18 @@ matrix_controller::explore_multicore()
 
     if(!bbb[id]){
         //make sequential bb-explorer
-        bbb[id] = make_bbexplorer(id);
+        bbb[id] = make_bbexplorer();
         //set root
-        bbb[id]->setRoot(root.data());
+        bbb[id]->setRoot(pbb->root_sltn->perm);
         FILE_LOG(logDEBUG) << id << " === allocated";
     }
 
     if(state[id]==1){
-        //has non-empty interval
+        //has non-empty interval ...
         FILE_LOG(logDEBUG) << id << " === state 1";
 
         if(updatedIntervals){
-            dynamic_cast<ivmthread*>(bbb[id])->ivmbb->initAtInterval(pos[id].data(), end[id].data());
+            std::dynamic_pointer_cast<ivmthread>(bbb[id])->ivmbb->initAtInterval(pos[id], end[id]);
         }
 
         bbb[id]->setWorkState(true);
@@ -200,12 +184,12 @@ matrix_controller::explore_multicore()
     }else{
         //has empty interval
         FILE_LOG(logDEBUG) << id << " === state 0";
-        dynamic_cast<ivmthread*>(bbb[id])->ivmbb->clear();
+        std::dynamic_pointer_cast<ivmthread>(bbb[id])->ivmbb->clear();
         bbb[id]->setWorkState(false);
     }
 
     bbb[id]->reset_requestQueue();
-    dynamic_cast<ivmthread*>(bbb[id])->ivmbb->count_decomposed = 0;
+    std::dynamic_pointer_cast<ivmthread>(bbb[id])->ivmbb->count_decomposed = 0;
 
     int ret = pthread_barrier_wait(&barrier);
     if(ret==PTHREAD_BARRIER_SERIAL_THREAD)
@@ -221,7 +205,7 @@ matrix_controller::explore_multicore()
         //get best UB
         pbb->sltn->getBest(bestCost);
         //set best UB for multi-core BB
-        dynamic_cast<ivmthread*>(bbb[id])->ivmbb->setBest(bestCost);
+        std::dynamic_pointer_cast<ivmthread>(bbb[id])->ivmbb->setBest(bestCost);
 
         bool continuer = bbb[id]->bbStep();
 
@@ -247,8 +231,8 @@ matrix_controller::explore_multicore()
         }
     }
 
-    pbb->stats.totDecomposed += dynamic_cast<ivmthread*>(bbb[id])->ivmbb->count_decomposed;
-    pbb->stats.leaves += dynamic_cast<ivmthread*>(bbb[id])->ivmbb->count_leaves;
+    pbb->stats.totDecomposed += std::dynamic_pointer_cast<ivmthread>(bbb[id])->ivmbb->count_decomposed;
+    pbb->stats.leaves += std::dynamic_pointer_cast<ivmthread>(bbb[id])->ivmbb->count_leaves;
 
     allEnd.store(true);
     stop(id);
@@ -319,7 +303,7 @@ matrix_controller::getSubproblem(int *ret, const int N)
         if(!bbb[i]->isEmpty())
         {
             for(int k=0;k<size;k++){
-                dynamic_cast<ivmthread*>(bbb[i])->getSchedule(&ret[count*size]);
+                std::dynamic_pointer_cast<ivmthread>(bbb[i])->getSchedule(&ret[count*size]);
             }
             count++;
         }

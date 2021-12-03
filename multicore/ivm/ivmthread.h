@@ -10,10 +10,10 @@ class pbab;
 class ivmthread : public bbthread
 {
 public:
-    ivmthread(pbab* _pbb);
+    explicit ivmthread(pbab* _pbb);
     ~ivmthread();
 
-    sequentialbb<int>* ivmbb;
+    std::shared_ptr<sequentialbb<int>> ivmbb;
 
     void
     getSchedule(int *sch)
@@ -22,15 +22,10 @@ public:
     }
 
     int
-    shareWork(int numerator, int denominator, sequentialbb<int> *thief_thread);
+    shareWork(std::shared_ptr<sequentialbb<int>> thief_thread);
 
-    bool bbStep(){
-        return ivmbb->next();
-    }
-
-    void setRoot(const int* perm){
-        ivmbb->setRoot(perm);
-    }
+    bool bbStep();
+    void setRoot(const int* perm);
 
     bool isEmpty(){
         return !ivmbb->IVM->beforeEnd();

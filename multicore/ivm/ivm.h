@@ -7,12 +7,20 @@ class ivm{
 private:
     int size;
     int line = 0;
-    int* posVect;
-    int* endVect;
-    int* dirVect;
 
+    std::vector<int> posVect;
+    // int* posVect;
+    std::vector<int> endVect;
+    // int* endVect;
+    std::vector<int> dirVect;
+    // int* dirVect;
+    std::vector<int> jobMat;
+    // int* jobMat;
+
+    subproblem node;
 public:
-    int* jobMat;
+    subproblem& getNode();
+
 
     //operate on line
     int getDepth() const;
@@ -31,12 +39,20 @@ public:
     int getDirection(const int _d) const;
     void setDirection(int depth, int dir);
 
+    void setRow(int k, const int *row);
+    int *getRowPtr(int i);
+    int getCell(int i,int j) const;
+
+    inline int getCurrentCell() const
+    {
+        return jobMat[line*size+posVect[line]];
+    };
 
 
-    std::unique_ptr<subproblem> node;
-
-    ivm(int _size);
+    explicit ivm(int _size);
     ~ivm();
+
+    void eliminateCurrent();
 
     void clearInterval();
     void getInterval(int*,int*);
@@ -58,6 +74,7 @@ public:
 
     void displayVector(int* ptr) const;
     void displayMatrix() const;
+    void printRow(const int r) const;
 
     int countExplorableSubtrees(const int line);
     int cuttingPosition(const int line, const int division);

@@ -143,7 +143,6 @@ class OperatorFactory
                 );
                 return ev;
             }
-
         }
     }
 };
