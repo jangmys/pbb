@@ -1,6 +1,6 @@
 //#define FINDALL
 
-#define NDEBUG
+// #define NDEBUG
 //#undef NDEBUG //uncomment to activate assert etc
 
 #define PERBLOCK 4 // warps per block
