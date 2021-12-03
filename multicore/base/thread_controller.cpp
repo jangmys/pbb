@@ -1,4 +1,5 @@
 #include <sys/sysinfo.h>
+#include <assert.h>
 
 #include "macros.h"
 #include "arguments.h"
@@ -13,6 +14,10 @@ thread_controller::thread_controller(pbab * _pbb) : pbb(_pbb), size(pbb->size)
     if(arguments::singleNode){
         std::cout<<" === Single-node multi-core : Using "<<M<<" threads"<<std::endl;
         std::cout<<" === Problem size : "<<size<<std::endl;
+    }
+
+    for (int i = 0; i < (int) M; i++){
+        bbb[i]=nullptr;
     }
 
     //barrier for syncing all explorer threads
@@ -67,10 +72,7 @@ thread_controller::counter_increment(unsigned id)
 unsigned
 thread_controller::explorer_get_new_id()
 {
-    if (atom_nb_explorers.load() >= MAX_EXPLORERS) {
-        printf("Erreur : Nombre maximal de threads\n");
-        exit(2);
-    }
+    assert(atom_nb_explorers.load() < MAX_EXPLORERS);
     return (atom_nb_explorers++);
 }
 
@@ -147,11 +149,13 @@ thread_controller::pull_request(unsigned id)
 
     pthread_mutex_lock_check(&bbb[id]->mutex_workRequested);
     //error check
-    if(bbb[id]->requestQueue.size()>=M){
-        FILE_LOG(logERROR) << "Received too many requests" << bbb[id]->requestQueue.size();
-        for(auto i: bbb[id]->requestQueue) FILE_LOG(logERROR) << i;
-        exit(-1);
-    }
+    assert(bbb[id]->requestQueue.size()<M);
+
+    // if(bbb[id]->requestQueue.size()>=M){
+    //     FILE_LOG(logERROR) << "Received too many requests" << bbb[id]->requestQueue.size();
+    //     for(auto i: bbb[id]->requestQueue) FILE_LOG(logERROR) << i;
+    //     exit(-1);
+    // }
 
     thief = (bbb[id]->requestQueue).front();
     (bbb[id]->requestQueue).pop_front();

@@ -23,10 +23,10 @@ protected:
     int size;
     unsigned M;
 
-    virtual bbthread* make_bbexplorer(unsigned _id) = 0;
+    virtual std::shared_ptr<bbthread> make_bbexplorer() = 0;
     virtual int work_share(unsigned id, unsigned dest) = 0;
 
-    bbthread *bbb[MAX_EXPLORERS];
+    std::shared_ptr<bbthread>bbb[MAX_EXPLORERS];
 
     std::atomic<unsigned int> atom_nb_explorers{0};
     std::atomic<unsigned int> atom_nb_steals{0};
