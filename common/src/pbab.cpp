@@ -68,11 +68,14 @@ void pbab::set_initial_solution()
     //by default initial upper bound in INFTY
     sltn->cost = INT_MAX;
 
+    struct timespec t1,t2;
+    clock_gettime(CLOCK_MONOTONIC,&t1);
+
     //if set, read initial UB from file
     switch (arguments::init_mode) {
         case 0:
         {
-            std::cout<<" === Get initial upper bound from file..."<<std::endl;
+            std::cout<<" === Get initial upper bound : FILE\n";
             switch (arguments::inst_name[0]) {
                 case 't':
                 {
@@ -89,6 +92,28 @@ void pbab::set_initial_solution()
         }
         case 1:
         {
+            std::cout<<" === Get initial upper bound : NEH\n";
+
+            fastNEH neh(instance);
+
+            std::shared_ptr<subproblem> p = std::make_shared<subproblem>(instance->size);
+
+            int fitness;
+
+            neh.initialSort(p.get()->schedule);
+            neh.runNEH(p->schedule,fitness);
+
+            p->set_fitness(fitness);
+
+            for(int i=0; i<instance->size; i++){
+                sltn->perm[i] = p->schedule[i];
+            }
+            sltn->cost = p->fitness();
+
+            break;
+        }
+        case 2:
+        {
             Beam bs(instance);
 
             subproblem *p = new subproblem(instance->size);
@@ -102,15 +127,15 @@ void pbab::set_initial_solution()
 
             break;
         }
-        case 2:
-        {
-            break;
-        }
         default:
         {
             sltn->cost = INT_MAX;
         }
     }
+
+    clock_gettime(CLOCK_MONOTONIC,&t2);
+    std::cout<<"\tTime(InitialSolution):\t"<<(t2.tv_sec-t1.tv_sec)+(t2.tv_nsec-t1.tv_nsec)/1e9<<std::endl;
+
 
     *(root_sltn) = *(sltn);
 
