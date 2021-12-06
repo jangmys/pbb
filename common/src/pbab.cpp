@@ -93,7 +93,7 @@ void pbab::set_initial_solution()
 
             subproblem *p = new subproblem(instance->size);
 
-            bs.run(1<<14,p);
+            bs.run_loop(1<<14,p);
 
             for(int i=0; i<instance->size; i++){
                 sltn->perm[i] = bs.bestSolution->schedule[i];
