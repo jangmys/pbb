@@ -4,7 +4,10 @@
 #include <vector>
 #include <iostream>
 
+
 class subproblem {
+    friend std::ostream& operator << (std::ostream& stream, const subproblem& s);
+
 public:
     subproblem(int _size);
     subproblem(const subproblem& s);
@@ -22,8 +25,8 @@ public:
     std::vector<int> schedule;
     std::vector<bool> mask;
 
-    int cost;
-    int ub;
+    // int cost;
+    // int ub;
 
     float prio;
 
@@ -55,6 +58,26 @@ public:
     void
     copy(subproblem * p);
 
+    int fitness() const
+    {
+        return _ub;
+    }
+    int lower_bound() const{
+        return _cost;
+    }
+
+    void set_fitness(const int ub)
+    {
+        _ub = ub;
+    }
+    void set_lower_bound(const int lb)
+    {
+        _cost = lb;
+    }
+
+private:
+    int _cost;
+    int _ub;
 };
 
 std::ostream&

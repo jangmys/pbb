@@ -66,7 +66,7 @@ Beam::run(const int maxBeamWidth, subproblem* p)
         activeSet.clear();
 
         std::unique_ptr<subproblem> root = std::make_unique<subproblem>(*p);
-        root->cost = 0;
+        root->set_lower_bound(0);
         activeSet.push_back(std::move(root));
 
         // while(step_loop(beamWidth,localBest));
@@ -86,15 +86,15 @@ Beam::step_loop_local_pq(int beamWidth,int localBest){
     if(n_parents>0 && activeSet[0]->depth == bestSolution->size-1){
         std::unique_ptr<subproblem> slice_min(std::move(activeSet[0]));
         for(int i=1;i<n_parents;i++){
-            if(activeSet[i]->cost < slice_min->cost){
+            if(activeSet[i]->lower_bound() < slice_min->lower_bound()){
                 slice_min = std::move(activeSet[i]);
             }
         }
         activeSet.clear();
 
-        if(slice_min->cost < prune->local_best){
-            slice_min->ub = slice_min->cost;
-            prune->local_best = slice_min->ub;
+        if(slice_min->lower_bound() < prune->local_best){
+            slice_min->set_fitness(slice_min->lower_bound());
+            prune->local_best = slice_min->fitness();
             bestSolution = std::move(slice_min);
             std::cout<<"best\t"<<*bestSolution<<"\n";
         }
@@ -134,7 +134,7 @@ Beam::step_loop_local_pq(int beamWidth,int localBest){
                 //compute priorities
                 float alpha = (float)(n->depth+1)/n->size;
                 for(auto &c : ns){
-                    c->prio = (1.0f-alpha)*(c->cost)*c->prio + alpha*(c->cost);
+                    c->prio = (1.0f-alpha)*(c->lower_bound())*c->prio + alpha*(c->lower_bound());
                 }
                 for(auto it=std::make_move_iterator(ns.begin());
                     it!=std::make_move_iterator(ns.end());it++){
@@ -189,15 +189,15 @@ Beam::step_loop_pq(int beamWidth,int localBest){
     if(n_parents>0 && activeSet[0]->depth == bestSolution->size-1){
         std::unique_ptr<subproblem> slice_min(std::move(activeSet[0]));
         for(int i=1;i<n_parents;i++){
-            if(activeSet[i]->cost < slice_min->cost){
+            if(activeSet[i]->lower_bound() < slice_min->lower_bound()){
                 slice_min = std::move(activeSet[i]);
             }
         }
         activeSet.clear();
 
-        if(slice_min->cost < prune->local_best){
-            slice_min->ub = slice_min->cost;
-            prune->local_best = slice_min->ub;
+        if(slice_min->lower_bound() < prune->local_best){
+            slice_min->set_fitness(slice_min->lower_bound());
+            prune->local_best = slice_min->fitness();
             bestSolution = std::move(slice_min);
             std::cout<<"best\t"<<*bestSolution<<"\n";
         }
@@ -227,7 +227,7 @@ Beam::step_loop_pq(int beamWidth,int localBest){
                 //compute priorities
                 float alpha = (float)(n->depth+1)/n->size;
                 for(auto &c : ns){
-                    c->prio = (1.0f-alpha)*(c->cost)*c->prio + alpha*(c->cost);
+                    c->prio = (1.0f-alpha)*(c->lower_bound())*c->prio + alpha*(c->lower_bound());
                 }
                 //insert in next slice
                 local_children.insert(local_children.end(), make_move_iterator(ns.begin()), make_move_iterator(ns.end()));
@@ -274,15 +274,15 @@ Beam::step_loop(int beamWidth,int localBest){
     if(n_parents>0 && activeSet[0]->depth == bestSolution->size-1){
         std::unique_ptr<subproblem> slice_min(std::move(activeSet[0]));
         for(int i=1;i<n_parents;i++){
-            if(activeSet[i]->cost < slice_min->cost){
+            if(activeSet[i]->lower_bound() < slice_min->lower_bound()){
                 slice_min = std::move(activeSet[i]);
             }
         }
         activeSet.clear();
 
-        if(slice_min->cost < prune->local_best){
-            slice_min->ub = slice_min->cost;
-            prune->local_best = slice_min->ub;
+        if(slice_min->lower_bound() < prune->local_best){
+            slice_min->set_fitness(slice_min->lower_bound());
+            prune->local_best = slice_min->fitness();
             bestSolution = std::move(slice_min);
             std::cout<<"best\t"<<*bestSolution<<"\n";
         }
@@ -309,7 +309,7 @@ Beam::step_loop(int beamWidth,int localBest){
                 //compute priorities
                 float alpha = (float)(n->depth)/n->size;
                 for(auto &c : ns){
-                    c->prio = (1.0f-alpha)*(c->cost)*c->prio + alpha*(c->cost);
+                    c->prio = (1.0f-alpha)*(c->lower_bound())*c->prio + alpha*(c->lower_bound());
                 }
                 //insert in next slice
                 local_children.insert(local_children.end(), make_move_iterator(ns.begin()), make_move_iterator(ns.end()));
@@ -420,11 +420,11 @@ Beam::decompose(const subproblem& n, std::vector<std::unique_ptr<subproblem>>& c
 
     if (n.simple()) { //2 solutions ...
         tmp        = std::make_unique<subproblem>(n, n.limit1 + 1, BEGIN_ORDER);
-        tmp->cost=eval->evalSolution(tmp->schedule.data());
+        tmp->set_lower_bound(eval->evalSolution(tmp->schedule.data()));
         children.push_back(std::move(tmp));
 
         tmp        = std::make_unique<subproblem>(n, n.limit1+2 , BEGIN_ORDER);
-        tmp->cost=eval->evalSolution(tmp->schedule.data());
+        tmp->set_lower_bound(eval->evalSolution(tmp->schedule.data()));
         children.push_back(std::move(tmp));
     } else {
         std::vector<int> costFwd(n.size);
@@ -446,7 +446,7 @@ Beam::decompose(const subproblem& n, std::vector<std::unique_ptr<subproblem>>& c
                 if(!(*prune)(costFwd[job])){
                     tmp = std::make_unique<subproblem>(n, j, BEGIN_ORDER);
 
-                    tmp->cost=costFwd[job];
+                    tmp->set_lower_bound(costFwd[job]);
                     tmp->prio=prioFwd[job];
 
                     children.push_back(std::move(tmp));
@@ -458,7 +458,7 @@ Beam::decompose(const subproblem& n, std::vector<std::unique_ptr<subproblem>>& c
                 if(!(*prune)(costBwd[job])){
                     tmp = std::make_unique<subproblem>(n, j, END_ORDER);
 
-                    tmp->cost=costBwd[job];
+                    tmp->set_lower_bound(costBwd[job]);
                     tmp->prio=prioBwd[job];
 
                     children.push_back(std::move(tmp));

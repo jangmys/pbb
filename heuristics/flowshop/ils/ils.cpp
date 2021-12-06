@@ -160,7 +160,7 @@ int IG::runIG(subproblem* current)
 
     // bestcost=neh->evalMakespan(best->schedule, nbJob);
 	currentcost=bestcost;
-	current->ub=bestcost;
+	current->set_fitness(bestcost);
 
     int l1=0;//current->limit1+1;
     int l2=nbJob;//current->limit2;
@@ -183,7 +183,7 @@ int IG::runIG(subproblem* current)
 
 		int tempcost=ls->localSearchKI(temp->schedule,kmax);
 
-		temp->ub=tempcost;
+		temp->set_fitness(tempcost);
 
         if(acceptance(tempcost, currentcost, acceptanceParameter)){
 			currentcost=tempcost;
@@ -206,7 +206,7 @@ int IG::runIG(subproblem* current)
 		*current=*best;
 	}
 
-    return current->ub;
+    return current->fitness();
 }
 
 int IG::runIG(subproblem* current, int l1, int l2)

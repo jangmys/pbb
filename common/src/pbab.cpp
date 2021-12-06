@@ -98,7 +98,7 @@ void pbab::set_initial_solution()
             for(int i=0; i<instance->size; i++){
                 sltn->perm[i] = bs.bestSolution->schedule[i];
             }
-            sltn->cost = p->ub;
+            sltn->cost = p->fitness();
 
             break;
         }

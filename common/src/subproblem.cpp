@@ -18,8 +18,8 @@ subproblem::subproblem(int _size) :
 {
     std::iota(schedule.begin(),schedule.end(),0);
 
-    cost = 0;
-	ub=0;
+    _cost = 0;
+	_ub=0;
 	depth=0;
 }
 
@@ -39,8 +39,8 @@ subproblem::subproblem(const subproblem& s)
     for (int j = 0; j < size; j++)
         schedule[j] = s.schedule[j];
 
-    cost = s.cost;
-	ub = s.ub;
+    _cost = s._cost;
+	_ub = s._ub;
 	depth= s.depth;
 }
 
@@ -53,8 +53,8 @@ subproblem::subproblem(const subproblem& father, int indice, int begin_end)
     permutation_set(father, indice, begin_end);
 
     depth=father.depth+1;
-    cost = 0;
-    ub=0;
+    _cost = 0;
+    _ub=0;
 }
 
 
@@ -172,7 +172,7 @@ subproblem::print()
     {
         printf("%3d ",schedule[i]);
     }
-    printf("\t %d\n",cost);
+    printf("\t %d\n",_cost);
 }
 
 void
@@ -198,8 +198,8 @@ subproblem::operator=(const subproblem& s)
     for (int j = 0; j < size; j++)
         schedule[j] = s.schedule[j];
 
-    cost = s.cost;
-	ub = s.ub;
+    _cost = s._cost;
+	_ub = s._ub;
     depth = s.depth;
 
     return *this;
@@ -214,7 +214,7 @@ operator << (std::ostream& stream, const subproblem& s)
     for (int i = 0; i < s.size; i++) {
         stream << s.schedule[i] << " ";
     }
-	stream << "\t" << s.cost << " " << s.ub;
+	stream << "\t" << s._cost << " " << s._ub;
 
     return stream;
 }
