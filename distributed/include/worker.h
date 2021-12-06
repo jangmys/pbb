@@ -18,12 +18,11 @@ class gpubb;
 class worker {
     // private:
 public:
-    int M;
-    int size;
-
-
-    communicator * comm;
     pbab * pbb;
+    int size;
+    int M;
+
+    std::unique_ptr<communicator> comm;
 
     matrix_controller * mc;
     gpubb * gbb;

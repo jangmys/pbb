@@ -97,7 +97,7 @@ fact_work::fact2dec(std::shared_ptr<work> dw)
     mpz_class tmpb(0);
     mpz_class tmpe(0);
 
-    for (int i = 0; i < nb_intervals; i++) {
+    for (unsigned i = 0; i < nb_intervals; i++) {
         // for (int j = 0; j < pbsize; j++) {
         //     printf("%d ", pos[i*pbsize+j]);
         // }
@@ -126,7 +126,7 @@ fact_work::dec2fact(std::shared_ptr<work> dw)
     nb_intervals  = dw->Uinterval.size();
     max_intervals = dw->max_intervals;
 
-    for (int k = 0; k < nb_intervals; k++) {
+    for (unsigned k = 0; k < nb_intervals; k++) {
         ids[k] = dw->Uinterval[k]->id;
         BigintToVect(
             dw->Uinterval[k]->begin, dw->Uinterval[k]->end,

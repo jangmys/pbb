@@ -15,20 +15,30 @@ public:
 
     std::shared_ptr<sequentialbb<int>> ivmbb;
 
-    void
-    getSchedule(int *sch)
+    subproblem&
+    getNode()
     {
-        ivmbb->IVM->getSchedule(sch);
+        return ivmbb->get_ivm()->getNode();
+    }
+
+    void
+    getInterval(int *pos,int *end){
+        ivmbb->get_ivm()->getInterval(pos, end);
     }
 
     int
-    shareWork(std::shared_ptr<sequentialbb<int>> thief_thread);
+    shareWork(std::shared_ptr<ivmthread> thief_thread);
+
+    //pure virtuals
+    void setLocalBest(const int best){
+        ivmbb->setBest(best);
+    }
 
     bool bbStep();
     void setRoot(const int* perm);
 
     bool isEmpty(){
-        return !ivmbb->IVM->beforeEnd();
+        return !ivmbb->get_ivm()->beforeEnd();
     }
 };
 

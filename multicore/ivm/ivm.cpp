@@ -3,32 +3,20 @@
 #include "../../common/include/pbab.h"
 #include "ivm.h"
 
-ivm::ivm(int _size) : size(_size),node(_size){
-    jobMat = std::vector<int>(size*size,0);
-    // jobMat = (int*)calloc(size*size,sizeof(int));
-
-    posVect = std::vector<int>(size,0);
-    endVect = std::vector<int>(size,0);
-    dirVect = std::vector<int>(size,0);
-
+ivm::ivm(int _size) : size(_size),line(0),
+    posVect(_size,0),endVect(_size,0),dirVect(_size,0),jobMat(_size*_size,0),
+    node(_size){
     clearInterval();
     posVect[0]=size; //makes interval empty
 
 #ifndef NDEBUG
     std::cout<<"debug\n";
 #endif
-
-}
-
-ivm::~ivm()
-{
-    // free(jobMat);
 }
 
 subproblem& ivm::getNode(){
     return node;
 }
-
 
 int ivm::getDepth() const{
     return line;
@@ -112,12 +100,9 @@ ivm::getCell(int i, int j) const{
 */
 void ivm::clearInterval()
 {
-    memset(jobMat.data(), 0, size*size*sizeof(int));
-
+    std::fill(std::begin(jobMat),std::end(jobMat),0);
     std::fill(std::begin(posVect),std::end(posVect),0);
-    // memset(posVect, 0, size*sizeof(int));
     std::fill(std::begin(endVect),std::end(endVect),0);
-    // memset(endVect, 0, size*sizeof(int));
     posVect[0]=size;
 }
 
@@ -157,13 +142,9 @@ void ivm::goDown()
     generateLine(line, true);
 }
 
-int removeFlag(int a)
+inline int removeFlag(int a)
 {
-    if(a>=0){
-        return a;
-    }else{
-        return -a-1;
-    }
+    return (a>=0)?a:(-a-1);
 }
 
 void
@@ -360,7 +341,6 @@ int ivm::cuttingPosition(const int line, const int division)
 	int keep = expSubtrees / division;
 
 	// determine where the thief's interval should start
-	// int pos = firstAvailableSubtree(line);
 	int pos          = posVect[line] + 1;
 	int keptSubtrees = 0;
 
@@ -375,29 +355,16 @@ int ivm::cuttingPosition(const int line, const int division)
 	return pos;
 }
 
-bool ivm::intervalValid(){
+bool ivm::intervalValid() const{
     for (int i = 0; i < size; i++) {
         if ( (posVect[i] < 0) || (posVect[i] >= size - i) ) {
-            std::cout << " incorrect position vector: pos[" << i << "]=" << posVect[i] << " size="<<size<<std::endl;
             return false;
         }
         if ((endVect[i] < 0) || (endVect[i] >= size - i)) {
-            std::cout << " incorrect end vector: end[ " << i << "]=" << endVect[i] << " size="<<size<<std::endl;
             return false;
         }
     }
     return true;
 }
-
-
-void
-ivm::getSchedule(int *sch)
-{
-    for (int i = 0; i < size; i++) {
-        sch[i]=node.schedule[i];
-    }
-}
-
-
 
 template void ivm::sortSiblingNodes<int>(std::vector<int> lb,std::vector<int> prio);

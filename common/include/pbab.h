@@ -9,6 +9,8 @@
 #include "../include/misc.h"
 #include "../include/arguments.h"
 #include "../include/statistics.h"
+#include "subproblem.h"
+#include "solution.h"
 
 #include "libbounds.h"
 
@@ -30,6 +32,7 @@ public:
     void
     set_instance(char problem[], char inst_name[]);
 
+    std::unique_ptr<subproblem> best_solution;
     solution * sltn;
     solution * root_sltn;
 

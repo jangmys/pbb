@@ -13,7 +13,7 @@ class weights;
 class fact_work{
 public:
     int id;
-    int nb_intervals;
+    unsigned nb_intervals;
     int max_intervals;
     int nb_decomposed;//decomposed nodes since last update
     int nb_leaves;

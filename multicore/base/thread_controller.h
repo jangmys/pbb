@@ -20,8 +20,10 @@ public:
 
 protected:
     pbab* pbb;
-    int size;
-    unsigned M;
+
+    unsigned int get_num_threads();
+    void interruptExploration();
+    std::shared_ptr<bbthread>get_bbthread(int k);
 
     virtual std::shared_ptr<bbthread> make_bbexplorer() = 0;
     virtual int work_share(unsigned id, unsigned dest) = 0;
@@ -30,7 +32,6 @@ protected:
 
     std::atomic<unsigned int> atom_nb_explorers{0};
     std::atomic<unsigned int> atom_nb_steals{0};
-    std::atomic<unsigned int>end_counter{0};
     std::atomic<bool> allEnd{false};
 
     pthread_mutex_t mutex_end;
@@ -45,14 +46,19 @@ protected:
     unsigned select_victim(unsigned id);
 
     void push_request(unsigned victim, unsigned id);
-    int pull_request(unsigned id);
+    unsigned pull_request(unsigned id);
     void request_work(unsigned id);
     bool try_answer_request(unsigned id);
     void unlock_waiting_thread(unsigned id);
 
     void stop(unsigned id);
     void unlockWaiting(unsigned id);
+
+    void resetExplorationState();
 private:
+    unsigned M;
+
+    std::atomic<unsigned int>end_counter{0};
 };
 
 #endif

@@ -9,19 +9,17 @@ private:
     int line = 0;
 
     std::vector<int> posVect;
-    // int* posVect;
     std::vector<int> endVect;
-    // int* endVect;
     std::vector<int> dirVect;
-    // int* dirVect;
     std::vector<int> jobMat;
-    // int* jobMat;
 
     subproblem node;
 public:
+    explicit ivm(int _size);
+
+    //GETTERS / SETTERS =========================
     subproblem& getNode();
-
-
+    // void getSchedule(int *sch);
     //operate on line
     int getDepth() const;
     void setDepth(int _line);
@@ -35,10 +33,10 @@ public:
     void setEnd(int* end);
     void setEnd(int depth, int end);
     int getEnd(const int _d) const;
-
+    //direction vector
     int getDirection(const int _d) const;
     void setDirection(int depth, int dir);
-
+    //matrix
     void setRow(int k, const int *row);
     int *getRowPtr(int i);
     int getCell(int i,int j) const;
@@ -48,34 +46,30 @@ public:
         return jobMat[line*size+posVect[line]];
     };
 
-
-    explicit ivm(int _size);
-    ~ivm();
-
     void eliminateCurrent();
 
     void clearInterval();
     void getInterval(int*,int*);
-    void initEmpty();
-    void initRoot();
 
-    void goDown();
-    void goRight();
-    void goUp();
+    //Tree operations
+    void goDown(); //branch node
+    void goRight(); //next sibling
+    void goUp(); //backtrack
 
-    bool isLineFinished() const;
-    bool isLastLine() const;
-    bool lineEndState() const;
-    bool pruningCellState() const;
+    //Exploration state
+    bool isLastLine() const; //reached leaf node
+    bool lineEndState() const; //all siblings explored
+    bool pruningCellState() const; //is pruned
+    bool beforeEnd() const; //interval not empty
+
     void generateLine(const int line, const bool explore);
-    bool beforeEnd() const;
 
-    int getDir();
-
+    //Display methods
     void displayVector(int* ptr) const;
     void displayMatrix() const;
     void printRow(const int r) const;
 
+    //Work partition
     int countExplorableSubtrees(const int line);
     int cuttingPosition(const int line, const int division);
 
@@ -84,8 +78,7 @@ public:
     template<typename T>
     void sortSiblingNodes(std::vector<T> lb,std::vector<T> prio);
 
-    bool intervalValid();
-    void getSchedule(int *sch);
+    bool intervalValid() const;
 };
 
 

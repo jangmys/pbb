@@ -23,10 +23,6 @@ typedef std::vector<std::shared_ptr<interval>>::iterator INTERVAL_IT;
 class work
 {
 public:
-    // pbab*pbb;
-
-    //the DATA
-    //work unit = set (union) of intervals...
     INTERVAL_VEC Uinterval; //...as decimals
 
     //the meta-data

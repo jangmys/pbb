@@ -14,30 +14,16 @@ template<typename T>
 class sequentialbb{
 public:
     sequentialbb(pbab* _pbb, int _size);
-    ~sequentialbb();
 
     bool initAtInterval(std::vector<int>& pos, std::vector<int>& end);
     void initFullInterval();
     void setRoot(const int* varOrder);
-    bool solvedAtRoot();
 
     void run();
     bool next();
     void clear();
 
     void setBest(const int);
-
-    pbab* pbb;
-    std::shared_ptr<ivm> IVM;
-
-    long long int count_leaves;
-    long long int count_decomposed;
-
-    std::vector<T> lower_bound_begin;
-    std::vector<T> lower_bound_end;
-    std::vector<T> priority_begin;
-    std::vector<T> priority_end;
-
     void eliminateJobs(std::vector<T> lb);
     bool boundLeaf();
 
@@ -45,20 +31,47 @@ public:
     static int rootDir;
     static int first;
 
-    // void boundRoot();
-
     void weakBoundPrune();
     void mixedBoundPrune();
     void strongBoundPrune();
 
     void boundNode(std::shared_ptr<ivm> IVM, std::vector<T>& lb_begin, std::vector<T>& lb_end);
     void computeStrongBounds(subproblem& node, const int be, std::vector<T>& lb);
-protected:
+
+    long long int get_leaves_count() const 
+    {
+        return count_leaves;
+    }
+    long long int get_decomposed_count() const
+    {
+        return count_decomposed;
+    }
+    void reset_node_counter(){
+        count_leaves = 0;
+        count_decomposed = 0;
+    }
+
+
+    std::shared_ptr<ivm> get_ivm(){
+        return IVM;
+    }
+private:
+    pbab* pbb;
+    int size;
+    std::shared_ptr<ivm> IVM;
+
+    long long int count_leaves{0};
+    long long int count_decomposed;
+
+    std::vector<T> lower_bound_begin;
+    std::vector<T> lower_bound_end;
+    std::vector<T> priority_begin;
+    std::vector<T> priority_end;
+
     std::unique_ptr<pruning> prune;
     std::unique_ptr<branching> branch;
     std::unique_ptr<evaluator<T>> eval;
 
-    int size;
     void unfold(int mode);
 };
 

@@ -25,18 +25,17 @@ class worker_mc : public worker
 public:
     worker_mc(pbab * _pbb) :
         worker(_pbb),
-        mc(new matrix_controller(pbb))
+        mc(std::make_unique<matrix_controller>(pbb))
     {
-        M    = mc->getNbIVM();
-
-        comm = new communicator(M, size);
+        M    = mc->get_num_threads();
+        comm = std::make_unique<communicator>(M, size);
 
         work_buf = std::make_shared<fact_work>(M, size);
         work_buf->max_intervals = M;
         work_buf->id = 0;
     };
 
-    matrix_controller * mc;
+    std::unique_ptr<matrix_controller> mc;
 
     void interrupt();
     void updateWorkUnit();

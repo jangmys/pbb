@@ -1,3 +1,5 @@
+#include <assert.h>
+
 #include "../../common/include/macros.h"
 
 #include "log.h"
@@ -7,13 +9,9 @@
 #include "operator_factory.h"
 
 template<typename T>
-sequentialbb<T>::sequentialbb(pbab *_pbb, int _size)
+sequentialbb<T>::sequentialbb(pbab *_pbb, int _size) :
+    pbb(_pbb),size(_size),IVM(std::make_shared<ivm>(size))
 {
-    pbb = _pbb;
-    size=_size;
-
-    IVM = std::make_shared<ivm>(size);
-
     count_leaves=0;
     count_decomposed=0;
 
@@ -32,13 +30,6 @@ sequentialbb<T>::sequentialbb(pbab *_pbb, int _size)
 
     priority_begin = std::vector<T>(size,0);
     priority_end = std::vector<T>(size,0);
-
-}
-
-template<typename T>
-sequentialbb<T>::~sequentialbb()
-{
-
 }
 
 template<typename T>
@@ -88,20 +79,6 @@ sequentialbb<T>::setRoot(const int *varOrder)
     }
 }
 
-template<typename T>
-bool
-sequentialbb<T>::solvedAtRoot()
-{
-    bool solved=true;
-    for(int i=0;i<size;i++){
-        solved &= (IVM->getCell(0,i)<0);
-    }
-    if(solved){
-        printf("problem solved at level 0\n");
-        IVM->printRow(0);
-    }
-    return solved;
-}
 
 template<typename T>
 void
@@ -166,7 +143,7 @@ bool sequentialbb<T>::next()
         } else if (IVM->pruningCellState()) {
             IVM->goRight();
             continue;
-        } else if (!IVM->pruningCellState()) {
+        } else { //if (!IVM->pruningCellState()) {
             state = 1;// exploring
             count_decomposed++;
 
@@ -205,10 +182,7 @@ template<typename T>
 void
 sequentialbb<T>::unfold(int mode)
 {
-    if(!IVM->intervalValid()){
-        std::cout<<"interval invalid\n";
-        exit(-1);
-    }
+    assert(IVM->intervalValid());
 
     while (IVM->getDepth() < size - 2) {
         if (IVM->pruningCellState()) {

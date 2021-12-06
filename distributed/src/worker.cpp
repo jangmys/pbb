@@ -21,11 +21,8 @@
 #include "work.h"
 #include "communicator.h"
 
-worker::worker(pbab * _pbb)
+worker::worker(pbab * _pbb) : pbb(_pbb),size(pbb->size)
 {
-    pbb  = _pbb;
-    size = pbb->size;
-
     dwrk = std::make_shared<work>();
 
     pthread_barrier_init(&barrier, NULL, 2);// sync worker and helper thread
@@ -70,8 +67,6 @@ worker::~worker()
     pthread_mutex_destroy(&mutex_solutions);
 
     free(solutions);
-
-    delete comm;
 }
 
 void

@@ -34,7 +34,7 @@ public:
         // M : how many intervals can be handled?
         #ifdef USE_GPU
         M    = arguments::nbivms_gpu;
-        comm = new communicator(M, pbb->size);
+        comm = std::make_unique<communicator>(M, pbb->size);
         cudaFree(0);
 
         int num_devices = 0;

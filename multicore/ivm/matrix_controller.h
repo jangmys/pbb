@@ -17,38 +17,28 @@ class pbab;
 class bbthread;
 
 class matrix_controller : public thread_controller{
+    friend class worker_mc;
 public:
+    explicit matrix_controller(pbab* _pbb);
+
     std::shared_ptr<bbthread> make_bbexplorer();
     int work_share(unsigned id, unsigned thief);
 
-    explicit matrix_controller(pbab* _pbb);
-    // ~matrix_controller();
-
-	std::vector<int> ids;
-	std::vector<int> state;
-	std::vector<std::vector<int>> pos;
-	std::vector<std::vector<int>> end;
-
     void initFullInterval();
     void initFromFac(const unsigned int nbint, const int* ids, int*pos, int* end);
-
-    void getIntervals(int *pos, int* end, int *ids, int &nb_intervals, const unsigned int max_intervals);
-    int getNbIVM();
     int getSubproblem(int *ret, const int N);
 
-    bool solvedAtRoot();
-
-
     void unlockWaiting(unsigned id);
-    void resetExplorationState();
-    void interruptExploration();
 
     bool next();
-    void printStats();
-
     void explore_multicore();
 private:
     int updatedIntervals = 1;
+
+    std::vector<int> ids;
+    std::vector<int> state;
+    std::vector<std::vector<int>> pos;
+    std::vector<std::vector<int>> end;
 };
 
 #endif

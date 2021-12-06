@@ -144,5 +144,6 @@ class OperatorFactory
                 return ev;
             }
         }
+        return nullptr;
     }
 };

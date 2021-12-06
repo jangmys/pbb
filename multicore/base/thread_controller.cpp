@@ -6,16 +6,10 @@
 #include "pbab.h"
 #include "thread_controller.h"
 
-thread_controller::thread_controller(pbab * _pbb) : pbb(_pbb), size(pbb->size)
+thread_controller::thread_controller(pbab * _pbb) : pbb(_pbb) //, size(pbb->size)
 {
     // //set number of BB-explorers (threads)
     M = (arguments::nbivms_mc < 1) ? get_nprocs_conf() : arguments::nbivms_mc;
-
-    if(arguments::singleNode){
-        std::cout<<" === Single-node multi-core : Using "<<M<<" threads"<<std::endl;
-        std::cout<<" === Problem size : "<<size<<std::endl;
-    }
-
     for (int i = 0; i < (int) M; i++){
         bbb[i]=nullptr;
     }
@@ -39,14 +33,25 @@ thread_controller::thread_controller(pbab * _pbb) : pbb(_pbb), size(pbb->size)
 
     atom_nb_explorers.store(0);// id_generator
     allEnd.store(false);
+
+    if(arguments::singleNode){
+        std::cout<<" === Single-node multi-core : Using "<<M<<" threads"<<std::endl;
+        std::cout<<" === Problem size : "<<pbb->size<<std::endl;
+    }
 }
 
 thread_controller::~thread_controller()
 {
     pthread_mutex_destroy(&mutex_steal_list);
     pthread_mutex_destroy(&mutex_end);
-
+    pthread_barrier_destroy(&barrier);
 }
+
+std::shared_ptr<bbthread>
+thread_controller::get_bbthread(int k)
+{
+    return bbb[k];
+};
 
 void
 thread_controller::counter_decrement()
@@ -96,11 +101,9 @@ thread_controller::select_victim(unsigned id)
                 // randomly select active thread (at most nbIVM attempts...otherwise loop may be infinite)
                 victim = rand() / (RAND_MAX /  M);
                 if(++attempts > M)break;
-            }while(victim == id || !bbb[victim]->getWorkState());
-            // while (victim == id || !hasWork[victim]);
+            }while(victim == id || !bbb[victim]->get_work_state());
 
             return victim;
-
         }
         case 'o': {
             // select thread which has not made request for longest time
@@ -109,15 +112,8 @@ thread_controller::select_victim(unsigned id)
             victim_list.push_back(id);// put at end
             victim = victim_list.front();// take first in list (oldest)
 
-            // if(!hasWork[victim])
-            if(!bbb[victim]->getWorkState())
+            if(!bbb[victim]->get_work_state())
                 victim=(id == 0) ? (M - 1) : (id - 1);
-
-            // FILE_LOG(logDEBUG4) << id << " list ...";
-            // for(auto i:victim_list)
-            // {
-            //     FILE_LOG(logDEBUG4) << i;
-            // }
 
             pthread_mutex_unlock(&mutex_steal_list);
             break;
@@ -137,28 +133,18 @@ void
 thread_controller::push_request(unsigned victim, unsigned id)
 {
     pthread_mutex_lock_check(&bbb[victim]->mutex_workRequested);
-    (bbb[victim]->requestQueue).push_back(id); // push ID into requestQueue of victim thread
+    bbb[victim]->enqueue_request(id);
     pthread_mutex_unlock(&bbb[victim]->mutex_workRequested);
 }
 
-
-int
+unsigned
 thread_controller::pull_request(unsigned id)
 {
-    int thief;
+    unsigned thief;
 
     pthread_mutex_lock_check(&bbb[id]->mutex_workRequested);
-    //error check
-    assert(bbb[id]->requestQueue.size()<M);
-
-    // if(bbb[id]->requestQueue.size()>=M){
-    //     FILE_LOG(logERROR) << "Received too many requests" << bbb[id]->requestQueue.size();
-    //     for(auto i: bbb[id]->requestQueue) FILE_LOG(logERROR) << i;
-    //     exit(-1);
-    // }
-
-    thief = (bbb[id]->requestQueue).front();
-    (bbb[id]->requestQueue).pop_front();
+    assert(bbb[id]->num_requests()<M);
+    thief = bbb[id]->get_oldest_request();
     pthread_mutex_unlock(&bbb[id]->mutex_workRequested);
     return thief;
 }
@@ -169,7 +155,7 @@ thread_controller::unlock_waiting_thread(unsigned id)
     //Note: For dependable use of condition variables, and to ensure that you do not lose wake-up operations on condition variables, your application should always use a Boolean predicate and a mutex with the condition variable.
     //https://www.ibm.com/support/knowledgecenter/en/ssw_ibm_i_74/apis/users_76.htm
     pthread_mutex_lock_check(&bbb[id]->mutex_shared);
-    bbb[id]->setReceivedWork(true);
+    bbb[id]->set_received_work(true);
     pthread_cond_signal(&bbb[id]->cond_shared);
     pthread_mutex_unlock(&bbb[id]->mutex_shared);
 }
@@ -177,18 +163,14 @@ thread_controller::unlock_waiting_thread(unsigned id)
 void
 thread_controller::request_work(unsigned id)
 {
-    bbb[id]->setWorkState(false);
+    bbb[id]->set_work_state(false);
     // hasWork[id]=false;
     if (counter_increment(id)) return;
 
     // if any pending requests, release waiting threads
     while (bbb[id]->has_request()) {
         unsigned thief = pull_request(id);
-
-        if(thief==id){
-            FILE_LOG(logERROR) << id << " try cancel myself " << thief;
-            exit(-1);
-        }
+        assert(thief != id);
 
         counter_decrement();
         FILE_LOG(logDEBUG4) << id << " cancel " << thief << " count: "<<end_counter.load();
@@ -202,13 +184,13 @@ thread_controller::request_work(unsigned id)
 
     if (victim != id) {
         pthread_mutex_lock_check(&bbb[id]->mutex_shared);
-        bbb[id]->setReceivedWork(false);
+        bbb[id]->set_received_work(false);
         pthread_mutex_unlock(&bbb[id]->mutex_shared);
 
         push_request(victim, id);
 
         pthread_mutex_lock_check(&bbb[id]->mutex_shared);
-        while (!bbb[id]->getReceivedWork() && !allEnd.load()) {
+        while (!bbb[id]->has_received_work() && !allEnd.load()) {
             pthread_cond_wait(&bbb[id]->cond_shared, &bbb[id]->mutex_shared);
         }
         pthread_mutex_unlock(&bbb[id]->mutex_shared);
@@ -218,7 +200,7 @@ thread_controller::request_work(unsigned id)
         counter_decrement();
     }
 
-    bbb[id]->setWorkState(!bbb[id]->isEmpty());
+    bbb[id]->set_work_state(!bbb[id]->isEmpty());
     // hasWork[id]=!bbb[id]->isEmpty();
 
 } // thread_controller::request_work
@@ -233,12 +215,7 @@ thread_controller::try_answer_request(unsigned id)
 
     unsigned thief = pull_request(id);
 
-    if(bbb[thief]->getWorkState()){
-    // if(hasWork[thief]){
-        FILE_LOG(logERROR) << "id "<<id<<" FATAL error : thief "<<thief<<" got work";
-        FILE_LOG(logERROR) << "and "<<bbb[id]->requestQueue.size()<<" pending requests";
-        exit(-1);
-    }
+    assert(!bbb[thief]->get_work_state());
 
     pthread_mutex_lock_check(&bbb[thief]->mutex_ivm);
     atom_nb_steals += work_share(id, thief);
@@ -262,6 +239,28 @@ thread_controller::unlockWaiting(unsigned id)
         if (i == id) continue;
         unlock_waiting_thread(i);
     }
+}
+
+void
+thread_controller::resetExplorationState()
+{
+    //reset global variables
+    end_counter.store(0);// termination counter
+    allEnd.store(false);
+    atom_nb_explorers.store(0);// id_generator
+    atom_nb_steals.store(0);//count work thefts
+}
+
+void
+thread_controller::interruptExploration()
+{
+    allEnd.store(true);
+}
+
+unsigned int
+thread_controller::get_num_threads()
+{
+    return M;
 }
 
 void

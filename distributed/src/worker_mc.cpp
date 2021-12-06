@@ -2,6 +2,7 @@
 
 #include <pthread.h>
 #include <sched.h>
+#include <assert.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -51,6 +52,11 @@ worker_mc::doWork()
 void
 worker_mc::updateWorkUnit()
 {
+    assert(work_buf->nb_intervals <= mc->get_num_threads());
+    if (work_buf->nb_intervals == 0) {
+        return;
+    }
+
     pthread_mutex_lock_check(&mutex_wunit);
     mc->initFromFac(
         work_buf->nb_intervals,
@@ -66,18 +72,27 @@ worker_mc::updateWorkUnit()
     pthread_cond_signal(&cond_updateApplied);
 }
 
-// // copies work units from GPU (resp. thread-private IVMs) to communicator-buffer
+// // copies work units from thread-private IVMs to communicator-buffer
 // // --> prepare SEND
 void
 worker_mc::getIntervals()
 {
-    mc->getIntervals(
-        work_buf->pos,
-        work_buf->end,
-        work_buf->ids,
-        work_buf->nb_intervals,
-        work_buf->max_intervals
-    );
+    memset(work_buf->pos, 0, work_buf->max_intervals * pbb->size * sizeof(int));
+    memset(work_buf->end, 0, work_buf->max_intervals * pbb->size * sizeof(int));
+    memset(work_buf->ids, 0, work_buf->max_intervals * sizeof(int));
+
+    assert(work_buf->max_intervals >= mc->get_num_threads());
+
+    int nbActive = 0;
+    for (unsigned int k = 0; k < mc->get_num_threads(); k++) {
+        if (!mc->get_bbthread(k)->isEmpty()) {
+            work_buf->ids[nbActive] = k;
+            std::static_pointer_cast<ivmthread>(mc->get_bbthread(k))->getInterval(&work_buf->pos[nbActive * size],&work_buf->end[nbActive * size]);
+            nbActive++;
+        }
+    }
+    work_buf->nb_intervals = nbActive;
+
     dwrk->exploredNodes      = pbb->stats.totDecomposed;
     dwrk->nbLeaves           = pbb->stats.leaves;
     pbb->stats.totDecomposed = 0;

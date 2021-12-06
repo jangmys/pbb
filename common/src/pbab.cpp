@@ -8,8 +8,7 @@
 #include "libbounds.h"
 #include "libheuristic.h"
 
-#include "subproblem.h"
-#include "solution.h"
+// #include "solution.h"
 #include "ttime.h"
 #include "pbab.h"
 #include "log.h"
@@ -28,6 +27,12 @@ pbab::pbab() : stats()
     size     = instance->size;
 
     this->ttm = new ttime();
+
+    sltn = new solution(size);
+    root_sltn = new solution(size);
+
+    best_solution = std::make_unique<subproblem>(size);
+
 }
 
 void pbab::set_instance(char problem[],char inst_name[])
@@ -60,9 +65,6 @@ void pbab::set_instance(char problem[],char inst_name[])
 
 void pbab::set_initial_solution()
 {
-    sltn = new solution(size);
-    root_sltn = new solution(size);
-
     //by default initial upper bound in INFTY
     sltn->cost = INT_MAX;
 

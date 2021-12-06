@@ -21,13 +21,13 @@ void ivmthread::setRoot(const int* perm){
 
 
 int
-ivmthread::shareWork(std::shared_ptr<sequentialbb<int>> thief_thread)
+ivmthread::shareWork(std::shared_ptr<ivmthread> thief_thread)
 {
     int numShared = 0;
     int l         = 0;
 
-    std::shared_ptr<ivm> thief(thief_thread->IVM);
-    std::shared_ptr<ivm> IVM(ivmbb->IVM);
+    std::shared_ptr<ivm> thief(thief_thread->ivmbb->get_ivm());
+    std::shared_ptr<ivm> IVM(ivmbb->get_ivm());
 
     while (IVM->getPosition(l) == IVM->getEnd(l) && l < IVM->getDepth() && l < pbb->size - 4) l++;
 
