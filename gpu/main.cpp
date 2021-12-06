@@ -12,17 +12,17 @@
 int
 main(int argc, char ** argv)
 {
-    strcpy(arguments::inifile,"./gpuconfig.ini");
     arguments::parse_arguments(argc, argv);
     std::cout<<" === solving "<<arguments::problem<<" - instance "<<arguments::inst_name<<std::endl;
 
     /*SET UP LOGGING*/
+    FILELog::ReportingLevel() = logINFO;
     FILE* log_fd = fopen(arguments::logfile, "w" );
     Output2FILE::Stream() = log_fd;
 
     pbab * pbb = new pbab();
     pbb->set_initial_solution();
-    std::cout<<*(pbb->sltn);
+    std::cout<<"initial solution "<<*(pbb->sltn);
 
 	arguments::singleNode=true;
 

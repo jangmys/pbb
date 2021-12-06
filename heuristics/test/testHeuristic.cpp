@@ -62,8 +62,12 @@ int main(int argc, char* argv[])
         {
             fastNEH neh(instance.get());
 
+            int fitness;
+
             neh.initialSort(p->schedule);
-            neh.runNEH(p->schedule,p->ub);
+            neh.runNEH(p->schedule,fitness);
+
+            p->set_fitness(fitness);
 
             std::cout<<" = NEH :\t";
             break;
@@ -72,7 +76,7 @@ int main(int argc, char* argv[])
         {
             IG ils(instance.get());
 
-            p->ub = ils.runIG(p.get());
+            p->set_fitness(ils.runIG(p.get()));
 
             std::cout<<" = ILS :\t";
             break;
@@ -81,7 +85,7 @@ int main(int argc, char* argv[])
         {
             LocalSearch ls(instance.get());
 
-            p->ub = ls(p->schedule,-1,p->size);
+            p->set_fitness(ls(p->schedule,-1,p->size));
 
             std::cout<<" = LS :\t";
             break;
@@ -129,5 +133,5 @@ int main(int argc, char* argv[])
     {
         std::cout<<e<<" ";
     }
-    std::cout<<" === "<<p->ub<<std::endl;
+    std::cout<<" === "<<p->fitness()<<std::endl;
 }

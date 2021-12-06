@@ -23,11 +23,11 @@ int
 Treeheuristic::run(std::shared_ptr<subproblem>& s, int _ub)
 {
     std::shared_ptr<subproblem> bsol = std::make_shared<subproblem>(*s);
-    bsol->ub = eval->evalSolution(bsol->schedule.data());
+    bsol->set_fitness(eval->evalSolution(bsol->schedule.data()));
 
 	prune->local_best=_ub;//ub used for pruning
     if(prune->local_best == 0)
-        prune->local_best = bsol->ub; //if no upper bound provided
+        prune->local_best = bsol->fitness(); //if no upper bound provided
 
     std::shared_ptr<subproblem> tmpsol = std::make_shared<subproblem>(*bsol);
     std::shared_ptr<subproblem> currsol = std::make_shared<subproblem>(*bsol);
@@ -53,10 +53,10 @@ Treeheuristic::run(std::shared_ptr<subproblem>& s, int _ub)
 
         exploreNeighborhood(tmpsol,cutoff);
 
-		if(tmpsol->ub < currsol->ub){
+		if(tmpsol->fitness() < currsol->fitness()){
             *currsol = *tmpsol;
         }
-        if(tmpsol->ub < bsol->ub){
+        if(tmpsol->fitness() < bsol->fitness()){
             // std::cout<<"improved "<<tmpsol->ub<<std::endl;
             *bsol = *tmpsol;
         }else{
@@ -79,8 +79,8 @@ Treeheuristic::exploreNeighborhood(std::shared_ptr<subproblem> s,long long int c
 {
     tr->clearPool();
     tr->setRoot(s->schedule, s->limit1, s->limit2);
-    (tr->top())->cost = 0;
-    (tr->top())->ub = eval->evalSolution(tr->top()->schedule.data());
+    (tr->top())->set_lower_bound(0);
+    (tr->top())->set_fitness(eval->evalSolution(tr->top()->schedule.data()));
 
     bool foundSolution = false;
 
@@ -91,7 +91,7 @@ Treeheuristic::exploreNeighborhood(std::shared_ptr<subproblem> s,long long int c
 
             if(!(*prune)(n.get())){
                 if(n->leaf()){
-                    prune->local_best = n->cost;
+                    prune->local_best = n->lower_bound();
                     *bestSolution = *n;
                     foundSolution = true;
                 }else{
@@ -105,9 +105,9 @@ Treeheuristic::exploreNeighborhood(std::shared_ptr<subproblem> s,long long int c
 
                     insert(ns);
 
-                    if(tr->top()->ub < bestSolution->ub)
+                    if(tr->top()->fitness() < bestSolution->fitness())
                     {
-                        prune->local_best = tr->top()->ub;
+                        prune->local_best = tr->top()->fitness();
                         *bestSolution = *(tr->top());
                         foundSolution = true;
 
@@ -142,11 +142,11 @@ Treeheuristic::decompose(subproblem& n)
 
     if (n.simple()) { //2 solutions ...
         tmp        = std::make_shared<subproblem>(n, n.limit1 + 1, BEGIN_ORDER);
-        tmp->cost=eval->evalSolution(tmp->schedule.data());
+        tmp->set_lower_bound(eval->evalSolution(tmp->schedule.data()));
         children.push_back(tmp);
 
         tmp        = std::make_shared<subproblem>(n, n.limit1+2 , BEGIN_ORDER);
-        tmp->cost=eval->evalSolution(tmp->schedule.data());
+        tmp->set_lower_bound(eval->evalSolution(tmp->schedule.data()));
         children.push_back(tmp);
     } else {
         std::vector<int> costFwd(n.size);
@@ -170,7 +170,7 @@ Treeheuristic::decompose(subproblem& n)
                 if(!(*prune)(costFwd[job])){
                     tmp = std::make_shared<subproblem>(n, j, BEGIN_ORDER);
 
-                    tmp->cost=costFwd[job];
+                    tmp->set_lower_bound(costFwd[job]);
                     tmp->prio=prioFwd[job];
 
                     children.push_back(tmp);
@@ -182,7 +182,7 @@ Treeheuristic::decompose(subproblem& n)
                 if(!(*prune)(costBwd[job])){
                     tmp = std::make_shared<subproblem>(n, j, END_ORDER);
 
-                    tmp->cost=costBwd[job];
+                    tmp->set_lower_bound(costBwd[job]);
                     tmp->prio=prioFwd[job];
 
                     children.push_back(tmp);
@@ -204,7 +204,7 @@ Treeheuristic::insert(std::vector<std::shared_ptr<subproblem>>&ns)
     //children inserted with push_back [ 1 2 3 ... ]
     //for left->right exploration, insert (push) in reverse order
     for (auto i = ns.rbegin(); i != ns.rend(); i++) {
-        (*i)->ub = eval->evalSolution((*i)->schedule.data());
+        (*i)->set_fitness(eval->evalSolution((*i)->schedule.data()));
         tr->push(std::move(*i));
     }
 }
