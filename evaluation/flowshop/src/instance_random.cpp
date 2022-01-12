@@ -56,15 +56,3 @@ instance_random::~instance_random()
 {
     delete data;
 }
-
-// void
-// instance_random::generate_instance(const char * _file, std::ostream& stream)
-// {
-//
-// } // instance_random::generate_instance
-//
-// int
-// instance_random::get_initial_ub_from_file(const char* inst_name,int init_mode)
-// {
-//
-// }

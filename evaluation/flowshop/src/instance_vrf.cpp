@@ -79,7 +79,7 @@ instance_vrf::generate_instance(const char * _file, std::ostream& stream)
 } // instance_vrf::generate_instance
 
 int
-instance_vrf::get_initial_ub_from_file(const char* inst_name,int init_mode)
+instance_vrf::get_initial_ub_from_file(const char* inst_name)
 {
     std::string tmp = "";
     int jobs     = 0;

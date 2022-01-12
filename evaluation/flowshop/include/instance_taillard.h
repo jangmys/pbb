@@ -34,7 +34,7 @@ struct instance_taillard : public instance_abstract {
     void
     generate_instance(int id, std::ostream& stream);
 
-    int read_initial_ub_from_file(const char * inst_name, int init_mode)
+    int read_initial_ub_from_file(const char * inst_name)
     {
         std::stringstream rubrique;
         std::string tmp;
