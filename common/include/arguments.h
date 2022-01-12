@@ -37,7 +37,6 @@ public:
     //UB initialization
     static int init_mode;
     static int initial_ub;
-    static int init_solution;
 
     static int initial_work;
     static int sortNodes;

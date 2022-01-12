@@ -3,14 +3,11 @@
 #include "../include/log.h"
 #include "../include/arguments.h"
 
-// #include "libbounds.h"
-
 //initialization files
 char arguments::inifile[50] = "./bbconfig.ini";
 char arguments::work_directory[50] = "../../bbworks/";
 
 //instance / problem
-// int arguments::instancev;
 char arguments::inst_name[50];
 char arguments::problem[50];
 
@@ -28,7 +25,6 @@ int arguments::nodePriority = 1;
 bool arguments::findAll        = false;
 
 //initial upper bound and solutions
-int arguments::init_solution = 1;
 int arguments::init_mode = 1;
 int arguments::initial_ub;
 
@@ -100,10 +96,7 @@ arguments::readIniFile()
     // }
 
     init_mode = reader.GetInteger("initial", "ub", -1);
-    init_solution = reader.GetInteger("initial", "sol", -1);
 
-    // nb IVMs
-    // nbivm_mc   = reader.GetInteger("multicore", "threads", -1);
     nbivms_mc  = reader.GetInteger("multicore", "threads", -1);
     nbivms_gpu = reader.GetInteger("gpu", "nbIVMs", 4096);
 
