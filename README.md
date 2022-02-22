@@ -11,12 +11,9 @@ Due to the combinatorial explosion of the search space, this requires massively 
 - [PBB@Cluster](./distributed/README.md)
 - [PFSP instances](instances)
 
-The following targets can be build separately.
+- [Configuration options](configuration)
 
-- multi-core PBB (Pthreads)
-- GPU PBB (Cuda)
-- distributed/no GPU (MPI+Pthreads)
-- distributed/GPU (MPI+Pthreads+Cuda)
+
 
 ### Compilation
 1. `mkdir build`
@@ -43,3 +40,34 @@ PFSP Benchmark instances for are included in the `evaluation/flowshop/data` fold
     - the folder `vrf_parameters` contains the processing times and `src/instance_vrf.cpp` the code for reading the instance files.
 
 - [Custom] File `file14_7.txt` is a sample instance (14 jobs, 7 machines) that is readable by PBB. Users can provide their instance data though similar files.
+
+
+### Configuration
+Some option can be given to PBB as command line arguments. But there are too many, so there are the following `.ini` files
+- `bbconfig.ini`
+- `multicore/mcconfig.ini`
+- `gpu/gpuconfig.ini`
+
+Any of those files (or .ini files with same layout) can be passed to PBB with the `-f <relative-path to .ini file>` option
+
+The options are:
+- [problem]
+    - `problem = flowshop`
+        - only option for now
+    - instance = ta20
+
+        it should be more convenient to pass this through the `-z p=fsp,i=ta20` option
+
+- [initial]
+    - control how initial upper bound is generated
+
+- [bb]
+    - single node or distributed?
+    - option for sorting sibling nodes in DFS
+    - bounding mode (LB1,LB2,combined)
+    - branching strategy ()
+    - LB2 variants
+    - search all
+
+- [verbose]
+- [time parameters]
