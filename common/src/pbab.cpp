@@ -79,12 +79,12 @@ void pbab::set_initial_solution()
             switch (arguments::inst_name[0]) {
                 case 't':
                 {
-                    sltn->cost = (static_cast<instance_taillard*>(instance))->read_initial_ub_from_file(arguments::inst_name,arguments::init_mode);
+                    sltn->cost = (static_cast<instance_taillard*>(instance))->read_initial_ub_from_file(arguments::inst_name);
                     break;
                 }
                 case 'V':
                 {
-                    sltn->cost = (static_cast<instance_vrf*>(instance))->get_initial_ub_from_file(arguments::inst_name,arguments::init_mode);
+                    sltn->cost = (static_cast<instance_vrf*>(instance))->get_initial_ub_from_file(arguments::inst_name);
                     break;
                 }
             }
@@ -116,14 +116,19 @@ void pbab::set_initial_solution()
         {
             Beam bs(instance);
 
-            subproblem *p = new subproblem(instance->size);
+            std::shared_ptr<subproblem> p = std::make_shared<subproblem>(instance->size);
 
-            bs.run_loop(1<<14,p);
+            bs.run_loop(1<<14,p.get());
 
             for(int i=0; i<instance->size; i++){
                 sltn->perm[i] = bs.bestSolution->schedule[i];
             }
             sltn->cost = p->fitness();
+
+            break;
+        }
+        case 3:
+        {
 
             break;
         }
