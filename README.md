@@ -1,4 +1,15 @@
-# Parallel B&B for Permutation Flow-shop Scheduling Problem (PFSP)
+# PBB: Parallel B&B for the Permutation Flow-shop Scheduling Problem (PFSP)
+
+B&B is an exact algorithm which solves combinatorial optimization problems by dynamically constructing and exploring a search tree that implicitly enumerates all possible solutions.
+
+Due to the combinatorial explosion of the search space, this requires massively parallel processing for all but the smallest problem instances. PBBPerm provides parallel B&B algorithms for solving permutation-based optimization problems on multi-core processors, GPUs and large-scale GPU-accelerated HPC systems.
+
+## Contents
+- [Compilation](compilation)
+- [PBB@multicore](./multicore/README.md)
+- [PBB@GPU](./multicore/README.md)
+- [PBB@Cluster](./distributed/README.md)
+- [PFSP instances](instances)
 
 The following targets can be build separately.
 
@@ -7,17 +18,23 @@ The following targets can be build separately.
 - distributed/no GPU (MPI+Pthreads)
 - distributed/GPU (MPI+Pthreads+Cuda)
 
-#### Compilation
+### Compilation
 1. `mkdir build`
 2. `cd build`
-3. `cmake <options> ..` where <options> are
+3. `cmake <options> ..` where `<options>` are
     - `-DMPI=true`
     - `-DGPU=true`
 4. `make`
 
+- Without option : build only PBB@multicore
+- `-DMPI=true` : build distributed (requires MPI)
+- `-DGPU=true` : build PBB@GPU (requires CUDA)
+
+### Instances
+
 ## 1) multi-core PBB
 
-[Instructions for PBB@multicore](./multicore/README.md)
+- [Instructions for PBB@multicore](./multicore/README.md)
 
 ## 2) GPU PBB
 
