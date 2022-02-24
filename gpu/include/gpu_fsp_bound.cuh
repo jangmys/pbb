@@ -9,9 +9,6 @@
 #define TILE_SZ 32
 #define MAXJOBS 800
 
-// #define MAXMACH 20
-// #define MAXSOMME 190 //M*(M-1)/2
-
 __device__ unsigned int _trigger;
 
 __device__ int root_d[MAXJOBS];
@@ -311,297 +308,37 @@ void fillTabJohnson()
  ****** evaluate bounds **********
  *********************************/
 //§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§
-inline __device__ void
-initCmax_d(const int * tempsMachines, const int nbAffectDebut, int &tmp0, int &tmp1, int &ma0, int &ma1, const int ind) {
-  ma0 = _machine[ind];
-  ma1 = _machine[_sum + ind];
-
-  int coeff = __cosf(nbAffectDebut);//=1 ifff nbAffect=0
-  tmp0 = (1 - coeff) * tempsMachines[ma0] + coeff * _minTempsArr[ma0];
-  tmp1 = (1 - coeff) * tempsMachines[ma1] + coeff * _minTempsArr[ma1];
+#include "gpu_lb_johnson.cuh"
 
 
-}
-//§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§
-inline __device__ void
-heuristiqueCmax_d(const int * job, int &tmp0, int &tmp1, const int ma0, const int ma1, const int ind, const int * _tabJohnson, const unsigned char * tempsJob) {
-  register int jobCour;
-
-  //#pragma unroll 5
-  for (int j = 0; j < size_d; j++) {
-    //jobCour = tex1Dfetch(tabJohnson_tex,ind*size_d+j);
-    jobCour = _tabJohnson[ind * size_d + j];
-    if (job[jobCour] == 0) {
-      tmp0 += tempsJob[ma0 * size_d + jobCour];
-
-      tmp1 = max(tmp1, tmp0 + _tempsLag[ind * size_d + jobCour]) + tempsJob[ma1 * size_d + jobCour];
-    }
-  }
-}
-//§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§!!
-inline __device__ int
-cmaxFin_d(const int *  tempsMachinesFin, const int tmp0, const int tmp1, const int ma0, const int ma1) {
-  return max(tmp1 + tempsMachinesFin[ma1],
-             tmp0 + tempsMachinesFin[ma0]);
-}
-//§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§
-//compute front
-template <typename T>
-inline __device__ void
-set_tempsMachines_d(const int* front, int *tempsMachines, const T* permutation, const T toSwap1, const T toSwap2, const int limit1, const int * tempsJob, const int matId) {
-    int job, m = 0;
-
-    for (m = 0; m < _nbMachines; m++)
-        tempsMachines[m] = front[m];
-
-    if(toSwap2 == limit1){
-        job = permutation[index2D(toSwap1, matId)];
-
-        tempsMachines[0] += tempsJob[job];
-
-        for (m = 1; m < _nbMachines; m++){
-            tempsMachines[m] = max(tempsMachines[m], tempsMachines[m - 1]);
-            tempsMachines[m] += tempsJob[m * size_d + job];
-        }
-    }
-}
-
-template <typename T>
-inline __device__ void
-set_tempsMachines_retardDebut_d(int *tempsMachines, const T* permutation, const T toSwap1, const T toSwap2, const int limit1, const int * tempsJob, const int matId) {
-  int job, m = 0;
-
-  memset(tempsMachines,0,_nbMachines*sizeof(int));
-
-  for (int j = 0; j <= limit1; j++) {
-    if (j == toSwap1)
-      job = permutation[index2D(toSwap2, matId)];
-    else if (j == toSwap2)
-      job = permutation[index2D(toSwap1, matId)];
-    else
-      job = permutation[index2D(j, matId)];
-
-    tempsMachines[0] = tempsMachines[0] + tempsJob[job]; //=_tempsJob[0][job]
-
-    for (m = 1; m < _nbMachines; m++)
-      tempsMachines[m] = max(tempsMachines[m], tempsMachines[m - 1]) + tempsJob[m * size_d + job];
-  }
-}
-//§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§!
-template <typename T>
-inline __device__ void
-set_job_d(int *job, const T *permutation, const T toSwap1, const T toSwap2, const int limit1, const int limit2,
-                                        const int matId) {
-  int j = 0;
-
-  for (j = 0; j < size_d; j++) {
-    job[j] = 1;
-  }
-
-  for (j = limit1 + 1; j < limit2; j++) {
-    if (j == toSwap1)
-      job[permutation[index2D(toSwap2, matId)]] = 0;
-    else if (j == toSwap2)
-      job[permutation[index2D(toSwap1, matId)]] = 0;
-    else
-      job[permutation[index2D(j, matId)]] = 0;
-  }
-}
-
-template <typename T>
-inline __device__ void
-set_job_jobFin_d(int *job, int *jobFin, const T *permutation, const T toSwap1, const T toSwap2, const int limit1, const int limit2, const int matId) {
-  int j = 0;
-
-  for (j = 0; j <= limit1; j++) {
-
-    if (j == toSwap1)
-      job[permutation[index2D(toSwap2, matId)]] = j + 1;
-    else if (j == toSwap2)
-      job[permutation[index2D(toSwap1, matId)]] = j + 1;
-    else
-      job[permutation[index2D(j, matId)]] = j + 1;
-  }
-  for (j = limit1 + 1; j < limit2; j++) {
-    if (j == toSwap1)
-      job[permutation[index2D(toSwap2, matId)]] = 0;
-    else if (j == toSwap2)
-      job[permutation[index2D(toSwap1, matId)]] = 0;
-    else
-      job[permutation[index2D(j, matId)]] = 0;
-  }
-  for (j = limit2; j < size_d; j++) {
-    if (j == toSwap1) {
-      job[permutation[index2D(toSwap2, matId)]] = j + 1;
-      jobFin[j] = permutation[index2D(toSwap2, matId)];
-    } else if (j == toSwap2) {
-      job[permutation[index2D(toSwap1, matId)]] = j + 1;
-      jobFin[j] = permutation[index2D(toSwap1, matId)];
-    } else {
-      job[permutation[index2D(j, matId)]] = j + 1;
-      jobFin[j] = permutation[index2D(j, matId)];
-    }
-  }
-}
-//§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§!
-template <typename T>
-inline __device__ void
-set_tempsMachinesFin_d(const int* back, const T *prmu, int *tempsMachinesFin, const T swap1, const T swap2, const int limit2, const int *tempsJob) {
-  int jobCour=0;
-
-  for (int m = 0; m < _nbMachines; m++)
-    tempsMachinesFin[m] = back[m];
-
-  if(swap2 == limit2){
-    jobCour = prmu[swap1];
-    tempsMachinesFin[_nbMachines-1] += tempsJob[(_nbMachines-1)*size_d + jobCour];
-    for (int j = _nbMachines - 2; j >= 0; j--){
-        tempsMachinesFin[j]=max(tempsMachinesFin[j],tempsMachinesFin[j+1])+tempsJob[j * size_d + jobCour];
-    }
-  }
-}
-
-inline __device__ void
-set_tempsMachinesFin_tempsJobFin_d(const int *jobFin, int *tempsMachinesFin, const int nbAffectFin, const int * tempsJob) {
-  int jobCour=0;
-  int tmpMa[MAXMACH]={0};
-
-  //  #pragma unroll 5
-  for (int j = 0; j < _nbMachines; j++) {
-    for (int k = j; k < _nbMachines; k++)
-      tmpMa[k] = 0;
-    for (int k = size_d - nbAffectFin; k < size_d; k++) {
-      jobCour = jobFin[k];
-      tmpMa[j] += tempsJob[j * size_d + jobCour];
-      for (int l = j + 1; l < _nbMachines; l++) {
-        tmpMa[l] = max(tmpMa[l - 1], tmpMa[l]);
-        tmpMa[l] += tempsJob[l * size_d + jobCour];
-      }
-    }
-    tempsMachinesFin[j] = tmpMa[_nbMachines - 1];
-  }
-}
-
-/**
- * most time intesive part of lower bounding operation.....optimized
- */
-//§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§
-inline __device__ int
-borneInfMakespan_d(const int * job, const int * tempsMachinesFin, const int *  tempsMachines, const int nbAffectDebut,
-  const int nbAffectFin, int * valBorneInf, const int * tabJohnson, const int * tempsJob, const int best)
-{
-    int moinsBon = 0;
-    int i;
-
-    int ma0  = 0;
-    int ma1  = 0;
-    int tmp0 = 0;
-    int tmp1 = 0;
-
-    int job1;
-    int4 job4;
-
-    for (i = 0; i < _sum; i++) {
-        initCmax_d(tempsMachines, nbAffectDebut, tmp0, tmp1, ma0, ma1, i);
-
-        // ....manual unrolling!
-        // compute johnson seq for ma0,ma1
-        for (int j = 0; j < size_d; j += 5) {
-            job4.x = _tabJohnson[i * size_d + j];
-            job4.y = _tabJohnson[i * size_d + j + 1];
-            job4.z = _tabJohnson[i * size_d + j + 2];// vec type...
-            job4.w = _tabJohnson[i * size_d + j + 3];
-            job1   = _tabJohnson[i * size_d + j + 4];
-
-            if (job[job4.x] == 0) {
-                tmp0 += tempsJob[ma0 * size_d + job4.x];
-                tmp1  = max(tmp1, tmp0 + _tempsLag[i * size_d + job4.x]);
-                tmp1 += tempsJob[ma1 * size_d + job4.x];
-            }
-            if (job[job4.y] == 0) {
-                tmp0 += tempsJob[ma0 * size_d + job4.y];
-
-                tmp1  = max(tmp1, tmp0 + _tempsLag[i * size_d + job4.y]);
-                tmp1 += tempsJob[ma1 * size_d + job4.y];
-            }
-            if (job[job4.z] == 0) {
-                tmp0 += tempsJob[ma0 * size_d + job4.z];
-
-                tmp1  = max(tmp1, tmp0 + _tempsLag[i * size_d + job4.z]);
-                tmp1 += tempsJob[ma1 * size_d + job4.z];
-            }
-            if (job[job4.w] == 0) {
-                tmp0 += tempsJob[ma0 * size_d + job4.w];
-
-                tmp1  = max(tmp1, tmp0 + _tempsLag[i * size_d + job4.w]);
-                tmp1 += tempsJob[ma1 * size_d + job4.w];
-            }
-            if (job[job1] == 0) {
-                tmp0 += tempsJob[ma0 * size_d + job1];
-
-                tmp1  = max(tmp1, tmp0 + _tempsLag[i * size_d + job1]);
-                tmp1 += tempsJob[ma1 * size_d + job1];
-            }
-        }
-
-        if (nbAffectFin != 0) {
-            tmp1 = max(tmp1 + tempsMachinesFin[ma1],
-                tmp0 + tempsMachinesFin[ma0]);
-        } else {
-            tmp1 += _minTempsDep[ma1];
-        }
-
-        moinsBon = max(moinsBon, tmp1);
-    }
-
-    valBorneInf[0] = moinsBon;
-
-    return 0;// moinsBon;
-} // borneInfMakespan_d
-
-//§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§
-inline __device__ int
-calculBorne_d(const int *  job, const int *  tempsMachinesFin,
-                                    const int *  tempsMachines, const int nbAffectDebut,
-                                    const int nbAffectFin,
-                                    const int * tempsJob, const int * _tabJohnson, const int thebest) {
-  // int minCmax = 0 ;
-  int valBorneInf[2]={0,0};
-  // int retardNonFin = 0;//retardNonAff;
-//  int thebest=999999;
-
-  borneInfMakespan_d(job, tempsMachinesFin, tempsMachines, nbAffectDebut,
-                     nbAffectFin, valBorneInf, _tabJohnson, _tempsJob, thebest);
-  return valBorneInf[0];
-
-}
 //§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§
 //thread evaluates
 //swap(permutation,toSwap1,toSwap2)
 template <typename T>
 inline __device__ int
-thread_evalSol_d(const T *  permutation, const T toSwap1, const T toSwap2) {
-  int temps[MAXMACH]={0};
-  int job;
+thread_evalSol_d(const T * permutation, const T toSwap1, const T toSwap2)
+{
+    int temps[MAXMACH] = { 0 };
+    int job;
 
-  for (int mm = 0; mm < _nbMachines; mm++)
-    temps[mm] = 0;
+    for (int mm = 0; mm < _nbMachines; mm++)
+        temps[mm] = 0;
 
-  for (int j = 0; j < size_d; j++) {
-    if (j == toSwap1)
-      job = permutation[toSwap2];
-    else if (j == toSwap2)
-      job = permutation[toSwap1];
-    else
-      job = permutation[j];
+    for (int j = 0; j < size_d; j++) {
+        if (j == toSwap1)
+            job = permutation[toSwap2];
+        else if (j == toSwap2)
+            job = permutation[toSwap1];
+        else
+            job = permutation[j];
 
-    temps[0] = temps[0] + _tempsJob[job];
+        temps[0] = temps[0] + _tempsJob[job];
 
-    for (int m = 1; m < _nbMachines; m++)
-      temps[m] = max(temps[m], temps[m - 1]) + _tempsJob[m * size_d + job];
-  }
+        for (int m = 1; m < _nbMachines; m++)
+            temps[m] = max(temps[m], temps[m - 1]) + _tempsJob[m * size_d + job];
+    }
 
-  return temps[_nbMachines - 1];
+    return temps[_nbMachines - 1];
 }
 
 //insert {toSwap1 < toSwap2}
@@ -744,6 +481,8 @@ __launch_bounds__(128, 8) bound(const T * schedules_d, const T * limit1s_d, cons
 
 //§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§
 //warp parallel partial makespan evaluation : front
+//input : permutation, limit1, processing time matrix
+//output : completion times of prefix schedule on all machines / remaining
 template <unsigned tile_size>
 inline __device__ void
 tile_scheduleFront(thread_block_tile<tile_size> g, const int* permutation, const int limit1, const int* ptm, int *front, int *remain) {
@@ -759,11 +498,11 @@ tile_scheduleFront(thread_block_tile<tile_size> g, const int* permutation, const
     for (int i = lane; i < _nbMachines; i+=tile_size)
         front[i] = 0;
 
-    int slice_width = mini(tile_size,limit1+1);
+    int slice_width = min(tile_size,limit1+1);
     int n_slices = 1 + limit1/tile_size;
 
     for(int k=0;k<n_slices;k++){
-        int to = mini(slice_width,limit1+1-k*slice_width);
+        int to = min(slice_width,limit1+1-k*slice_width);
 
         int pt;
         int job;
@@ -775,11 +514,11 @@ tile_scheduleFront(thread_block_tile<tile_size> g, const int* permutation, const
         }
         for(int i=0;i<to;i++){ //for jobs scheduled in front
             tmp1=g.shfl_up(tmp0,1); //no wrap-around (lowest lane not modified)
-            if(lane<mini(i+1,_nbMachines)){
+            if(lane<min(i+1,_nbMachines)){
                 job=permutation[k*slice_width+i-lane];
                 pt = ptm[lane*size_d+job];
                 remain[lane] -= pt;
-                tmp0=maxi(tmp0,tmp1)+pt;
+                tmp0=max(tmp0,tmp1)+pt;
             }
         }
         if(lane==0)
@@ -795,72 +534,15 @@ tile_scheduleFront(thread_block_tile<tile_size> g, const int* permutation, const
             if(k>0 && lane == to-1 && lane+1 < _nbMachines)
                 tmp1 = front[lane+i];
 
-            if(lane<mini(_nbMachines-i,to)){ // mini(_nbMachines-i,mNM)
+            if(lane<min(_nbMachines-i,to)){ // mini(_nbMachines-i,mNM)
                 pt = ptm[(lane+i)*size_d+job];
                 remain[lane+i] -= pt;
-                tmp0=maxi(tmp0,tmp1)+pt;
+                tmp0=max(tmp0,tmp1)+pt;
             }
             if(lane==0)front[i]=tmp0;
         }
     }
 }
-
-// template <unsigned tile_size>
-// inline __device__ void
-// tile_scheduleFront(thread_block_tile<tile_size> g, const int* permutation, const int limit1, const int* ptm, int *front, int *remain) {
-//     int lane = g.thread_rank();
-//
-// 	if(limit1 == -1){
-//         for (int i = lane; i < _nbMachines; i+=tile_size) {
-//             front[i]=_minTempsArr[i];
-//         }
-//         return;
-// 	}
-//
-//     for (int i = lane; i < _nbMachines; i+=tile_size)
-//         front[i] = 0;
-//
-//     int mNM=mini(limit1+1,_nbMachines);
-//
-//     int pt;
-//     int job;
-//     int tmp0=0;
-//     int tmp1=0;
-//
-//     int nfront = mini(limit1+1,tile_size);
-//
-//     //limit1==0 means 1 job scheduled in from
-//     for(int i=0;i<nfront;i++){
-//         tmp1=g.shfl_up(tmp0,1);
-//         if(lane<mini(i+1,mNM)){
-//             job=permutation[i-lane];
-//             pt = ptm[lane*size_d+job];
-//             remain[lane] -= pt;
-//             tmp0=maxi(tmp0,tmp1)+pt;
-//         }
-//     }
-//
-//     if(lane==0)
-//         front[0] +=tmp0;
-//
-//     if(lane<mini(_nbMachines-1,mNM)){
-//         job=permutation[limit1-lane];
-//     }
-//
-//     for(int i=1;i<_nbMachines;i++){
-//         tmp1=g.shfl_down(tmp0,1);
-//         if(lane<mini(_nbMachines-i,mNM)){
-//             pt = ptm[(lane+i)*size_d+job];
-//
-//             remain[lane+i] -= pt;
-//             tmp0=maxi(tmp0,tmp1)+pt;
-//         }
-//         if(lane==0)
-//             front[i]+=tmp0;
-//     }
-// }
-
-
 
 template <unsigned tile_size>
 inline __device__ void
@@ -876,11 +558,11 @@ tile_scheduleBack(thread_block_tile<tile_size> g, const int* permutation, const 
     for (int i = lane; i < _nbMachines; i+=tile_size)
         back[i] = 0;
 
-    int slice_width = mini(tile_size,size_d-limit2);
+    int slice_width = min(tile_size,size_d-limit2);
     int n_slices = 1 + (size_d-limit2-1)/tile_size;
 
     for(int k=0;k<n_slices;k++){
-        int to = mini(slice_width,(size_d-limit2)-k*slice_width);
+        int to = min(slice_width,(size_d-limit2)-k*slice_width);
 
         int pt;
         int job;
@@ -895,22 +577,16 @@ tile_scheduleBack(thread_block_tile<tile_size> g, const int* permutation, const 
 
         for(int i=0;i<to;i++){ //for jobs scheduled in back
             tmp1=g.shfl_up(tmp0,1);
-            if( lane < mini(i+1,_nbMachines) ){
+            if( lane < min(i+1,_nbMachines) ){
                 job=permutation[(size_d-1)+lane-i-k*slice_width];
                 pt=ptm[ma*size_d+job];
                 remain[ma] -= pt;
-                tmp0=maxi(tmp0,tmp1)+pt;
+                tmp0=max(tmp0,tmp1)+pt;
             }
         }
 
         if(lane==0)
             back[_nbMachines-1]=tmp0;
-        // if(lane==0)
-        //     front[0]=tmp0;
-
-        // if(lane<mini(_nbMachines-1,mNM)){
-        //     job=permutation[limit2+lane];
-        // }
 
         if(lane<to){
             job=permutation[size_d-(to-lane)-k*slice_width];
@@ -923,59 +599,14 @@ tile_scheduleBack(thread_block_tile<tile_size> g, const int* permutation, const 
             if(k>0 && lane == to-1 && lane+1 < _nbMachines)
                 tmp1 = back[_nbMachines-1-(lane+i)];
 
-            if( lane<mini(_nbMachines-i,to) ){
+            if( lane<min(_nbMachines-i,to) ){
                 pt = ptm[ma*size_d+job];
                 remain[ma] -= pt;
-                tmp0=maxi(tmp0,tmp1)+pt;
+                tmp0=max(tmp0,tmp1)+pt;
             }
             if(lane==0)back[_nbMachines-1-i]=tmp0;
         }
     }
-
-
-    // for (int i = 0; i <= (_nbMachines / tile_size); i++) {
-    //     lane = i * tile_size + g.thread_rank();
-    //
-    //     if(lane<_nbMachines)back[lane]=0;
-    //
-    //     int mNM=mini(size_d-limit2,_nbMachines);
-    //
-    //     int pt;
-    //     int job;
-    //     int tmp0=0;
-    //     int tmp1=0;
-    //
-    //     int ma=_nbMachines-1-lane;
-    //
-    //     for(int i=0;i<size_d-limit2;i++){//for jobs scheduled in back
-    //         tmp1=g.shfl_up(tmp0,1);
-    //         if(lane<mini(i+1,mNM)){
-    //             job=permutation[(size_d-1)+lane-i];
-    //
-    //             pt=ptm[ma*size_d+job];
-    //             remain[ma] -= pt;
-    //             tmp0=maxi(tmp0,tmp1)+pt;
-    //         }
-    //     }
-    //
-    //     if(lane==0)
-    //         back[_nbMachines-1]=tmp0;
-    //
-    //     if(lane<mini(_nbMachines-1,mNM)){
-    //         job=permutation[limit2+lane];
-    //     }
-    //
-    //     for(int i=1;i<_nbMachines;i++){
-    //         ma--;
-    //         tmp1=g.shfl_down(tmp0,1);
-    //         if(lane<mini(_nbMachines-i,mNM)){
-    //             pt = ptm[ma*size_d+job];
-    //             remain[ma] -= pt;
-    //             tmp0=maxi(tmp0,tmp1)+pt;
-    //         }
-    //         if(lane==0)back[_nbMachines-1-i]=tmp0;
-    //     }
-    // }
 }
 
 template <unsigned size>
@@ -1085,7 +716,7 @@ inline __device__ int perIVMtodo(int& ivmtodo, int* row, int line)
 
 template <typename T>
 __global__ void
- __launch_bounds__(128, 16)
+ __launch_bounds__(128, 8)
 boundOne(const T * schedules_d, const T * limit1s_d, const T * limit2s_d, const T * dir, const T * line_d,
   int * costsBE_d, const int * toSwap_d, const int * ivmId_d, const int best, const int * front,
   const int * back)
@@ -1278,11 +909,11 @@ tile_evalSolution(thread_block_tile<tile_size> g, const int* permutation, const 
     for(int i=lane;i<_nbMachines;i+=tile_size)
         front[i]=0;
 
-    int slice_width = mini(tile_size,limit1+1);
+    int slice_width = min(tile_size,limit1+1);
     int n_slices = 1 + limit1/tile_size;
 
     for(int k=0;k<n_slices;k++){
-        int to = mini(slice_width,limit1+1-k*slice_width);
+        int to = min(slice_width,limit1+1-k*slice_width);
 
         int pt;
         int job;
@@ -1295,10 +926,10 @@ tile_evalSolution(thread_block_tile<tile_size> g, const int* permutation, const 
 
         for(int i=0;i<to;i++){ //for jobs scheduled in front
             tmp1=g.shfl_up(tmp0,1); //no wrap-around (lowest lane not modified)
-            if(lane<mini(i+1,_nbMachines)){
+            if(lane<min(i+1,_nbMachines)){
                 job=permutation[k*slice_width+i-lane];
                 pt = ptm[lane*size_d+job];
-                tmp0=maxi(tmp0,tmp1)+pt;
+                tmp0=max(tmp0,tmp1)+pt;
             }
         }
         if(lane==0)
@@ -1314,9 +945,9 @@ tile_evalSolution(thread_block_tile<tile_size> g, const int* permutation, const 
             if(k>0 && lane == to-1 && lane+1 < _nbMachines)
                 tmp1 = front[lane+i];
 
-            if(lane<mini(_nbMachines-i,to)){ // mini(_nbMachines-i,mNM)
+            if(lane<min(_nbMachines-i,to)){ // mini(_nbMachines-i,mNM)
                 pt = ptm[(lane+i)*size_d+job];
-                tmp0=maxi(tmp0,tmp1)+pt;
+                tmp0=max(tmp0,tmp1)+pt;
             }
             if(lane==0)front[i]=tmp0;
         }
