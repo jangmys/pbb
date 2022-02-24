@@ -1,29 +1,32 @@
-# Multi-core B&B for Permutation Flow-shop Scheduling Problem (PFSP)
+# PBB@Multi-core
 
-#### Solving PFSP instances with PBB@Multicore
+### Solving PFSP instances with PBB@Multicore
 
 - Go to the `/build` folder.
-
 - If the build succeeded, there is an executable `./multicore/bb`.
 
-The easiest way to run PBB@Multi-core is to use the default `.ini` file `/multicore/mcconfig.ini`. It can be passed to `bb` using the option `-f <relative-path>`
+Several options should be configured for PBB@Multi-core. The easiest is to use the default configuration file `/multicore/mcconfig.ini`. PBB@Multi-core will use all available CPU cores.
 
-Several PFSP instances are provided in the `/evaluation` folder:
-- Taillard's benchmark
-- VFR benchmark
-- Random
-- Custom file
-
-Let's go! (assuming you're in `/build` now)
-
-_______________
+_________________________________________
 
 ##### Example 1 : Solve Taillard's instance Ta31 (50 jobs, 5 machines):
 
 `./multicore/bb -f ../multicore/mcconfig.ini -z p=fsp,i=ta31`
 
-- The output should be an optimal permutation of length 50 with Cmax=2724.
-- Multiple runs will probably yield different optimal solutions (no uniqueness!). If you want ALL optimal solutions, set `findAll = true` in the `.ini` file - caution : the algorithm will run MUCH longer!
+- The output should be an optimal permutation of length 50 with Cmax=2724. You should see something like this
+```
+...
+=================
+Exploration stats
+=================
+TOT-BRANCHED:	7534
+TOT-LEAVES:	4
+Found optimal solution:
+        Min Cmax:	2724
+        Argmin Cmax:	2724	|	30 9 16 31 49 40 29 7 33 25 27 44 28 26 13 20 8 3 15 14 1 24 12 42 4 17 10 46 45 5 0 6 37 39 2 21 41 23 38 32 48 22 11 43 19 47 36 34 18 35
+Walltime	:	 0.003165362
+```
+- Multiple runs will probably yield different optimal solutions (no uniqueness!). If you want ALL optimal solutions, set `findAll = true` in the `.ini` file. Caution : the algorithm will run MUCH longer!
 
 ##### Example 2 : Solve VFR instance VFR20_10_6 (20 jobs, 10 machines)
 

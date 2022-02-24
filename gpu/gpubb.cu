@@ -89,6 +89,7 @@ gpubb::initFullInterval()
         int best = INT_MAX;
         pbb->sltn->getBest(best);
 		FILE_LOG(logINFO) << "Init Full : Bound Root with UB:\t" << best;
+		FILE_LOG(logINFO) << "Init Full : size:\t" << size << " " << nbMachines_h ;
 		FILE_LOG(logINFO) << "Init Full : Root :\t" << *(pbb->root_sltn);
 
 		int *bestsol_d;

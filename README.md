@@ -5,17 +5,33 @@ B&B is an exact algorithm which solves combinatorial optimization problems by dy
 Due to the combinatorial explosion of the search space, this requires massively parallel processing for all but the smallest problem instances. PBBPerm provides parallel B&B algorithms for solving permutation-based optimization problems on multi-core processors, GPUs and large-scale GPU-accelerated HPC systems.
 
 ## Contents
-- [Compilation](compilation)
+- [Compilation](#compilation)
 - [PBB@multicore](./multicore/README.md)
 - [PBB@GPU](./multicore/README.md)
 - [PBB@Cluster](./distributed/README.md)
-- [PFSP instances](instances)
-
-- [Configuration options](configuration)
+- [PFSP instances](#instances)
+- [Configuration options](#configuration)
 
 
 
 ### Compilation
+
+#### Prerequisites
+- All
+    - [CMake](https://cmake.org/) >=3.13
+    - C++ compiler (tested gcc 7.5)
+- For PBB@Cluster
+    - [GNU Multiple Precision Arithmetic Library](https://gmplib.org/) (tested GMP 6.1.2)
+    - [OpenMPI](https://www.open-mpi.org/) (tested OpenMPI 2.1.1)
+- For PBB@GPU
+    - [NVIDIA CUDA Toolkit](https://developer.nvidia.com/cuda-toolkit) (tested CUDA 11.1)
+
+#### Build
+To build PBB we use CMake>=3.13.
+
+You can build PBB without GMP, MPI and CUDA - but PBB will be limited to multi-core execution.
+In the PBB root directory:
+
 1. `mkdir build`
 2. `cd build`
 3. `cmake <options> ..` where `<options>` are
@@ -23,9 +39,15 @@ Due to the combinatorial explosion of the search space, this requires massively 
     - `-DGPU=true`
 4. `make`
 
-- Without option : build only PBB@multicore
-- `-DMPI=true` : build distributed (requires MPI)
-- `-DGPU=true` : build PBB@GPU (requires CUDA)
+_________________
+
+### Functionalities
+see
+- [PBB@multicore](./multicore/README.md)
+- [PBB@GPU](./multicore/README.md)
+- [PBB@Cluster](./distributed/README.md)
+
+___________________________________________
 
 ### Instances
 PFSP Benchmark instances for are included in the `evaluation/flowshop/data` folder.
@@ -39,8 +61,10 @@ PFSP Benchmark instances for are included in the `evaluation/flowshop/data` fold
     - for each of the 480 instances the file `instancesVRF.data` contains the number of jobs and best LB/UB as provided by the authors [here](http://soa.iti.es/problem-instances)
     - the folder `vrf_parameters` contains the processing times and `src/instance_vrf.cpp` the code for reading the instance files.
 
-- [Custom] File `file14_7.txt` is a sample instance (14 jobs, 7 machines) that is readable by PBB. Users can provide their instance data though similar files.
+- User-Undefined
+    - File `file14_7.txt` is a sample instance (14 jobs, 7 machines) that is readable by PBB. Users can provide their instance data though similar files.
 
+___________________
 
 ### Configuration
 Some option can be given to PBB as command line arguments. But there are too many, so there are the following `.ini` files
