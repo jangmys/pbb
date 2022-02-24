@@ -1436,7 +1436,10 @@ xOver_makespans(int *schedules_d,int *cmax, int *state_d, int *parent2, int* l1,
 
 
 //single block :
-__global__ void boundRoot(int *mat, int *dir, int *line, int *costsBE_d, int *sums_d, int *bestpermut, const int best, const int branchingMode) {
+
+__global__ void
+__launch_bounds__(1024, 1)
+boundRoot(int *mat, int *dir, int *line, int *costsBE_d, int *sums_d, int *bestpermut, const int best, const int branchingMode) {
 	thread_block bl = this_thread_block();
     thread_block_tile<32> tile32 = tiled_partition<32>(this_thread_block());
     int warpID = bl.thread_rank() / warpSize;
