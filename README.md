@@ -35,8 +35,9 @@ In the PBB root directory:
 1. `mkdir build`
 2. `cd build`
 3. `cmake <options> ..` where `<options>` are
-    - `-DMPI=true`
-    - `-DGPU=true`
+    - `-DMPI=true` #enable MPI
+    - `-DGPU=true` #enable GPU
+    - `-DCMAKE_BUILD_TYPE=Release/Debug` #(un)define NDEBUG
 4. `make`
 
 _________________
@@ -67,6 +68,22 @@ PFSP Benchmark instances for are included in the `evaluation/flowshop/data` fold
 ___________________
 
 ### Configuration
+
+Some option can be given to PBB as command line arguments. But there are too many, so there are the following `.ini` files
+- `bbconfig.ini`
+- `multicore/mcconfig.ini`
+- `gpu/gpuconfig.ini`
+
+#### Command-line options
+- problem, instance, initial-ub
+    - `-z p=fsp,i=<instance>,o`
+        - `instance` either of form `ta35` or `VFR_15_10_4`
+        - `o` is optional for initializing UB best-known solution (from file)
+- number of threads(multi-core)
+    - `-t <nbthreads>`
+
+#### Ini-file options
+
 Some option can be given to PBB as command line arguments. But there are too many, so there are the following `.ini` files
 - `bbconfig.ini`
 - `multicore/mcconfig.ini`
@@ -94,4 +111,22 @@ The options are:
     - search all
 
 - [verbose]
+    - toggle print solutions to stdout
+
 - [time parameters]
+    - global checkpoint interval (sec)
+    - local checkpoint interval (sec)
+    - timeout for support heuristic (sec)
+
+- [multicore only]
+    - number of threads
+    - workstealing strategy
+
+- [gpu only]
+    - nb explorers
+
+- [truncate bb search]
+
+- [heuristic]
+
+- [distributed only]

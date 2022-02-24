@@ -27,5 +27,9 @@ nodeB
 
 To launch two processes per node :
 ```
-mpirun -hostfile nodefile -map-by ppr:2:node ./distributed/dbb -f ../bbconfig.ini -z p=fsp,i=ta30
+mpirun -hostfile nodefile -map-by ppr:2:node ./distributed/dbb -f ../bbconfig.ini -z p=fsp,i=ta21
 ```
+
+
+
+#### Checkpointing
