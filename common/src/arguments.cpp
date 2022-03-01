@@ -143,28 +143,6 @@ fexists(const std::string& name)
     return (stat(name.c_str(), &buffer) == 0);
 }
 
-/*read upper bounds from file*/
-void
-arguments::initialize()
-{
-    // initial_ub = INT_MAX;
-    //
-    // if(init_mode == 0){
-    //     printf("Get initial upper bound from file\n"); fflush(stdout);
-    //     switch (inst_name[0]) {
-    //         case 't':
-    //         {
-    //             initial_ub = instance_flowshop::get_initial_ub_from_file(inst_name,init_mode);
-    //             break;
-    //         }
-    //         case 'V':
-    //         {
-    //             initial_ub = instance_vrf::get_initial_ub_from_file(inst_name,init_mode);
-    //             break;
-    //         }
-    //     }
-    // }
-} // arguments::initialize
 
 #define OPTIONS "z:ftm" // vrtnqbiowcdugmsfh"
 bool
@@ -186,6 +164,7 @@ arguments::parse_arguments(int argc, char ** argv)
 
     while (c != -1) {
         switch (c) {
+            //-f ../multicore/mcconfig.ini
             case 'f': {
                 strcpy(inifile, argv[optind]);
                 readIniFile();
@@ -210,9 +189,7 @@ arguments::parse_arguments(int argc, char ** argv)
                 break;
             }
             case 't': {
-                timeout = atoi(argv[optind]);
-                // printf("Timeout %s\n",argv[optind]);
-                // printf("Timeout %d\n",timeout);
+                nbivms_mc = atoi(argv[optind]);
                 break;
             }
             case 'm': {

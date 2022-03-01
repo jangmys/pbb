@@ -76,31 +76,6 @@ index2D(const int row, const int ivm)
     return (ivm * size_d + row);
 }
 
-// =======================================
-// returns absolute value of (a)
-template <typename T>
-inline __device__ T
-abso(const T a){ return (a < 0) ? (-a) : a; }
-
-// =======================================
-// returns maximum of two int values
-inline __device__ int
-maxi(const int a, const int b){ return (a < b) ? b : a; }
-
-// =======================================
-// returns minimum of two int values
-inline __device__ int
-mini(const int a, const int b){ return (a > b) ? b : a; }
-
-__forceinline__ __device__ unsigned int
-laneID()
-{
-    unsigned int lane;
-
-    asm volatile ("mov.u32 %0, %%laneid;" : "=r" (lane));
-    return lane;
-}
-
 __device__ void
 gnomeSortSequential(int * arr, int * key, int lim1, int lim2)
 {
@@ -120,14 +95,11 @@ int
 get_available_devices(int& nb_block, int& block_size)
 {
     cudaDeviceProp prop;
-    // //	std::cout<<"aabbbbbbbbbbbaaaa"<<std::endl<<std::flush;
     int count;
 
-    // //	new bound_flowshop();
     cudaGetDeviceCount(&count);
-    //  posVect[ind2D(0, 0)] = size;
     printf("\n\n   --- Number of device %d ---\n\n", count);
-    //
+
     for (int i = 0; i < count; i++) {
         cudaGetDeviceProperties(&prop, i);
         printf("   --- General Information for device %d ---\n\n", i);

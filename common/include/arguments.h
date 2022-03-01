@@ -75,7 +75,6 @@ public:
 
     static void readIniFile();
     static bool parse_arguments(int argc, char **argv);
-    static void initialize();
 };
 
 #endif

@@ -1,12 +1,5 @@
-//#define FINDALL
-
-// #define NDEBUG
-//#undef NDEBUG //uncomment to activate assert etc
-
 #define PERBLOCK 4 // warps per block
 #define TILE_SZ 32 // tile size
-
-// #define MAXJOBS 800 //max problem size
 
 #include <cuda.h>
 #include <cuda_runtime.h>
@@ -366,7 +359,7 @@ decodeIVMandFlagLeaf(const T *jobMats_d, const T *dirVecs_d, const T *posVecs_d,
 {
     int ivm    = (blockIdx.x * blockDim.x + threadIdx.x) / warpSize; // global ivm id
     int warpID = threadIdx.x / warpSize;
-    int thPos  = laneID();                                           // threadIdx.x
+    int thPos  = threadIdx.x % warpSize;                                           // threadIdx.x
                                                                      // % warpSize;
     extern __shared__ T decode_smem[];
     T *l1   = decode_smem;
@@ -477,7 +470,7 @@ chooseBranchingSortAndPrune(int *jobMats_d,int *dirVecs_d,const int *posVecs_d,i
 
     int ivm = (blockIdx.x * blockDim.x + threadIdx.x) / warpSize; // global ivm id
     int warpID = threadIdx.x / warpSize;
-    int thPos = laneID();
+    int thPos = threadIdx.x % warpSize;
 
     // SHARED MEMORY
     extern __shared__ bool smemPrune[];
@@ -573,7 +566,7 @@ const T *line_d,T *schedules_d,int *costsBE_d,int *prio_d, T *state_d,int *todo_
 
     int ivm = (blockIdx.x * blockDim.x + threadIdx.x) / warpSize; // global ivm id
     int warpID = threadIdx.x / warpSize;
-    int thPos = laneID();
+    int thPos = threadIdx.x % warpSize;
 
     // SHARED MEMORY
     extern __shared__ bool smemPrune[];
@@ -653,7 +646,7 @@ prune2noSort(T *jobMats_d, const T *dirVecs_d, const T *line_d,
     // thread indexing
     int ivm   = (blockIdx.x * blockDim.x + threadIdx.x) / warpSize; // global
                                                                     // ivm id
-    int thPos = laneID();
+    int thPos = threadIdx.x % warpSize;
 
     int dir = dirVecs_d[index2D(line_d[ivm], ivm)];
     int l   = 0;

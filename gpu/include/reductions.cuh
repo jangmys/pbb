@@ -42,40 +42,12 @@ __device__ void tile_minloc(thread_block_tile<size> g, int &val, int &ind)
     }
 }
 
-////////////////////////////////////////////////////////
-// __inline__ __device__
-// int blockReduceEnd(int end) {
-//     int tid    = blockIdx.x * blockDim.x + threadIdx.x;
-//     int warpID = threadIdx.x / warpSize;
-//     int lane   = laneID();
-//
-//     static __shared__ int endblock[32];
-//
-//     if (tid >= nbIVM_d) return 0;
-//
-//     if(lane==0)
-//         endblock[warpID]=0;//init
-//
-//     __syncthreads();                        // wait for init
-//
-//     end = __any_sync(FULL_MASK,end);        // warp reduce
-//
-//     if (lane == 0) endblock[warpID] = end;  // Write reduced value to shared memory
-//     __syncthreads();                        // wait for partial reductions
-//
-//     end = (threadIdx.x < blockDim.x / warpSize) ? endblock[lane] : 0;
-//
-//     if (warpID == 0) end = __any_sync(FULL_MASK,end);  // Final reduce within first warp
-//
-//     return end;
-// }
-
 template < typename T >
 __global__ void checkEnd(T *state) {
     int tid = blockIdx.x * blockDim.x + threadIdx.x;
 
     int warpID = threadIdx.x / warpSize;
-    int lane = laneID();
+    int lane = threadIdx.x % warpSize;
 
     int end = state[tid];
 

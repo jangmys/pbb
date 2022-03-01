@@ -16,10 +16,10 @@ set(CMAKE_CXX_FLAGS_DEBUG "-ggdb3 -O0" CACHE STRING "")
 
 #add lower bounds library
 add_subdirectory(evaluation)
-#add multicore IVM-based BB
-add_subdirectory(multicore)
 #add heuristics library
 add_subdirectory(heuristics)
+#add multicore IVM-based BB
+add_subdirectory(multicore)
 
 #optional : add GPUBB (requires CUDA)
 if(GPU)
