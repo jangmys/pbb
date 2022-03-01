@@ -5,16 +5,8 @@
 #include <stdlib.h>
 
 #include <random>
-// inline prevents "multiple inclusion" (header included in pbab.h, itself included everywhere)
+#include <algorithm>
 
-static void
-swap(int * ptrA, int * ptrB)
-{
-    int tmp = *ptrA;
-
-    *ptrA = *ptrB;
-    *ptrB = tmp;
-}
 
 static int
 negative(const int i)
@@ -40,7 +32,7 @@ gnomeSortByKeyInc(int * arr, const int * key, const int from, const int to)
         //        if(arr[i]<0){printf("BUG2\n");}
 
         if (key[arr[i - 1]] > key[arr[i]]) {
-            swap(&arr[i - 1], &arr[i]);
+            std::swap(arr[i - 1], arr[i]);
             if (--i) continue;
         }
         i = j++;
@@ -57,7 +49,7 @@ gnomeSortByKeysInc(int * arr, const int * key1, const int * key2, const int from
         if ( (key1[arr[i - 1]] > key1[arr[i]]) ||
           ((key1[arr[i - 1]] == key1[arr[i]]) && (key2[arr[i - 1]] > key2[arr[i]])) )
         {
-            swap(&arr[i - 1], &arr[i]);
+            std::swap(arr[i - 1], arr[i]);
             if (--i) continue;
         }
         i = j++;

@@ -25,6 +25,11 @@ Treeheuristic::run(std::shared_ptr<subproblem>& s, int _ub)
     std::shared_ptr<subproblem> bsol = std::make_shared<subproblem>(*s);
     bsol->set_fitness(eval->evalSolution(bsol->schedule.data()));
 
+    // int f = ig->runIG(bsol.get(),-1,bsol->size);
+    // bsol->set_fitness(f);
+    beam->run_loop(1<<12,bsol.get());
+    *bsol = *(beam->bestSolution);
+
 	prune->local_best=_ub;//ub used for pruning
     if(prune->local_best == 0)
         prune->local_best = bsol->fitness(); //if no upper bound provided
@@ -33,7 +38,7 @@ Treeheuristic::run(std::shared_ptr<subproblem>& s, int _ub)
     std::shared_ptr<subproblem> currsol = std::make_shared<subproblem>(*bsol);
 
     int c=0;
-    long long int cutoff = 100000;
+    long long int cutoff = bsol->size*bsol->size*10;
     bool perturb = false;
 
     while(1){
@@ -45,6 +50,9 @@ Treeheuristic::run(std::shared_ptr<subproblem>& s, int _ub)
             std::mt19937 g(rd());
 
             std::shuffle(tmpsol->schedule.begin()+r, tmpsol->schedule.begin()+r+l, g);
+
+            (tmpsol)->set_fitness((*ls)(tmpsol->schedule,-1,tmpsol->size));
+
 			perturb=false;
 		}
 
@@ -57,7 +65,7 @@ Treeheuristic::run(std::shared_ptr<subproblem>& s, int _ub)
             *currsol = *tmpsol;
         }
         if(tmpsol->fitness() < bsol->fitness()){
-            // std::cout<<"improved "<<tmpsol->ub<<std::endl;
+            std::cout<<"improved "<<tmpsol->fitness()<<std::endl;
             *bsol = *tmpsol;
         }else{
             *tmpsol = *currsol;
@@ -98,10 +106,10 @@ Treeheuristic::exploreNeighborhood(std::shared_ptr<subproblem> s,long long int c
                     std::vector<std::shared_ptr<subproblem>>ns;
                     ns = decompose(*n);
 
-                    // float alpha = (float)(n->depth)/n->size;
-                    // for(auto &c : ns){
-                    //     c->prio = (1.0f-alpha)*(c->cost)*c->prio + alpha*(c->cost);
-                    // }
+                    float alpha = (float)(n->depth+1)/n->size;
+                    for(auto &c : ns){
+                        c->prio = (1.0f-alpha)*(c->lower_bound())*c->prio + alpha*(c->lower_bound());
+                    }
 
                     insert(ns);
 
@@ -110,8 +118,7 @@ Treeheuristic::exploreNeighborhood(std::shared_ptr<subproblem> s,long long int c
                         prune->local_best = tr->top()->fitness();
                         *bestSolution = *(tr->top());
                         foundSolution = true;
-
-                        std::cout<<"new th  "<<*bestSolution<<"\n";
+                        // std::cout<<"new treeheuristic best\t"<<*bestSolution<<"\n";
                     }
                 }
             }
@@ -204,7 +211,17 @@ Treeheuristic::insert(std::vector<std::shared_ptr<subproblem>>&ns)
     //children inserted with push_back [ 1 2 3 ... ]
     //for left->right exploration, insert (push) in reverse order
     for (auto i = ns.rbegin(); i != ns.rend(); i++) {
-        (*i)->set_fitness(eval->evalSolution((*i)->schedule.data()));
+        if((*i)->depth < 50 && (*i)->depth%5 == 0){
+            ig->igiter=20;
+            int f = ig->runIG((*i).get(),(*i)->limit1+1,(*i)->limit2);
+            (*i)->set_fitness(f);
+        }else if((*i)->depth%5 == 0){
+            int c = (*ls)((*i)->schedule,(*i)->limit1+1,(*i)->limit2);
+            (*i)->set_fitness(c);
+        }else{
+            (*i)->set_fitness(eval->evalSolution((*i)->schedule.data()));
+        }
+
         tr->push(std::move(*i));
     }
 }
