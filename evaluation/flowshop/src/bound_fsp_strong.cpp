@@ -311,7 +311,7 @@ bound_fsp_strong::borneInfMakespan(int * valBorneInf, int minCmax)
         int j = 2;
         while (i < nbMachinePairs) {
             if (countMachinePairs[machinePairOrder[i - 1]] < countMachinePairs[machinePairOrder[i]]) {
-                myswap(&machinePairOrder[i - 1], &machinePairOrder[i]);
+                std::swap(machinePairOrder[i - 1],machinePairOrder[i]);
                 if ((--i)) continue;
             }
             i = j++;
@@ -378,7 +378,7 @@ bound_fsp_strong::borneInfLearn(int * valBorneInf, int UB, bool earlyExit)
     i = 1, j = 2;
     while (i < nbMachinePairs) {
         if (rewards[machinePairOrder[i - 1]] < rewards[machinePairOrder[i]]) {
-            myswap(&machinePairOrder[i - 1], &machinePairOrder[i]);
+            std::swap(machinePairOrder[i - 1], machinePairOrder[i]);
             if ((--i)) continue;
         }
         i = j++;
@@ -443,17 +443,6 @@ bound_fsp_strong::setFlags(int permutation[], int limite1, int limite2)
         flag[permutation[j]] = -1;
     for (int j = limite2; j < nbJob; j++)
         flag[permutation[j]] = permutation[j] + 1;
-}
-
-
-
-void
-bound_fsp_strong::myswap(int * a, int * b)
-{
-    int tmp = *a;
-
-    *a = *b;
-    *b = tmp;
 }
 
 

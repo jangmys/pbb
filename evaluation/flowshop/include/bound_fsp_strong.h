@@ -94,8 +94,6 @@ public:
     evalSolution(int * permut);
 
     void
-    myswap(int * a, int * b);
-    void
     partial_cost(int permutation[], int limit1, int limit2, int * couts, int jobin, int here);
 
     ~bound_fsp_strong(){ };

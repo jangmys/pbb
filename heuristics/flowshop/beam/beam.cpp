@@ -4,25 +4,6 @@
 #include "beam.h"
 #include "operator_factory.h"
 
-// std::vector<std::unique_ptr<subproblem>> q1;
-//
-// auto push = [&q1](std::unique_ptr<subproblem> p) {
-//     q1.push_back(std::move(p));
-//     std::push_heap(q1.begin(), q1.end());
-// };
-//
-// auto pop = [&q1]() {
-//     std::pop_heap(q1.begin(), q1.end());
-//     auto result = std::move(q1.back());
-//     q1.pop_back();
-//     return result;
-// };
-
-// push(std::make_unique<MyStruct>(10));
-// std::deque<std::unique_ptr<MyStruct>> q2;
-// q2.push_back(pop());
-
-
 Beam::Beam(instance_abstract* inst) :
     tr(std::make_unique<Tree>(inst,inst->size)),
     prune(OperatorFactory::createPruning(arguments::findAll)),
@@ -57,9 +38,9 @@ Beam::run(const int maxBeamWidth, subproblem* p)
  int
  Beam::run_loop(const int maxBeamWidth, subproblem* p)
  {
-     int localBest = 999999;
+     int localBest = p->fitness();
 
-     prune->local_best = 999999;
+     prune->local_best = p->fitness();
 
      int beamWidth = 1;
      do{

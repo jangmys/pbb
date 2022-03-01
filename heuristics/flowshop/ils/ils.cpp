@@ -56,7 +56,7 @@ void IG::destruction(std::vector<int>& perm, std::vector<int>& permOut, int k, i
 
 	std::vector<int>v;
 
-	for(int i=a; i<b; i++)
+	for(int i=a+1; i<b; i++)
         v.push_back(i);
 
   	std::random_device rd;
@@ -70,8 +70,11 @@ void IG::destruction(std::vector<int>& perm, std::vector<int>& permOut, int k, i
 
     for(int i=0;i<k;i++){
         permOut[i]=perm[removePos[i]];
+    }
+    for(int i=0;i<k;i++){
         perm.erase(perm.begin()+removePos[i]);
     }
+
 }
 
 void IG::perturbation(int *perm, int k, int a, int b)
@@ -118,6 +121,14 @@ void IG::construction(std::vector<int>& perm, std::vector<int>& permOut, int k,i
 {
     int cost;
 	int len=nbJob-k;
+
+    nhood->m->tabupos->clear();
+    for(int i=0;i<=a;i++){
+        nhood->m->tabupos->add(i);
+    }
+    for(int i=b;i<perm.size();i++){
+        nhood->m->tabupos->add(i);
+    }
 
     for(int j=0;j<k;j++){
 		nhood->m->bestInsert(perm, len, permOut[j], cost);
@@ -224,15 +235,15 @@ int IG::runIG(subproblem* current, int l1, int l2)
 
     int perturb=destructStrength;
     std::vector<int> removedJobs(perturb);
-
+    //
     for(int iter=0;iter<igiter;iter++){
 		*temp=*current;
 
 		destruction(temp->schedule, removedJobs, perturb, l1, l2);
 		construction(temp->schedule, removedJobs, perturb,l1,l2);
-
+    //
         int tempcost=(*ls)(temp->schedule,l1,l2);
-
+    //
         if(acceptance(tempcost, currentcost, acceptanceParameter)){
 			currentcost=tempcost;
 		    *current=*temp;

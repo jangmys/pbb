@@ -9,9 +9,6 @@
 #define BEGIN_ORDER 0
 #define END_ORDER   1
 
-#define SIMPLE      0
-#define JOHNSON     1
-
 #include <memory>
 
 #include "../../common/inih/INIReader.h"
@@ -54,9 +51,9 @@ struct ub_compare {
         if(p1->depth < p2->depth)return true;
         if(p1->depth > p2->depth)return false;
         // //smaller (weighted) idle time
-        // if(p1->prio > p2->prio)return true;
-        // if(p1->prio < p2->prio)return false;
-        //smaller bound first
+        if(p1->prio > p2->prio)return true;
+        if(p1->prio < p2->prio)return false;
+        // smaller bound first
         if(p1->lower_bound() > p2->lower_bound())return true;
         if(p1->lower_bound() < p2->lower_bound())return false;
 
