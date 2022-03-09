@@ -28,9 +28,6 @@ gnomeSortByKeyInc(int * arr, const int * key, const int from, const int to)
     int j = i + 1;
 
     while (i <= to) {
-        //        if(arr[i-1]<0){printf("BUG1\n");}
-        //        if(arr[i]<0){printf("BUG2\n");}
-
         if (key[arr[i - 1]] > key[arr[i]]) {
             std::swap(arr[i - 1], arr[i]);
             if (--i) continue;

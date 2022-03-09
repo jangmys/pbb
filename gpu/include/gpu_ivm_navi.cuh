@@ -223,44 +223,9 @@ template <typename T>
 inline __device__ void
 jumpUp(T * pos, T * lptr, T * jm, T * mat_ptr, int cutoff)
 {
-    // std::shared_ptr<finterval> remain(new finterval(size));
-    // memcpy(remain->begin,IVM->posVect,size*sizeof(int));
-    // remain->depth_bt=-IVM->line;
-    //    remain->cost_cutoff=-IVM->line;
-
     while ((*lptr) > cutoff) {
         goUp2(pos, lptr, jm, mat_ptr);
     }
-
-    // IVM->line++;
-    // bd->prepareSchedule(IVM,arguments::branchingMode);
-    // IVM->line--;
-
-    //    IVM->displayVector(bd->schedule);
-    //
-    //    int c[2];
-    //         int c2[2];
-    //    bd->bound[SIMPLE]->bornes_calculer(bd->schedule, bd->limit1,bd->limit2, c, 99999);
-    //         //         pbb->bound->bornes_calculer(schedule+k*size, limit1[k],limit2[k], c, 99999);
-    //         pbb->bound2->bornes_calculer(schedule+k*size, limit1[k],limit2[k], c2, 99999);
-    //    printf("%d \n",c[0]);
-    //
-    //    memcpy(remain->end,IVM->posVect,size*sizeof(int));
-    //    for(int i=IVM->line+1;i<size;i++){
-    //        remain->end[i]=size-i-1;
-    //    }
-    //  remain->end[IVM->line]++;
-
-    //    IVM->displayVector(remain->begin);
-    //    IVM->displayVector(remain->end);
-
-    //    remain->cost_cutoff=c[0];
-    //    remains.push_back(remain);
-    //         //
-    //         //displayVector(newpos);
-    //
-    //         //return;
-    // }
 } // jumpUp
 
 // _______________________________________________

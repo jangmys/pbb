@@ -1,6 +1,7 @@
 add_library(bounds)
 
 add_subdirectory(${PROJECT_SOURCE_DIR}/evaluation/flowshop)
+add_subdirectory(${PROJECT_SOURCE_DIR}/evaluation/dummy)
 target_include_directories(bounds PUBLIC ${PROJECT_SOURCE_DIR}/evaluation)
 
 # install(TARGETS bounds ${PROJECT_SOURCE_DIR}/lib/)
