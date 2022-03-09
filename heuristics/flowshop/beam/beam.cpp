@@ -199,7 +199,7 @@ Beam::step_loop_pq(int beamWidth,int localBest){
         #pragma omp parallel
         {
             std::vector<std::unique_ptr<subproblem>>local_children;
-            #pragma omp for schedule(static)
+            #pragma omp for schedule(static,100)
             for(int i=0;i<n_parents;i++){
                 std::unique_ptr<subproblem> n(std::move(activeSet[i]));
                 std::vector<std::unique_ptr<subproblem>>ns;

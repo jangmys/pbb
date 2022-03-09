@@ -23,7 +23,14 @@ int
 Treeheuristic::run(std::shared_ptr<subproblem>& s, int _ub)
 {
     std::shared_ptr<subproblem> bsol = std::make_shared<subproblem>(*s);
-    bsol->set_fitness(eval->evalSolution(bsol->schedule.data()));
+
+    beam->run_loop(1<<10,bsol.get());
+    *bsol = *(beam->bestSolution);
+
+
+    // bsol->set_fitness(ig->runIG(bsol.get()));
+
+    // bsol->set_fitness(eval->evalSolution(bsol->schedule.data()));
 
     // int f = ig->runIG(bsol.get(),-1,bsol->size);
     // bsol->set_fitness(f);
@@ -73,7 +80,7 @@ Treeheuristic::run(std::shared_ptr<subproblem>& s, int _ub)
             c++;
         }
 
-        if(c > 100)
+        if(c > 500)
             break;
     }
 
