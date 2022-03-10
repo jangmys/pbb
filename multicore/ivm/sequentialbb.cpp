@@ -22,8 +22,8 @@ sequentialbb<T>::sequentialbb(pbab *_pbb, int _size) :
         rootRow = std::vector<T>(size,0);
     pthread_mutex_unlock(&_pbb->mutex_instance);
 
-    branch = OperatorFactory::createBranching(arguments::branchingMode,size,_pbb->initialUB);
-    prune = OperatorFactory::createPruning(arguments::findAll);
+    branch = pbb->branching_factory->make_branching(arguments::branchingMode,size,_pbb->initialUB);
+    prune = pbb->pruning_factory->make_pruning();
 
     lower_bound_begin = std::vector<T>(size,0);
     lower_bound_end = std::vector<T>(size,0);

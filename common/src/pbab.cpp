@@ -9,8 +9,8 @@
 #include "libheuristic.h"
 
 // #include "solution.h"
-#include "ttime.h"
 #include "pbab.h"
+// #include "ttime.h"
 #include "log.h"
 
 
@@ -123,7 +123,7 @@ void pbab::set_initial_solution()
         }
         case 2:
         {
-            Beam bs(instance);
+            Beam bs(this,instance);
 
             std::shared_ptr<subproblem> p = std::make_shared<subproblem>(instance->size);
 

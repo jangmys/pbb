@@ -21,7 +21,7 @@
 #include "sequentialbb.h"
 #include "matrix_controller.h"
 
-matrix_controller::matrix_controller(pbab* _pbb) : thread_controller(_pbb){
+matrix_controller::matrix_controller(pbab* _pbb,int _nthreads) : thread_controller(_pbb,_nthreads){
     resetExplorationState();
 
     state = std::vector<int>(get_num_threads(),0);
@@ -143,6 +143,7 @@ matrix_controller::explore_multicore()
         pbb->sltn->getBest(bestCost);
         //set local UB
         bbb[id]->setLocalBest(bestCost);
+        //GO ON!
         bool continuer = bbb[id]->bbStep();
 
         if (allEnd.load(std::memory_order_relaxed)) {
@@ -154,6 +155,8 @@ matrix_controller::explore_multicore()
             try_answer_request(id);
         }
 
+#ifdef WITH_MPI
+        std::cout<<"with mpi\n";
         if(!arguments::singleNode)
         {
             bool passed=pbb->ttm->period_passed(WORKER_BALANCING);
@@ -165,6 +168,7 @@ matrix_controller::explore_multicore()
                 break;
             }
         }
+#endif
     }
 
     pbb->stats.totDecomposed += std::static_pointer_cast<ivmthread>(bbb[id])->ivmbb->get_decomposed_count();

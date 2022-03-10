@@ -15,7 +15,7 @@ class bbthread;
 
 class thread_controller{
 public:
-    thread_controller(pbab * _pbb);
+    thread_controller(pbab * _pbb,int _nthreads);
     virtual ~thread_controller();
 
 protected:
@@ -33,7 +33,7 @@ protected:
     std::atomic<unsigned int> atom_nb_explorers{0};
     std::atomic<unsigned int> atom_nb_steals{0};
     std::atomic<bool> allEnd{false};
-
+    
     pthread_mutex_t mutex_end;
     pthread_barrier_t barrier;
     pthread_mutex_t mutex_steal_list;

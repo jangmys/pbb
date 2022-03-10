@@ -6,10 +6,9 @@
 #include "pbab.h"
 #include "thread_controller.h"
 
-thread_controller::thread_controller(pbab * _pbb) : pbb(_pbb) //, size(pbb->size)
+thread_controller::thread_controller(pbab * _pbb, int _nthreads) : pbb(_pbb),M(_nthreads) //, size(pbb->size)
 {
     // //set number of BB-explorers (threads)
-    M = (arguments::nbivms_mc < 1) ? get_nprocs_conf() : arguments::nbivms_mc;
     for (int i = 0; i < (int) M; i++){
         bbb[i]=nullptr;
     }
@@ -64,12 +63,12 @@ thread_controller::counter_increment(unsigned id)
 {
     end_counter++;
 
-    pthread_mutex_lock_check(&mutex_end);
+    // pthread_mutex_lock_check(&mutex_end);
     if (end_counter.load() == M) {
         allEnd.store(true);
         FILE_LOG(logDEBUG) << "++END COUNTER " << id << " " <<end_counter.load()<<" "<<M<<std::flush;
     }
-    pthread_mutex_unlock(&mutex_end);
+    // pthread_mutex_unlock(&mutex_end);
 
     return allEnd.load();
 }

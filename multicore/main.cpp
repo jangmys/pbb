@@ -22,7 +22,26 @@ main(int argc, char ** argv)
     FILE* log_fd = fopen(arguments::logfile, "w" );
     Output2FILE::Stream() = log_fd;
 
+    //pruning
+    std::unique_ptr<PruningFactoryInterface> prune;
+    if(arguments::findAll){
+        prune = std::make_unique<PruneLargerFactory>();
+    }else{
+        prune = std::make_unique<PruneStrictLargerFactory>();
+    }
+
+    //branching
+    std::unique_ptr<BranchingFactoryInterface> branch;
+    branch = std::make_unique<PFSPBranchingFactory>();
+    // if(arguments::problem[0] == 'f'){
+    // }
+
     pbab * pbb = new pbab();
+    pbb->set_pruning_factory(std::move(prune));
+    pbb->set_branching_factory(std::move(branch));
+
+
+
     pbb->set_initial_solution();
 
     enum algo{
@@ -52,7 +71,8 @@ main(int argc, char ** argv)
 		{
 			std::cout<<" === Run multi-core IVM-based BB ..."<<std::endl;
 
-            matrix_controller mc(pbb);
+            int nthreads = (arguments::nbivms_mc < 1) ? get_nprocs() : arguments::nbivms_mc;
+            matrix_controller mc(pbb,nthreads);
 			mc.initFullInterval();
 			mc.next();
 

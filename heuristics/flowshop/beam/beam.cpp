@@ -4,9 +4,10 @@
 #include "beam.h"
 #include "operator_factory.h"
 
-Beam::Beam(instance_abstract* inst) :
+Beam::Beam(pbab* _pbb, instance_abstract* inst) :
+    pbb(_pbb),
     tr(std::make_unique<Tree>(inst,inst->size)),
-    prune(OperatorFactory::createPruning(arguments::findAll)),
+    prune(pbb->pruning_factory->make_pruning()),
     branch(OperatorFactory::createBranching(arguments::branchingMode,inst->size,99999)),
     eval(std::make_unique<bound_fsp_weak_idle>())
 {

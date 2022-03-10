@@ -1,3 +1,6 @@
+#ifndef OPERATOR_FACTORY_H
+#define OPERATOR_FACTORY_H
+
 #include "arguments.h"
 
 #include "evaluator.h"
@@ -6,20 +9,91 @@
 
 #include "libbounds.h"
 
+
+class PruningFactoryInterface
+{
+public:
+    virtual std::unique_ptr<Pruning> make_pruning() = 0;
+};
+
+class PruneStrictLargerFactory : public PruningFactoryInterface
+{
+public:
+    std::unique_ptr<Pruning> make_pruning() override
+    {
+        return std::make_unique<keepSmaller>();
+    }
+};
+
+class PruneLargerFactory : public PruningFactoryInterface
+{
+public:
+    std::unique_ptr<Pruning> make_pruning() override
+    {
+        return std::make_unique<keepEqualOrSmaller>();
+    }
+};
+
+//===================================================================
+//===================================================================
+//===================================================================
+
+class BranchingFactoryInterface
+{
+public:
+    virtual std::unique_ptr<branching> make_branching(int choice, int size, int initialUB) = 0;
+};
+
+class PFSPBranchingFactory : public BranchingFactoryInterface
+{
+public:
+    std::unique_ptr<branching> make_branching(int choice, int size, int initialUB) override
+    {
+        switch (choice) {
+            case -3:{
+                return std::make_unique<alternateBranching>(size);
+            }
+            case -2:{
+                return std::make_unique<forwardBranching>(size);
+            }
+            case -1:{
+                return std::make_unique<backwardBranching>(size);
+            }
+            case 1:{
+                return std::make_unique<maxSumBranching>(size);
+            }
+            case 2:{
+                return std::make_unique<minBranchBranching>(size,initialUB);
+            }
+            case 3:{
+                return std::make_unique<minMinBranching>(size,initialUB);
+            }
+            default:{
+                printf("branching rule not defined\n");
+                break;
+            }
+        }
+        return nullptr;
+    }
+};
+
+
+
+
 class OperatorFactory
 {
   public:
-    int a;
+    // int a;
 
-    static std::unique_ptr<pruning> createPruning(bool findAll)
-    {
-        if(!findAll)
-        {
-            return std::make_unique<keepSmaller>();
-        }else{
-            return std::make_unique<keepEqualOrSmaller>();
-        }
-    }
+    // static std::unique_ptr<Pruning> createPruning(bool findAll)
+    // {
+    //     if(!findAll)
+    //     {
+    //         return std::make_unique<keepSmaller>();
+    //     }else{
+    //         return std::make_unique<keepEqualOrSmaller>();
+    //     }
+    // }
 
     static std::unique_ptr<branching> createBranching(int choice, int size, int initialUB)
     {
@@ -171,3 +245,6 @@ class OperatorFactory
         return nullptr;
     }
 };
+
+
+#endif

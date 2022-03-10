@@ -6,10 +6,10 @@
 
 class subproblem;
 
-class pruning{
+class Pruning{
 public:
     //minimization is default
-    pruning() : local_best(INT_MAX)
+    Pruning() : local_best(INT_MAX)
     {};
 
     virtual bool operator()(const int lb) = 0;
@@ -25,10 +25,10 @@ public:
 
 //only search for better (smaller) solutions
 //(find ONE global minimizer)
-class keepSmaller : public pruning
+class keepSmaller : public Pruning
 {
 public:
-    keepSmaller() : pruning(){};
+    keepSmaller() : Pruning(){};
 
     bool operator()(const int lb)
     {
@@ -38,10 +38,10 @@ public:
 
 //find all minimizing solutions
 //(find ALL global minimizers)
-class keepEqualOrSmaller : public pruning
+class keepEqualOrSmaller : public Pruning
 {
 public:
-    keepEqualOrSmaller() : pruning(){};
+    keepEqualOrSmaller() : Pruning(){};
 
     bool operator()(const int cost)
     {

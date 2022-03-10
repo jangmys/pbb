@@ -53,6 +53,17 @@ int main(int argc, char* argv[])
 
     std::cout<<argv[3]<<std::endl;
 
+
+    std::unique_ptr<PruningFactoryInterface> prune;
+    if(arguments::findAll){
+        prune = std::make_unique<PruneLargerFactory>();
+    }else{
+        prune = std::make_unique<PruneStrictLargerFactory>();
+    }
+
+    pbab * pbb = new pbab();
+    pbb->set_pruning_factory(std::move(prune));
+
     struct timespec t1,t2;
     clock_gettime(CLOCK_MONOTONIC,&t1);
 
@@ -92,7 +103,9 @@ int main(int argc, char* argv[])
         }
         case 3:
         {
-            Beam bs(instance.get());
+            // pbab* pbb = new pbab();
+
+            Beam bs(pbb,instance.get());
 
             // // subproblem *q = new subproblem(instance->size);
             // bs.run(1<<14,p.get());
@@ -103,7 +116,8 @@ int main(int argc, char* argv[])
         }
         case 4:
         {
-            Beam bs(instance.get());
+            // pbab* pbb = new pbab();
+            Beam bs(pbb,instance.get());
 
             // subproblem *q = new subproblem(instance->size);
             bs.run_loop(1<<14,p.get());
@@ -114,7 +128,8 @@ int main(int argc, char* argv[])
         }
         case 5:
         {
-            Treeheuristic th(instance.get());
+            // pbab* pbb = new pbab();
+            Treeheuristic th(pbb,instance.get());
 
             th.run(p,0);
 

@@ -100,7 +100,8 @@ main(int argc, char ** argv)
                 #ifdef USE_GPU
                 worker *wrkr = new worker_gpu(pbb);
                 #else
-                worker *wrkr = new worker_mc(pbb);
+                int nthreads = (arguments::nbivms_mc < 1) ? get_nprocs() : arguments::nbivms_mc;
+                worker *wrkr = new worker_mc(pbb,nthreads);
                 #endif
                 // worker *wrkr = new worker_mc(pbb);
 
@@ -148,7 +149,8 @@ main(int argc, char ** argv)
                 #ifdef USE_GPU
                 worker *wrkr = new worker_gpu(pbb);
                 #else
-                worker *wrkr = new worker_mc(pbb);
+                int nthreads = (arguments::nbivms_mc < 1) ? get_nprocs() : arguments::nbivms_mc;
+                worker *wrkr = new worker_mc(pbb,nthreads);
                 #endif
 
                 int continueBB=1;

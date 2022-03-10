@@ -3,6 +3,7 @@
 
 #include <memory>
 
+#include "pbab.h"
 #include "tree.h"
 #include "branching.h"
 #include "pruning.h"
@@ -13,10 +14,12 @@ class Beam;
 
 class Treeheuristic{
 public:
-    Treeheuristic(instance_abstract* inst);
+    Treeheuristic(pbab* pbb, instance_abstract* inst);
+
+    pbab *pbb;
 
     std::unique_ptr<Tree> tr;
-    std::unique_ptr<pruning> prune;
+    std::unique_ptr<Pruning> prune;
     std::unique_ptr<branching> branch;
     std::unique_ptr<bound_fsp_weak_idle> eval;
 

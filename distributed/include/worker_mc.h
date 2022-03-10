@@ -23,9 +23,9 @@ class solution;
 class worker_mc : public worker
 {
 public:
-    worker_mc(pbab * _pbb) :
+    worker_mc(pbab * _pbb,int _nthreads) :
         worker(_pbb),
-        mc(std::make_unique<matrix_controller>(pbb))
+        mc(std::make_unique<matrix_controller>(pbb,_nthreads))
     {
         M    = mc->get_num_threads();
         comm = std::make_unique<communicator>(M, size);

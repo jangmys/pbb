@@ -38,7 +38,7 @@ public:
     void boundNode(std::shared_ptr<ivm> IVM, std::vector<T>& lb_begin, std::vector<T>& lb_end);
     void computeStrongBounds(subproblem& node, const int be, std::vector<T>& lb);
 
-    long long int get_leaves_count() const 
+    long long int get_leaves_count() const
     {
         return count_leaves;
     }
@@ -68,7 +68,7 @@ private:
     std::vector<T> priority_begin;
     std::vector<T> priority_end;
 
-    std::unique_ptr<pruning> prune;
+    std::unique_ptr<Pruning> prune;
     std::unique_ptr<branching> branch;
     std::unique_ptr<evaluator<T>> eval;
 

@@ -11,8 +11,11 @@
 #include "../include/statistics.h"
 #include "subproblem.h"
 #include "solution.h"
+#include "ttime.h"
 
 #include "libbounds.h"
+
+#include "operator_factory.h"
 
 # define ALIGN 64
 
@@ -47,6 +50,19 @@ public:
     void printStats();
 
     pthread_mutex_t mutex_instance;
+
+    std::unique_ptr<PruningFactoryInterface> pruning_factory;
+    void set_pruning_factory(std::unique_ptr<PruningFactoryInterface> p)
+    {
+        pruning_factory = std::move(p);
+    }
+
+    std::unique_ptr<BranchingFactoryInterface> branching_factory;
+    void set_branching_factory(std::unique_ptr<BranchingFactoryInterface> b)
+    {
+        branching_factory = std::move(b);
+    }
+
 
     void
     buildInitialUB();
