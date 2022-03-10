@@ -14,13 +14,6 @@ set(CMAKE_CXX_FLAGS_DEBUG "-g -pg -O0" CACHE STRING "")
 
 ######################################################################################
 
-#add lower bounds library
-add_subdirectory(evaluation)
-#add heuristics library
-add_subdirectory(heuristics)
-#add multicore IVM-based BB
-add_subdirectory(multicore)
-
 #optional : add GPUBB (requires CUDA)
 if(GPU)
     add_definitions(-DUSE_GPU)
@@ -30,9 +23,16 @@ endif()
 #optional : add distributed BB (requires MPI and GMP)
 if(MPI)
     add_definitions(-DWITH_MPI)
+    add_compile_definitions(WITH_MPI)
     add_subdirectory(distributed)
 endif()
 
+#add lower bounds library
+add_subdirectory(evaluation)
+#add heuristics library
+add_subdirectory(heuristics)
+#add multicore IVM-based BB
+add_subdirectory(multicore)
 ######################################################################################
 
 if(TESTS)
