@@ -135,16 +135,16 @@ arguments::readIniFile()
     initial_work = reader.GetInteger("distributed", "initialWork", 3);
 } // arguments::readIniFile
 
-inline bool
-fexists(const std::string& name)
-{
-    struct stat buffer;
+// inline bool
+// fexists(const std::string& name)
+// {
+//     struct stat buffer;
+//
+//     return (stat(name.c_str(), &buffer) == 0);
+// }
 
-    return (stat(name.c_str(), &buffer) == 0);
-}
 
-
-#define OPTIONS "z:ftm" // vrtnqbiowcdugmsfh"
+#define OPTIONS "z:ftma" // vrtnqbiowcdugmsfh"
 bool
 arguments::parse_arguments(int argc, char ** argv)
 {
@@ -195,6 +195,9 @@ arguments::parse_arguments(int argc, char ** argv)
             case 'm': {
                 singleNode = true;
                 break;
+            }
+            case 'a': {
+                findAll = true;
             }
         }
         c = getopt_long(argc, argv, OPTIONS, NULL, NULL);
