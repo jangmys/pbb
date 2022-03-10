@@ -24,6 +24,9 @@ solution::solution(int _size)
     pthread_mutexattr_init(&attr);
     pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_ERRORCHECK);
     pthread_mutex_init(&mutex_sol, &attr);
+
+    pthread_rwlock_init(&lock_sol,NULL);
+
 }
 
 int
@@ -71,24 +74,21 @@ int
 solution::getBest()
 {
     int ret;
-    pthread_mutex_lock_check(&mutex_sol);
+
+    pthread_rwlock_rdlock(&lock_sol);
     ret=cost;
-    pthread_mutex_unlock(&mutex_sol);
+    pthread_rwlock_unlock(&lock_sol);
     return ret;
 }
 
-//no lock?? reading should be ok but better be safe....
 void
 solution::getBest(int& _cost)
 {
-    // if (cost == _cost) return;
-
-    // pthread_mutex_lock_check(&mutex_sol);
+    pthread_rwlock_rdlock(&lock_sol);
     if (cost < _cost) {
         _cost = cost;
     }
-    // pthread_mutex_unlock(&mutex_sol);
-
+    pthread_rwlock_unlock(&lock_sol);
     return;
 }
 

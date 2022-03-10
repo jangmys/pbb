@@ -23,6 +23,8 @@ public:
     int * perm;
 
     pthread_mutex_t mutex_sol;
+
+    pthread_rwlock_t lock_sol;
     // volatile bool newBest;
 
     // bool isImproved();
