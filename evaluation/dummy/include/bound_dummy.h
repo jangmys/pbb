@@ -22,7 +22,7 @@ public:
       int * prioEnd){};
 
     int evalSolution(int * permut){
-        return 0;
+        return 1;
     };
 
     int size;
