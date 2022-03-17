@@ -116,8 +116,6 @@ public:
     {};
 
     int operator()(const int*cb, const int* ce, const int line){
-        // int ub=local_best;
-        // if(!arguments::singleNode)
         int ub=initialUB;
 
         int min=INT_MAX;

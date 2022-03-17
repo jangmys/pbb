@@ -25,11 +25,19 @@ public:
     ~bbthread();
 
     pthread_mutex_t mutex_ivm;
-    pthread_mutex_t mutex_workState;
+    // pthread_mutex_t mutex_workState;
     pthread_mutex_t mutex_workRequested;
     pthread_mutex_t mutex_shared;
     pthread_cond_t cond_shared;
 
+    void set_work_state(const bool _b)
+    {
+        has_work.store(_b);
+    }
+    bool get_work_state()
+    {
+        return has_work.load();
+    }
 private:
     std::atomic<bool> has_work{false};
     bool received_work;
@@ -60,14 +68,7 @@ private:
         return received_work;
     }
 
-    void set_work_state(const bool _b)
-    {
-        has_work.store(_b);
-    }
-    bool get_work_state()
-    {
-        return has_work.load();
-    }
+
 
 
 };

@@ -27,6 +27,8 @@ public:
         worker(_pbb),
         mc(std::make_unique<matrix_controller>(pbb,_nthreads))
     {
+        mc->set_distributed();
+
         M    = mc->get_num_threads();
         comm = std::make_unique<communicator>(M, size);
 

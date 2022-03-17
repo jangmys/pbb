@@ -73,7 +73,27 @@ main(int argc, char ** argv)
 
             int nthreads = (arguments::nbivms_mc < 1) ? get_nprocs() : arguments::nbivms_mc;
             matrix_controller mc(pbb,nthreads);
-			mc.initFullInterval();
+
+            switch (arguments::mc_ws_select) {
+                case 'r':
+                {
+                    mc.set_victim_select(std::make_unique<RingVictimSelector>(nthreads));
+                    break;
+                }
+                case 'a':
+                {
+                    mc.set_victim_select(std::make_unique<RandomVictimSelector>(nthreads));
+                    break;
+                }
+                case 'o':
+                {
+                    mc.set_victim_select(std::make_unique<HonestVictimSelector>(nthreads));
+                    break;
+                }
+
+            }
+
+		    mc.initFullInterval();
 			mc.next();
 
 			break;

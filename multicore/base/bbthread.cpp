@@ -11,7 +11,7 @@ bbthread::bbthread(pbab * _pbb) : pbb(_pbb),received_work(false)
     //
     pthread_mutex_init(&mutex_ivm, &attr);
     pthread_mutex_init(&mutex_workRequested, &attr);
-    pthread_mutex_init(&mutex_workState, &attr);
+    // pthread_mutex_init(&mutex_workState, &attr);
 
     pthread_mutex_init(&mutex_shared, &attr);
     pthread_cond_init(&cond_shared, NULL);
@@ -25,7 +25,7 @@ bbthread::~bbthread()
 {
     pthread_mutex_destroy(&mutex_ivm);
     pthread_mutex_destroy(&mutex_workRequested);
-    pthread_mutex_destroy(&mutex_workState);
+    // pthread_mutex_destroy(&mutex_workState);
     pthread_mutex_destroy(&mutex_shared);
 }
 

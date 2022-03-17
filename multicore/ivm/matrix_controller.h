@@ -32,6 +32,14 @@ public:
 
     bool next();
     void explore_multicore();
+
+    void set_distributed(){
+        _distributed = true;
+    }
+    bool is_distributed(){
+        return _distributed;
+    }
+
 private:
     int updatedIntervals = 1;
 
@@ -39,6 +47,8 @@ private:
     std::vector<int> state;
     std::vector<std::vector<int>> pos;
     std::vector<std::vector<int>> end;
+
+    bool _distributed = false;
 };
 
 #endif

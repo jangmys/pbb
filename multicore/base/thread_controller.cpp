@@ -8,10 +8,8 @@
 
 thread_controller::thread_controller(pbab * _pbb, int _nthreads) : pbb(_pbb),M(_nthreads) //, size(pbb->size)
 {
-    // //set number of BB-explorers (threads)
-    for (int i = 0; i < (int) M; i++){
-        bbb[i]=nullptr;
-    }
+    //set number of BB-explorers (threads)
+    bbb = std::vector<std::shared_ptr<bbthread>>(M,nullptr);
 
     //barrier for syncing all explorer threads
     pthread_barrier_init(&barrier, NULL, M);
@@ -23,15 +21,17 @@ thread_controller::thread_controller(pbab * _pbb, int _nthreads) : pbb(_pbb),M(_
     pthread_mutex_init(&mutex_end, &attr);
 
     //work stealing victim-list (only for "honest" strategy)
-    pthread_mutex_init(&mutex_steal_list, &attr);
-    for (unsigned i = 0; i < M; i++) {
-        victim_list.push_back(i);
-    }
+    // pthread_mutex_init(&mutex_steal_list, &attr);
+    // for (unsigned i = 0; i < M; i++) {
+    //     victim_list.push_back(i);
+    // }
     //for "random" WS strategy
     srand(time(NULL));
 
     atom_nb_explorers.store(0);// id_generator
     allEnd.store(false);
+
+    victim_select = std::make_unique<RingVictimSelector>(M);
 
     if(arguments::singleNode){
         std::cout<<" === Single-node multi-core : Using "<<M<<" threads"<<std::endl;
@@ -41,7 +41,7 @@ thread_controller::thread_controller(pbab * _pbb, int _nthreads) : pbb(_pbb),M(_
 
 thread_controller::~thread_controller()
 {
-    pthread_mutex_destroy(&mutex_steal_list);
+    // pthread_mutex_destroy(&mutex_steal_list);
     pthread_mutex_destroy(&mutex_end);
     pthread_barrier_destroy(&barrier);
 }
@@ -81,50 +81,52 @@ thread_controller::explorer_get_new_id()
 }
 
 
-unsigned
-thread_controller::select_victim(unsigned id)
-{
+// unsigned
+// thread_controller::select_victim(unsigned id)
+// {
     // default: select left neighbor
-    unsigned victim = (id == 0) ? (M - 1) : (id - 1);
+    // unsigned victim = (id == 0) ? (M - 1) : (id - 1);
 
-    switch (arguments::mc_ws_select) {
-        case 'r':
-        {
-            std::cout<<"ring\n";
-            //ring selction is default
-            break;
-        }
-        case 'a': {
-            unsigned int attempts = 0;
-            do {
-                // randomly select active thread (at most nbIVM attempts...otherwise loop may be infinite)
-                victim = rand() / (RAND_MAX /  M);
-                if(++attempts > M)break;
-            }while(victim == id || !bbb[victim]->get_work_state());
+    // return (*victim_select)(id,bbb);
 
-            return victim;
-        }
-        case 'o': {
-            // select thread which has not made request for longest time
-            pthread_mutex_lock(&mutex_steal_list);
-            victim_list.remove(id);// remove id from list
-            victim_list.push_back(id);// put at end
-            victim = victim_list.front();// take first in list (oldest)
+    // switch (arguments::mc_ws_select) {
+    //     case 'r':
+    //     {
+    //         // std::cout<<"ring\n";
+    //         //ring selction is default
+    //         break;
+    //     }
+    //     case 'a': {
+    //         unsigned int attempts = 0;
+    //         do {
+    //             // randomly select active thread (at most nbIVM attempts...otherwise loop may be infinite)
+    //             victim = rand() / (RAND_MAX /  M);
+    //             if(++attempts > M)break;
+    //         }while(victim == id || !bbb[victim]->get_work_state());
+    //
+    //         return victim;
+    //     }
+    //     case 'o': {
+    //         // select thread which has not made request for longest time
+    //         pthread_mutex_lock(&mutex_steal_list);
+    //         victim_list.remove(id);// remove id from list
+    //         victim_list.push_back(id);// put at end
+    //         victim = victim_list.front();// take first in list (oldest)
+    //
+    //         if(!bbb[victim]->get_work_state())
+    //             victim=(id == 0) ? (M - 1) : (id - 1);
+    //
+    //         pthread_mutex_unlock(&mutex_steal_list);
+    //         break;
+    //     }
+    //     default:
+    //     {
+    //         break;
+    //     }
+    // }
 
-            if(!bbb[victim]->get_work_state())
-                victim=(id == 0) ? (M - 1) : (id - 1);
-
-            pthread_mutex_unlock(&mutex_steal_list);
-            break;
-        }
-        default:
-        {
-            break;
-        }
-    }
-
-    return victim;
-}
+    // return victim;
+// }
 
 
 
@@ -177,7 +179,8 @@ thread_controller::request_work(unsigned id)
         unlock_waiting_thread(thief);
     }
 
-    unsigned victim = select_victim(id); // select victim
+    unsigned victim = (*victim_select)(id,bbb);
+    // unsigned victim = select_victim(id); // select victim
 
     FILE_LOG(logDEBUG4) << id << " select " << victim << "\tcounter: "<<end_counter.load() << std::flush;
 
