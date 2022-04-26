@@ -35,7 +35,10 @@ public:
     int getEnd(const int _d) const;
     //direction vector
     int getDirection(const int _d) const;
+    int getDirection() const;
     void setDirection(int depth, int dir);
+    void setDirection(int dir);
+
     //matrix
     void setRow(int k, const int *row);
     int *getRowPtr(int i);

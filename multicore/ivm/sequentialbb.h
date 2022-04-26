@@ -31,12 +31,9 @@ public:
     static int rootDir;
     static int first;
 
-    void weakBoundPrune();
-    void mixedBoundPrune();
-    void strongBoundPrune();
+    void boundAndKeepSurvivors(const int);
 
-    void boundNode(std::shared_ptr<ivm> IVM, std::vector<T>& lb_begin, std::vector<T>& lb_end);
-    void computeStrongBounds(subproblem& node, const int be, std::vector<T>& lb);
+    void refineBounds(subproblem& node, const int be, std::vector<T>& lb,std::vector<T>& prio);
 
     long long int get_leaves_count() const
     {
@@ -63,13 +60,8 @@ private:
     long long int count_leaves{0};
     long long int count_decomposed;
 
-    std::vector<T> lower_bound_begin;
-    std::vector<T> lower_bound_end;
-    std::vector<T> priority_begin;
-    std::vector<T> priority_end;
-
     std::unique_ptr<Pruning> prune;
-    std::unique_ptr<branching> branch;
+    std::unique_ptr<Branching> branch;
     std::unique_ptr<evaluator<T>> eval;
 
     void unfold(int mode);

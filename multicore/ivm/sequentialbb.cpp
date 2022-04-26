@@ -17,19 +17,16 @@ sequentialbb<T>::sequentialbb(pbab *_pbb, int _size) :
 
     pthread_mutex_lock_check(&_pbb->mutex_instance);
     eval = OperatorFactory::createEvaluator(_pbb->instance,0);
-
     if(rootRow.size()==0)
         rootRow = std::vector<T>(size,0);
     pthread_mutex_unlock(&_pbb->mutex_instance);
 
-    branch = pbb->branching_factory->make_branching(arguments::branchingMode,size,_pbb->initialUB);
+    branch = pbb->branching_factory->make_branching(
+        arguments::branchingMode,
+        size,
+        _pbb->initialUB
+    );
     prune = pbb->pruning_factory->make_pruning();
-
-    lower_bound_begin = std::vector<T>(size,0);
-    lower_bound_end = std::vector<T>(size,0);
-
-    priority_begin = std::vector<T>(size,0);
-    priority_end = std::vector<T>(size,0);
 }
 
 template<typename T>
@@ -67,8 +64,8 @@ sequentialbb<T>::setRoot(const int *varOrder)
         }
         IVM->setRow(0,pbb->root_sltn->perm);
 
-        //compute children bounds (of IVM->node), choose branching and modify IVM accordingly
-        weakBoundPrune();
+        //compute children bounds (of IVM->node), choose Branching and modify IVM accordingly
+        boundAndKeepSurvivors(0);
 
         //save first line of matrix (bounded root decomposition)
         rootDir = IVM->getDirection(0);
@@ -127,6 +124,82 @@ void sequentialbb<T>::run()
     pbb->stats.leaves += count_leaves;
 }
 
+template<typename T>
+void sequentialbb<T>::boundAndKeepSurvivors(const int mode)
+{
+    std::vector<std::vector<T>> lb(2,std::vector<T>(size,0));
+    std::vector<std::vector<T>> prio(2,std::vector<T>(size,0));
+
+    //weak or mixed bounding
+    if(mode != 2){
+        // get lower bounds
+        eval->get_children_bounds_incr(
+            IVM->getNode(),
+            lb[Branching::Front],
+            lb[Branching::Back],
+            prio[Branching::Front],
+            prio[Branching::Back],
+            branch->get_type()
+        );
+
+        // for full evaluation
+        // std::vector<bool> mask(size,true);
+        // eval->get_children_bounds_full(
+        //     IVM->getNode(),
+        //     mask, IVM->getNode().limit1 + 1,
+        //     lb[Branching::Front],
+        //     prio[Branching::Front],
+        //     -1, evaluator<T>::Primary);
+    }
+    //strong bound only
+    if(mode == 2){
+        std::vector<bool> mask(size,true);
+
+        eval->get_children_bounds_full(
+            IVM->getNode(),
+            mask, IVM->getNode().limit1 + 1,
+            lb[Branching::Front],
+            prio[Branching::Front],
+            -1, evaluator<T>::Secondary);
+        eval->get_children_bounds_full(
+            IVM->getNode(),
+            mask, IVM->getNode().limit2 - 1,
+            lb[Branching::Back],
+            prio[Branching::Back],
+            -1, evaluator<T>::Secondary);
+    }
+
+    //all
+    {
+        //make Branching decision
+        auto dir = (*branch)(
+            lb[Branching::Front].data(),
+            lb[Branching::Back].data(),
+            IVM->getDepth()
+        );
+        IVM->setDirection(dir);
+    }
+
+    //only mixed
+    if(mode == 1){
+        auto dir = IVM->getDirection();
+        refineBounds(
+            IVM->getNode(),
+            dir,
+            lb[dir],
+            prio[dir]
+        );
+    }
+
+    //all
+    auto dir = IVM->getDirection();
+    IVM->sortSiblingNodes(
+        lb[dir],
+        prio[dir]
+    );
+    eliminateJobs(lb[dir]);
+}
+
 
 
 template<typename T>
@@ -160,19 +233,10 @@ bool sequentialbb<T>::next()
         }
     }
 
+    //bound, set Branching direction, prune
     if(state == 1)
     {
-        switch (arguments::boundMode) {
-            case 0:
-                weakBoundPrune();
-                break;
-            case 1:
-                strongBoundPrune();
-                break;
-            case 2:
-                mixedBoundPrune();
-                break;
-        }
+        boundAndKeepSurvivors(arguments::boundMode);
     }
 
     return (state == 1);
@@ -194,132 +258,44 @@ sequentialbb<T>::unfold(int mode)
         IVM->generateLine(IVM->getDepth(), false);
         IVM->decodeIVM();
 
-        FILE_LOG(logDEBUG) << " === Line: "<<IVM->getDepth()<<"\n";
+        FILE_LOG(logDEBUG) << " === Unfold line: "<<IVM->getDepth()<<"\n";
 
-        switch (mode) {
-            case 0:
-                weakBoundPrune();
-                break;
-            case 1:
-                strongBoundPrune();
-                break;
-            case 2:
-                mixedBoundPrune();
-                break;
-        }
+        boundAndKeepSurvivors(mode);
     }
 } // matrix::unfold
 
-
-
+/**
+ * compute LB on (left or right) children of subproblem "node" using single-child bounder
+ *
+ * @param node parent subproblem
+ * @param be =0 iff front, = 1 iff back
+ * @param lb (inout) already known bounds (e.g. precomputed by weaker bound, 0 if not). will be overwritten
+ * @param prio (out) children priority values
+ */
 template<typename T>
 void
-sequentialbb<T>::weakBoundPrune()
-{
-    // get lower bounds
-    eval->get_children_bounds_weak(IVM->getNode(),lower_bound_begin,lower_bound_end,priority_begin,priority_end);
-    //make branching decision
-    int dir = (*branch)(lower_bound_begin.data(),lower_bound_end.data(),IVM->getDepth());
-    IVM->setDirection(IVM->getDepth(),dir);
-
-    if(IVM->getDirection(IVM->getDepth()) == branching::Front){
-        IVM->sortSiblingNodes(lower_bound_begin,priority_begin);
-        eliminateJobs(lower_bound_begin);
-    }else if(IVM->getDirection(IVM->getDepth()) == branching::Back){
-        IVM->sortSiblingNodes(lower_bound_end,priority_end);
-        eliminateJobs(lower_bound_end);
-    }
-}
-
-template<typename T>
-void
-sequentialbb<T>::mixedBoundPrune(){
-    // get lower bounds
-    eval->get_children_bounds_weak(IVM->getNode(),lower_bound_begin,lower_bound_end,priority_begin,priority_end);
-    //make branching decision
-    int dir = (*branch)(lower_bound_begin.data(),lower_bound_end.data(),IVM->getDepth());
-    IVM->setDirection(IVM->getDepth(),dir);
-
-    boundNode(IVM,lower_bound_begin,lower_bound_end);
-
-    if(IVM->getDirection(IVM->getDepth()) == branching::Front){
-        IVM->sortSiblingNodes(lower_bound_begin,priority_begin);
-        eliminateJobs(lower_bound_begin);
-    }else if(IVM->getDirection(IVM->getDepth()) == branching::Back){
-        IVM->sortSiblingNodes(lower_bound_begin,priority_end);
-        eliminateJobs(lower_bound_end);
-    }
-}
-
-template<typename T>
-void
-sequentialbb<T>::strongBoundPrune(){
-    IVM->setDirection(IVM->getDepth(),-1);
-
-    std::fill(lower_bound_begin.begin(),lower_bound_begin.end(),0);
-    std::fill(lower_bound_end.begin(),lower_bound_end.end(),0);
-
-    boundNode(IVM,lower_bound_begin,lower_bound_end);
-    int dir = (*branch)(lower_bound_begin.data(),lower_bound_end.data(),IVM->getDepth());
-    IVM->setDirection(IVM->getDepth(),dir);
-
-    if(IVM->getDirection(IVM->getDepth()) == branching::Front){
-        IVM->sortSiblingNodes(lower_bound_begin,priority_begin);
-        eliminateJobs(lower_bound_begin);
-    }else if(IVM->getDirection(IVM->getDepth()) == branching::Back){
-        IVM->sortSiblingNodes(lower_bound_end,priority_end);
-        eliminateJobs(lower_bound_end);
-    }
-}
-
-//compute LB on (left or right) children  of subproblem "node"
-//optionally providing :
-    //already known bounds
-    //current local best (for early stopping of LB calculation)
-template<typename T>
-void
-sequentialbb<T>::computeStrongBounds(subproblem& node, const int be, std::vector<T>& lb){
-    std::vector<int>mask(size,0);
+sequentialbb<T>::refineBounds(subproblem& node, const int be,
+    std::vector<T>& lb,
+    std::vector<T>& prio){
+    std::vector<bool>mask(size,false);
 
     for (int i = node.limit1 + 1; i < node.limit2; i++) {
         int job = node.schedule[i];
         if(!(*prune)(lb[job])){
-            mask[job] = 1;
+            mask[job] = true;
         }
     }
 
-    if(be==branching::Front){
-        int fillPos = node.limit1 + 1;
-        eval->get_children_bounds_strong(node,mask,be,fillPos,lb,priority_begin,-1);
+    if(be==Branching::Front){
+        eval->get_children_bounds_full(
+            node,mask,node.limit1 + 1,lb,prio,-1,evaluator<T>::Secondary
+        );
     }else{
-        int fillPos = node.limit2 - 1;
-        eval->get_children_bounds_strong(node,mask,be,fillPos,lb,priority_end,-1);
+        eval->get_children_bounds_full(
+            node,mask,node.limit2 - 1,lb,prio,-1,evaluator<T>::Secondary
+        );
     }
 }
-
-template<typename T>
-void
-sequentialbb<T>::boundNode(std::shared_ptr<ivm> IVM, std::vector<T>& lb_begin, std::vector<T>& lb_end)
-{
-    int dir=IVM->getDirection(IVM->getDepth());
-
-    FILE_LOG(logDEBUG) << " === Bound: "<<dir<<"\n";
-
-    //
-    if (dir == 1){
-        computeStrongBounds(IVM->getNode(), branching::Back, lb_end);
-    }else if(dir == 0){
-        computeStrongBounds(IVM->getNode(), branching::Front, lb_begin);
-    }else if(dir == -1){
-        // printf("eval BE johnson\n");
-        computeStrongBounds(IVM->getNode(), branching::Front, lb_begin);
-        computeStrongBounds(IVM->getNode(), branching::Back, lb_end);
-    }else{
-        perror("boundNode");exit(-1);
-    }
-}
-
-
 
 
 template<typename T>
@@ -327,7 +303,7 @@ bool
 sequentialbb<T>::boundLeaf()
 {
     bool better=false;
-    int cost=eval->getSolutionCost(IVM->getNode());
+    int cost=eval->get_solution_cost(IVM->getNode());
 
     if(!(*prune)(cost)){
         better=true;

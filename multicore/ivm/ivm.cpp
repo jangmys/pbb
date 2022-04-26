@@ -72,8 +72,18 @@ void ivm::setDirection(int depth, int dir){
     dirVect[depth] = dir;
 };
 
+void ivm::setDirection(int dir){
+    dirVect[getDepth()] = dir;
+};
+
+
+
 int ivm::getDirection(const int _d) const{
     return dirVect[_d];
+}
+
+int ivm::getDirection() const{
+    return dirVect[getDepth()];
 }
 
 void

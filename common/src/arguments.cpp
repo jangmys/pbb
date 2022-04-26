@@ -55,7 +55,7 @@ int arguments::cut_top         = 99999;
 int arguments::cut_bottom      = -1;
 
 //verbosity / logging
-bool arguments::printSolutions = true;
+bool arguments::printSolutions = false;
 char arguments::logfile[50] = "./logfile.txt";
 int arguments::logLevel = logINFO;
 

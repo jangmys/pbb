@@ -27,9 +27,13 @@ bound_fsp_weak::init(instance_abstract * _instance)
     // read matrix of processing times from instance-data (stringstream)
     PTM = std::vector<std::vector<int> >(nbMachines, std::vector<int>(nbJob));
 
-    for (int j = 0; j < nbMachines; j++)
-        for (int i = 0; i < nbJob; i++)
+    for (int j = 0; j < nbMachines; j++){
+        for (int i = 0; i < nbJob; i++){
             *(_instance->data) >> PTM[j][i];
+            // std::cout<<PTM[j][i]<<"\t";
+        }
+        // std::cout<<"\n";
+    }
 
     // fill auxiliary data for LB computation
     fillMinHeadsTails();
@@ -62,6 +66,9 @@ bound_fsp_weak::fillMinHeadsTails()
             min_heads[k] = (tmp[k - 1] < min_heads[k]) ? tmp[k - 1] : min_heads[k];
         }
     }
+    // for(auto &c: min_heads)
+    //     std::cout<<c<<" ";
+    // std::cout<<std::endl;
 
     // 2/ min run-out times on each machine
     std::fill(min_tails.begin(), min_tails.end(), INT_MAX);
@@ -79,6 +86,10 @@ bound_fsp_weak::fillMinHeadsTails()
             min_tails[k] = std::min(tmp[k + 1], min_tails[k]);
         }
     }
+
+    // for(auto &c: min_tails)
+    //     std::cout<<c<<" ";
+    // std::cout<<std::endl;
 }
 
 // ==============================================================

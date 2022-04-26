@@ -22,18 +22,24 @@ public:
         lb2(std::move(_lb2))
     {};
 
+    enum lb_strength{
+        Primary = 0,
+        Secondary = 1
+    };
+
+    void get_children_bounds_full(subproblem& node,std::vector<bool> mask, int fillPos, std::vector<T>& lower_bounds, std::vector<T>& priority,T best = std::numeric_limits<T>::max(),lb_strength lb_type=Primary);
+
+    void get_children_bounds_incr(subproblem& node, std::vector<T>& lower_bounds_begin, std::vector<T>& lower_bounds_end, std::vector<T>& priority_begin, std::vector<T>& priority_end, const int begin_end);
+
+    T get_solution_cost(subproblem& s);
+
+
+    bound_abstract<T>* get_lb(lb_strength);
+
+private:
     std::unique_ptr<bound_abstract<T>> lb;
     std::unique_ptr<bound_abstract<T>> lb2;
-
-    void get_children_bounds_strong(subproblem& node,std::vector<int> mask,int begin_end, int fillPos, std::vector<T>& lower_bounds, std::vector<T>& priority,int best = std::numeric_limits<T>::max());
-
-    void get_children_bounds_weak(subproblem& node, std::vector<T>& lower_bounds_begin, std::vector<T>& lower_bounds_end, std::vector<T>& priority_begin, std::vector<T>& priority_end);
-
-    void getChildrenBounds(subproblem& s, unsigned int fixposition, std::vector<T>& LB, T best_cost = std::numeric_limits<T>::max());
-
-    T getBounds(subproblem* s, int fixposition);
-
-    T getSolutionCost(subproblem& s);
+    bool m_bidirectional = true;
 };
 
 #endif
