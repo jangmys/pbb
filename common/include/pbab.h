@@ -23,14 +23,17 @@ class instance_abstract;
 class solution;
 class ttime;
 
+
 class pbab
 {
 public:
     pbab();
+    pbab(std::unique_ptr<instance_abstract>& _inst);
     ~pbab();
 
-    int size;
     instance_abstract* instance;
+    int size;
+
 
     void
     set_instance(char problem[], char inst_name[]);
@@ -51,14 +54,21 @@ public:
 
     pthread_mutex_t mutex_instance;
 
+    std::unique_ptr<BoundFactoryInterface<int>> bound_factory;
+    template<typename T>
+    void set_bound_factory(std::unique_ptr<BoundFactoryInterface<T>>& p)
+    {
+        bound_factory = std::move(p);
+    }
+
     std::unique_ptr<PruningFactoryInterface> pruning_factory;
-    void set_pruning_factory(std::unique_ptr<PruningFactoryInterface> p)
+    void set_pruning_factory(std::unique_ptr<PruningFactoryInterface>& p)
     {
         pruning_factory = std::move(p);
     }
 
     std::unique_ptr<BranchingFactoryInterface> branching_factory;
-    void set_branching_factory(std::unique_ptr<BranchingFactoryInterface> b)
+    void set_branching_factory(std::unique_ptr<BranchingFactoryInterface>& b)
     {
         branching_factory = std::move(b);
     }

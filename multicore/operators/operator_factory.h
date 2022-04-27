@@ -78,6 +78,44 @@ public:
 };
 
 
+//===================================================================
+//===================================================================
+//===================================================================
+
+template<typename T>
+class BoundFactoryInterface
+{
+public:
+    virtual std::unique_ptr<bound_abstract<T>> make_bound(std::unique_ptr<instance_abstract>& inst, char problem[], int bound_mode) = 0;
+};
+
+template<typename T>
+class PFSPBoundFactory : public BoundFactoryInterface<T>
+{
+public:
+    std::unique_ptr<bound_abstract<T>> make_bound(std::unique_ptr<instance_abstract>& inst, char problem[], int bound_mode) override
+    {
+        switch (arguments::boundMode) {
+            case 0:
+            {
+                std::unique_ptr<bound_fsp_weak> bd = std::make_unique<bound_fsp_weak>();
+                bd->init(inst.get());
+                return bd;
+            }
+            case 1:
+            {
+                std::unique_ptr<bound_fsp_strong> bd = std::make_unique<bound_fsp_strong>();
+                bd->init(inst.get());
+                bd->earlyExit=arguments::earlyStopJohnson;
+                bd->machinePairs=arguments::johnsonPairs;
+                return bd;
+            }
+        }
+    }
+};
+
+
+
 
 
 class OperatorFactory

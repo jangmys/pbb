@@ -62,7 +62,8 @@ int main(int argc, char* argv[])
     }
 
     pbab * pbb = new pbab();
-    pbb->set_pruning_factory(std::move(prune));
+    pbb->set_pruning_factory(prune);
+    // pbb->set_pruning_factory(std::move(prune));
 
     struct timespec t1,t2;
     clock_gettime(CLOCK_MONOTONIC,&t1);

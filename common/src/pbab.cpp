@@ -31,8 +31,29 @@ pbab::pbab() : stats()
     root_sltn = new solution(size);
 
     best_solution = std::make_unique<subproblem>(size);
-
 }
+
+pbab::pbab(std::unique_ptr<instance_abstract>& _inst) : instance(_inst.get()),size(instance->size),stats()
+{
+    pthread_mutexattr_t attr;
+    pthread_mutexattr_init(&attr);
+    pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_ERRORCHECK);
+    pthread_mutex_init(&mutex_instance, &attr);
+
+    //set instance and problem size
+    // set_instance(arguments::problem, arguments::inst_name);
+    // size     = instance->size;
+
+    this->ttm = new ttime();
+
+    sltn = new solution(size);
+    root_sltn = new solution(size);
+
+    best_solution = std::make_unique<subproblem>(size);
+}
+
+
+
 
 void pbab::set_instance(char problem[],char inst_name[])
 {
@@ -63,7 +84,6 @@ void pbab::set_instance(char problem[],char inst_name[])
         {
             instance = new instance_dummy(inst_name);
         }
-
     }
 }
 
