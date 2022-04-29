@@ -67,10 +67,6 @@ private:
     {
         return received_work;
     }
-
-
-
-
 };
 
 #endif // ifndef BBTHREAD_H_

@@ -74,7 +74,9 @@ main(int argc, char ** argv)
 
     pbab * pbb = new pbab(inst);
 
-    // pbb->set_instance(arguments::problem, arguments::inst_name);
+    //each thread should have a private copy of the b&b operators.
+    //we'll just define factory methods here that will be passed to each thread through the pbab class
+    //each thread will build it's own bound, branch and prune operators later.
 
     //SET BOUND
     std::unique_ptr<BoundFactoryInterface<int>> bound;
@@ -83,7 +85,7 @@ main(int argc, char ** argv)
     }else if(arguments::problem[0]=='d'){
         std::cout<<"dummy\n";
     }
-    pbb->set_bound_factory(bound);
+    pbb->set_bound_factory(std::move(bound));
 
     //SET PRUNING
     std::unique_ptr<PruningFactoryInterface> prune;
@@ -92,12 +94,14 @@ main(int argc, char ** argv)
     }else{
         prune = std::make_unique<PruneStrictLargerFactory>();
     }
-    pbb->set_pruning_factory(prune);
+    pbb->set_pruning_factory(std::move(prune));
 
     //SET BRANCHING
-    std::unique_ptr<BranchingFactoryInterface> branch;
-    branch = std::make_unique<PFSPBranchingFactory>();
-    pbb->set_branching_factory(branch);
+    // std::unique_ptr<BranchingFactoryInterface> branch;
+    // branch = std::make_unique<PFSPBranchingFactory>(arguments::branchingMode);
+    pbb->set_branching_factory(
+        std::make_unique<PFSPBranchingFactory>(arguments::branchingMode)
+    );
 
     //BUILD INITIAL SOLUTION
     pbb->set_initial_solution();

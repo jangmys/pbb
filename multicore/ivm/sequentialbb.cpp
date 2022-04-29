@@ -16,13 +16,15 @@ sequentialbb<T>::sequentialbb(pbab *_pbb, int _size) :
     count_decomposed=0;
 
     pthread_mutex_lock_check(&_pbb->mutex_instance);
-    eval = OperatorFactory::createEvaluator(_pbb->instance,0);
+    // eval = OperatorFactory::createEvaluator(_pbb->instance,0);
+    auto bd1 = pbb->bound_factory->make_bound(pbb->instance,0);
+    auto bd2 = pbb->bound_factory->make_bound(pbb->instance,1);
+    eval = OperatorFactory::createEvaluator(bd1,bd2,1);
     if(rootRow.size()==0)
         rootRow = std::vector<T>(size,0);
     pthread_mutex_unlock(&_pbb->mutex_instance);
 
     branch = pbb->branching_factory->make_branching(
-        arguments::branchingMode,
         size,
         _pbb->initialUB
     );

@@ -32,7 +32,7 @@ gpubb::gpubb(pbab * _pbb)
     // as in 'ivm_bound' constructor (should make a function...)
     if (arguments::problem[0] == 'f') {
         bound_fsp_weak *bd=new bound_fsp_weak();
-        bd->init(pbb->instance);
+        bd->init(pbb->instance.get());
         bound=bd;
     }
 

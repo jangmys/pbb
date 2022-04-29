@@ -41,15 +41,21 @@ public:
 class BranchingFactoryInterface
 {
 public:
-    virtual std::unique_ptr<Branching> make_branching(int choice, int size, int initialUB) = 0;
+    BranchingFactoryInterface(int _mode) : _branchingMode(_mode){};
+
+    virtual std::unique_ptr<Branching> make_branching(int size, int initialUB) = 0;
+protected:
+    int _branchingMode;
 };
 
 class PFSPBranchingFactory : public BranchingFactoryInterface
 {
 public:
-    std::unique_ptr<Branching> make_branching(int choice, int size, int initialUB) override
+    PFSPBranchingFactory(int _mode) : BranchingFactoryInterface(_mode){};
+
+    std::unique_ptr<Branching> make_branching(int size, int initialUB) override
     {
-        switch (choice) {
+        switch (_branchingMode) {
             case -3:{
                 return std::make_unique<alternateBranching>(size);
             }
@@ -86,16 +92,16 @@ template<typename T>
 class BoundFactoryInterface
 {
 public:
-    virtual std::unique_ptr<bound_abstract<T>> make_bound(std::unique_ptr<instance_abstract>& inst, char problem[], int bound_mode) = 0;
+    virtual std::unique_ptr<bound_abstract<T>> make_bound(std::unique_ptr<instance_abstract>& inst, int bound_mode) = 0;
 };
 
 template<typename T>
 class PFSPBoundFactory : public BoundFactoryInterface<T>
 {
 public:
-    std::unique_ptr<bound_abstract<T>> make_bound(std::unique_ptr<instance_abstract>& inst, char problem[], int bound_mode) override
+    std::unique_ptr<bound_abstract<T>> make_bound(std::unique_ptr<instance_abstract>& inst, int bound_mode) override
     {
-        switch (arguments::boundMode) {
+        switch (bound_mode) {
             case 0:
             {
                 std::unique_ptr<bound_fsp_weak> bd = std::make_unique<bound_fsp_weak>();
@@ -163,7 +169,7 @@ class OperatorFactory
     }
 
 
-    static std::unique_ptr<evaluator<int>> createEvaluator(instance_abstract* instance, int nb)
+    static std::unique_ptr<evaluator<int>> createEvaluator(std::unique_ptr<bound_abstract<int>>& bd, std::unique_ptr<bound_abstract<int>>& bd2, int nb)
     {
         switch (arguments::problem[0]) {
             case 'f':
@@ -171,20 +177,11 @@ class OperatorFactory
                 switch (arguments::boundMode) {
                     case 0:{
                         auto ev = std::make_unique<evaluator<int>>(
-                            std::make_unique<bound_fsp_weak>()
+                            std::move(bd)
                         );
-                        ev->get_lb(evaluator<int>::Primary)->init(instance);
                         return ev;
                     }
                     case 1:{
-                        auto bd = std::make_unique<bound_fsp_weak>();
-                        bd->init(instance);
-
-                        auto bd2 = std::make_unique<bound_fsp_strong>( );
-                        bd2->init(instance);
-                        bd2->earlyExit=arguments::earlyStopJohnson;
-                        bd2->machinePairs=arguments::johnsonPairs;
-
                         auto ev = std::make_unique<evaluator<int>>(
                             std::move(bd),
                             std::move(bd2)
@@ -192,14 +189,6 @@ class OperatorFactory
                         return ev;
                     }
                     case 2:{
-                        auto bd = std::make_unique<bound_fsp_weak>();
-                        bd->init(instance);
-
-                        auto bd2 = std::make_unique<bound_fsp_strong>( );
-                        bd2->init(instance);
-                        bd2->earlyExit=arguments::earlyStopJohnson;
-                        bd2->machinePairs=arguments::johnsonPairs;
-
                         auto ev = std::make_unique<evaluator<int>>(
                             std::move(bd),
                             std::move(bd2)
@@ -211,8 +200,8 @@ class OperatorFactory
             case 'd':
             {
                 auto ev = std::make_unique<evaluator<int>>(
-                            std::make_unique<bound_dummy>()
-                        );
+                    std::move(bd)
+                );
                         // ev->lb->init(instance);
                 return ev;
             }

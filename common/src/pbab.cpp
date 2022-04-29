@@ -33,7 +33,7 @@ pbab::pbab() : stats()
     best_solution = std::make_unique<subproblem>(size);
 }
 
-pbab::pbab(std::unique_ptr<instance_abstract>& _inst) : instance(_inst.get()),size(instance->size),stats()
+pbab::pbab(std::unique_ptr<instance_abstract>& _inst) : instance(std::move(_inst)),size(instance->size),stats()
 {
     pthread_mutexattr_t attr;
     pthread_mutexattr_init(&attr);
@@ -63,26 +63,26 @@ void pbab::set_instance(char problem[],char inst_name[])
         {
             switch (inst_name[0]) {//DIFFERENT INSTANCES...
                 case 't': {
-                    instance = new instance_taillard(inst_name);
+                    instance = std::make_unique<instance_taillard>(inst_name);
                     break;
                 }
                 case 'V': {
-                    instance = new instance_vrf(inst_name);
+                    instance = std::make_unique<instance_vrf>(inst_name);
                     break;
                 }
                 case 'r': {
-                    instance = new instance_random(inst_name);
+                    instance = std::make_unique<instance_random>(inst_name);
                     break;
                 }
                 case '.': {
-                    instance = new instance_filename(inst_name);
+                    instance = std::make_unique<instance_filename>(inst_name);
                 }
             }
             break;
         }
         case 'd': //DUMMY
         {
-            instance = new instance_dummy(inst_name);
+            instance = std::make_unique<instance_dummy>(inst_name);
         }
     }
 }
@@ -108,12 +108,12 @@ void pbab::set_initial_solution()
             switch (arguments::inst_name[0]) {
                 case 't':
                 {
-                    sltn->cost = (static_cast<instance_taillard*>(instance))->read_initial_ub_from_file(arguments::inst_name);
+                    sltn->cost = (static_cast<instance_taillard*>(instance.get()))->read_initial_ub_from_file(arguments::inst_name);
                     break;
                 }
                 case 'V':
                 {
-                    sltn->cost = (static_cast<instance_vrf*>(instance))->get_initial_ub_from_file(arguments::inst_name);
+                    sltn->cost = (static_cast<instance_vrf*>(instance.get()))->get_initial_ub_from_file(arguments::inst_name);
                     break;
                 }
             }
@@ -123,7 +123,7 @@ void pbab::set_initial_solution()
         {
             std::cout<<" === Get initial upper bound : NEH\n";
 
-            fastNEH neh(instance);
+            fastNEH neh(instance.get());
 
             std::shared_ptr<subproblem> p = std::make_shared<subproblem>(instance->size);
 
@@ -143,7 +143,7 @@ void pbab::set_initial_solution()
         }
         case 2:
         {
-            Beam bs(this,instance);
+            Beam bs(this,instance.get());
 
             std::shared_ptr<subproblem> p = std::make_shared<subproblem>(instance->size);
 
@@ -204,5 +204,5 @@ pbab::printStats()
 
 pbab::~pbab()
 {
-    delete instance;
+    // delete instance;
 }
