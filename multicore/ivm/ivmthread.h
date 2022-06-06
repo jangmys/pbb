@@ -3,17 +3,17 @@
 
 #include "pbab.h"
 #include "bbthread.h"
-#include "sequentialbb.h"
+#include "intervalbb.h"
 
 class pbab;
 
 class ivmthread : public bbthread
 {
 public:
-    explicit ivmthread(pbab* _pbb);
+    ivmthread(pbab* _pbb, std::shared_ptr<Intervalbb<int>> _ibb);
     ~ivmthread();
 
-    std::shared_ptr<sequentialbb<int>> ivmbb;
+    std::shared_ptr<Intervalbb<int>> ivmbb;
 
     subproblem&
     getNode()
@@ -35,7 +35,7 @@ public:
     }
 
     bool bbStep();
-    void setRoot(const int* perm);
+    void setRoot(const int* perm, int l1, int l2);
 
     bool isEmpty(){
         return !ivmbb->get_ivm()->beforeEnd();

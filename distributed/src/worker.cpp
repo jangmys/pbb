@@ -336,7 +336,7 @@ heu_thread2(void * arg)
 
     pthread_mutex_lock_check(&w->pbb->mutex_instance);
     // std::unique_ptr<fastNEH> neh = std::make_unique<fastNEH>(w->pbb->instance);
-    std::unique_ptr<IG> ils = std::make_unique<IG>(w->pbb->instance);
+    std::unique_ptr<IG> ils = std::make_unique<IG>(w->pbb->instance.get());
     // IG ils(w->pbb->instance);
 //     IG* ils=new IG(w->pbb->instance);
 //     th->strategy=PRIOQ;
@@ -455,7 +455,7 @@ worker::run()
     // FILE_LOG(logDEBUG) << "Created " << nbHeuThds << " heuristic threads.";
     int workeriter = 0;
 
-    // printf("RUN\n");fflush(stdout);
+    // printf("RUN %d\n",M);fflush(stdout);
 
     // ==========================================
     // worker main-loop :
@@ -480,7 +480,7 @@ worker::run()
         // work is done here... explore intervals(s)
         //        pbb->ttm->on(pbb->ttm->workerExploretime);
 
-        // printf("iter : %d\n",comm->rank);
+        // printf("Rank : %d\n",comm->rank);
         allEnd = doWork();
 
         if(arguments::heuristic_threads)

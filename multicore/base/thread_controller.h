@@ -39,14 +39,10 @@ protected:
 
     pthread_mutex_t mutex_end;
     pthread_barrier_t barrier;
-    // pthread_mutex_t mutex_steal_list;
-    // std::list<int> victim_list;
 
     void counter_decrement();
     bool counter_increment(unsigned id);
     unsigned explorer_get_new_id();
-
-    // unsigned select_victim(unsigned id);
 
     void push_request(unsigned victim, unsigned id);
     unsigned pull_request(unsigned id);
@@ -58,7 +54,6 @@ protected:
     void unlockWaiting(unsigned id);
 
     void resetExplorationState();
-
 
     std::unique_ptr<VictimSelector> victim_select;
 private:

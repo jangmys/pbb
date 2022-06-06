@@ -2,7 +2,6 @@
 #include <assert.h>
 
 #include "macros.h"
-#include "arguments.h"
 #include "pbab.h"
 #include "thread_controller.h"
 
@@ -20,28 +19,12 @@ thread_controller::thread_controller(pbab * _pbb, int _nthreads) : pbb(_pbb),M(_
 
     pthread_mutex_init(&mutex_end, &attr);
 
-    //work stealing victim-list (only for "honest" strategy)
-    // pthread_mutex_init(&mutex_steal_list, &attr);
-    // for (unsigned i = 0; i < M; i++) {
-    //     victim_list.push_back(i);
-    // }
-    //for "random" WS strategy
-    srand(time(NULL));
-
     atom_nb_explorers.store(0);// id_generator
     allEnd.store(false);
-
-    victim_select = std::make_unique<RingVictimSelector>(M);
-
-    if(arguments::singleNode){
-        std::cout<<" === Single-node multi-core : Using "<<M<<" threads"<<std::endl;
-        std::cout<<" === Problem size : "<<pbb->size<<std::endl;
-    }
 }
 
 thread_controller::~thread_controller()
 {
-    // pthread_mutex_destroy(&mutex_steal_list);
     pthread_mutex_destroy(&mutex_end);
     pthread_barrier_destroy(&barrier);
 }
@@ -52,23 +35,23 @@ thread_controller::get_bbthread(int k)
     return bbb[k];
 };
 
+/* end_counter is atomic*/
 void
 thread_controller::counter_decrement()
 {
     end_counter--;
 }
 
+/* end_counter is atomic*/
 bool
 thread_controller::counter_increment(unsigned id)
 {
     end_counter++;
 
-    // pthread_mutex_lock_check(&mutex_end);
     if (end_counter.load() == M) {
         allEnd.store(true);
-        FILE_LOG(logDEBUG) << "++END COUNTER " << id << " " <<end_counter.load()<<" "<<M<<std::flush;
+        FILE_LOG(logDEBUG) << "+++END COUNTER (" << id << ") VAL: " <<end_counter.load()<<"/"<<M<<std::flush;
     }
-    // pthread_mutex_unlock(&mutex_end);
 
     return allEnd.load();
 }
@@ -76,58 +59,9 @@ thread_controller::counter_increment(unsigned id)
 unsigned
 thread_controller::explorer_get_new_id()
 {
-    assert(atom_nb_explorers.load() < MAX_EXPLORERS);
+    // assert(atom_nb_explorers.load() < MAX_EXPLORERS);
     return (atom_nb_explorers++);
 }
-
-
-// unsigned
-// thread_controller::select_victim(unsigned id)
-// {
-    // default: select left neighbor
-    // unsigned victim = (id == 0) ? (M - 1) : (id - 1);
-
-    // return (*victim_select)(id,bbb);
-
-    // switch (arguments::mc_ws_select) {
-    //     case 'r':
-    //     {
-    //         // std::cout<<"ring\n";
-    //         //ring selction is default
-    //         break;
-    //     }
-    //     case 'a': {
-    //         unsigned int attempts = 0;
-    //         do {
-    //             // randomly select active thread (at most nbIVM attempts...otherwise loop may be infinite)
-    //             victim = rand() / (RAND_MAX /  M);
-    //             if(++attempts > M)break;
-    //         }while(victim == id || !bbb[victim]->get_work_state());
-    //
-    //         return victim;
-    //     }
-    //     case 'o': {
-    //         // select thread which has not made request for longest time
-    //         pthread_mutex_lock(&mutex_steal_list);
-    //         victim_list.remove(id);// remove id from list
-    //         victim_list.push_back(id);// put at end
-    //         victim = victim_list.front();// take first in list (oldest)
-    //
-    //         if(!bbb[victim]->get_work_state())
-    //             victim=(id == 0) ? (M - 1) : (id - 1);
-    //
-    //         pthread_mutex_unlock(&mutex_steal_list);
-    //         break;
-    //     }
-    //     default:
-    //     {
-    //         break;
-    //     }
-    // }
-
-    // return victim;
-// }
-
 
 
 void
@@ -153,12 +87,16 @@ thread_controller::pull_request(unsigned id)
 void
 thread_controller::unlock_waiting_thread(unsigned id)
 {
+    FILE_LOG(logDEBUG) << "=== Unlock ("<<id<<")";
+
     //Note: For dependable use of condition variables, and to ensure that you do not lose wake-up operations on condition variables, your application should always use a Boolean predicate and a mutex with the condition variable.
     //https://www.ibm.com/support/knowledgecenter/en/ssw_ibm_i_74/apis/users_76.htm
     pthread_mutex_lock_check(&bbb[id]->mutex_shared);
     bbb[id]->set_received_work(true);
     pthread_cond_signal(&bbb[id]->cond_shared);
     pthread_mutex_unlock(&bbb[id]->mutex_shared);
+
+    FILE_LOG(logDEBUG) << "=== Unlocked ("<<id<<")";
 }
 
 void
@@ -167,6 +105,7 @@ thread_controller::request_work(unsigned id)
     bbb[id]->set_work_state(false);
     // hasWork[id]=false;
     if (counter_increment(id)) return;
+
 
     // if any pending requests, release waiting threads
     while (bbb[id]->has_request()) {
@@ -180,6 +119,7 @@ thread_controller::request_work(unsigned id)
     }
 
     unsigned victim = (*victim_select)(id,bbb);
+    // return;
     // unsigned victim = select_victim(id); // select victim
 
     FILE_LOG(logDEBUG4) << id << " select " << victim << "\tcounter: "<<end_counter.load() << std::flush;
@@ -234,7 +174,7 @@ thread_controller::try_answer_request(unsigned id)
 void
 thread_controller::unlockWaiting(unsigned id)
 {
-    FILE_LOG(logDEBUG1) << "Unlock all waiting";
+    FILE_LOG(logDEBUG) << "=== Unlock all waiting ("<<id<<")";
 
     // unlock threads waiting for work
     for (unsigned i = 0; i < M; i++) {
@@ -268,10 +208,15 @@ thread_controller::get_num_threads()
 void
 thread_controller::stop(unsigned id)
 {
+    FILE_LOG(logDEBUG) << "=== stop ("<<id<<")";
+
     unlockWaiting(id);
+
+    FILE_LOG(logDEBUG) << "=== barrier.....("<<id<<")";
 
     int ret=pthread_barrier_wait(&barrier);
     if(ret==PTHREAD_BARRIER_SERIAL_THREAD){
-        FILE_LOG(logDEBUG1) << "=== stop "<<M<<" ===";
+        FILE_LOG(logDEBUG) << "=== stop barrier ===";
     }
+    FILE_LOG(logDEBUG) << "=== stop ("<<id<<")";
 }

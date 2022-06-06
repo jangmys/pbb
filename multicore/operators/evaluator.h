@@ -6,17 +6,13 @@
 
 #include <memory>
 
-//get children bounds BEGIN
-//get children bounds END_ORDER
-//get children bounds BEGIN_END
-
 template<typename T>
-class evaluator
+class Evaluator
 {
 public:
-    evaluator(){};
-    evaluator(std::unique_ptr<bound_abstract<T>> _lb) : lb(std::move(_lb)){};
-    evaluator(std::unique_ptr<bound_abstract<T>> _lb,
+    Evaluator(){};
+    Evaluator(std::unique_ptr<bound_abstract<T>> _lb) : lb(std::move(_lb)){};
+    Evaluator(std::unique_ptr<bound_abstract<T>> _lb,
               std::unique_ptr<bound_abstract<T>> _lb2
     ) : lb(std::move(_lb)),
         lb2(std::move(_lb2))
@@ -30,6 +26,8 @@ public:
     void get_children_bounds_full(subproblem& node,std::vector<bool> mask, int fillPos, std::vector<T>& lower_bounds, std::vector<T>& priority,T best = std::numeric_limits<T>::max(),lb_strength lb_type=Primary);
 
     void get_children_bounds_incr(subproblem& node, std::vector<T>& lower_bounds_begin, std::vector<T>& lower_bounds_end, std::vector<T>& priority_begin, std::vector<T>& priority_end, const int begin_end);
+
+    void get_children_bounds_incr(subproblem& node, std::vector<T>& lower_bounds, std::vector<T>& priority, const int begin_end);
 
     T get_solution_cost(subproblem& s);
 

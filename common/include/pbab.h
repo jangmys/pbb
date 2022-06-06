@@ -17,8 +17,6 @@
 
 #include "operator_factory.h"
 
-# define ALIGN 64
-
 class instance_abstract;
 class solution;
 class ttime;
@@ -31,7 +29,8 @@ public:
     pbab(std::unique_ptr<instance_abstract>& _inst);
     ~pbab();
 
-    instance_abstract* instance;
+    std::unique_ptr<instance_abstract> instance;
+    // instance_abstract* instance;
     int size;
 
 
@@ -56,19 +55,19 @@ public:
 
     std::unique_ptr<BoundFactoryInterface<int>> bound_factory;
     template<typename T>
-    void set_bound_factory(std::unique_ptr<BoundFactoryInterface<T>>& p)
+    void set_bound_factory(std::unique_ptr<BoundFactoryInterface<T>> p)
     {
         bound_factory = std::move(p);
     }
 
     std::unique_ptr<PruningFactoryInterface> pruning_factory;
-    void set_pruning_factory(std::unique_ptr<PruningFactoryInterface>& p)
+    void set_pruning_factory(std::unique_ptr<PruningFactoryInterface> p)
     {
         pruning_factory = std::move(p);
     }
 
     std::unique_ptr<BranchingFactoryInterface> branching_factory;
-    void set_branching_factory(std::unique_ptr<BranchingFactoryInterface>& b)
+    void set_branching_factory(std::unique_ptr<BranchingFactoryInterface> b)
     {
         branching_factory = std::move(b);
     }

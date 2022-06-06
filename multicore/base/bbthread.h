@@ -19,7 +19,7 @@ protected:
     virtual void setLocalBest(const int best) = 0;
     virtual bool isEmpty() = 0;
     virtual bool bbStep() = 0;
-    virtual void setRoot(const int *perm) = 0;
+    virtual void setRoot(const int *perm, int l1, int l2) = 0;
 public:
     bbthread(pbab * _pbb);
     ~bbthread();

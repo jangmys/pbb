@@ -86,16 +86,16 @@ template<typename T>
 class BoundFactoryInterface
 {
 public:
-    virtual std::unique_ptr<bound_abstract<T>> make_bound(std::unique_ptr<instance_abstract>& inst, char problem[], int bound_mode) = 0;
+    virtual std::unique_ptr<bound_abstract<T>> make_bound(std::unique_ptr<instance_abstract>& inst, int bound_mode) = 0;
 };
 
 template<typename T>
 class PFSPBoundFactory : public BoundFactoryInterface<T>
 {
 public:
-    std::unique_ptr<bound_abstract<T>> make_bound(std::unique_ptr<instance_abstract>& inst, char problem[], int bound_mode) override
+    std::unique_ptr<bound_abstract<T>> make_bound(std::unique_ptr<instance_abstract>& inst, int bound_mode) override
     {
-        switch (arguments::boundMode) {
+        switch (bound_mode) {
             case 0:
             {
                 std::unique_ptr<bound_fsp_weak> bd = std::make_unique<bound_fsp_weak>();
@@ -163,46 +163,29 @@ class OperatorFactory
     }
 
 
-    static std::unique_ptr<evaluator<int>> createEvaluator(instance_abstract* instance, int nb)
+    static std::unique_ptr<Evaluator<int>> createEvaluator(std::unique_ptr<bound_abstract<int>> lb1, std::unique_ptr<bound_abstract<int>> lb2)
     {
         switch (arguments::problem[0]) {
             case 'f':
             {
                 switch (arguments::boundMode) {
                     case 0:{
-                        auto ev = std::make_unique<evaluator<int>>(
-                            std::make_unique<bound_fsp_weak>()
+                        auto ev = std::make_unique<Evaluator<int>>(
+                            std::move(lb1)
                         );
-                        ev->get_lb(evaluator<int>::Primary)->init(instance);
                         return ev;
                     }
                     case 1:{
-                        auto bd = std::make_unique<bound_fsp_weak>();
-                        bd->init(instance);
-
-                        auto bd2 = std::make_unique<bound_fsp_strong>( );
-                        bd2->init(instance);
-                        bd2->earlyExit=arguments::earlyStopJohnson;
-                        bd2->machinePairs=arguments::johnsonPairs;
-
-                        auto ev = std::make_unique<evaluator<int>>(
-                            std::move(bd),
-                            std::move(bd2)
+                        auto ev = std::make_unique<Evaluator<int>>(
+                            std::move(lb1),
+                            std::move(lb2)
                         );
                         return ev;
                     }
                     case 2:{
-                        auto bd = std::make_unique<bound_fsp_weak>();
-                        bd->init(instance);
-
-                        auto bd2 = std::make_unique<bound_fsp_strong>( );
-                        bd2->init(instance);
-                        bd2->earlyExit=arguments::earlyStopJohnson;
-                        bd2->machinePairs=arguments::johnsonPairs;
-
-                        auto ev = std::make_unique<evaluator<int>>(
-                            std::move(bd),
-                            std::move(bd2)
+                        auto ev = std::make_unique<Evaluator<int>>(
+                            std::move(lb1),
+                            std::move(lb2)
                         );
                         return ev;
                     }
@@ -210,7 +193,7 @@ class OperatorFactory
             }
             case 'd':
             {
-                auto ev = std::make_unique<evaluator<int>>(
+                auto ev = std::make_unique<Evaluator<int>>(
                             std::make_unique<bound_dummy>()
                         );
                         // ev->lb->init(instance);
