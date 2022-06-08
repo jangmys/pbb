@@ -41,32 +41,44 @@ public:
 class BranchingFactoryInterface
 {
 public:
-    virtual std::unique_ptr<Branching> make_branching(int choice, int size, int initialUB) = 0;
+    BranchingFactoryInterface(int choice, int size, int initialUB) : _choice(choice),_size(size),_initialUB(initialUB){};
+
+    virtual std::unique_ptr<Branching> make_branching() = 0;
+
+protected:
+    int _choice;
+    int _size;
+    int _initialUB;
 };
 
 class PFSPBranchingFactory : public BranchingFactoryInterface
 {
 public:
-    std::unique_ptr<Branching> make_branching(int choice, int size, int initialUB) override
+    PFSPBranchingFactory(int choice, int size, int initialUB) : BranchingFactoryInterface(
+        choice,size,initialUB
+    ){};
+
+
+    std::unique_ptr<Branching> make_branching() override
     {
-        switch (choice) {
+        switch (_choice) {
             case -3:{
-                return std::make_unique<alternateBranching>(size);
+                return std::make_unique<alternateBranching>(_size);
             }
             case -2:{
-                return std::make_unique<forwardBranching>(size);
+                return std::make_unique<forwardBranching>(_size);
             }
             case -1:{
-                return std::make_unique<backwardBranching>(size);
+                return std::make_unique<backwardBranching>(_size);
             }
             case 1:{
-                return std::make_unique<maxSumBranching>(size);
+                return std::make_unique<maxSumBranching>(_size);
             }
             case 2:{
-                return std::make_unique<minBranchBranching>(size,initialUB);
+                return std::make_unique<minBranchBranching>(_size,_initialUB);
             }
             case 3:{
-                return std::make_unique<minMinBranching>(size,initialUB);
+                return std::make_unique<minMinBranching>(_size,_initialUB);
             }
             default:{
                 printf("branching rule not defined\n");
@@ -86,13 +98,21 @@ template<typename T>
 class BoundFactoryInterface
 {
 public:
+    // BoundFactoryInterface(int bound_mode) : _bound_mode(bound_mode){};
+
     virtual std::unique_ptr<bound_abstract<T>> make_bound(std::unique_ptr<instance_abstract>& inst, int bound_mode) = 0;
+
+// protected:
+//     int _bound_mode;
 };
 
 template<typename T>
 class PFSPBoundFactory : public BoundFactoryInterface<T>
 {
 public:
+    // PFSPBoundFactory(int bound_mode) : BoundFactoryInterface<T>(bound_mode){};
+
+
     std::unique_ptr<bound_abstract<T>> make_bound(std::unique_ptr<instance_abstract>& inst, int bound_mode) override
     {
         switch (bound_mode) {

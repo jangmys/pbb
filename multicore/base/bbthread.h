@@ -1,6 +1,7 @@
 #ifndef BBTHREAD_H_
 #define BBTHREAD_H_
 
+#include <atomic>
 #include <deque>
 
 #include "log.h"
@@ -10,6 +11,7 @@ class pbab;
 
 class bbthread
 {
+    friend class PoolController;
     friend class thread_controller;
     friend class matrix_controller;
     friend class worker_mc;
@@ -67,10 +69,6 @@ private:
     {
         return received_work;
     }
-
-
-
-
 };
 
 #endif // ifndef BBTHREAD_H_

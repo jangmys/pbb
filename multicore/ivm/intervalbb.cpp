@@ -9,9 +9,12 @@
 #include "operator_factory.h"
 
 template<typename T>
-Intervalbb<T>::Intervalbb(pbab *_pbb, std::unique_ptr<Branching> _branch, std::unique_ptr<Pruning> _prune) :
-    pbb(_pbb),size(_pbb->size),IVM(std::make_shared<ivm>(size)),count_leaves(0),count_decomposed(0),prune(std::move(_prune)),branch(std::move(_branch))
+Intervalbb<T>::Intervalbb(pbab *_pbb) :
+    pbb(_pbb),size(_pbb->size),IVM(std::make_shared<ivm>(size)),count_leaves(0),count_decomposed(0)
 {
+    prune = pbb->pruning_factory->make_pruning();
+    branch = pbb->branching_factory->make_branching();
+
     pthread_mutex_lock_check(&_pbb->mutex_instance);
     eval = OperatorFactory::createEvaluator(
         pbb->bound_factory->make_bound(_pbb->instance,0),

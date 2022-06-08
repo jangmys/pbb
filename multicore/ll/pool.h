@@ -32,20 +32,22 @@ public:
     // std::priority_queue<std::shared_ptr<subproblem>, std::vector<std::shared_ptr<subproblem>>, ub_compare> pque;
 
     void
-    setRoot(const int* root, int l1, int l2);
+    set_root(const int* root, int l1, int l2);
 
-    void push(std::unique_ptr<subproblem>& p);
-
+    void push(std::unique_ptr<subproblem> p);
+    std::unique_ptr<subproblem> top();
+    std::unique_ptr<subproblem> take();
+    void pop();
+    bool empty();
 
     int size();
-    void push_back(std::shared_ptr<subproblem> p);
-    void pop();
-    std::shared_ptr<subproblem> top();
-    bool empty();
-    std::shared_ptr<subproblem> take();
-    void clearPool();
 
-    void insert(std::vector<std::shared_ptr<subproblem>>& ns);
+
+    // void push_back(std::shared_ptr<subproblem> p);
+    // // std::shared_ptr<subproblem> take();
+    // void clearPool();
+    //
+    // void insert(std::vector<std::shared_ptr<subproblem>>& ns);
 };
 
 

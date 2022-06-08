@@ -5,6 +5,7 @@
 #include <memory>
 #include <list>
 #include <vector>
+#include <iostream>
 
 #include <victim_selector.h>
 #include "bbthread.h"

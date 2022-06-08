@@ -6,12 +6,14 @@
 
 #include "libbounds.h"
 #include "matrix_controller.h"
+#include "pool_controller.h"
 
 #include "../ivm/intervalbb.h"
 #include "../ivm/intervalbb_incr.h"
 #include "../ivm/intervalbb_easy.h"
 
 #include "../ll/pool.h"
+#include "../ll/poolbb.h"
 
 template class PFSPBoundFactory<int>;
 
@@ -59,7 +61,11 @@ main(int argc, char ** argv)
     }
 
     //SET BRANCHING
-    pbb->set_branching_factory(std::make_unique<PFSPBranchingFactory>());
+    pbb->set_branching_factory(std::make_unique<PFSPBranchingFactory>(
+        arguments::branchingMode,
+        pbb->size,
+        pbb->initialUB
+    ));
 
     //BUILD INITIAL SOLUTION
     pbb->set_initial_solution();
@@ -71,6 +77,7 @@ main(int argc, char ** argv)
         ivm_seqbb,
         ll_sequential,
         ivm_multicore,
+        ll_multicore
     };
 
     int choice=ivm_multicore;
@@ -78,6 +85,8 @@ main(int argc, char ** argv)
 		choice=ivm_seqbb;
 
     // choice=ll_sequential;
+    choice=ll_multicore;
+
     pbb->ttm->on(pbb->ttm->wall);
 
     switch(choice){
@@ -88,35 +97,11 @@ main(int argc, char ** argv)
             std::unique_ptr<Intervalbb<int>>sbb;
 
             if(arguments::boundMode == 0){
-                sbb = std::make_unique<IntervalbbIncr<int>>(
-                    pbb,
-                    pbb->branching_factory->make_branching(
-                        arguments::branchingMode,
-                        pbb->size,
-                        pbb->initialUB
-                    ),
-                    pbb->pruning_factory->make_pruning()
-                );
+                sbb = std::make_unique<IntervalbbIncr<int>>(pbb);
             }else if(arguments::boundMode == 2){
-                sbb = std::make_unique<IntervalbbEasy<int>>(
-                    pbb,
-                    pbb->branching_factory->make_branching(
-                        arguments::branchingMode,
-                        pbb->size,
-                        pbb->initialUB
-                    ),
-                    pbb->pruning_factory->make_pruning()
-                );
+                sbb = std::make_unique<IntervalbbEasy<int>>(pbb);
             }else{
-                sbb = std::make_unique<Intervalbb<int>>(
-                    pbb,
-                    pbb->branching_factory->make_branching(
-                        arguments::branchingMode,
-                        pbb->size,
-                        pbb->initialUB
-                    ),
-                    pbb->pruning_factory->make_pruning()
-                );
+                sbb = std::make_unique<Intervalbb<int>>(pbb);
             }
 
             // Intervalbb<int> sbb(
@@ -136,9 +121,18 @@ main(int argc, char ** argv)
         }
         case ll_sequential:
         {
+            std::cout<<" === Run single-threaded POOL-BB"<<std::endl;
+
             Pool p(pbb->size);
 
-            p.setRoot(pbb->root_sltn->perm,-1,pbb->size);
+            p.set_root(pbb->root_sltn->perm,-1,pbb->size);
+
+
+            std::unique_ptr<Poolbb>sbb;
+            sbb = std::make_unique<Poolbb>(pbb);
+
+            sbb->set_root(*(pbb->root_sltn));
+            sbb->run();
 
             break;
         }
@@ -173,6 +167,15 @@ main(int argc, char ** argv)
 
 			break;
 		}
+        case ll_multicore:
+        {
+            std::cout<<" === Run multi-core LL-based BB ..."<<std::endl;
+
+            int nthreads = (arguments::nbivms_mc < 1) ? get_nprocs() : arguments::nbivms_mc;
+            PoolController pc(pbb,nthreads);
+
+            pc.next();
+        }
     }
 	pbb->printStats();
 

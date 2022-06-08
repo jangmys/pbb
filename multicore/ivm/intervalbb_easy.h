@@ -10,10 +10,7 @@ class pbab;
 template<typename T>
 class IntervalbbEasy : public Intervalbb<T>{
 public:
-    IntervalbbEasy(pbab* _pbb,
-        std::unique_ptr<Branching> _branch,
-        std::unique_ptr<Pruning> _prune
-    ) : Intervalbb<T>(_pbb,std::move(_branch),std::move(_prune)){};
+    IntervalbbEasy(pbab* _pbb) : Intervalbb<T>(_pbb){};
 
 
     void boundAndKeepSurvivors(subproblem& _subpb,const int mode) override

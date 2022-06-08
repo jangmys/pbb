@@ -81,7 +81,9 @@ main(int argc, char ** argv)
     //SET BRANCHING
     // std::unique_ptr<BranchingFactoryInterface> branch;
     // branch = std::make_unique<PFSPBranchingFactory>();
-    pbb->set_branching_factory(std::make_unique<PFSPBranchingFactory>());
+    pbb->set_branching_factory(std::make_unique<PFSPBranchingFactory>(                        arguments::branchingMode,
+                            pbb->size,
+                            pbb->initialUB));
 
 
     pbb->set_initial_solution();

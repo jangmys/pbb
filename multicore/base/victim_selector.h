@@ -2,6 +2,7 @@
 #define VICTIM_SELECTOR_H
 
 #include <bbthread.h>
+#include <random>
 #include <vector>
 
 class VictimSelector

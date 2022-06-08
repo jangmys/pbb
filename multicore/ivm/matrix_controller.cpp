@@ -36,14 +36,7 @@ matrix_controller::make_bbexplorer(){
     //initialize local (sequential) BB
     return std::make_shared<ivmthread>(
         pbb,
-        std::make_shared<Intervalbb<int>>(pbb,
-            pbb->branching_factory->make_branching(
-                arguments::branchingMode,
-                pbb->size,
-                pbb->initialUB
-            ),
-            pbb->pruning_factory->make_pruning()
-        )
+        std::make_shared<Intervalbb<int>>(pbb)
     );
 }
 

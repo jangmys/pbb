@@ -1,10 +1,22 @@
 #ifndef POOLTHREAD_H_
 #define POOLTHREAD_H_
 
+#include "bbthread.h"
+#include "poolbb.h"
+
 class PoolThread : public bbthread
 {
 public:
     PoolThread(pbab* _pbb);
+    // ~PoolThread();
+
+    int
+    shareWork(std::shared_ptr<PoolThread> thief_thread);
+
+    void setLocalBest(const int best){};
+    bool isEmpty(){};
+    bool bbStep(){};
+    void setRoot(const int *perm, int l1, int l2){} ;
 
 };
 

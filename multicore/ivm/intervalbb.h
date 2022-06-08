@@ -13,10 +13,7 @@ class pbab;
 template<typename T>
 class Intervalbb{
 public:
-    Intervalbb(pbab* _pbb,
-        std::unique_ptr<Branching> _branch,
-        std::unique_ptr<Pruning> _prune
-    );
+    Intervalbb(pbab* _pbb);
 
     bool initAtInterval(std::vector<int>& pos, std::vector<int>& end);
     void initFullInterval();
