@@ -54,7 +54,38 @@ main(int argc, char ** argv)
         FILE_LOG(logINFO) << "Worker start logging";
     }
 
-    pbab * pbb = new pbab();//, bound1, bound2);
+    //SET INSTANCE
+    InstanceFactory inst_factory;
+    std::unique_ptr<instance_abstract> inst = inst_factory.make_instance(arguments::problem, arguments::inst_name);
+
+    pbab * pbb = new pbab(inst);
+
+    std::unique_ptr<BoundFactoryInterface<int>> bound;
+    if(arguments::problem[0]=='f'){
+        // pbb->set_bound_factory(std::make_unique<PFSPBoundFactory<int>>());
+        bound = std::make_unique<PFSPBoundFactory<int>>();
+    }else if(arguments::problem[0]=='d'){
+        std::cout<<"dummy\n";
+    }
+    // pbb->set_bound_factory(bound);
+
+    //SET PRUNING
+    std::unique_ptr<PruningFactoryInterface> prune;
+    if(arguments::findAll){
+        pbb->set_pruning_factory(std::make_unique<PruneLargerFactory>());
+    }else{
+        pbb->set_pruning_factory(std::make_unique<PruneStrictLargerFactory>());
+    }
+    pbb->set_pruning_factory(std::move(prune));
+
+    //SET BRANCHING
+    // std::unique_ptr<BranchingFactoryInterface> branch;
+    // branch = std::make_unique<PFSPBranchingFactory>();
+    pbb->set_branching_factory(std::make_unique<PFSPBranchingFactory>(                        arguments::branchingMode,
+                            pbb->size,
+                            pbb->initialUB));
+
+
     pbb->set_initial_solution();
 
     int bbmode=0;
@@ -81,7 +112,7 @@ main(int argc, char ** argv)
                 MPI_Bcast(pbb->sltn->perm, pbb->size, MPI_INT, 0, MPI_COMM_WORLD);
                 MPI_Bcast(&pbb->sltn->cost, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
-                std::cout<<" = master:\t run ..."<<std::endl;
+                // std::cout<<" = master:\t run ..."<<std::endl;
                 mstr->run();
 
                 clock_gettime(CLOCK_MONOTONIC, &tend);

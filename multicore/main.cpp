@@ -6,49 +6,14 @@
 
 #include "libbounds.h"
 #include "matrix_controller.h"
-#include "../ivm/sequentialbb.h"
+#include "pool_controller.h"
 
-// instance_abstract*
-std::unique_ptr<instance_abstract>
-set_instance(char problem[],char inst_name[])
-{
-    instance_abstract* instance;
+#include "../ivm/intervalbb.h"
+#include "../ivm/intervalbb_incr.h"
+#include "../ivm/intervalbb_easy.h"
 
-    switch(problem[0])//DIFFERENT PROBLEMS...
-    {
-        case 'f': //FLOWSHOP
-        {
-            switch (inst_name[0]) {//DIFFERENT INSTANCES...
-                case 't': {
-                    return std::make_unique<instance_taillard>(inst_name);
-                    // instance = new instance_taillard(inst_name);
-                    break;
-                }
-                case 'V': {
-                    return std::make_unique<instance_vrf>(inst_name);
-                    // instance = new instance_vrf(inst_name);
-                    break;
-                }
-                case 'r': {
-                    return std::make_unique<instance_random>(inst_name);
-                    // instance = new instance_random(inst_name);
-                    break;
-                }
-                case '.': {
-                    return std::make_unique<instance_filename>(inst_name);
-                    // instance = new instance_filename(inst_name);
-                }
-            }
-            break;
-        }
-        case 'd': //DUMMY
-        {
-            return std::make_unique<instance_dummy>(inst_name);
-            // instance = new instance_dummy(inst_name);
-        }
-    }
-    // return instance;
-}
+#include "../ll/pool.h"
+#include "../ll/poolbb.h"
 
 template class PFSPBoundFactory<int>;
 
@@ -69,7 +34,9 @@ main(int argc, char ** argv)
     Output2FILE::Stream() = log_fd;
 
     //SET INSTANCE
-    std::unique_ptr<instance_abstract> inst = set_instance(arguments::problem, arguments::inst_name);
+    InstanceFactory inst_factory;
+    std::unique_ptr<instance_abstract> inst = inst_factory.make_instance(arguments::problem, arguments::inst_name);
+    // set_instance(arguments::problem, arguments::inst_name);
 
 
     pbab * pbb = new pbab(inst);
@@ -81,6 +48,7 @@ main(int argc, char ** argv)
     //SET BOUND
     std::unique_ptr<BoundFactoryInterface<int>> bound;
     if(arguments::problem[0]=='f'){
+        // pbb->set_bound_factory(std::make_unique<PFSPBoundFactory<int>>());
         bound = std::make_unique<PFSPBoundFactory<int>>();
     }else if(arguments::problem[0]=='d'){
         std::cout<<"dummy\n";
@@ -88,36 +56,38 @@ main(int argc, char ** argv)
     pbb->set_bound_factory(std::move(bound));
 
     //SET PRUNING
-    std::unique_ptr<PruningFactoryInterface> prune;
     if(arguments::findAll){
-        prune = std::make_unique<PruneLargerFactory>();
+        pbb->set_pruning_factory(std::make_unique<PruneLargerFactory>());
     }else{
-        prune = std::make_unique<PruneStrictLargerFactory>();
+        pbb->set_pruning_factory(std::make_unique<PruneStrictLargerFactory>());
     }
-    pbb->set_pruning_factory(std::move(prune));
 
     //SET BRANCHING
-    // std::unique_ptr<BranchingFactoryInterface> branch;
-    // branch = std::make_unique<PFSPBranchingFactory>(arguments::branchingMode);
-    pbb->set_branching_factory(
-        std::make_unique<PFSPBranchingFactory>(arguments::branchingMode)
-    );
+    pbb->set_branching_factory(std::make_unique<PFSPBranchingFactory>(
+        arguments::branchingMode,
+        pbb->size,
+        pbb->initialUB
+    ));
 
     //BUILD INITIAL SOLUTION
     pbb->set_initial_solution();
 
-
-    //////////////////////////////////////
+    //////////////////////////////////
     // RUN
-    //////////////////////////////////////
+    //////////////////////////////////
     enum algo{
         ivm_seqbb,
+        ll_sequential,
         ivm_multicore,
+        ll_multicore
     };
 
     int choice=ivm_multicore;
 	if(arguments::nbivms_mc==1)
 		choice=ivm_seqbb;
+
+    // choice=ll_sequential;
+    choice=ll_multicore;
 
     pbb->ttm->on(pbb->ttm->wall);
 
@@ -126,10 +96,45 @@ main(int argc, char ** argv)
         {
             std::cout<<" === Run single-threaded IVM-BB"<<std::endl;
 
-            sequentialbb<int> sbb(pbb,pbb->size);
-            sbb.setRoot(pbb->root_sltn->perm);
-            sbb.initFullInterval();
-            sbb.run();
+            std::unique_ptr<Intervalbb<int>>sbb;
+
+            if(arguments::boundMode == 0){
+                sbb = std::make_unique<IntervalbbIncr<int>>(pbb);
+            }else if(arguments::boundMode == 2){
+                sbb = std::make_unique<IntervalbbEasy<int>>(pbb);
+            }else{
+                sbb = std::make_unique<Intervalbb<int>>(pbb);
+            }
+
+            // Intervalbb<int> sbb(
+            //     pbb,
+            //     pbb->branching_factory->make_branching(
+            //         arguments::branchingMode,
+            //         pbb->size,
+            //         pbb->initialUB
+            //     ),
+            //     pbb->pruning_factory->make_pruning()
+            // );
+            sbb->setRoot(pbb->root_sltn->perm,-1,pbb->size);
+            sbb->initFullInterval();
+            sbb->run();
+
+            break;
+        }
+        case ll_sequential:
+        {
+            std::cout<<" === Run single-threaded POOL-BB"<<std::endl;
+
+            Pool p(pbb->size);
+
+            p.set_root(pbb->root_sltn->perm,-1,pbb->size);
+
+
+            std::unique_ptr<Poolbb>sbb;
+            sbb = std::make_unique<Poolbb>(pbb);
+
+            sbb->set_root(*(pbb->root_sltn));
+            sbb->run();
 
             break;
         }
@@ -164,6 +169,15 @@ main(int argc, char ** argv)
 
 			break;
 		}
+        case ll_multicore:
+        {
+            std::cout<<" === Run multi-core LL-based BB ..."<<std::endl;
+
+            int nthreads = (arguments::nbivms_mc < 1) ? get_nprocs() : arguments::nbivms_mc;
+            PoolController pc(pbb,nthreads);
+
+            pc.next();
+        }
     }
 	pbb->printStats();
 

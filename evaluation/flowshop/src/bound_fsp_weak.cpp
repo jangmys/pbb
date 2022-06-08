@@ -246,7 +246,7 @@ bound_fsp_weak::boundChildren(int * schedule, int limit1, int limit2, int * cost
         computePartial(schedule, limit1, limit2);
         for (int i = limit1 + 1; i < limit2; i++) {
             int job = schedule[i];
-            costsBegin[job] = addBackAndBound(job, prioEnd[job]);
+            costsEnd[job] = addBackAndBound(job, prioEnd[job]);
         }
     }
 }

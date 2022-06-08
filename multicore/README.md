@@ -63,7 +63,7 @@ The first row gives (#Jobs,#Machines) and the following gives the (#Jobs x #Mach
 
 Solve the associated PFSP with:
 
-`./multicore/bb -f ../multicore/mcconfig.ini -z p=fsp,i=../../evaluation/flowshop/data/file14_7.txt`
+`./multicore/bb -f ../multicore/mcconfig.ini -z p=fsp,i=../evaluation/flowshop/data/file14_7.txt`
 
 The provided instance name (`i=...`) is the relative path to the file. It must start with a `.`, so if the file is in the same directory as executable, the command becomes:
 

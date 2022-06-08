@@ -41,38 +41,44 @@ public:
 class BranchingFactoryInterface
 {
 public:
-    BranchingFactoryInterface(int _mode) : _branchingMode(_mode){};
+    BranchingFactoryInterface(int choice, int size, int initialUB) : _choice(choice),_size(size),_initialUB(initialUB){};
 
-    virtual std::unique_ptr<Branching> make_branching(int size, int initialUB) = 0;
+    virtual std::unique_ptr<Branching> make_branching() = 0;
+
 protected:
-    int _branchingMode;
+    int _choice;
+    int _size;
+    int _initialUB;
 };
 
 class PFSPBranchingFactory : public BranchingFactoryInterface
 {
 public:
-    PFSPBranchingFactory(int _mode) : BranchingFactoryInterface(_mode){};
+    PFSPBranchingFactory(int choice, int size, int initialUB) : BranchingFactoryInterface(
+        choice,size,initialUB
+    ){};
 
-    std::unique_ptr<Branching> make_branching(int size, int initialUB) override
+
+    std::unique_ptr<Branching> make_branching() override
     {
-        switch (_branchingMode) {
+        switch (_choice) {
             case -3:{
-                return std::make_unique<alternateBranching>(size);
+                return std::make_unique<alternateBranching>(_size);
             }
             case -2:{
-                return std::make_unique<forwardBranching>(size);
+                return std::make_unique<forwardBranching>(_size);
             }
             case -1:{
-                return std::make_unique<backwardBranching>(size);
+                return std::make_unique<backwardBranching>(_size);
             }
             case 1:{
-                return std::make_unique<maxSumBranching>(size);
+                return std::make_unique<maxSumBranching>(_size);
             }
             case 2:{
-                return std::make_unique<minBranchBranching>(size,initialUB);
+                return std::make_unique<minBranchBranching>(_size,_initialUB);
             }
             case 3:{
-                return std::make_unique<minMinBranching>(size,initialUB);
+                return std::make_unique<minMinBranching>(_size,_initialUB);
             }
             default:{
                 printf("branching rule not defined\n");
@@ -92,7 +98,12 @@ template<typename T>
 class BoundFactoryInterface
 {
 public:
+    // BoundFactoryInterface(int bound_mode) : _bound_mode(bound_mode){};
+
     virtual std::unique_ptr<bound_abstract<T>> make_bound(std::unique_ptr<instance_abstract>& inst, int bound_mode) = 0;
+
+// protected:
+//     int _bound_mode;
 };
 
 template<typename T>
@@ -169,29 +180,29 @@ class OperatorFactory
     }
 
 
-    static std::unique_ptr<evaluator<int>> createEvaluator(std::unique_ptr<bound_abstract<int>>& bd, std::unique_ptr<bound_abstract<int>>& bd2, int nb)
+    static std::unique_ptr<Evaluator<int>> createEvaluator(std::unique_ptr<bound_abstract<int>> lb1, std::unique_ptr<bound_abstract<int>> lb2)
     {
         switch (arguments::problem[0]) {
             case 'f':
             {
                 switch (arguments::boundMode) {
                     case 0:{
-                        auto ev = std::make_unique<evaluator<int>>(
-                            std::move(bd)
+                        auto ev = std::make_unique<Evaluator<int>>(
+                            std::move(lb1)
                         );
                         return ev;
                     }
                     case 1:{
-                        auto ev = std::make_unique<evaluator<int>>(
-                            std::move(bd),
-                            std::move(bd2)
+                        auto ev = std::make_unique<Evaluator<int>>(
+                            std::move(lb1),
+                            std::move(lb2)
                         );
                         return ev;
                     }
                     case 2:{
-                        auto ev = std::make_unique<evaluator<int>>(
-                            std::move(bd),
-                            std::move(bd2)
+                        auto ev = std::make_unique<Evaluator<int>>(
+                            std::move(lb1),
+                            std::move(lb2)
                         );
                         return ev;
                     }
@@ -199,9 +210,9 @@ class OperatorFactory
             }
             case 'd':
             {
-                auto ev = std::make_unique<evaluator<int>>(
-                    std::move(bd)
-                );
+                auto ev = std::make_unique<Evaluator<int>>(
+                            std::make_unique<bound_dummy>()
+                        );
                         // ev->lb->init(instance);
                 return ev;
             }

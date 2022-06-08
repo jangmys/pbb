@@ -19,7 +19,7 @@ class bbthread;
 class matrix_controller : public thread_controller{
     friend class worker_mc;
 public:
-    explicit matrix_controller(pbab* _pbb,int _nthreads);
+    matrix_controller(pbab* _pbb,int _nthreads);
 
     std::shared_ptr<bbthread> make_bbexplorer();
     int work_share(unsigned id, unsigned thief);

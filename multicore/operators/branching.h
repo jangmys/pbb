@@ -5,7 +5,6 @@
 #include <memory>
 
 class pbab;
-class ivm;
 
 class Branching{
 public:

@@ -7,6 +7,7 @@ add_executable(bb main.cpp)
 add_subdirectory(base)
 add_subdirectory(operators)
 add_subdirectory(ivm)
+add_subdirectory(ll)
 add_subdirectory(${PARENT_DIR}/common/src ./build_common_mc)
 
 target_include_directories(bb PUBLIC ${PARENT_DIR}/evaluation)
@@ -16,6 +17,7 @@ target_include_directories(bb PUBLIC ${PARENT_DIR}/heuristics)
 
 target_include_directories(bb PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/base)
 target_include_directories(bb PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/ivm)
+target_include_directories(bb PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/ll)
 target_include_directories(bb PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/operators)
 
 target_link_libraries(bb PUBLIC Threads::Threads)

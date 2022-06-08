@@ -1,6 +1,7 @@
 #ifndef BBTHREAD_H_
 #define BBTHREAD_H_
 
+#include <atomic>
 #include <deque>
 
 #include "log.h"
@@ -10,6 +11,7 @@ class pbab;
 
 class bbthread
 {
+    friend class PoolController;
     friend class thread_controller;
     friend class matrix_controller;
     friend class worker_mc;
@@ -19,7 +21,7 @@ protected:
     virtual void setLocalBest(const int best) = 0;
     virtual bool isEmpty() = 0;
     virtual bool bbStep() = 0;
-    virtual void setRoot(const int *perm) = 0;
+    virtual void setRoot(const int *perm, int l1, int l2) = 0;
 public:
     bbthread(pbab * _pbb);
     ~bbthread();

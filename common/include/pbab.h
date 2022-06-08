@@ -17,8 +17,6 @@
 
 #include "operator_factory.h"
 
-# define ALIGN 64
-
 class instance_abstract;
 class solution;
 class ttime;

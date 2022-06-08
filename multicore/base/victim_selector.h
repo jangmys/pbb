@@ -2,6 +2,7 @@
 #define VICTIM_SELECTOR_H
 
 #include <bbthread.h>
+#include <random>
 #include <vector>
 
 class VictimSelector
@@ -18,7 +19,7 @@ protected:
 class RingVictimSelector : public VictimSelector
 {
 public:
-    RingVictimSelector(unsigned _nthreads) : VictimSelector(_nthreads){};
+    explicit RingVictimSelector(unsigned _nthreads) : VictimSelector(_nthreads){};
 
     unsigned operator()(unsigned id,std::vector<std::shared_ptr<bbthread>>& bbs)
     {
@@ -29,7 +30,7 @@ public:
 class RandomVictimSelector : public VictimSelector
 {
 public:
-    RandomVictimSelector(unsigned _nthreads) : VictimSelector(_nthreads),unif(std::uniform_int_distribution<int>(0,nthreads)){};
+    explicit RandomVictimSelector(unsigned _nthreads) : VictimSelector(_nthreads),unif(std::uniform_int_distribution<int>(0,nthreads)){};
 
     unsigned operator()(unsigned id,std::vector<std::shared_ptr<bbthread>>& bbs)
     {
@@ -52,7 +53,7 @@ private:
 class HonestVictimSelector : public VictimSelector
 {
 public:
-    HonestVictimSelector(unsigned _nthreads) : VictimSelector(_nthreads){
+    explicit HonestVictimSelector(unsigned _nthreads) : VictimSelector(_nthreads){
         for (unsigned i = 0; i < nthreads; i++) {
             victim_list.push_back(i);
         }

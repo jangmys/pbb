@@ -17,7 +17,7 @@
 #include "../../common/include/log.h"
 
 #include "bbthread.h"
-#include "sequentialbb.h"
+#include "intervalbb.h"
 #include "matrix_controller.h"
 
 matrix_controller::matrix_controller(pbab* _pbb,int _nthreads) : thread_controller(_pbb,_nthreads){
@@ -34,7 +34,10 @@ matrix_controller::matrix_controller(pbab* _pbb,int _nthreads) : thread_controll
 std::shared_ptr<bbthread>
 matrix_controller::make_bbexplorer(){
     //initialize local (sequential) BB
-    return std::make_shared<ivmthread>(pbb);
+    return std::make_shared<ivmthread>(
+        pbb,
+        std::make_shared<Intervalbb<int>>(pbb)
+    );
 }
 
 void
@@ -50,7 +53,7 @@ matrix_controller::initFullInterval()
     }
     state[0]=1;
 
-    sequentialbb<int>::first=true;
+    Intervalbb<int>::first=true;
 }
 
 //nbint := number received intervals
@@ -67,7 +70,7 @@ matrix_controller::initFromFac(const unsigned int nbint, const int * ids, int * 
         // victim_list.push_front(id);// put in front
         state[id]=1;
 
-        bbb[id]->setRoot(pbb->root_sltn->perm);
+        bbb[id]->setRoot(pbb->root_sltn->perm, -1, pbb->size);
         for (int i = 0; i < pbb->size; i++) {
             pos[id][i] = _pos[k * pbb->size + i];
             end[id][i] = _end[k * pbb->size + i];
@@ -93,19 +96,19 @@ matrix_controller::explore_multicore()
 {
     // get unique ID
     int id = explorer_get_new_id();
-    FILE_LOG(logDEBUG) << " === got ID" << id;
+    FILE_LOG(logDEBUG) << "=== got ID " << id;
 
     if(!bbb[id]){
         //make sequential bb-explorer
         bbb[id] = make_bbexplorer();
         //set root
-        bbb[id]->setRoot(pbb->root_sltn->perm);
-        FILE_LOG(logDEBUG) << id << " === allocated";
+        bbb[id]->setRoot(pbb->root_sltn->perm, -1, pbb->size);
+        FILE_LOG(logDEBUG) << "=== made explorer ("<<id<<")";
     }
 
     if(state[id]==1){
         //has non-empty interval ...
-        FILE_LOG(logDEBUG) << id << " === state 1";
+        FILE_LOG(logDEBUG) << "=== state 1 ("<<id<<")";
 
         if(updatedIntervals){
             std::static_pointer_cast<ivmthread>(bbb[id])->ivmbb->initAtInterval(pos[id], end[id]);
@@ -119,7 +122,7 @@ matrix_controller::explore_multicore()
         // pthread_mutex_unlock(&mutex_steal_list);
     }else{
         //has empty interval
-        FILE_LOG(logDEBUG) << id << " === state 0";
+        FILE_LOG(logDEBUG) << "=== state 0 ("<<id<<")";
         std::static_pointer_cast<ivmthread>(bbb[id])->ivmbb->clear();
         bbb[id]->set_work_state(false);
     }
@@ -146,13 +149,14 @@ matrix_controller::explore_multicore()
         bool continuer = bbb[id]->bbStep();
 
         if (allEnd.load(std::memory_order_relaxed)) {
-            FILE_LOG(logDEBUG) << "=== ALL END";
+            FILE_LOG(logDEBUG) << "=== ALL END ("<<id<<")";
             break;
         }else if (!continuer){
             request_work(id);
         }else{
             try_answer_request(id);
         }
+        // break;
 
 #ifdef WITH_MPI
         if(is_distributed())
@@ -169,10 +173,15 @@ matrix_controller::explore_multicore()
 #endif
     }
 
+    FILE_LOG(logDEBUG) << "=== Exit exploration loop";
+
+
     pbb->stats.totDecomposed += std::static_pointer_cast<ivmthread>(bbb[id])->ivmbb->get_decomposed_count();
     pbb->stats.leaves += std::static_pointer_cast<ivmthread>(bbb[id])->ivmbb->get_leaves_count();
 
     allEnd.store(true);
+    FILE_LOG(logDEBUG) << "=== Decomposed: "<<std::static_pointer_cast<ivmthread>(bbb[id])->ivmbb->get_decomposed_count();
+    FILE_LOG(logDEBUG) << "=== Leaves: "<<std::static_pointer_cast<ivmthread>(bbb[id])->ivmbb->get_leaves_count();
     stop(id);
 }
 

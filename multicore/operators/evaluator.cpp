@@ -7,9 +7,9 @@
 
 template<typename T>
 bound_abstract<T>*
-evaluator<T>::get_lb(evaluator<T>::lb_strength _lb)
+Evaluator<T>::get_lb(Evaluator<T>::lb_strength _lb)
 {
-    if(_lb == evaluator<T>::Primary){
+    if(_lb == Evaluator<T>::Primary){
         return lb.get();
     }else{
         return lb2.get();
@@ -28,7 +28,7 @@ evaluator<T>::get_lb(evaluator<T>::lb_strength _lb)
 */
 template<typename T>
 void
-evaluator<T>::get_children_bounds_full(subproblem& node, std::vector<bool> mask, int fillPos, std::vector<T>& lower_bounds, std::vector<T>& priority,T best, lb_strength lb_type)
+Evaluator<T>::get_children_bounds_full(subproblem& node, std::vector<bool> mask, int fillPos, std::vector<T>& lower_bounds, std::vector<T>& priority,T best, lb_strength lb_type)
 {
     int _limit1 = node.limit1;
     int _limit2 = node.limit2;
@@ -56,7 +56,6 @@ evaluator<T>::get_children_bounds_full(subproblem& node, std::vector<bool> mask,
     }
 };
 
-//use std::optional...?
 /**
  * Compute children bounds using all-child (incremental) bounding function - front, back or both
  *
@@ -64,32 +63,34 @@ evaluator<T>::get_children_bounds_full(subproblem& node, std::vector<bool> mask,
  */
 template<typename T>
 void
-evaluator<T>::get_children_bounds_incr(subproblem& node, std::vector<T>& lower_bound_begin, std::vector<T>& lower_bound_end, std::vector<T>& priority_begin, std::vector<T>& priority_end, const int begin_end)
+Evaluator<T>::get_children_bounds_incr(subproblem& node, std::vector<T>& lower_bound_begin, std::vector<T>& lower_bound_end, std::vector<T>& priority_begin, std::vector<T>& priority_end, const int begin_end)
+{
+    lb->boundChildren(
+            node.schedule.data(),node.limit1,node.limit2,
+            lower_bound_begin.data(),lower_bound_end.data(),
+            priority_begin.data(),priority_end.data()
+        );
+};
+
+template<typename T>
+void
+Evaluator<T>::get_children_bounds_incr(subproblem& node, std::vector<T>& lower_bound, std::vector<T>& priority, const int begin_end)
 {
     switch(begin_end){
         case 0:
         {
             lb->boundChildren(
                 node.schedule.data(),node.limit1,node.limit2,
-                lower_bound_begin.data(),nullptr,
-                priority_begin.data(),nullptr);
+                lower_bound.data(),nullptr,
+                priority.data(),nullptr);
             break;
         }
         case 1:
         {
             lb->boundChildren(
                 node.schedule.data(),node.limit1,node.limit2,
-                nullptr,lower_bound_end.data(),
-                nullptr,priority_end.data()
-            );
-            break;
-        }
-        case 2:
-        {
-            lb->boundChildren(
-                node.schedule.data(),node.limit1,node.limit2,
-                lower_bound_begin.data(),lower_bound_end.data(),
-                priority_begin.data(),priority_end.data()
+                nullptr,lower_bound.data(),
+                nullptr,priority.data()
             );
             break;
         }
@@ -100,13 +101,12 @@ evaluator<T>::get_children_bounds_incr(subproblem& node, std::vector<T>& lower_b
 
 
 
-
 template <typename T>
 T
-evaluator<T>::get_solution_cost(subproblem& s)
+Evaluator<T>::get_solution_cost(subproblem& s)
 {
     return lb->evalSolution(s.schedule.data());
 }
 
 
-template class evaluator<int>;
+template class Evaluator<int>;
