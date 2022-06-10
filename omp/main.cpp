@@ -10,7 +10,7 @@
 #include "arguments.h"
 #include "libbounds.h"
 
-#define JOHNSON_BOUND
+// #define JOHNSON_BOUND
 #define SIMPLE_BOUND
 
 bool all_true(const std::vector<bool>& v)
@@ -95,7 +95,7 @@ main(int argc, char ** argv)
         }
 #endif
         //JOHNSON BOUND
-#ifdef JOHNSON
+#ifdef JOHNSON_BOUND
         bound_fsp_strong bound;
         #pragma omp critical
         {

@@ -1,0 +1,22 @@
+Compile
+-------
+Inside ``omp`` directory:
+
+mkdir build
+cd build
+cmake ..
+make
+
+By default this builds the code for "Simple Bound".
+
+Change main.cpp:13,14 to
+#define JOHNSON_BOUND
+//#define SIMPLE_BOUND
+
+to get the "Johnson Bound"
+
+Run
+---
+OMP_NUM_THREADS=4 ./bb -z p=fsp,i=ta3,o
+
+to execute bb with 4 threads and instance ta3, initialized at optimum. 

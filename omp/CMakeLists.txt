@@ -18,12 +18,6 @@ get_filename_component(PARENT_DIR ${CMAKE_CURRENT_SOURCE_DIR} DIRECTORY)
 add_executable(bb main.cpp)
 add_executable(bb_seq main_noomp.cpp)
 
-# add_subdirectory(${PARENT_DIR}/common/src ./build_common_mc)
-
-#add lower bounds library
-# add_subdirectory(${PARENT_DIR}/evaluation ./build_bounds)
-
-
 
 ### BB OpenMP
 FILE(GLOB MyCppSources ./src/*.cpp)
