@@ -1,6 +1,7 @@
 #ifndef SOLUTION_H
 #define SOLUTION_H
 
+#include <atomic>
 #include <iostream>
 #include <climits>
 #include <pthread.h>
@@ -19,7 +20,8 @@ public:
 
     int size;
 
-    int cost;
+    std::atomic<int>cost;
+    // int cost;
     int * perm;
 
     pthread_mutex_t mutex_sol;

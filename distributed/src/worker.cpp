@@ -165,7 +165,11 @@ comm_thread(void * arg)
             w->setNewBest(false);
             // get sol
             solution *tmp=new solution(w->pbb->size);
-            w->pbb->sltn->getBestSolution(tmp->perm,tmp->cost);
+
+            int tmpcost;
+            w->pbb->sltn->getBestSolution(tmp->perm,tmpcost);
+            tmp->cost.store(tmpcost);
+
             w->comm->send_sol(tmp, 0, BEST);
 
             delete tmp;

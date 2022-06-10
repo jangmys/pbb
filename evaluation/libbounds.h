@@ -17,6 +17,6 @@
 #include "dummy/include/bound_dummy.h"
 
 #include "instance_factory.h"
-
+#include "bound_factory.h"
 
 #endif // ifndef LIBBOUNDS_H

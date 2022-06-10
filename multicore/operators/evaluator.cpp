@@ -63,7 +63,12 @@ Evaluator<T>::get_children_bounds_full(subproblem& node, std::vector<bool> mask,
  */
 template<typename T>
 void
-Evaluator<T>::get_children_bounds_incr(subproblem& node, std::vector<T>& lower_bound_begin, std::vector<T>& lower_bound_end, std::vector<T>& priority_begin, std::vector<T>& priority_end, const int begin_end)
+Evaluator<T>::get_children_bounds_incr(subproblem& node,
+    std::vector<T>& lower_bound_begin,
+    std::vector<T>& lower_bound_end,
+    std::vector<T>& priority_begin,
+    std::vector<T>& priority_end,
+    const int begin_end)
 {
     lb->boundChildren(
             node.schedule.data(),node.limit1,node.limit2,

@@ -25,6 +25,8 @@ public:
     virtual ~Branching(){};
     virtual int operator()(const int*cb, const int* ce, const int line) = 0;
 
+    virtual int pre_bound_choice(const int line) = 0;
+
     virtual Branching::branchingType get_type()
     {
         return m_branchType;
@@ -47,6 +49,11 @@ public:
     {
         return Front;
     }
+
+    int pre_bound_choice(const int line)
+    {
+        return Front;
+    }
 };
 
 //static : only right to left
@@ -60,6 +67,11 @@ public:
     {
         return Back;
     }
+
+    int pre_bound_choice(const int line)
+    {
+        return Back;
+    }
 };
 
 //alternating : Branching direction depends on depth
@@ -69,6 +81,11 @@ public:
     explicit alternateBranching(int _size) : Branching(_size,Branching::Bidirectional){};
 
     int operator()(const int*cb, const int* ce, const int line)
+    {
+        return (line%2)?Back:Front;
+    }
+
+    int pre_bound_choice(const int line)
     {
         return (line%2)?Back:Front;
     }
@@ -88,6 +105,11 @@ public:
         }
 
         return (sum < 0)?Back:Front; //choose larger sum, tiebreak : FRONT
+    }
+
+    int pre_bound_choice(const int line)
+    {
+        return -1;
     }
 };
 
@@ -114,6 +136,11 @@ public:
         if(elim > 0)return Front;
         else if(elim < 0)return Back;
         else return (sum < 0)?Back:Front;
+    }
+
+    int pre_bound_choice(const int line)
+    {
+        return -1;
     }
 
 private:
@@ -151,6 +178,12 @@ public:
         else if(minCount < 0)return Front;
         else return (elimCount > 0)?Front:Back;//break ties
     }
+
+    int pre_bound_choice(const int line)
+    {
+        return -1;
+    }
+
 private:
     int initialUB;
 };

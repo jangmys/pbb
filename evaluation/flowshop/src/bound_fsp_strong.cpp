@@ -200,7 +200,7 @@ bound_fsp_strong::scheduleFront(int permutation[], int limite1, int limite2, int
         int job      = permutation[j];
         front[0] = front[0] + PTM[0][job];
         for (int m = 1; m < nbMachines; m++) {
-            *idle   += std::max(0, front[m - 1] - front[m]);
+            // *idle   += std::max(0, front[m - 1] - front[m]); //TMP!!!
             front[m] = std::max(front[m],
                 front[m - 1]) + PTM[m][job];
         }

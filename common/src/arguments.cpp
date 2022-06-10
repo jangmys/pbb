@@ -13,8 +13,8 @@ char arguments::problem[50];
 
 //Bounding options
 int arguments::boundMode     = 2;
-bool arguments::earlyStopJohnson = true;
-int arguments::johnsonPairs      = 1;
+bool arguments::earlyStopJohnson = false;
+int arguments::johnsonPairs      = 0;
 
 //Branching options
 int arguments::branchingMode = 3;

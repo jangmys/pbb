@@ -273,6 +273,15 @@ bound_fsp_weak::evalSolution(int * permut)
 void
 bound_fsp_weak::bornes_calculer(int permutation[], int limite1, int limite2, int * couts, int best)
 {
+    // printf("NB JOBS:%2d\t",nbJob);
+    // printf("NB MACH:%2d\t",nbMachines);
+    //
+    // for(int i=0; i<nbJob; i++)
+    // {
+    //     printf("%2d ",permutation[i]);
+    // }
+    // printf("\n");
+
     scheduleFront(permutation, limite1);
     scheduleBack(permutation, limite2);
     sumUnscheduled(permutation, limite1, limite2);
