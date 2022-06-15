@@ -38,7 +38,6 @@ main(int argc, char ** argv)
     std::unique_ptr<instance_abstract> inst = inst_factory.make_instance(arguments::problem, arguments::inst_name);
     // set_instance(arguments::problem, arguments::inst_name);
 
-
     pbab * pbb = new pbab(inst);
 
     //each thread should have a private copy of the b&b operators.
@@ -87,7 +86,7 @@ main(int argc, char ** argv)
 		choice=ivm_seqbb;
 
     // choice=ll_sequential;
-    choice=ll_multicore;
+    // choice=ll_multicore;
 
     pbb->ttm->on(pbb->ttm->wall);
 

@@ -12,6 +12,7 @@ template<typename T>
 Intervalbb<T>::Intervalbb(pbab *_pbb) :
     pbb(_pbb),size(_pbb->size),IVM(std::make_shared<ivm>(size)),count_leaves(0),count_decomposed(0)
 {
+    //why not pass operators to the ctor?
     prune = pbb->pruning_factory->make_pruning();
     branch = pbb->branching_factory->make_branching();
 
@@ -164,13 +165,15 @@ void Intervalbb<T>::boundAndKeepSurvivors_static(subproblem& _subpb, const int m
     if(mode == 2){
         std::vector<bool> mask(size,true);
 
+        int best = prune->local_best;
+
         if(dir == Branching::Front){
             eval->get_children_bounds_full(
                 _subpb,
                 mask, _subpb.limit1 + 1,
                 lb[Branching::Front],
                 prio[Branching::Front],
-                -1, Evaluator<T>::Secondary
+                best, Evaluator<T>::Secondary
             );
         }
         else if(dir == Branching::Back){
@@ -179,7 +182,7 @@ void Intervalbb<T>::boundAndKeepSurvivors_static(subproblem& _subpb, const int m
                 mask, _subpb.limit2 - 1,
                 lb[Branching::Back],
                 prio[Branching::Back],
-                -1, Evaluator<T>::Secondary
+                best, Evaluator<T>::Secondary
             );
         }
     }

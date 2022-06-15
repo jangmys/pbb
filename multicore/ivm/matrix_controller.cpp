@@ -104,6 +104,7 @@ matrix_controller::explore_multicore()
         //set root
         bbb[id]->setRoot(pbb->root_sltn->perm, -1, pbb->size);
         FILE_LOG(logDEBUG) << "=== made explorer ("<<id<<")";
+        state[id]=1;
     }
 
     if(state[id]==1){
@@ -115,11 +116,6 @@ matrix_controller::explore_multicore()
         }
 
         bbb[id]->set_work_state(true);
-        //only for "honest" ws strategy
-        // pthread_mutex_lock(&mutex_steal_list);
-        // victim_list.remove(id);
-        // victim_list.push_front(id);// put in front
-        // pthread_mutex_unlock(&mutex_steal_list);
     }else{
         //has empty interval
         FILE_LOG(logDEBUG) << "=== state 0 ("<<id<<")";
@@ -148,7 +144,7 @@ matrix_controller::explore_multicore()
         //GO ON!
         bool continuer = bbb[id]->bbStep();
 
-        if (allEnd.load(std::memory_order_relaxed)) {
+        if (allEnd.load()) {
             FILE_LOG(logDEBUG) << "=== ALL END ("<<id<<")";
             break;
         }else if (!continuer){
