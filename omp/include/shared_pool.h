@@ -73,7 +73,7 @@ template<class Subproblem>
 class SharedPool
 {
 public:
-    SharedPool(unsigned _num_threads):segments(std::vector<Segment<Subproblem>>(_num_threads)),gen(rd()),distrib(0,_num_threads-1)
+    SharedPool(unsigned _num_threads = omp_get_max_threads()):segments(std::vector<Segment<Subproblem>>(_num_threads)),gen(rd()),distrib(0,_num_threads-1)
     {}
 
     void insert(std::unique_ptr<Subproblem> n, const int tid){
@@ -93,16 +93,7 @@ public:
         //avg case : try get from neighbor
         if(!ret){
             int victim = distrib(gen);
-            // std::cout<<distrib(gen)<<'\n';
-
-            // int victim = tid?(tid-1):segments.size()-1;
-
             ret = std::move(segments[victim].take_back());
-
-            // std::cout<<"thread "<<tid<<" got work from neighbor\n";
-
-            // if(!ret)
-            //     std::cout<<tid<<" get null\n";
         }
 
         return ret;
@@ -115,14 +106,6 @@ public:
     bool empty(const int tid){
         return segments[tid].empty();
     }
-    // std::unique_ptr<Subproblem> take(){
-    //     omp_set_lock(&lock);
-    //     std::unique_ptr<Subproblem> n=(stack.empty())?nullptr:std::move(stack.top());
-    //     if(n)stack.pop();
-    //     omp_unset_lock(&lock);
-    //     return n;
-    // };
-
 
 private:
     std::vector<Segment<Subproblem>> segments;

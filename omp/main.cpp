@@ -51,7 +51,7 @@ main(int argc, char ** argv)
     //get num_threads as specified by OMP_NUM_THREADS environment variable
     int nthreads(omp_get_max_threads());
     //make shared pool of permutation subproblems for nthreads threads
-    SharedPool<PermutationSubproblem> p(nthreads);
+    SharedPool<PermutationSubproblem> p;
     //flags for termination detection
     std::vector<bool>stop_flags(nthreads,0);
     int end_flag=0;
@@ -70,16 +70,15 @@ main(int argc, char ** argv)
         std::cout<<"read UB "<<global_best_ub<<" from file\n";
     }
 
-
+    //master gets root node
+    std::unique_ptr<PermutationSubproblem> root = std::make_unique<PermutationSubproblem>(inst.size);
+    p.insert(std::move(root),0);
 
     //start parallel exploration
     //==========================
     #pragma omp parallel num_threads(nthreads) shared(p,stop_flags,end_flag,inst,global_best_ub) reduction(+:count_decomposed,count_leaves)
     {
         int tid = omp_get_thread_num();
-        int nthd = omp_get_num_threads();
-
-        int pbsize;
 
         //INITIALIZATIONS (thread private data)
         //=====================================
@@ -91,7 +90,6 @@ main(int argc, char ** argv)
         #pragma omp critical
         {
             bound.init(&inst);
-            pbsize=inst.size;
         }
 #endif
         //JOHNSON BOUND
@@ -102,25 +100,11 @@ main(int argc, char ** argv)
             bound.init(&inst);
             bound.earlyExit=0; //arguments::earlyStopJohnson; ==> don't
             bound.machinePairs=0; //arguments::johnsonPairs; ==> all machine-pairs
-
-            pbsize=inst.size;
         }
 #endif
 
         //all the B&B logic - except exploration - is here (branching,bounding and pruning)
         DecomposePerm decompose(bound);
-
-        //master gets root node
-        #pragma omp master
-        {
-            std::unique_ptr<PermutationSubproblem> root = std::make_unique<PermutationSubproblem>(pbsize);
-            p.insert(std::move(root),tid);
-        }
-
-        int max_iter=0;
-
-        //should not start before master has initial node (although it might not be a problem)
-        #pragma omp barrier
 
         while(!atomic_read(end_flag)){
             // #pragma omp atomic read
