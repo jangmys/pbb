@@ -10,26 +10,41 @@
 #include "arguments.h"
 #include "libbounds.h"
 
-// #define JOHNSON_BOUND
-#define SIMPLE_BOUND
+#define JOHNSON_BOUND
+// #define SIMPLE_BOUND
 
-bool all_true(const std::vector<bool>& v)
-{
-    for(const auto& c : v){
-        if(!c)return false;
-    }
-    return true;
-}
 
 template<typename T>
 T atomic_read(const T val)
 {
     T value;
 
+    #pragma omp flush
     #pragma omp atomic read
     value=val;
     return value;
 }
+
+bool all_true(int* flags, unsigned len)
+{
+    for(unsigned i=0;i<len;++i){
+        // if(!flags[i])return false;
+        if(!atomic_read(flags[i]))return false;
+    }
+    return true;
+}
+
+
+bool all_true(const std::vector<bool>& v)
+{
+
+
+    for(const auto& c : v){
+        if(!c)return false;
+    }
+    return true;
+}
+
 
 
 
@@ -53,8 +68,9 @@ main(int argc, char ** argv)
     //make shared pool of permutation subproblems for nthreads threads
     SharedPool<PermutationSubproblem> p;
     //flags for termination detection
-    std::vector<bool>stop_flags(nthreads,0);
-    int end_flag=0;
+    // std::vector<bool>stop_flags(nthreads,0); //some problem with atomic operations...compiler doesn't like it
+    int *stop_flags = new int[nthreads];
+
     //node counters
     int count_decomposed = 0;
     int count_leaves = 0;
@@ -76,7 +92,7 @@ main(int argc, char ** argv)
 
     //start parallel exploration
     //==========================
-    #pragma omp parallel num_threads(nthreads) shared(p,stop_flags,end_flag,inst,global_best_ub) reduction(+:count_decomposed,count_leaves)
+    #pragma omp parallel num_threads(nthreads) reduction(+:count_decomposed,count_leaves)
     {
         int tid = omp_get_thread_num();
 
@@ -103,27 +119,31 @@ main(int argc, char ** argv)
         }
 #endif
 
+        #pragma omp atomic write
+        stop_flags[tid]=0;
+        #pragma omp flush
+
         //all the B&B logic - except exploration - is here (branching,bounding and pruning)
         DecomposePerm decompose(bound);
 
-        while(!atomic_read(end_flag)){
-            // #pragma omp atomic read
-            local_best = atomic_read(global_best_ub);
-
+        while(true){
+            #pragma omp atomic read
+            local_best = global_best_ub;
             std::unique_ptr<PermutationSubproblem> n(p.take(tid));
 
             if(!n){ //if locally empty and steal failed
+                #pragma omp atomic write
                 stop_flags[tid]=1;
+                #pragma omp flush
 
-                if(all_true(stop_flags)){
-                    // std::cout<<"thread "<<tid<<" says goodbye "<<p.size(tid)<<"\n";
-                    #pragma omp atomic update
-                    end_flag++;
+                if(all_true(stop_flags,omp_get_num_threads())){
                     break;
                 }
                 continue;
             }else{
+                #pragma omp atomic write
                 stop_flags[tid]=0;
+                #pragma omp flush
 
                 count_decomposed++;
 
@@ -131,7 +151,10 @@ main(int argc, char ** argv)
                     int ub = bound.evalSolution(n->schedule.data());
                     if(ub < local_best && ub < atomic_read(global_best_ub)){
                         #pragma omp critical
-                        global_best_ub = ub;
+                        {
+                            //should update permutation as well...
+                            global_best_ub = ub;
+                        }
                     }
                     ++count_leaves;
                 }else{
@@ -143,6 +166,8 @@ main(int argc, char ** argv)
         #pragma omp critical
         std::cout<<tid<<" decomposed:\t "<<count_decomposed<<"\n";
     }
+
+    delete[] stop_flags;
 
     //OUTPUT
     //======

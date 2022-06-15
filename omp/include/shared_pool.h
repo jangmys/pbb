@@ -20,6 +20,7 @@ public:
 
     std::deque<std::unique_ptr<Subproblem>>deque;
 
+    //returns nullptr if deque is empty
     std::unique_ptr<Subproblem> take(){
         omp_set_lock(&lock);
         std::unique_ptr<Subproblem> n=(deque.empty())?nullptr:std::move(deque.front());
@@ -28,6 +29,7 @@ public:
         return n;
     };
 
+    //returns nullptr if deque is empty
     std::unique_ptr<Subproblem> take_back(){
         omp_set_lock(&lock);
         std::unique_ptr<Subproblem> n=(deque.empty())?nullptr:std::move(deque.back());
@@ -35,7 +37,6 @@ public:
         omp_unset_lock(&lock);
         return n;
     };
-
 
     void insert(std::unique_ptr<Subproblem> n){
         omp_set_lock(&lock);
