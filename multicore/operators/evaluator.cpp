@@ -61,47 +61,47 @@ Evaluator<T>::get_children_bounds_full(subproblem& node, std::vector<bool> mask,
  *
  *
  */
-template<typename T>
-void
-Evaluator<T>::get_children_bounds_incr(subproblem& node,
-    std::vector<T>& lower_bound_begin,
-    std::vector<T>& lower_bound_end,
-    std::vector<T>& priority_begin,
-    std::vector<T>& priority_end,
-    const int begin_end)
-{
-    lb->boundChildren(
-            node.schedule.data(),node.limit1,node.limit2,
-            lower_bound_begin.data(),lower_bound_end.data(),
-            priority_begin.data(),priority_end.data()
-        );
-};
-
-template<typename T>
-void
-Evaluator<T>::get_children_bounds_incr(subproblem& node, std::vector<T>& lower_bound, std::vector<T>& priority, const int begin_end)
-{
-    switch(begin_end){
-        case 0:
-        {
-            lb->boundChildren(
-                node.schedule.data(),node.limit1,node.limit2,
-                lower_bound.data(),nullptr,
-                priority.data(),nullptr);
-            break;
-        }
-        case 1:
-        {
-            lb->boundChildren(
-                node.schedule.data(),node.limit1,node.limit2,
-                nullptr,lower_bound.data(),
-                nullptr,priority.data()
-            );
-            break;
-        }
-    }
-};
-
+// template<typename T>
+// void
+// Evaluator<T>::get_children_bounds_incr(subproblem& node,
+//     std::vector<T>& lower_bound_begin,
+//     std::vector<T>& lower_bound_end,
+//     std::vector<T>& priority_begin,
+//     std::vector<T>& priority_end,
+//     const int begin_end)
+// {
+//     lb->boundChildren(
+//             node.schedule.data(),node.limit1,node.limit2,
+//             lower_bound_begin.data(),lower_bound_end.data(),
+//             priority_begin.data(),priority_end.data()
+//         );
+// };
+//
+// template<typename T>
+// void
+// Evaluator<T>::get_children_bounds_incr(subproblem& node, std::vector<T>& lower_bound, std::vector<T>& priority, const int begin_end)
+// {
+//     switch(begin_end){
+//         case 0:
+//         {
+//             lb->boundChildren(
+//                 node.schedule.data(),node.limit1,node.limit2,
+//                 lower_bound.data(),nullptr,
+//                 priority.data(),nullptr);
+//             break;
+//         }
+//         case 1:
+//         {
+//             lb->boundChildren(
+//                 node.schedule.data(),node.limit1,node.limit2,
+//                 nullptr,lower_bound.data(),
+//                 nullptr,priority.data()
+//             );
+//             break;
+//         }
+//     }
+// };
+//
 
 
 

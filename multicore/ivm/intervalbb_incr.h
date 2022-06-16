@@ -21,116 +21,76 @@ public:
         int dir = this->branch->pre_bound_choice(this->IVM->getDepth());
 
         if(dir<0){
-            this->eval->get_children_bounds_incr(
-                _subpb,
-                lb[Branching::Front],lb[Branching::Back],
-                prio[Branching::Front],prio[Branching::Back],
-                -1
-            );
-
+            //get bounds for both children sets using incremental evaluator
+            this->primary_bound->boundChildren(
+                    _subpb.schedule.data(),_subpb.limit1,_subpb.limit2,
+                    lb[Branching::Front].data(),lb[Branching::Back].data(),
+                    prio[Branching::Front].data(),prio[Branching::Back].data()
+                );
+            //choose branching direction
             dir = (*(this->branch))(
                 lb[Branching::Front].data(),
                 lb[Branching::Back].data(),
                 this->IVM->getDepth()
             );
         }else if(dir==Branching::Front){
-            this->eval->get_children_bounds_incr(
-                _subpb,
-                lb[Branching::Front],
-                prio[Branching::Front],
-                0
-            );
+            this->primary_bound->boundChildren(
+                    _subpb.schedule.data(),_subpb.limit1,_subpb.limit2,
+                    lb[Branching::Front].data(),nullptr,
+                    prio[Branching::Front].data(),nullptr
+                );
         }else if(dir==Branching::Back){
-            this->eval->get_children_bounds_incr(
-                _subpb,
-                lb[Branching::Back],
-                prio[Branching::Back],
-                1
-            );
+            this->primary_bound->boundChildren(
+                    _subpb.schedule.data(),_subpb.limit1,_subpb.limit2,
+                    nullptr,lb[Branching::Back].data(),
+                    nullptr,prio[Branching::Back].data()
+                );
         }
 
+        //branching direction was selected
         this->IVM->setDirection(dir);
 
-        //all
+        //now refine bounds
+        //mark all subproblems not pruned by first bound
+        std::vector<bool>mask(this->size,false);
+        for (int i = _subpb.limit1 + 1; i < _subpb.limit2; i++) {
+            int job = _subpb.schedule[i];
+            if(!(*this->prune)(lb[dir][job])){
+                mask[job] = true;
+            }
+        }
+        if(dir==Branching::Front){
+            int costs[2];
+            for (int i = _subpb.limit1 + 1; i < _subpb.limit2; i++) {
+                int job = _subpb.schedule[i];
+                if(mask[job]){
+                    std::swap(_subpb.schedule[_subpb.limit1 + 1], _subpb.schedule[i]);
+                this->secondary_bound->bornes_calculer(_subpb.schedule.data(), _subpb.limit1 + 1, _subpb.limit2, costs, this->prune->local_best);
+                    lb[Branching::Front][job] = costs[0];
+                    prio[Branching::Front][job]=costs[1];
+                    std::swap(_subpb.schedule[_subpb.limit1 + 1], _subpb.schedule[i]);
+                }
+            }
+        }else{
+            int costs[2];
+            for (int i = _subpb.limit2 - 1; i > _subpb.limit1; i--) {
+                int job = _subpb.schedule[i];
+                if(mask[job]){
+                    std::swap(_subpb.schedule[_subpb.limit2 - 1], _subpb.schedule[i]);
+                this->secondary_bound->bornes_calculer(_subpb.schedule.data(), _subpb.limit1, _subpb.limit2-1, costs, this->prune->local_best);
+                    lb[Branching::Back][job] = costs[0];
+                    prio[Branching::Back][job]=costs[1];
+                    std::swap(_subpb.schedule[_subpb.limit2 - 1], _subpb.schedule[i]);
+                }
+            }
+        }
+
         this->IVM->sortSiblingNodes(
             lb[dir],
             prio[dir]
         );
         this->eliminateJobs(lb[dir]);
     }
-
-
-    //weak or mixed bounding
-    // if(mode != 2){
-    //     // get lower bounds
-    //     if(dir == Branching::Front){
-    //         eval->get_children_bounds_incr(
-    //             _subpb,
-    //             lb[Branching::Front],
-    //             prio[Branching::Front],
-    //             0
-    //         );
-    //     }
-    //     else if(dir == Branching::Back){
-    //         eval->get_children_bounds_incr(
-    //             _subpb,
-    //             lb[Branching::Back],
-    //             prio[Branching::Back],
-    //             1
-    //         );
-    //     }
-    //     // for full evaluation
-    //     // std::vector<bool> mask(size,true);
-    //     // eval->get_children_bounds_full(
-    //     //     IVM->getNode(),
-    //     //     mask, IVM->getNode().limit1 + 1,
-    //     //     lb[Branching::Front],
-    //     //     prio[Branching::Front],
-    //     //     -1, evaluator<T>::Primary);
-    // }
-    //strong bound only
-//     if(mode == 2){
-//         std::vector<bool> mask(size,true);
-//
-//         if(dir == Branching::Front){
-//             eval->get_children_bounds_full(
-//                 _subpb,
-//                 mask, _subpb.limit1 + 1,
-//                 lb[Branching::Front],
-//                 prio[Branching::Front],
-//                 -1, Evaluator<T>::Secondary
-//             );
-//         }
-//         else if(dir == Branching::Back){
-//             eval->get_children_bounds_full(
-//                 _subpb,
-//                 mask, _subpb.limit2 - 1,
-//                 lb[Branching::Back],
-//                 prio[Branching::Back],
-//                 -1, Evaluator<T>::Secondary
-//             );
-//         }
-//     }
-//
-//     //only mixed
-//     if(mode == 1){
-//         dir = IVM->getDirection();
-//         refineBounds(
-//             _subpb,
-//             dir,
-//             lb[dir],
-//             prio[dir]
-//         );
-//     }
-//
-//     //all
-//     dir = IVM->getDirection();
-//     IVM->sortSiblingNodes(
-//         lb[dir],
-//         prio[dir]
-//     );
-//     eliminateJobs(lb[dir]);
-//
 };
 
 #endif

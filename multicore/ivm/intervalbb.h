@@ -32,9 +32,8 @@ public:
     static int first;
 
     virtual void boundAndKeepSurvivors(subproblem& subproblem,const int);
-    virtual void boundAndKeepSurvivors_static(subproblem& subproblem,const int);
 
-    void refineBounds(subproblem& node, const int be, std::vector<T>& lb,std::vector<T>& prio);
+    // void refineBounds(subproblem& node, const int be, std::vector<T>& lb,std::vector<T>& prio);
 
     long long int get_leaves_count() const
     {

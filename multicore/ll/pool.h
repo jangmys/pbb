@@ -13,9 +13,9 @@
 
 #include <subproblem.h>
 
-
-
-
+/*
+basically a proxy for stack, deque, priority_queue, etc
+*/
 class Pool
 {
 private:

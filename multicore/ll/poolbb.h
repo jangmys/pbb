@@ -9,6 +9,7 @@
 #include "pbab.h"
 #include "pool.h"
 
+#include "libbounds.h"
 
 class Poolbb{
 public:
@@ -18,7 +19,7 @@ public:
     void set_root(solution& node);
 
     void decompose(
-        const subproblem& n,
+        subproblem& n,
         std::vector<std::unique_ptr<subproblem>>& children
     );
 
@@ -30,6 +31,7 @@ private:
 
     std::unique_ptr<Pruning> prune;
     std::unique_ptr<Branching> branch;
+    std::unique_ptr<bound_abstract<int>> bound;
 
 };
 

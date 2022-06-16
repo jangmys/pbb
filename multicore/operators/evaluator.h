@@ -25,9 +25,9 @@ public:
 
     void get_children_bounds_full(subproblem& node,std::vector<bool> mask, int fillPos, std::vector<T>& lower_bounds, std::vector<T>& priority,T best = std::numeric_limits<T>::max(),lb_strength lb_type=Primary);
 
-    void get_children_bounds_incr(subproblem& node, std::vector<T>& lower_bounds_begin, std::vector<T>& lower_bounds_end, std::vector<T>& priority_begin, std::vector<T>& priority_end, const int begin_end);
-
-    void get_children_bounds_incr(subproblem& node, std::vector<T>& lower_bounds, std::vector<T>& priority, const int begin_end);
+    // void get_children_bounds_incr(subproblem& node, std::vector<T>& lower_bounds_begin, std::vector<T>& lower_bounds_end, std::vector<T>& priority_begin, std::vector<T>& priority_end, const int begin_end);
+    //
+    // void get_children_bounds_incr(subproblem& node, std::vector<T>& lower_bounds, std::vector<T>& priority, const int begin_end);
 
     T get_solution_cost(subproblem& s);
 

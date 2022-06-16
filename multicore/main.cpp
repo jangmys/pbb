@@ -98,11 +98,14 @@ main(int argc, char ** argv)
             std::unique_ptr<Intervalbb<int>>sbb;
 
             if(arguments::boundMode == 0){
-                sbb = std::make_unique<IntervalbbIncr<int>>(pbb);
-            }else if(arguments::boundMode == 2){
+                std::cout<<"EvalChildren MODE\n";
+                sbb = std::make_unique<Intervalbb<int>>(pbb);
+            }else if(arguments::boundMode == 1){
+                std::cout<<"EvalOne MODE\n";
                 sbb = std::make_unique<IntervalbbEasy<int>>(pbb);
             }else{
-                sbb = std::make_unique<Intervalbb<int>>(pbb);
+                std::cout<<"EvalDouble MODE\n";
+                sbb = std::make_unique<IntervalbbIncr<int>>(pbb);
             }
 
             // Intervalbb<int> sbb(
@@ -126,14 +129,21 @@ main(int argc, char ** argv)
 
             Pool p(pbb->size);
 
-            p.set_root(pbb->root_sltn->perm,-1,pbb->size);
 
+            std::unique_ptr<subproblem> root( new subproblem(pbb->size) );
+            for(int i=0;i<pbb->size;i++){
+                root->schedule[i] = pbb->root_sltn->perm[i];
+            }
+            p.push(std::move(root));
 
-            std::unique_ptr<Poolbb>sbb;
-            sbb = std::make_unique<Poolbb>(pbb);
+            Poolbb sbb(pbb);
+            // p.set_root(pbb->root_sltn->perm,-1,pbb->size);
 
-            sbb->set_root(*(pbb->root_sltn));
-            sbb->run();
+            // std::unique_ptr<Poolbb>sbb;
+            // sbb = std::make_unique<Poolbb>(pbb);
+
+            sbb.set_root(*(pbb->root_sltn));
+            sbb.run();
 
             break;
         }

@@ -20,57 +20,72 @@ public:
 
         int dir = this->branch->pre_bound_choice(this->IVM->getDepth());
 
-        if(dir<0){
-            //no branching decision : evaluate both sets
-            std::vector<bool> mask(this->size,true);
-            this->eval->get_children_bounds_full(
-                _subpb,
-                mask, _subpb.limit1 + 1,
-                lb[Branching::Front],
-                prio[Branching::Front],
-                -1, Evaluator<T>::Secondary
-            );
-            this->eval->get_children_bounds_full(
-                _subpb,
-                mask, _subpb.limit2 - 1,
-                lb[Branching::Back],
-                prio[Branching::Back],
-                -1, Evaluator<T>::Secondary
-            );
+        std::vector<bool> mask(this->size,true);
 
-            dir = (*(this->branch))(
+        if(dir<0){
+            //evaluate both children sets using full LB evalution function
+            int costs[2];
+
+            for (int i = _subpb.limit1 + 1; i < _subpb.limit2; i++) {
+                int job = _subpb.schedule[i];
+                if(mask[job]){
+                    //front
+                    std::swap(_subpb.schedule[_subpb.limit1 + 1], _subpb.schedule[i]);
+                    this->primary_bound->bornes_calculer(_subpb.schedule.data(), _subpb.limit1 + 1, _subpb.limit2, costs, this->prune->local_best);
+                    lb[Branching::Front][job] = costs[0];
+                    prio[Branching::Front][job]=costs[1];
+                    std::swap(_subpb.schedule[_subpb.limit1 + 1], _subpb.schedule[i]);
+                    //back
+                    std::swap(_subpb.schedule[_subpb.limit2 - 1], _subpb.schedule[i]);
+                    this->primary_bound->bornes_calculer(_subpb.schedule.data(), _subpb.limit1, _subpb.limit2 - 1, costs, this->prune->local_best);
+                    lb[Branching::Back][job] = costs[0];
+                    prio[Branching::Back][job]=costs[1];
+                    std::swap(_subpb.schedule[_subpb.limit2 - 1], _subpb.schedule[i]);
+                }
+            }
+
+            //make Branching decision
+            dir = (*this->branch)(
                 lb[Branching::Front].data(),
                 lb[Branching::Back].data(),
                 this->IVM->getDepth()
             );
+            // this->IVM->setDirection(dir);
         }else if(dir==Branching::Front){
-            std::vector<bool> mask(this->size,true);
-            this->eval->get_children_bounds_full(
-                _subpb,
-                mask, _subpb.limit1 + 1,
-                lb[Branching::Front],
-                prio[Branching::Front],
-                -1, Evaluator<T>::Secondary
-            );
+            int costs[2];
+            for (int i = _subpb.limit1 + 1; i < _subpb.limit2; i++) {
+                int job = _subpb.schedule[i];
+                if(mask[job]){
+                    std::swap(_subpb.schedule[_subpb.limit1 + 1], _subpb.schedule[i]);
+                    this->primary_bound->bornes_calculer(_subpb.schedule.data(), _subpb.limit1 + 1, _subpb.limit2, costs, this->prune->local_best);
+                    lb[Branching::Front][job] = costs[0];
+                    prio[Branching::Front][job]=costs[1];
+                    std::swap(_subpb.schedule[_subpb.limit1 + 1], _subpb.schedule[i]);
+                }
+            }
+            // this->IVM->setDirection(dir);
         }else{
-            std::vector<bool> mask(this->size,true);
-            this->eval->get_children_bounds_full(
-                _subpb,
-                mask, _subpb.limit2 - 1,
-                lb[Branching::Back],
-                prio[Branching::Back],
-                -1, Evaluator<T>::Secondary
-            );
+            int costs[2];
+            for (int i = _subpb.limit2 - 1; i > _subpb.limit1; i--) {
+                int job = _subpb.schedule[i];
+                if(mask[job]){
+                    std::swap(_subpb.schedule[_subpb.limit2 - 1], _subpb.schedule[i]);
+                    this->primary_bound->bornes_calculer(_subpb.schedule.data(), _subpb.limit1, _subpb.limit2-1, costs, this->prune->local_best);
+                    lb[Branching::Back][job] = costs[0];
+                    prio[Branching::Back][job]=costs[1];
+                    std::swap(_subpb.schedule[_subpb.limit2 - 1], _subpb.schedule[i]);
+                }
+            }
         }
-
         this->IVM->setDirection(dir);
 
-        //all
         this->IVM->sortSiblingNodes(
             lb[dir],
             prio[dir]
         );
         this->eliminateJobs(lb[dir]);
+
+
     }
 };
 

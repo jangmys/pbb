@@ -16,10 +16,13 @@ Intervalbb<T>::Intervalbb(pbab *_pbb) :
     prune = pbb->pruning_factory->make_pruning();
     branch = pbb->branching_factory->make_branching();
 
+    primary_bound = pbb->bound_factory->make_bound(_pbb->instance,0);
+    secondary_bound = pbb->bound_factory->make_bound(_pbb->instance,0);
+
     // pthread_mutex_lock_check(&_pbb->mutex_instance);
-    eval = OperatorFactory::createEvaluator(
-        pbb->bound_factory->make_bound(_pbb->instance,0),
-        pbb->bound_factory->make_bound(_pbb->instance,1));
+    // eval = OperatorFactory::createEvaluator(
+    //     pbb->bound_factory->make_bound(_pbb->instance,0),
+    //     pbb->bound_factory->make_bound(_pbb->instance,1));
     if(rootRow.size()==0)
         rootRow = std::vector<T>(size,0);
     // pthread_mutex_unlock(&_pbb->mutex_instance);
@@ -119,164 +122,102 @@ void Intervalbb<T>::run()
     pbb->stats.leaves += count_leaves;
 }
 
-
-
-template<typename T>
-void Intervalbb<T>::boundAndKeepSurvivors_static(subproblem& _subpb, const int mode)
-{
-    std::vector<std::vector<T>> lb(2,std::vector<T>(size,0));
-    std::vector<std::vector<T>> prio(2,std::vector<T>(size,0));
-
-    auto dir = (*branch)(
-        nullptr,nullptr,
-        IVM->getDepth()
-    );
-    IVM->setDirection(dir);
-
-    //weak or mixed bounding
-    if(mode != 2){
-        // get lower bounds
-        if(dir == Branching::Front){
-            eval->get_children_bounds_incr(
-                _subpb,
-                lb[Branching::Front],
-                prio[Branching::Front],
-                0
-            );
-        }
-        else if(dir == Branching::Back){
-            eval->get_children_bounds_incr(
-                _subpb,
-                lb[Branching::Back],
-                prio[Branching::Back],
-                1
-            );
-        }
-        // for full evaluation
-        // std::vector<bool> mask(size,true);
-        // eval->get_children_bounds_full(
-        //     IVM->getNode(),
-        //     mask, IVM->getNode().limit1 + 1,
-        //     lb[Branching::Front],
-        //     prio[Branching::Front],
-        //     -1, evaluator<T>::Primary);
-    }
-    //strong bound only
-    if(mode == 2){
-        std::vector<bool> mask(size,true);
-
-        int best = prune->local_best;
-
-        if(dir == Branching::Front){
-            eval->get_children_bounds_full(
-                _subpb,
-                mask, _subpb.limit1 + 1,
-                lb[Branching::Front],
-                prio[Branching::Front],
-                best, Evaluator<T>::Secondary
-            );
-        }
-        else if(dir == Branching::Back){
-            eval->get_children_bounds_full(
-                _subpb,
-                mask, _subpb.limit2 - 1,
-                lb[Branching::Back],
-                prio[Branching::Back],
-                best, Evaluator<T>::Secondary
-            );
-        }
-    }
-
-    //only mixed
-    if(mode == 1){
-        dir = IVM->getDirection();
-        refineBounds(
-            _subpb,
-            dir,
-            lb[dir],
-            prio[dir]
-        );
-    }
-
-    //all
-    dir = IVM->getDirection();
-    IVM->sortSiblingNodes(
-        lb[dir],
-        prio[dir]
-    );
-    eliminateJobs(lb[dir]);
-}
-
-
+//using boundChildren
+//BEGIN_END OPTIONAL PARAMETER in boundChildren?
 template<typename T>
 void Intervalbb<T>::boundAndKeepSurvivors(subproblem& _subpb, const int mode)
 {
     std::vector<std::vector<T>> lb(2,std::vector<T>(size,0));
     std::vector<std::vector<T>> prio(2,std::vector<T>(size,0));
 
-    //weak or mixed bounding
-    if(mode != 2){
-        // get lower bounds
-        eval->get_children_bounds_incr(
-            _subpb,
-            lb[Branching::Front],
-            lb[Branching::Back],
-            prio[Branching::Front],
-            prio[Branching::Back],
-            branch->get_type()
-        );
+    auto dir = branch->pre_bound_choice(IVM->getDepth());
+    IVM->setDirection(dir);
 
-        // for full evaluation
-        // std::vector<bool> mask(size,true);
-        // eval->get_children_bounds_full(
-        //     IVM->getNode(),
-        //     mask, IVM->getNode().limit1 + 1,
-        //     lb[Branching::Front],
-        //     prio[Branching::Front],
-        //     -1, evaluator<T>::Primary);
-    }
-    //strong bound only
-    if(mode == 2){
-        std::vector<bool> mask(size,true);
+    if(dir<0){
+        // get lower bounds : both directions
+        primary_bound->boundChildren(
+                _subpb.schedule.data(),_subpb.limit1,_subpb.limit2,
+                lb[Branching::Front].data(),lb[Branching::Back].data(),
+                prio[Branching::Front].data(),prio[Branching::Back].data()
+            );
 
-        eval->get_children_bounds_full(
-            _subpb,
-            mask, _subpb.limit1 + 1,
-            lb[Branching::Front],
-            prio[Branching::Front],
-            -1, Evaluator<T>::Secondary);
-        eval->get_children_bounds_full(
-            _subpb,
-            mask, _subpb.limit2 - 1,
-            lb[Branching::Back],
-            prio[Branching::Back],
-            -1, Evaluator<T>::Secondary);
-    }
-
-    //all
-    {
-        //make Branching decision
-        auto dir = (*branch)(
+        //choose branching direction
+        dir = (*branch)(
             lb[Branching::Front].data(),
             lb[Branching::Back].data(),
             IVM->getDepth()
         );
-        IVM->setDirection(dir);
+    }else if(dir == Branching::Front){
+        // get lower bounds : forward only
+        primary_bound->boundChildren(
+                _subpb.schedule.data(),_subpb.limit1,_subpb.limit2,
+                lb[Branching::Front].data(),nullptr,
+                prio[Branching::Front].data(),nullptr
+            );
+    }else{
+        // get lower bounds : backward only
+        primary_bound->boundChildren(
+                _subpb.schedule.data(),_subpb.limit1,_subpb.limit2,
+                nullptr,lb[Branching::Back].data(),
+                nullptr,prio[Branching::Back].data()
+            );
     }
 
-    //only mixed
-    if(mode == 1){
-        auto dir = IVM->getDirection();
-        refineBounds(
-            _subpb,
-            dir,
-            lb[dir],
-            prio[dir]
-        );
-    }
+    IVM->setDirection(dir);
+
+    // //weak or mixed bounding
+    // if(mode != 2){
+    //
+    // }
+    // //strong bound only
+    // if(mode == 2){
+    //     std::vector<bool> mask(size,true);
+    //
+    //     int costs[2];
+    //
+    //     for (int i = _subpb.limit1 + 1; i < _subpb.limit2; i++) {
+    //         int job = _subpb.schedule[i];
+    //         if(mask[job]){
+    //             //front
+    //             std::swap(_subpb.schedule[_subpb.limit1 + 1], _subpb.schedule[i]);
+    //             secondary_bound->bornes_calculer(_subpb.schedule.data(), _subpb.limit1 + 1, _subpb.limit2, costs, prune->local_best);
+    //             lb[Branching::Front][job] = costs[0];
+    //             prio[Branching::Front][job]=costs[1];
+    //             std::swap(_subpb.schedule[_subpb.limit1 + 1], _subpb.schedule[i]);
+    //             //back
+    //             std::swap(_subpb.schedule[_subpb.limit2 - 1], _subpb.schedule[i]);
+    //             secondary_bound->bornes_calculer(_subpb.schedule.data(), _subpb.limit1, _subpb.limit2 - 1, costs, prune->local_best);
+    //             lb[Branching::Back][job] = costs[0];
+    //             prio[Branching::Back][job]=costs[1];
+    //             std::swap(_subpb.schedule[_subpb.limit2 - 1], _subpb.schedule[i]);
+    //         }
+    //     }
+    // }
+    //
+    // //all
+    // {
+    //     //make Branching decision
+    //     auto dir = (*branch)(
+    //         lb[Branching::Front].data(),
+    //         lb[Branching::Back].data(),
+    //         IVM->getDepth()
+    //     );
+    //     IVM->setDirection(dir);
+    // }
+    //
+    // //only mixed
+    // if(mode == 1){
+    //     auto dir = IVM->getDirection();
+    //     refineBounds(
+    //         _subpb,
+    //         dir,
+    //         lb[dir],
+    //         prio[dir]
+    //     );
+    // }
 
     //all
-    auto dir = IVM->getDirection();
+    dir = IVM->getDirection();
     IVM->sortSiblingNodes(
         lb[dir],
         prio[dir]
@@ -320,11 +261,7 @@ bool Intervalbb<T>::next()
     //bound, set Branching direction, prune
     if(state == 1)
     {
-        if(arguments::branchingMode < 0){
-            boundAndKeepSurvivors_static(IVM->getNode(),arguments::boundMode);
-        }else{
-            boundAndKeepSurvivors(IVM->getNode(),arguments::boundMode);
-        }
+        boundAndKeepSurvivors(IVM->getNode(),arguments::boundMode);
     }
 
     return (state == 1);
@@ -352,46 +289,13 @@ Intervalbb<T>::unfold(int mode)
     }
 } // matrix::unfold
 
-/**
- * compute LB on (left or right) children of subproblem "node" using single-child bounder
- *
- * @param node parent subproblem
- * @param be =0 iff front, = 1 iff back
- * @param lb (inout) already known bounds (e.g. precomputed by weaker bound, 0 if not). will be overwritten
- * @param prio (out) children priority values
- */
-template<typename T>
-void
-Intervalbb<T>::refineBounds(subproblem& node, const int be,
-    std::vector<T>& lb,
-    std::vector<T>& prio){
-    std::vector<bool>mask(size,false);
-
-    for (int i = node.limit1 + 1; i < node.limit2; i++) {
-        int job = node.schedule[i];
-        if(!(*prune)(lb[job])){
-            mask[job] = true;
-        }
-    }
-
-    if(be==Branching::Front){
-        eval->get_children_bounds_full(
-            node,mask,node.limit1 + 1,lb,prio,-1,Evaluator<T>::Secondary
-        );
-    }else{
-        eval->get_children_bounds_full(
-            node,mask,node.limit2 - 1,lb,prio,-1,Evaluator<T>::Secondary
-        );
-    }
-}
-
 
 template<typename T>
 bool
 Intervalbb<T>::boundLeaf(subproblem& node)
 {
     bool better=false;
-    int cost=eval->get_solution_cost(node);
+    int cost=primary_bound->evalSolution(node.schedule.data());
 
     if(!(*prune)(cost)){
         better=true;
