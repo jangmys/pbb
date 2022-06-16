@@ -6,6 +6,7 @@
 
 #include "instance_abstract.h"
 
+#include <pthread.h>
 #include <sys/stat.h>
 #include <stdlib.h>
 #include <string.h>

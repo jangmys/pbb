@@ -338,13 +338,13 @@ heu_thread2(void * arg)
 
     worker * w = (worker *) arg;
 
-    pthread_mutex_lock_check(&w->pbb->mutex_instance);
+    // pthread_mutex_lock_check(&w->pbb->mutex_instance);
     // std::unique_ptr<fastNEH> neh = std::make_unique<fastNEH>(w->pbb->instance);
     std::unique_ptr<IG> ils = std::make_unique<IG>(w->pbb->instance.get());
     // IG ils(w->pbb->instance);
 //     IG* ils=new IG(w->pbb->instance);
 //     th->strategy=PRIOQ;
-    pthread_mutex_unlock(&w->pbb->mutex_instance);
+    // pthread_mutex_unlock(&w->pbb->mutex_instance);
 //
     int N=w->pbb->size;
     subproblem *s=new subproblem(N);

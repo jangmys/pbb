@@ -15,6 +15,7 @@
 void
 bound_fsp_strong::init(instance_abstract * _instance)
 {
+    pthread_mutex_lock(&_instance->mutex_instance_data);
     (_instance->data)->seekg(0);
     (_instance->data)->clear();
     *(_instance->data) >> nbJob;
@@ -28,6 +29,8 @@ bound_fsp_strong::init(instance_abstract * _instance)
     for (int j = 0; j < nbMachines; j++)
         for (int i = 0; i < nbJob; i++)
             *(_instance->data) >> PTM[j][i];
+    pthread_mutex_unlock(&_instance->mutex_instance_data);
+
 
     // fill auxiliary data for LB computation
     // [to be called in this order!!]

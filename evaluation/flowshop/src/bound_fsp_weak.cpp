@@ -18,6 +18,7 @@
 void
 bound_fsp_weak::init(instance_abstract * _instance)
 {
+    pthread_mutex_lock(&_instance->mutex_instance_data);
     // get instance parameters (N/M)
     (_instance->data)->seekg(0);
     (_instance->data)->clear();
@@ -34,6 +35,7 @@ bound_fsp_weak::init(instance_abstract * _instance)
         }
         // std::cout<<"\n";
     }
+    pthread_mutex_unlock(&_instance->mutex_instance_data);
 
     // fill auxiliary data for LB computation
     fillMinHeadsTails();

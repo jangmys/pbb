@@ -50,7 +50,7 @@ public:
     statistics stats;//(0,0,0,0);
     void printStats();
 
-    pthread_mutex_t mutex_instance;
+    // pthread_mutex_t mutex_instance;
 
     std::unique_ptr<BoundFactoryInterface<int>> bound_factory;
     template<typename T>

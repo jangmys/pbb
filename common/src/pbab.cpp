@@ -16,10 +16,10 @@
 
 pbab::pbab() : stats()
 {
-    pthread_mutexattr_t attr;
-    pthread_mutexattr_init(&attr);
-    pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_ERRORCHECK);
-    pthread_mutex_init(&mutex_instance, &attr);
+    // pthread_mutexattr_t attr;
+    // pthread_mutexattr_init(&attr);
+    // pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_ERRORCHECK);
+    // pthread_mutex_init(&mutex_instance, &attr);
 
     //set instance and problem size
     set_instance(arguments::problem, arguments::inst_name);
@@ -35,10 +35,10 @@ pbab::pbab() : stats()
 
 pbab::pbab(std::unique_ptr<instance_abstract>& _inst) : instance(std::move(_inst)),size(instance->size),stats()
 {
-    pthread_mutexattr_t attr;
-    pthread_mutexattr_init(&attr);
-    pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_ERRORCHECK);
-    pthread_mutex_init(&mutex_instance, &attr);
+    // pthread_mutexattr_t attr;
+    // pthread_mutexattr_init(&attr);
+    // pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_ERRORCHECK);
+    // pthread_mutex_init(&mutex_instance, &attr);
 
     //set instance and problem size
     // set_instance(arguments::problem, arguments::inst_name);

@@ -16,13 +16,13 @@ Intervalbb<T>::Intervalbb(pbab *_pbb) :
     prune = pbb->pruning_factory->make_pruning();
     branch = pbb->branching_factory->make_branching();
 
-    pthread_mutex_lock_check(&_pbb->mutex_instance);
+    // pthread_mutex_lock_check(&_pbb->mutex_instance);
     eval = OperatorFactory::createEvaluator(
         pbb->bound_factory->make_bound(_pbb->instance,0),
         pbb->bound_factory->make_bound(_pbb->instance,1));
     if(rootRow.size()==0)
         rootRow = std::vector<T>(size,0);
-    pthread_mutex_unlock(&_pbb->mutex_instance);
+    // pthread_mutex_unlock(&_pbb->mutex_instance);
 }
 
 template<typename T>
