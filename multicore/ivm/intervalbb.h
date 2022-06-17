@@ -1,7 +1,7 @@
 #ifndef INTERVALBB_H_
 #define INTERVALBB_H_
 
-#include "evaluator.h"
+// #include "evaluator.h"
 #include "branching.h"
 #include "pruning.h"
 #include "ivm.h"
@@ -33,8 +33,6 @@ public:
 
     virtual void boundAndKeepSurvivors(subproblem& subproblem,const int);
 
-    // void refineBounds(subproblem& node, const int be, std::vector<T>& lb,std::vector<T>& prio);
-
     long long int get_leaves_count() const
     {
         return count_leaves;
@@ -63,9 +61,7 @@ protected:
     std::unique_ptr<Branching> branch;
 
     std::unique_ptr<bound_abstract<T>> primary_bound ;
-    std::unique_ptr<bound_abstract<T>> secondary_bound ;
-
-    std::unique_ptr<Evaluator<T>> eval;
+    // std::unique_ptr<bound_abstract<T>> secondary_bound ;
 
     void unfold(int mode);
 };

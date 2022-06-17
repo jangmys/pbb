@@ -17,15 +17,10 @@ Intervalbb<T>::Intervalbb(pbab *_pbb) :
     branch = pbb->branching_factory->make_branching();
 
     primary_bound = pbb->bound_factory->make_bound(_pbb->instance,0);
-    secondary_bound = pbb->bound_factory->make_bound(_pbb->instance,0);
+    // secondary_bound = pbb->bound_factory->make_bound(_pbb->instance,1);
 
-    // pthread_mutex_lock_check(&_pbb->mutex_instance);
-    // eval = OperatorFactory::createEvaluator(
-    //     pbb->bound_factory->make_bound(_pbb->instance,0),
-    //     pbb->bound_factory->make_bound(_pbb->instance,1));
     if(rootRow.size()==0)
         rootRow = std::vector<T>(size,0);
-    // pthread_mutex_unlock(&_pbb->mutex_instance);
 }
 
 template<typename T>
@@ -164,57 +159,6 @@ void Intervalbb<T>::boundAndKeepSurvivors(subproblem& _subpb, const int mode)
     }
 
     IVM->setDirection(dir);
-
-    // //weak or mixed bounding
-    // if(mode != 2){
-    //
-    // }
-    // //strong bound only
-    // if(mode == 2){
-    //     std::vector<bool> mask(size,true);
-    //
-    //     int costs[2];
-    //
-    //     for (int i = _subpb.limit1 + 1; i < _subpb.limit2; i++) {
-    //         int job = _subpb.schedule[i];
-    //         if(mask[job]){
-    //             //front
-    //             std::swap(_subpb.schedule[_subpb.limit1 + 1], _subpb.schedule[i]);
-    //             secondary_bound->bornes_calculer(_subpb.schedule.data(), _subpb.limit1 + 1, _subpb.limit2, costs, prune->local_best);
-    //             lb[Branching::Front][job] = costs[0];
-    //             prio[Branching::Front][job]=costs[1];
-    //             std::swap(_subpb.schedule[_subpb.limit1 + 1], _subpb.schedule[i]);
-    //             //back
-    //             std::swap(_subpb.schedule[_subpb.limit2 - 1], _subpb.schedule[i]);
-    //             secondary_bound->bornes_calculer(_subpb.schedule.data(), _subpb.limit1, _subpb.limit2 - 1, costs, prune->local_best);
-    //             lb[Branching::Back][job] = costs[0];
-    //             prio[Branching::Back][job]=costs[1];
-    //             std::swap(_subpb.schedule[_subpb.limit2 - 1], _subpb.schedule[i]);
-    //         }
-    //     }
-    // }
-    //
-    // //all
-    // {
-    //     //make Branching decision
-    //     auto dir = (*branch)(
-    //         lb[Branching::Front].data(),
-    //         lb[Branching::Back].data(),
-    //         IVM->getDepth()
-    //     );
-    //     IVM->setDirection(dir);
-    // }
-    //
-    // //only mixed
-    // if(mode == 1){
-    //     auto dir = IVM->getDirection();
-    //     refineBounds(
-    //         _subpb,
-    //         dir,
-    //         lb[dir],
-    //         prio[dir]
-    //     );
-    // }
 
     //all
     dir = IVM->getDirection();

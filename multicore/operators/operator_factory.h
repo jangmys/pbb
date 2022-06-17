@@ -3,7 +3,7 @@
 
 #include "arguments.h"
 
-#include "evaluator.h"
+// #include "evaluator.h"
 #include "branching.h"
 #include "pruning.h"
 
@@ -180,45 +180,45 @@ class OperatorFactory
     }
 
 
-    static std::unique_ptr<Evaluator<int>> createEvaluator(std::unique_ptr<bound_abstract<int>> lb1, std::unique_ptr<bound_abstract<int>> lb2)
-    {
-        switch (arguments::problem[0]) {
-            case 'f':
-            {
-                switch (arguments::boundMode) {
-                    case 0:{
-                        auto ev = std::make_unique<Evaluator<int>>(
-                            std::move(lb1)
-                        );
-                        return ev;
-                    }
-                    case 1:{
-                        auto ev = std::make_unique<Evaluator<int>>(
-                            std::move(lb1),
-                            std::move(lb2)
-                        );
-                        return ev;
-                    }
-                    case 2:{
-                        auto ev = std::make_unique<Evaluator<int>>(
-                            std::move(lb1),
-                            std::move(lb2)
-                        );
-                        return ev;
-                    }
-                }
-            }
-            case 'd':
-            {
-                auto ev = std::make_unique<Evaluator<int>>(
-                            std::make_unique<bound_dummy>()
-                        );
-                        // ev->lb->init(instance);
-                return ev;
-            }
-        }
-        return nullptr;
-    }
+    // static std::unique_ptr<Evaluator<int>> createEvaluator(std::unique_ptr<bound_abstract<int>> lb1, std::unique_ptr<bound_abstract<int>> lb2)
+    // {
+    //     switch (arguments::problem[0]) {
+    //         case 'f':
+    //         {
+    //             switch (arguments::boundMode) {
+    //                 case 0:{
+    //                     auto ev = std::make_unique<Evaluator<int>>(
+    //                         std::move(lb1)
+    //                     );
+    //                     return ev;
+    //                 }
+    //                 case 1:{
+    //                     auto ev = std::make_unique<Evaluator<int>>(
+    //                         std::move(lb1),
+    //                         std::move(lb2)
+    //                     );
+    //                     return ev;
+    //                 }
+    //                 case 2:{
+    //                     auto ev = std::make_unique<Evaluator<int>>(
+    //                         std::move(lb1),
+    //                         std::move(lb2)
+    //                     );
+    //                     return ev;
+    //                 }
+    //             }
+    //         }
+    //         case 'd':
+    //         {
+    //             auto ev = std::make_unique<Evaluator<int>>(
+    //                         std::make_unique<bound_dummy>()
+    //                     );
+    //                     // ev->lb->init(instance);
+    //             return ev;
+    //         }
+    //     }
+    //     return nullptr;
+    // }
 };
 
 

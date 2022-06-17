@@ -10,7 +10,10 @@
 template<typename T>
 class IntervalbbIncr : public Intervalbb<T>{
 public:
-    IntervalbbIncr(pbab* _pbb) : Intervalbb<T>(_pbb){};
+    IntervalbbIncr(pbab* _pbb) : Intervalbb<T>(_pbb)
+    {
+        secondary_bound = this->pbb->bound_factory->make_bound(_pbb->instance,1);
+    };
 
 
     void boundAndKeepSurvivors(subproblem& _subpb,const int mode) override
@@ -91,6 +94,8 @@ public:
         );
         this->eliminateJobs(lb[dir]);
     }
+
+    std::unique_ptr<bound_abstract<T>> secondary_bound ;
 };
 
 #endif
