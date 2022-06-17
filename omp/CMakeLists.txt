@@ -45,3 +45,10 @@ link_directories(${PARENT_DIR}/build/evaluation)
 # target_link_libraries(bb PUBLIC bounds)
 target_link_libraries(bb PUBLIC ${PARENT_DIR}/build/evaluation/libbounds.a)
 target_link_libraries(bb_seq PUBLIC ${PARENT_DIR}/build/evaluation/libbounds.a)
+
+
+set(THREADS_PREFER_PTHREAD_FLAG ON)
+find_package(Threads REQUIRED)
+
+target_link_libraries(bb PUBLIC Threads::Threads)
+target_link_libraries(bb_seq PUBLIC Threads::Threads)
