@@ -11,14 +11,13 @@ class DecomposeBase
 {
 public:
     // DecomposeBase(){};
-    DecomposeBase(bound_abstract<int>& _eval):
-        eval(_eval)
+    DecomposeBase(std::unique_ptr<bound_abstract<int>> _eval):
+        eval(std::move(_eval))
     {};
 
     virtual std::vector<std::unique_ptr<T>> operator()(T& n, const int best_ub) = 0;
 
-
-    bound_abstract<int>& eval;
+    std::unique_ptr<bound_abstract<int>> eval;
 };
 
 #endif

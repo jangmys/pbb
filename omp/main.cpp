@@ -10,9 +10,6 @@
 #include "arguments.h"
 #include "libbounds.h"
 
-#define JOHNSON_BOUND
-// #define SIMPLE_BOUND
-
 
 template<typename T>
 T atomic_read(const T val)
@@ -51,6 +48,14 @@ bool all_true(const std::vector<bool>& v)
 int
 main(int argc, char ** argv)
 {
+    if(argc<5){
+        std::cout<<"3 arguments expected : \n";
+        std::cout<<"1) -z p=fsp,i=ta10,o\n";
+        std::cout<<"2) ['s','j'] : simple/johnson\n";
+        std::cout<<"3) [0,1] : one-by-one / incremental\n";
+        exit(1);
+    }
+
     //parse cmdline args and .ini file
     //==================================
     arguments::parse_arguments(argc, argv);
@@ -74,8 +79,8 @@ main(int argc, char ** argv)
     //node counters
     int count_decomposed = 0;
     int count_leaves = 0;
+
     //instance data
-    // instance_filename inst(arguments::inst_name);
     instance_taillard inst(arguments::inst_name);
 
     //global best (solution and cost)
@@ -90,6 +95,15 @@ main(int argc, char ** argv)
     std::unique_ptr<PermutationSubproblem> root = std::make_unique<PermutationSubproblem>(inst.size);
     p.insert(std::move(root),0);
 
+    //configure bound factory
+    bool early_stop = false;
+    int machine_pairs = 0;
+    BoundFactory bound_factory(
+        std::make_unique<instance_taillard>(inst),
+        early_stop,
+        machine_pairs
+    );
+
     //start parallel exploration
     //==========================
     #pragma omp parallel num_threads(nthreads) reduction(+:count_decomposed,count_leaves)
@@ -100,32 +114,42 @@ main(int argc, char ** argv)
         //=====================================
         int local_best = global_best_ub;
 
-        // SIMPLE BOUND
-#ifdef SIMPLE_BOUND
-        bound_fsp_weak bound;
-        #pragma omp critical
-        {
-            bound.init(&inst);
-        }
-#endif
-        //JOHNSON BOUND
-#ifdef JOHNSON_BOUND
-        bound_fsp_strong bound;
-        #pragma omp critical
-        {
-            bound.init(&inst);
-            bound.earlyExit=0; //arguments::earlyStopJohnson; ==> don't
-            bound.machinePairs=0; //arguments::johnsonPairs; ==> all machine-pairs
-        }
-#endif
-
         #pragma omp atomic write
         stop_flags[tid]=0;
         #pragma omp flush
 
-        //all the B&B logic - except exploration - is here (branching,bounding and pruning)
-        DecomposePerm decompose(bound);
+        // evaluation function (private for performance reasons)
+        std::unique_ptr<bound_abstract<int>> bound;
+        switch(argv[3][0]){
+            case 's': // SIMPLE BOUND
+            {
+                bound = bound_factory.make_bound(0);
+                break;
+            }
+            case 'j': //JOHNSON
+            {
+                bound = bound_factory.make_bound(1);
+                break;
+            }
+        }
 
+        //all the B&B logic - except exploration - is here (branching,bounding and pruning)
+        std::unique_ptr<DecomposeBase<PermutationSubproblem>> decompose;
+        switch(atoi(argv[4])){
+            case 0:
+            {
+                decompose = std::make_unique<DecomposePerm>(std::move(bound));
+                break;
+            }
+            case 1:
+            {
+                decompose = std::make_unique<DecomposePermIncr>(std::move(bound));
+                break;
+            }
+        }
+
+        // Main exploration loop
+        //=========================================
         while(true){
             #pragma omp atomic read
             local_best = global_best_ub;
@@ -148,7 +172,7 @@ main(int argc, char ** argv)
                 count_decomposed++;
 
                 if(n->is_leaf()){
-                    int ub = bound.evalSolution(n->schedule.data());
+                    int ub = bound->evalSolution(n->schedule.data());
                     if(ub < local_best && ub < atomic_read(global_best_ub)){
                         #pragma omp critical
                         {
@@ -158,7 +182,7 @@ main(int argc, char ** argv)
                     }
                     ++count_leaves;
                 }else{
-                    std::vector<std::unique_ptr<PermutationSubproblem>> ns = decompose(*n,local_best);
+                    std::vector<std::unique_ptr<PermutationSubproblem>> ns = (*decompose)(*n,local_best);
                     p.insert(std::move(ns),tid);
                 }
             }

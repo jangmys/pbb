@@ -26,13 +26,23 @@ main(int argc, char ** argv)
     std::cout<<" === solving "<<arguments::problem<<" - instance "<<arguments::inst_name<<std::endl;
     //******************************
 
-    instance_filename inst(arguments::inst_name);
-    // instance_taillard inst(arguments::inst_name);
+    // instance_filename inst(arguments::inst_name);
+    instance_taillard inst(arguments::inst_name);
 
-    bound_fsp_weak bound;
-    bound.init(&inst);
+    bool early_stop = false;
+    int machine_pairs = 0;
+    BoundFactory bound_factory(
+        std::make_unique<instance_taillard>(inst),
+        early_stop,
+        machine_pairs
+    );
 
-    DecomposePerm decompose(bound);
+    auto bound = bound_factory.make_bound(0);
+
+    // bound_fsp_weak bound;
+    bound->init(&inst);
+
+    DecomposePerm decompose(std::move(bound));
 
 
 
