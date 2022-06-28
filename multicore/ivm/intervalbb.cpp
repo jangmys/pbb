@@ -16,7 +16,7 @@ Intervalbb<T>::Intervalbb(pbab *_pbb) :
     prune = pbb->pruning_factory->make_pruning();
     branch = pbb->branching_factory->make_branching();
 
-    primary_bound = pbb->bound_factory->make_bound(_pbb->instance,0);
+    primary_bound = pbb->bound_factory->make_bound(pbb->instance,0);
     // secondary_bound = pbb->bound_factory->make_bound(_pbb->instance,1);
 
     if(rootRow.size()==0)

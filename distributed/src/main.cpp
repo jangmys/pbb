@@ -56,9 +56,9 @@ main(int argc, char ** argv)
 
     //SET INSTANCE
     InstanceFactory inst_factory;
-    std::unique_ptr<instance_abstract> inst = inst_factory.make_instance(arguments::problem, arguments::inst_name);
+    // std::unique_ptr<instance_abstract> inst = inst_factory.make_instance(arguments::problem, arguments::inst_name);
 
-    pbab * pbb = new pbab(inst);
+    pbab * pbb = new pbab(inst_factory.make_instance(arguments::problem, arguments::inst_name));
 
     std::unique_ptr<BoundFactoryInterface<int>> bound;
     if(arguments::problem[0]=='f'){

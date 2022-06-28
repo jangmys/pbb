@@ -35,24 +35,21 @@ main(int argc, char ** argv)
 
     //SET INSTANCE
     InstanceFactory inst_factory;
-    std::unique_ptr<instance_abstract> inst = inst_factory.make_instance(arguments::problem, arguments::inst_name);
-    // set_instance(arguments::problem, arguments::inst_name);
 
-    pbab * pbb = new pbab(inst);
+    pbab * pbb = new pbab(inst_factory.make_instance(arguments::problem, arguments::inst_name));
 
     //each thread should have a private copy of the b&b operators.
     //we'll just define factory methods here that will be passed to each thread through the pbab class
     //each thread will build it's own bound, branch and prune operators later.
 
     //SET BOUND
-    std::unique_ptr<BoundFactoryInterface<int>> bound;
+    std::unique_ptr<BoundFactoryBase> bound;
     if(arguments::problem[0]=='f'){
-        // pbb->set_bound_factory(std::make_unique<PFSPBoundFactory<int>>());
-        bound = std::make_unique<PFSPBoundFactory<int>>();
+        pbb->set_bound_factory(std::make_unique<BoundFactory>());
     }else if(arguments::problem[0]=='d'){
         std::cout<<"dummy\n";
     }
-    pbb->set_bound_factory(std::move(bound));
+    // pbb->set_bound_factory(std::move(bound));
 
     //SET PRUNING
     if(arguments::findAll){

@@ -26,7 +26,12 @@ class pbab
 {
 public:
     pbab();
-    pbab(std::unique_ptr<instance_abstract>& _inst);
+    pbab(std::unique_ptr<instance_abstract> _inst);
+
+    // pbab(
+    //     std::unique_ptr<instance_abstract> _inst,
+    // );
+
     ~pbab();
 
     std::unique_ptr<instance_abstract> instance;
@@ -50,24 +55,18 @@ public:
     statistics stats;//(0,0,0,0);
     void printStats();
 
-    // pthread_mutex_t mutex_instance;
-
-    std::unique_ptr<BoundFactoryInterface<int>> bound_factory;
-    template<typename T>
-    void set_bound_factory(std::unique_ptr<BoundFactoryInterface<T>> b)
-    {
+    std::unique_ptr<BoundFactoryBase> bound_factory;
+    void set_bound_factory(std::unique_ptr<BoundFactoryBase> b){
         bound_factory = std::move(b);
     }
 
     std::unique_ptr<PruningFactoryInterface> pruning_factory;
-    void set_pruning_factory(std::unique_ptr<PruningFactoryInterface> p)
-    {
+    void set_pruning_factory(std::unique_ptr<PruningFactoryInterface> p){
         pruning_factory = std::move(p);
     }
 
     std::unique_ptr<BranchingFactoryInterface> branching_factory;
-    void set_branching_factory(std::unique_ptr<BranchingFactoryInterface> b)
-    {
+    void set_branching_factory(std::unique_ptr<BranchingFactoryInterface> b){
         branching_factory = std::move(b);
     }
 
