@@ -59,9 +59,7 @@ protected:
 
     std::unique_ptr<Pruning> prune;
     std::unique_ptr<Branching> branch;
-
     std::unique_ptr<bound_abstract<T>> primary_bound ;
-    // std::unique_ptr<bound_abstract<T>> secondary_bound ;
 
     void unfold(int mode);
 };

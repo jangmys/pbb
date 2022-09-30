@@ -58,7 +58,7 @@ int main(int argc, char* argv[])
     if(arguments::findAll){
         prune = std::make_unique<PruneLargerFactory>();
     }else{
-        prune = std::make_unique<PruneStrictLargerFactory>();
+        prune = std::make_unique<PruneLargerEqualFactory>();
     }
 
     pbab * pbb = new pbab();

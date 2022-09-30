@@ -21,11 +21,11 @@ template class PFSPBoundFactory<int>;
 int
 main(int argc, char ** argv)
 {
-    //PARAMETER PARSING
+    //------------------PARAMETER PARSING-----------------
     arguments::parse_arguments(argc, argv);
     std::cout<<" === solving "<<arguments::problem<<" - instance "<<arguments::inst_name<<std::endl;
 
-    //SET UP LOGGING
+    //------------------SET UP LOGGING--------------------
     FILELog::ReportingLevel() = logERROR;
 #ifndef NDEBUG
     FILELog::ReportingLevel() = logDEBUG;
@@ -33,44 +33,47 @@ main(int argc, char ** argv)
     FILE* log_fd = fopen(arguments::logfile, "w" );
     Output2FILE::Stream() = log_fd;
 
-    //SET INSTANCE
+
+    //------------------B&B components----------------------
+    pbab* pbb = new pbab();
+
+    //------------------SET INSTANCE----------------------
     InstanceFactory inst_factory;
 
-    pbab * pbb = new pbab(inst_factory.make_instance(arguments::problem, arguments::inst_name));
+    pbb->set_instance(
+        pbb_instance::make(arguments::problem, arguments::inst_name)
+    );
 
+    //------------------SET BOUND-------------------------
     //each thread should have a private copy of the b&b operators.
     //we'll just define factory methods here that will be passed to each thread through the pbab class
     //each thread will build it's own bound, branch and prune operators later.
 
-    //SET BOUND
-    std::unique_ptr<BoundFactoryBase> bound;
     if(arguments::problem[0]=='f'){
         pbb->set_bound_factory(std::make_unique<BoundFactory>());
     }else if(arguments::problem[0]=='d'){
-        std::cout<<"dummy\n";
+        pbb->set_bound_factory(std::make_unique<DummyBoundFactory>());
     }
-    // pbb->set_bound_factory(std::move(bound));
 
-    //SET PRUNING
+    //------------------SET PRUNING------------------
     if(arguments::findAll){
-        pbb->set_pruning_factory(std::make_unique<PruneLargerFactory>());
+        pbb->choose_pruning(pbab::prune_greater);
     }else{
-        pbb->set_pruning_factory(std::make_unique<PruneStrictLargerFactory>());
+        pbb->choose_pruning(pbab::prune_greater_equal);
     }
 
-    //SET BRANCHING
+
+    //------------------SET BRANCHING------------------
     pbb->set_branching_factory(std::make_unique<PFSPBranchingFactory>(
         arguments::branchingMode,
         pbb->size,
         pbb->initialUB
     ));
 
-    //BUILD INITIAL SOLUTION
+    //------------------BUILD INITIAL SOLUTION------------------
     pbb->set_initial_solution();
 
-    //////////////////////////////////
-    // RUN
-    //////////////////////////////////
+    //------------------CHOOSE ALGORITHM-----------------------
     enum algo{
         ivm_seqbb,
         ll_sequential,
@@ -87,6 +90,10 @@ main(int argc, char ** argv)
 
     pbb->ttm->on(pbb->ttm->wall);
 
+    // if(arguments::problem[0]=='d'){
+    //     exit(0);
+    // }
+    //---------------------RUN-------------------------------------
     switch(choice){
         case ivm_seqbb:
         {

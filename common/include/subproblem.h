@@ -40,8 +40,6 @@ public:
     bool
     leaf()  const;
 
-    // int intRand(const int & min, const int & max);
-
     void
     print();
     void

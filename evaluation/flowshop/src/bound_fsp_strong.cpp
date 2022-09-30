@@ -487,9 +487,10 @@ bound_fsp_strong::evalSolution(int * permut)
     return tmp[nbMachines - 1];
 }
 
-void
+int
 bound_fsp_strong::bornes_calculer(int * schedule, int limit1, int limit2)
 {
+    return 0;
     // bornes_calculer(p.permutation, p.limite1, p.limite2,p.couts,999999);
     // p.couts_nbMachinePairs=p.couts[0]+p.couts[1];
 }

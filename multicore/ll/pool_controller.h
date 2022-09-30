@@ -17,7 +17,9 @@ public:
 
     std::shared_ptr<bbthread> make_bbexplorer();
 
-    int work_share(unsigned id, unsigned dest){};
+    int work_share(unsigned id, unsigned dest){
+        return 0;
+    };
 
     bool next();
 

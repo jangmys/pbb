@@ -8,7 +8,6 @@
 #include "flowshop/include/bound_fsp_strong.h"
 #include "flowshop/include/bound_fsp_weak.h"
 
-
 class BoundFactoryBase
 {
 public:
@@ -56,5 +55,20 @@ private:
     int machine_pairs;
 
 };
+
+class DummyBoundFactory : public BoundFactoryBase
+{
+public:
+    DummyBoundFactory() : BoundFactoryBase(){};
+
+    std::unique_ptr<bound_abstract<int>>
+        make_bound(std::unique_ptr<instance_abstract>& inst, int bound_type) override
+    {
+        std::unique_ptr<bound_dummy> bd = std::make_unique<bound_dummy>();
+        bd->init(inst.get());
+        return bd;
+    }
+};
+
 
 #endif

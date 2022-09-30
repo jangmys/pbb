@@ -362,7 +362,7 @@ heu_thread2(void * arg)
 //         int c;
 //         // w->local_sol->getBestSolution(s->schedule,c);
 //
-        int r=helper::intRand(0,100);
+        int r=pbb::random::intRand(0,100);
 //
 //         take=false;
         pthread_mutex_lock_check(&w->mutex_solutions);
@@ -411,8 +411,6 @@ heu_thread2(void * arg)
 //         //     // ils->perturbation(s->schedule, 2, 0, w->pbb->size);
 //         //
 //         // }
-//
-//         int ccc = cost;// + helper::intRand(-10,10);
 //
 //         cost=th->ITS(s,ccc);
 //         // printf("heueuhh %d %d %d\n",ccc,cost,w->pbb->sltn->getBest());

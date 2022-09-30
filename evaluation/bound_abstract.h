@@ -13,7 +13,7 @@ public:
     // boundSubproblem
     virtual void
      bornes_calculer(int permutation[], int limite1, int limite2, T* couts, T best) = 0;
-    virtual void
+    virtual T
      bornes_calculer(int permutation[], int limite1, int limite2) = 0;
 
     // in : subproblem p

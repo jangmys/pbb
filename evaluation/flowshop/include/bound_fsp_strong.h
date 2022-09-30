@@ -87,7 +87,7 @@ public:
 
     void
     bornes_calculer(int permutation[], int limite1, int limite2, int * couts, int);
-    void
+    int
     bornes_calculer(int permutation[], int limite1, int limite2);
 
     int

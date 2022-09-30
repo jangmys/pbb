@@ -16,7 +16,7 @@ public:
     virtual std::unique_ptr<Pruning> make_pruning() = 0;
 };
 
-class PruneStrictLargerFactory : public PruningFactoryInterface
+class PruneLargerEqualFactory : public PruningFactoryInterface
 {
 public:
     std::unique_ptr<Pruning> make_pruning() override

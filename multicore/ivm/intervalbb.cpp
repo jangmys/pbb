@@ -255,7 +255,7 @@ Intervalbb<T>::boundLeaf(subproblem& node)
         if(arguments::printSolutions){
             solution tmp(size);
             tmp.update(node.schedule.data(),cost);
-            std::cout<<"New Best:\n";
+            std::cout<<"New Best:\t";
             tmp.print();
         }
     }

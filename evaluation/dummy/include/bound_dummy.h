@@ -9,9 +9,15 @@ class bound_dummy : public bound_abstract<int> {
 public:
     void init(instance_abstract* _instance);
 
-    void bornes_calculer(int permutation[], int limite1, int limite2, int* couts, int best){};
+    void bornes_calculer(int permutation[], int limite1, int limite2, int* couts, int best)
+    {
+        couts[0]=0;
+        couts[1]=0;
+    };
 
-    void bornes_calculer(int permutation[], int limite1, int limite2){} ;
+    int bornes_calculer(int permutation[], int limite1, int limite2){
+        return 0;
+    } ;
 
     // in : subproblem p
     // out : costsBegin / costsEnd

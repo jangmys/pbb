@@ -306,6 +306,6 @@ bound_fsp_weak::bornes_calculer(int permutation[], int limite1, int limite2, int
     couts[0] = lb;
 }
 
-void
+int
 bound_fsp_weak::bornes_calculer(int permutation[], int limite1, int limite2)
 { }

@@ -54,11 +54,16 @@ main(int argc, char ** argv)
         FILE_LOG(logINFO) << "Worker start logging";
     }
 
+    pbab* pbb = new pbab();
+
     //SET INSTANCE
     InstanceFactory inst_factory;
     // std::unique_ptr<instance_abstract> inst = inst_factory.make_instance(arguments::problem, arguments::inst_name);
 
-    pbab * pbb = new pbab(inst_factory.make_instance(arguments::problem, arguments::inst_name));
+
+    pbb->set_instance(arguments::problem, arguments::inst_name);
+
+    // pbab * pbb = new pbab(inst_factory.make_instance(arguments::problem, arguments::inst_name));
 
     std::unique_ptr<BoundFactoryInterface<int>> bound;
     if(arguments::problem[0]=='f'){
@@ -74,7 +79,7 @@ main(int argc, char ** argv)
     if(arguments::findAll){
         pbb->set_pruning_factory(std::make_unique<PruneLargerFactory>());
     }else{
-        pbb->set_pruning_factory(std::make_unique<PruneStrictLargerFactory>());
+        pbb->set_pruning_factory(std::make_unique<PruneLargerEqualFactory>());
     }
     pbb->set_pruning_factory(std::move(prune));
 

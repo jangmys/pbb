@@ -46,7 +46,7 @@ public:
 
     void
     bornes_calculer(int permutation[], int limite1, int limite2, int * couts, int best);
-    void
+    int
     bornes_calculer(int permutation[], int limite1, int limite2);
 private:
     //performance vs local + passing into functions ?
