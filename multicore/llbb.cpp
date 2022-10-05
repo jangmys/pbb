@@ -43,7 +43,7 @@ main(int argc, char ** argv)
     InstanceFactory inst_factory;
 
     pbb->set_instance(
-        inst_factory.make_instance(arguments::problem, arguments::inst_name)
+        pbb_instance::make_instance(arguments::problem, arguments::inst_name)
     );
 
     //------------------SET BOUND-------------------------

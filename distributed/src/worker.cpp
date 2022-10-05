@@ -25,8 +25,6 @@ worker::worker(pbab * _pbb) : pbb(_pbb),size(pbb->size)
 {
     dwrk = std::make_shared<work>();
 
-    pthread_barrier_init(&barrier, NULL, 2);// sync worker and helper thread
-
     pthread_mutexattr_t attr;
     pthread_mutexattr_init(&attr);
     pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_ERRORCHECK);
@@ -55,8 +53,6 @@ worker::worker(pbab * _pbb) : pbb(_pbb),size(pbb->size)
 
 worker::~worker()
 {
-    pthread_barrier_destroy(&barrier);
-
     pthread_mutex_destroy(&mutex_wunit);
     pthread_mutex_destroy(&mutex_inst);
     pthread_mutex_destroy(&mutex_best);
@@ -118,13 +114,9 @@ comm_thread(void * arg)
 {
     worker * w = (worker *) arg;
 
-    MPI_Status status;
-
     w->sendRequestReady = true;
     w->sendRequest      = false;
     w->setNewBest(false);
-
-    pthread_barrier_wait(&w->barrier);
 
     int nbiter = 0;
     int dummy  = 11;
@@ -133,61 +125,58 @@ comm_thread(void * arg)
 
     int masterbest;
 
+    int *msg_counter = new int[5];
+
     while (1) {
+        //----------CHECK WORKER TERMINATION----------
         if (w->checkEnd()) break;
 
-        // printf("--- COMM READY.....\n");fflush(stdout);
-        // wait unitl update applied
-        bool doCheckpoint;
-        bool doBest;
+        //------------------WAIT ***** ------------------
+        //...until triggered and get reason (checkpoint or best)
+        bool doCheckpoint, doBest;
         w->wait_for_trigger(doCheckpoint, doBest);
 
-        // printf("---\n");
-        fflush(stdout);
-        nbiter++;
-        // checkpoint triggered
+        //---------CHECKPOINT : SEND intervals------------
         if (doCheckpoint) {
-            // printf("%d === CHECKPOINT\n",w->comm->rank);fflush(stdout);
+            //reset checkpoint-trigger
             pthread_mutex_lock_check(&w->mutex_trigger);
             w->sendRequest = false;
             pthread_mutex_unlock(&w->mutex_trigger);
 
-            // CONVERT TO MPZ INTEGER INTERVALS AND SORT...
+            //convert to mpz integer intervals and sort...
             w->work_buf->fact2dec(w->dwrk);
-            //w->dwrk->displayUinterval();
-
+            //...send to MASTER
             w->comm->send_work(w->dwrk, 0, WORK);
-            //            w->comm->send_fwork(0, WORK);
-            //            printf("send work unit...\n");fflush(stdout);//DEBUG
         } else if (doBest) {
-            // printf("=== BEST\n");fflush(stdout);
-
+        //-------------BEST : SEND local best-------------
+            //reset best-trigger
             w->setNewBest(false);
-            // get sol
-            solution *tmp=new solution(w->pbb->size);
-
+            //get worker-best-solution and cost
+            solution tmp(w->pbb->size);
             int tmpcost;
-            w->pbb->sltn->getBestSolution(tmp->perm,tmpcost);
-            tmp->cost.store(tmpcost);
 
-            w->comm->send_sol(tmp, 0, BEST);
+            w->pbb->sltn->getBestSolution(tmp.perm,tmpcost);
+            tmp.cost.store(tmpcost);
 
-            delete tmp;
-            // printf("SEND BEST %d ...\n",w->comm->rank   );fflush(stdout);//DEBUG
+            //send to master
+            w->comm->send_sol(&tmp, 0, BEST);
         }
-        /*
-         *  ==============================================
-         *  RECEIVE
-         *  ==============================================
-         */
-        // printf("%d === wait\n",w->comm->rank);fflush(stdout);
+
+        nbiter++;
+
+        // -----------------------------------------------
+        // ---------------RECEIVE ANSWER------------------
+        // -----------------------------------------------
+        MPI_Status status;
         MPI_Probe(0, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
+
+        msg_counter[status.MPI_TAG]++;
 
         switch(status.MPI_TAG)
         {
-            case WORK:
+            case WORK: /* new work */
             {
-                // receive buffer...
+                //the receive buffer...
                 std::shared_ptr<work> rwrk(new work());
 
                 FILE_LOG(logDEBUG4)<<"worker receives";
@@ -198,21 +187,21 @@ comm_thread(void * arg)
                 w->wait_for_update_complete();
                 break;
             }
-            case BEST:
+            case BEST: /* improved best */
             {
                 // printf("worker receive best\n");fflush(stdout);
                 MPI_Recv(&masterbest, 1, MPI_INT, status.MPI_SOURCE, BEST, MPI_COMM_WORLD, &status);
                 w->pbb->sltn->updateCost(masterbest);
                 break;
             }
-            case END:
+            case END: /* global termination*/
             {
                 MPI_Recv(&dummy, 1, MPI_INT, 0, END, MPI_COMM_WORLD, &status);
                 FILE_LOG(logINFO) << "Rank " << w->comm->rank << " terminates.";
                 w->end = true;
                 break;
             }
-            case NIL:
+            case NIL: /*nothing : still receive master-best*/
             {
                 w->comm->recv_sol(mastersol, 0, NIL, &status);
                 // printf("receive NIL=== %d ===\n",w->pbb->sltn->cost );fflush(stdout);
@@ -242,6 +231,16 @@ comm_thread(void * arg)
         w->sendRequestReady = true;
         pthread_mutex_unlock(&w->mutex_trigger);
     }
+
+    FILE_LOG(logINFO) << "----------Worker Message Count----------";
+    FILE_LOG(logINFO) <<"WORK\t"<<msg_counter[WORK];
+    FILE_LOG(logINFO) <<"BEST\t"<<msg_counter[BEST];
+    FILE_LOG(logINFO) <<"NIL\t"<<msg_counter[NIL];
+    FILE_LOG(logINFO) <<"END\t"<<msg_counter[END];
+    FILE_LOG(logINFO) <<"SLEEP\t"<<msg_counter[SLEEP];
+    FILE_LOG(logINFO) <<"---------------------------------------";
+
+    delete[] msg_counter;
 
     // // confirm that termination signal received... comm thread will be joined
     // MPI_Send(&dummy, 1, MPI_INT, 0, END, MPI_COMM_WORLD);
@@ -432,29 +431,28 @@ heu_thread2(void * arg)
 //     // return NULL;
 }
 
+
 // worker main thread : spawn communicator
 void
 worker::run()
 {
-    // create comm thread
+    //------------create communication thread------------
+    pthread_t * comm_thd;
     pthread_attr_t attr;
+
+    comm_thd = (pthread_t *) malloc(sizeof(pthread_t));
     pthread_attr_init(&attr);
     pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
-    pthread_t * comm_thd = (pthread_t *) malloc(sizeof(pthread_t));
     pthread_create(comm_thd, &attr, comm_thread, (void *) this);
 
-    bool allEnd = false;
-    // trigger = true;// true : got no work
-    pthread_barrier_wait(&barrier);// synchronize with communication thread
-
-    //heuristic threads
+    //-------------create heuristic threads-------------
     int nbHeuThds=arguments::heuristic_threads;
     pthread_t heur_thd[100];
     for(int i=0;i<nbHeuThds;i++)
     {
         pthread_create(&heur_thd[i], NULL, heu_thread2, (void *) this);
     }
-    // FILE_LOG(logDEBUG) << "Created " << nbHeuThds << " heuristic threads.";
+    FILE_LOG(logDEBUG) << "Created " << nbHeuThds << " heuristic threads.";
     int workeriter = 0;
 
     // printf("RUN %d\n",M);fflush(stdout);
@@ -462,6 +460,7 @@ worker::run()
     // ==========================================
     // worker main-loop :
     // do work or try acquire new work unit until END signal received
+    // bool allEnd = false;
     while (1) {
         workeriter++;
 
@@ -483,7 +482,7 @@ worker::run()
         //        pbb->ttm->on(pbb->ttm->workerExploretime);
 
         // printf("Rank : %d\n",comm->rank);
-        allEnd = doWork();
+        bool allEnd = doWork();
 
         if(arguments::heuristic_threads)
             getSolutions();
@@ -499,14 +498,11 @@ worker::run()
         }
     }
 
-    int err;
-    // printf("waintng for coomths\n"); fflush(stdout);
-    // pthread_join(*thd, NULL);
-
-    err = pthread_join(*comm_thd, NULL);
+    // int err;
+    int err = pthread_join(*comm_thd, NULL);
     if (err)
     {
-        FILE_LOG(logERROR) << "Failed to join comm thread " << strerror(err);
+        FILE_LOG(logDEBUG) << "Failed to join comm thread " << strerror(err);
     }
 
     pbb->ttm->logElapsed(pbb->ttm->workerExploretime, "Worker exploration time\t");

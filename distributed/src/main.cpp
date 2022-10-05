@@ -21,10 +21,11 @@
 int
 main(int argc, char ** argv)
 {
+// -----------------------MPI-----------------------
     int provided;
     MPI_Init_thread(&argc, &argv, MPI_THREAD_SERIALIZED, &provided);
     if (provided != MPI_THREAD_SERIALIZED){
-        printf("need at least MPI_THREAD_SERIALIZED support \n");
+        std::cout<<"need at least MPI_THREAD_SERIALIZED support \n";
         exit(-1);
     }
 
@@ -33,10 +34,14 @@ main(int argc, char ** argv)
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
     MPI_Comm_size(MPI_COMM_WORLD, &nProc);
 
-    // initializions...
-    // ==> pass ini file with -f <path-to-ini-file> option !
+    if(myrank==0)
+        std::cout<<"-----MPI initialized with "<<nProc<<" procs-----\n";
+
+// -----------------------Parse args----------------------
+// .. pass ini file with -f <path-to-ini-file> option !
     arguments::parse_arguments(argc, argv);
 
+// --------------------Set up logging--------------------
     if (myrank == 0) {
         FILELog::ReportingLevel() = logDEBUG;
 
@@ -44,6 +49,8 @@ main(int argc, char ** argv)
         snprintf(buf, sizeof(buf), "./logs/%s_master.txt", arguments::inst_name);
         FILE* log_fd = fopen( buf, "w" );
         Output2FILE::Stream() = log_fd;
+
+        std::cout<<"-----Coordinator logfile: "<<std::string(buf)<<"-----\n";
     }else{
         FILELog::ReportingLevel() = logDEBUG;
         char buf[100];
@@ -54,54 +61,65 @@ main(int argc, char ** argv)
         FILE_LOG(logINFO) << "Worker start logging";
     }
 
+//---------------------Configure B&B---------------------
     pbab* pbb = new pbab();
 
     //SET INSTANCE
-    InstanceFactory inst_factory;
-    // std::unique_ptr<instance_abstract> inst = inst_factory.make_instance(arguments::problem, arguments::inst_name);
+    pbb->set_instance(
+        pbb_instance::make_instance(arguments::problem, arguments::inst_name)
+    );
+    if(myrank==0){
+        std::cout<<"\t#Problem:\t\t"<<arguments::problem<<" / Instance"<<arguments::inst_name<<"\n";
+        std::cout<<"\t#ProblemSize:\t\t"<<pbb->size<<std::endl;
+    }
 
-
-    pbb->set_instance(arguments::problem, arguments::inst_name);
-
-    // pbab * pbb = new pbab(inst_factory.make_instance(arguments::problem, arguments::inst_name));
-
-    std::unique_ptr<BoundFactoryInterface<int>> bound;
+    //LOWER BOUND
     if(arguments::problem[0]=='f'){
-        // pbb->set_bound_factory(std::make_unique<PFSPBoundFactory<int>>());
-        bound = std::make_unique<PFSPBoundFactory<int>>();
+        pbb->set_bound_factory(std::make_unique<BoundFactory>());
     }else if(arguments::problem[0]=='d'){
-        std::cout<<"dummy\n";
+        pbb->set_bound_factory(std::make_unique<DummyBoundFactory>());
     }
-    // pbb->set_bound_factory(bound);
 
-    //SET PRUNING
-    std::unique_ptr<PruningFactoryInterface> prune;
+    //PRUNING
     if(arguments::findAll){
-        pbb->set_pruning_factory(std::make_unique<PruneLargerFactory>());
+        pbb->choose_pruning(pbab::prune_greater);
     }else{
-        pbb->set_pruning_factory(std::make_unique<PruneLargerEqualFactory>());
+        pbb->choose_pruning(pbab::prune_greater_equal);
     }
-    pbb->set_pruning_factory(std::move(prune));
 
-    //SET BRANCHING
-    // std::unique_ptr<BranchingFactoryInterface> branch;
-    // branch = std::make_unique<PFSPBranchingFactory>();
-    pbb->set_branching_factory(std::make_unique<PFSPBranchingFactory>(                        arguments::branchingMode,
-                            pbb->size,
-                            pbb->initialUB));
+    //BRANCHING
+    pbb->set_branching_factory(std::make_unique<PFSPBranchingFactory>(
+        arguments::branchingMode,
+        pbb->size,
+        pbb->initialUB
+    ));
 
+    //MAKE INITIAL SOLUTION (rank 0 --> could run multiple and min-reduce...)
+    if(myrank==0){
+        FILE_LOG(logINFO) <<"----Initialize incumbent----";
+        struct timespec t1,t2;
+        clock_gettime(CLOCK_MONOTONIC,&t1);
 
-    pbb->set_initial_solution();
+        pbb->set_initial_solution();
 
-    int bbmode=0;
+        pbb->sltn->save();
+        FILE_LOG(logINFO) << "Initial solution:\t" <<*(pbb->sltn);
+
+        clock_gettime(CLOCK_MONOTONIC,&t2);
+        FILE_LOG(logINFO) <<"Time(InitialSolution):\t"<<(t2.tv_sec-t1.tv_sec)+(t2.tv_nsec-t1.tv_nsec)/1e9;
+    }
+
+    enum bb_mode{
+        STANDARD,
+        ITERATE_INCREASING_UB
+    };
+
+    int bbmode=STANDARD;
+
     switch (bbmode) {
-        case 0:
+        case STANDARD:
         {
             if (myrank == 0) {
-                std::cout<<" === Master + "<<nProc-1<<" workers\n";
-                std::cout<<" === Solving "<<arguments::problem<<" / instance "<<arguments::inst_name<<"\n";
-                std::cout<<" === Problem Size:\t"<<pbb->size<<std::endl;
-
                 master* mstr = new master(pbb);
 
                 struct timespec tstart, tend;
@@ -109,6 +127,7 @@ main(int argc, char ** argv)
 
                 mstr->initWorks(arguments::initial_work);//3 = cut initial interval in nProc pieces
 
+                //make sure all workers have initialized pbb
                 MPI_Barrier(MPI_COMM_WORLD);
 
                 MPI_Bcast(pbb->root_sltn->perm, pbb->size, MPI_INT, 0, MPI_COMM_WORLD);
@@ -117,7 +136,6 @@ main(int argc, char ** argv)
                 MPI_Bcast(pbb->sltn->perm, pbb->size, MPI_INT, 0, MPI_COMM_WORLD);
                 MPI_Bcast(&pbb->sltn->cost, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
-                // std::cout<<" = master:\t run ..."<<std::endl;
                 mstr->run();
 
                 clock_gettime(CLOCK_MONOTONIC, &tend);
@@ -125,6 +143,7 @@ main(int argc, char ** argv)
             }
             else
             {
+                //make sure all workers have initialized pbb
                 MPI_Barrier(MPI_COMM_WORLD);
 
                 MPI_Bcast(pbb->root_sltn->perm, pbb->size, MPI_INT, 0, MPI_COMM_WORLD);
@@ -132,6 +151,11 @@ main(int argc, char ** argv)
 
                 MPI_Bcast(pbb->sltn->perm, pbb->size, MPI_INT, 0, MPI_COMM_WORLD);
                 MPI_Bcast(&pbb->sltn->cost, 1, MPI_INT, 0, MPI_COMM_WORLD);
+
+
+                std::cout<<"Worker recvd "<<*(pbb->root_sltn)<<"\n";
+                std::cout<<"Worker recvd "<<*(pbb->sltn)<<"\n";
+
                 // ==========================
                 #ifdef USE_GPU
                 worker *wrkr = new worker_gpu(pbb);
@@ -139,14 +163,13 @@ main(int argc, char ** argv)
                 int nthreads = (arguments::nbivms_mc < 1) ? get_nprocs() : arguments::nbivms_mc;
                 worker *wrkr = new worker_mc(pbb,nthreads);
                 #endif
-                // worker *wrkr = new worker_mc(pbb);
+                FILE_LOG(logDEBUG) << "Worker running with "<<nthreads<<" threads.\n";
 
-                FILE_LOG(logDEBUG) << "Worker running";
                 wrkr->run();
             }
             break;
         }
-        case 1:
+        case ITERATE_INCREASING_UB:
         {
             if (myrank == 0){
                 master* mstr = new master(pbb);

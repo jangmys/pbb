@@ -1,8 +1,8 @@
 #include "ivmthread.h"
 
-ivmthread::ivmthread(pbab* _pbb, std::shared_ptr<Intervalbb<int>> _ibb) :
+ivmthread::ivmthread(pbab* _pbb, std::unique_ptr<Intervalbb<int>> _ibb) :
     bbthread(_pbb),
-    ivmbb(_ibb)
+    ivmbb(std::move(_ibb))
     // ivmbb(std::make_shared<Intervalbb<int>>(_pbb,_pbb->size))
 {
 };

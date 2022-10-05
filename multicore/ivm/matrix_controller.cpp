@@ -36,7 +36,7 @@ matrix_controller::make_bbexplorer(){
     //initialize local (sequential) BB
     return std::make_shared<ivmthread>(
         pbb,
-        std::make_shared<Intervalbb<int>>(pbb)
+        make_interval_bb(pbb,arguments::boundMode)
     );
 }
 
@@ -91,20 +91,26 @@ matrix_controller::work_share(unsigned id, unsigned thief)
 }
 
 // run by multiple threads!!!
+// in distributed setting re-entry is possible
 void
 matrix_controller::explore_multicore()
 {
-    // get unique ID
+    //---------------get unique ID---------------
     int id = explorer_get_new_id();
     FILE_LOG(logDEBUG) << "=== got ID " << id;
 
+    //------check if explorer already exists------
     if(!bbb[id]){
         //make sequential bb-explorer
         bbb[id] = make_bbexplorer();
-        //set root
+        //set level 0 subproblems
         bbb[id]->setRoot(pbb->root_sltn->perm, -1, pbb->size);
         FILE_LOG(logDEBUG) << "=== made explorer ("<<id<<")";
-        state[id]=1;
+        FILE_LOG(logDEBUG) << *(pbb->root_sltn);
+        updatedIntervals = 1;
+        // state[id]=1;
+    }else{
+        FILE_LOG(logDEBUG) << "=== explorer ("<<id<<") is ready";
     }
 
     if(state[id]==1){
@@ -160,9 +166,11 @@ matrix_controller::explore_multicore()
             bool passed=pbb->ttm->period_passed(WORKER_BALANCING);
             if(atom_nb_steals>get_num_threads() || passed)
             {
+                FILE_LOG(logDEBUG) << "=== BREAK (nb_steals)";
                 break;
             }
             if(pbb->foundNewSolution){
+                FILE_LOG(logDEBUG) << "=== BREAK (new sol)";
                 break;
             }
         }
@@ -171,6 +179,22 @@ matrix_controller::explore_multicore()
 
     FILE_LOG(logDEBUG) << "=== Exit exploration loop";
 
+    // int *pos = new int[pbb->size];
+    // int *end = new int[pbb->size];
+    // std::static_pointer_cast<ivmthread>(bbb[id])->getInterval(pos,end);
+    //
+    // pthread_mutex_lock(&mutex_end);
+    // for(int i=0;i<pbb->size;i++)
+    //     std::cout<<pos[i]<<" ";
+    // std::cout<<"\n";
+    //
+    // for(int i=0;i<pbb->size;i++)
+    //     std::cout<<end[i]<<" ";
+    // std::cout<<"\n";
+    // pthread_mutex_unlock(&mutex_end);
+    //
+    // delete[] pos;
+    // delete[] end;
 
     pbb->stats.totDecomposed += std::static_pointer_cast<ivmthread>(bbb[id])->ivmbb->get_decomposed_count();
     pbb->stats.leaves += std::static_pointer_cast<ivmthread>(bbb[id])->ivmbb->get_leaves_count();

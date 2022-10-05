@@ -231,6 +231,8 @@ ivm::decodeIVM()
     for (int l = 0; l < size - _line; l++){
         node.schedule[node.limit1 + 1 + l] = absolute(jM[_line * size + l]);
     }
+
+    FILE_LOG(logDEBUG) << "D\t" << node;
 } // prepareSchedule
 
 template<typename T>

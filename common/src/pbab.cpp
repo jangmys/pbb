@@ -29,12 +29,12 @@ pbab::pbab() : stats()
     // best_solution = std::make_unique<subproblem>(size);
 }
 
-void pbab::set_instance(char problem[],char inst_name[])
-{
-    InstanceFactory inst_factory;
-
-    set_instance(inst_factory.make_instance(problem, inst_name));
-}
+// void pbab::set_instance(char problem[],char inst_name[])
+// {
+//     InstanceFactory inst_factory;
+//
+//     set_instance(inst_factory.make_instance(problem, inst_name));
+// }
 
 void
 pbab::set_instance(std::unique_ptr<instance_abstract> _inst){
@@ -54,9 +54,6 @@ void pbab::set_initial_solution()
     //by default initial upper bound in INFTY
     sltn->cost = INT_MAX;
 
-    struct timespec t1,t2;
-    clock_gettime(CLOCK_MONOTONIC,&t1);
-
     switch (arguments::problem[0]) {
         case 'f':
         {
@@ -69,7 +66,7 @@ void pbab::set_initial_solution()
                         break;
                     }
 
-                    std::cout<<" === Get initial upper bound : FILE\n";
+                    std::cout<<"\t#Get initial upper bound : FILE\n";
                     switch (arguments::inst_name[0]) {
                         case 't':
                         {
@@ -86,7 +83,7 @@ void pbab::set_initial_solution()
                 }
                 case 1:
                 {
-                    std::cout<<" === Get initial upper bound : NEH\n";
+                    std::cout<<"\t#Get initial upper bound : NEH\n";
 
                     fastNEH neh(instance.get());
 
@@ -142,9 +139,6 @@ void pbab::set_initial_solution()
             break;
         }
     }
-
-    clock_gettime(CLOCK_MONOTONIC,&t2);
-    std::cout<<"\tTime(InitialSolution):\t"<<(t2.tv_sec-t1.tv_sec)+(t2.tv_nsec-t1.tv_nsec)/1e9<<std::endl;
 
     *(root_sltn) = *(sltn);
 

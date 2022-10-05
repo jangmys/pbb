@@ -62,6 +62,8 @@ protected:
     std::unique_ptr<bound_abstract<T>> primary_bound ;
 
     void unfold(int mode);
+
+    pthread_mutex_t first_mutex;
 };
 
 //static members

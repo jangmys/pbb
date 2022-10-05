@@ -14,7 +14,7 @@
 namespace pbb_instance
 {
     static std::unique_ptr<instance_abstract>
-        make(char problem[],char inst_name[])
+        make_instance(char problem[],char inst_name[])
     {
         switch(problem[0])//DIFFERENT PROBLEMS...
         {

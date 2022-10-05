@@ -34,21 +34,20 @@ main(int argc, char ** argv)
     Output2FILE::Stream() = log_fd;
 
 
-    //------------------B&B components----------------------
+    //------------------B&B components-------------------
     pbab* pbb = new pbab();
 
     //------------------SET INSTANCE----------------------
     InstanceFactory inst_factory;
 
     pbb->set_instance(
-        pbb_instance::make(arguments::problem, arguments::inst_name)
+        pbb_instance::make_instance(arguments::problem, arguments::inst_name)
     );
 
     //------------------SET BOUND-------------------------
     //each thread should have a private copy of the b&b operators.
     //we'll just define factory methods here that will be passed to each thread through the pbab class
     //each thread will build it's own bound, branch and prune operators later.
-
     if(arguments::problem[0]=='f'){
         pbb->set_bound_factory(std::make_unique<BoundFactory>());
     }else if(arguments::problem[0]=='d'){
@@ -99,28 +98,10 @@ main(int argc, char ** argv)
         {
             std::cout<<" === Run single-threaded IVM-BB"<<std::endl;
 
-            std::unique_ptr<Intervalbb<int>>sbb;
+            std::unique_ptr<Intervalbb<int>>sbb(
+                make_interval_bb(pbb,arguments::boundMode)
+            );
 
-            if(arguments::boundMode == 0){
-                std::cout<<"EvalChildren MODE\n";
-                sbb = std::make_unique<Intervalbb<int>>(pbb);
-            }else if(arguments::boundMode == 1){
-                std::cout<<"EvalOne MODE\n";
-                sbb = std::make_unique<IntervalbbEasy<int>>(pbb);
-            }else{
-                std::cout<<"EvalDouble MODE\n";
-                sbb = std::make_unique<IntervalbbIncr<int>>(pbb);
-            }
-
-            // Intervalbb<int> sbb(
-            //     pbb,
-            //     pbb->branching_factory->make_branching(
-            //         arguments::branchingMode,
-            //         pbb->size,
-            //         pbb->initialUB
-            //     ),
-            //     pbb->pruning_factory->make_pruning()
-            // );
             sbb->setRoot(pbb->root_sltn->perm,-1,pbb->size);
             sbb->initFullInterval();
             sbb->run();
@@ -153,30 +134,12 @@ main(int argc, char ** argv)
         }
 		case ivm_multicore:
 		{
-			std::cout<<" === Run multi-core IVM-based BB ..."<<std::endl;
-
             int nthreads = (arguments::nbivms_mc < 1) ? get_nprocs() : arguments::nbivms_mc;
+			std::cout<<" === Run multi-core IVM-based BB with "<<nthreads<<" threads"<<std::endl;
+
             matrix_controller mc(pbb,nthreads);
 
-            switch (arguments::mc_ws_select) {
-                case 'r':
-                {
-                    mc.set_victim_select(std::make_unique<RingVictimSelector>(nthreads));
-                    break;
-                }
-                case 'a':
-                {
-                    mc.set_victim_select(std::make_unique<RandomVictimSelector>(nthreads));
-                    break;
-                }
-                case 'o':
-                {
-                    mc.set_victim_select(std::make_unique<HonestVictimSelector>(nthreads));
-                    break;
-                }
-
-            }
-
+            mc.set_victim_select(make_victim_selector(nthreads,arguments::mc_ws_select));
 		    mc.initFullInterval();
 			mc.next();
 

@@ -27,7 +27,6 @@ class solution;
 class gpubb;
 
 class worker_gpu : public worker {
-    // private:
 public:
     worker_gpu(pbab * _pbb) : worker(_pbb)
     {
@@ -78,59 +77,6 @@ public:
     getSolutions();
 
     void interrupt();
-
-    // int M;
-    // int size;
-    // char type;
-
-    // bool standalone;
-
-    // communicator * comm;
-    // pbab * pbb;
-
-    // matrix_controller * mc;
-
-    // std::shared_ptr<fact_work> work_buf;
-    // std::shared_ptr<work> dwrk;
-
-//    fact_work * work_buf;
-    // solution * best_buf;
-
-    // worker(pbab * _pbb);
-    // ~worker();
-
-    // int best;
-
-    // void tryLaunchCommBest();
-    // void tryLaunchCommWork();
-
-
-    // pthread_barrier_t barrier;
-    // pthread_mutex_t mutex_end;
-    // pthread_mutex_t mutex_wunit;
-    // pthread_mutex_t mutex_best;
-    // pthread_mutex_t mutex_updateAvail;
-    // pthread_cond_t cond_updateApplied;
-    //
-    // pthread_mutex_t mutex_trigger;
-    // pthread_cond_t cond_trigger;
-    //
-    // volatile bool end;
-    // volatile bool newBest;
-    // volatile bool trigger;
-    // volatile bool updateAvailable;
-    // volatile bool sendRequest;
-    // volatile bool sendRequestReady;
-    //
-    // void wait_for_trigger(bool& check, bool& best);
-    // void wait_for_update_complete();
-    // bool checkEnd();
-    // bool checkUpdate();
-    // bool commIsReady();
-    //
-    // void run();
-    //
-    // void test();
 };
 
-#endif // ifndef WORKER_H
+#endif // ifndef WORKER_GPU_H

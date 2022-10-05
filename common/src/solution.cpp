@@ -37,7 +37,7 @@ solution::update(const int * candidate, const int _cost)
     int ret = 0;
     // pthread_mutex_lock(&mutex_sol);
     pthread_mutex_lock_check(&mutex_sol);
-    if (_cost < cost.load()) {
+    if (_cost <= cost.load()) {
         ret = 1;
         // newBest  = true;
         cost.store(_cost);
@@ -117,11 +117,11 @@ void
 solution::print()
 {
     pthread_mutex_lock_check(&print_mutex);
-    std::cout<<cost.load()<<"\t|\t";
+    std::cout<<cost.load()<<",[";
     for (int i = 0; i < size; i++) {
         std::cout<<perm[i]<<" ";
     }
-    std::cout<<std::endl;
+    std::cout<<"]"<<std::endl;
     pthread_mutex_unlock(&print_mutex);
 }
 
@@ -129,9 +129,9 @@ void
 solution::save()
 {
     pthread_mutex_lock_check(&mutex_sol);
-    FILE_LOG(logINFO) << "SAVE SOLUTION " << this->cost.load();
+    FILE_LOG(logINFO) << "SAVE SOLUTION " << this->cost.load() << " to " << ("./output/sol" + std::string(arguments::inst_name) + ".save");
 
-    std::ofstream stream(("./bbworks/sol" + std::string(arguments::inst_name) + ".save").c_str());
+    std::ofstream stream(("./output/sol" + std::string(arguments::inst_name) + ".save").c_str());
     stream << *this <<std::endl;
     stream.close();
     pthread_mutex_unlock(&mutex_sol);

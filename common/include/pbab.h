@@ -33,8 +33,7 @@ public:
     std::unique_ptr<instance_abstract> instance;
     int size;
 
-
-    void set_instance(char problem[], char inst_name[]);
+    // void set_instance(char problem[], char inst_name[]);
     void set_instance(std::unique_ptr<instance_abstract> _inst);
 
     std::unique_ptr<subproblem> best_solution;

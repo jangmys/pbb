@@ -198,11 +198,11 @@ master::run()
 	solution* sol_buf=new solution(pbb->size);
 
     do{
+        //waiting for any message
         MPI_Probe(MPI_ANY_SOURCE,MPI_ANY_TAG,MPI_COMM_WORLD,&status);
 
-        iter++;
+        //master active now
         pbb->ttm->on(pbb->ttm->masterWalltime);
-
         switch (status.MPI_TAG) {
             case WORK:
             {
@@ -275,12 +275,11 @@ master::run()
                 break;
             }
         }
-        // printf("count %d\n",count_out);
-
         pbb->ttm->off(pbb->ttm->masterWalltime);
 
 		wrks->save();
 
+        iter++;
     }while(count_out!=nProc-1);//(!M->end);
 
     pbb->ttm->off(pbb->ttm->wall);
