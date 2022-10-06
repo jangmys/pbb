@@ -203,10 +203,12 @@ comm_thread(void * arg)
             }
             case NIL: /*nothing : still receive master-best*/
             {
-                w->comm->recv_sol(mastersol, 0, NIL, &status);
-                // printf("receive NIL=== %d ===\n",w->pbb->sltn->cost );fflush(stdout);
-                // MPI_Recv(&masterbest, 1, MPI_INT, 0, NIL, MPI_COMM_WORLD, &status);
-                w->pbb->sltn->update(mastersol->perm,mastersol->cost);
+                // w->comm->recv_sol(mastersol, 0, NIL, &status);
+                // w->pbb->sltn->update(mastersol->perm,mastersol->cost);
+
+                MPI_Recv(&masterbest, 1, MPI_INT, 0, NIL, MPI_COMM_WORLD, &status);
+                w->pbb->sltn->updateCost(masterbest);
+
                 break;
             }
             case SLEEP:

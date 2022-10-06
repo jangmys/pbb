@@ -38,7 +38,6 @@ protected:
     std::atomic<unsigned int> atom_nb_steals{0};
     std::atomic<bool> allEnd{false};
 
-    pthread_mutex_t mutex_end;
     pthread_barrier_t barrier;
 
     void counter_decrement();

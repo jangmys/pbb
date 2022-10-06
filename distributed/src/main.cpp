@@ -42,18 +42,18 @@ main(int argc, char ** argv)
     arguments::parse_arguments(argc, argv);
 
 // --------------------Set up logging--------------------
+    FILELog::ReportingLevel() = logINFO;
+#ifndef NDEBUG
+    FILELog::ReportingLevel() = logDEBUG;
+#endif
+    char buf[100];
     if (myrank == 0) {
-        FILELog::ReportingLevel() = logDEBUG;
-
-        char buf[100];
         snprintf(buf, sizeof(buf), "./logs/%s_master.txt", arguments::inst_name);
         FILE* log_fd = fopen( buf, "w" );
         Output2FILE::Stream() = log_fd;
 
         std::cout<<"-----Coordinator logfile: "<<std::string(buf)<<"-----\n";
     }else{
-        FILELog::ReportingLevel() = logDEBUG;
-        char buf[100];
         snprintf(buf, sizeof(buf), "./logs/%s_worker%d.txt", arguments::inst_name, myrank);
         FILE* log_fd = fopen( buf, "w" );
         Output2FILE::Stream() = log_fd;

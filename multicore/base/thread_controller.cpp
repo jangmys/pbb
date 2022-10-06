@@ -17,7 +17,7 @@ thread_controller::thread_controller(pbab * _pbb, int _nthreads) : pbb(_pbb),M(_
     pthread_mutexattr_init(&attr);
     pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_ERRORCHECK);
 
-    pthread_mutex_init(&mutex_end, &attr);
+    // pthread_mutex_init(&mutex_end, &attr);
 
     atom_nb_explorers.store(0);// id_generator
     allEnd.store(false);
@@ -25,7 +25,7 @@ thread_controller::thread_controller(pbab * _pbb, int _nthreads) : pbb(_pbb),M(_
 
 thread_controller::~thread_controller()
 {
-    pthread_mutex_destroy(&mutex_end);
+    // pthread_mutex_destroy(&mutex_end);
     pthread_barrier_destroy(&barrier);
 }
 
@@ -39,17 +39,17 @@ thread_controller::get_bbthread(int k)
 void
 thread_controller::counter_decrement()
 {
-    pthread_mutex_lock(&mutex_end);
+    // pthread_mutex_lock(&mutex_end);
     end_counter--;
     FILE_LOG(logDEBUG) << " DECREMENT COUNTER :" << end_counter<<std::flush;
-    pthread_mutex_unlock(&mutex_end);
+    // pthread_mutex_unlock(&mutex_end);
 }
 
 /* end_counter is atomic*/
 bool
 thread_controller::counter_increment(unsigned id)
 {
-    pthread_mutex_lock(&mutex_end);
+    // pthread_mutex_lock(&mutex_end);
     end_counter++;
 
     FILE_LOG(logDEBUG) << "+++ "<<id<<" INCREMENT COUNTER :" << end_counter<<std::flush;
@@ -58,7 +58,7 @@ thread_controller::counter_increment(unsigned id)
         allEnd.store(true);
         FILE_LOG(logDEBUG) << "+++END COUNTER (" << id << ") VAL: " <<end_counter.load()<<"/"<<M<<std::flush;
     }
-    pthread_mutex_unlock(&mutex_end);
+    // pthread_mutex_unlock(&mutex_end);
 
     return allEnd.load();
 }

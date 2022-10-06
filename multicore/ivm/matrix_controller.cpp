@@ -33,7 +33,7 @@ matrix_controller::matrix_controller(pbab* _pbb,int _nthreads) : thread_controll
 
 std::shared_ptr<bbthread>
 matrix_controller::make_bbexplorer(){
-    //initialize local (sequential) BB
+    //initialize local (sequential) BB ----> different options...!
     return std::make_shared<ivmthread>(
         pbb,
         make_interval_bb(pbb,arguments::boundMode)
@@ -53,7 +53,7 @@ matrix_controller::initFullInterval()
     }
     state[0]=1;
 
-    Intervalbb<int>::first=true;
+    // Intervalbb<int>::first=true;
 }
 
 //nbint := number received intervals
@@ -103,6 +103,7 @@ matrix_controller::explore_multicore()
     if(!bbb[id]){
         //make sequential bb-explorer
         bbb[id] = make_bbexplorer();
+
         //set level 0 subproblems
         bbb[id]->setRoot(pbb->root_sltn->perm, -1, pbb->size);
         FILE_LOG(logDEBUG) << "=== made explorer ("<<id<<")";
@@ -112,6 +113,14 @@ matrix_controller::explore_multicore()
     }else{
         FILE_LOG(logDEBUG) << "=== explorer ("<<id<<") is ready";
     }
+
+    int bestCost=INT_MAX;
+
+    //get global best UB
+    pbb->sltn->getBest(bestCost);
+    //set local UB
+    bbb[id]->setLocalBest(bestCost);
+
 
     if(state[id]==1){
         //has non-empty interval ...
@@ -129,18 +138,19 @@ matrix_controller::explore_multicore()
         bbb[id]->set_work_state(false);
     }
 
+    //reset counters and request queue
     bbb[id]->reset_request_queue();
     std::static_pointer_cast<ivmthread>(bbb[id])->ivmbb->reset_node_counter();
 
+    //make sure all are initialized
     int ret = pthread_barrier_wait(&barrier);
     if(ret==PTHREAD_BARRIER_SERIAL_THREAD)
     {
         updatedIntervals = 0;
         FILE_LOG(logDEBUG) << "=== start "<<get_num_threads()<<" exploration threads ===";
     }
-    ret = pthread_barrier_wait(&barrier);
 
-    int bestCost=INT_MAX;
+
 
     while (1) {
         //get global best UB

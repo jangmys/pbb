@@ -16,7 +16,6 @@ public:
     Intervalbb(pbab* _pbb);
 
     bool initAtInterval(std::vector<int>& pos, std::vector<int>& end);
-    void initFullInterval();
     void setRoot(const int* varOrder, int l1, int l2);
 
     void run();

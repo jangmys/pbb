@@ -36,16 +36,8 @@ template<typename T>
 void
 Intervalbb<T>::setRoot(const int *varOrder,int l1,int l2)
 {
-    clear();
-
-    pbb->sltn->getBest(prune->local_best);
-
-    IVM->setRow(0,varOrder);
-
+    IVM->clearInterval();
     IVM->setDepth(0);
-    IVM->decodeIVM();
-    IVM->getNode().limit1=-1;
-    IVM->getNode().limit2=size;
 
     bool _first;
     pthread_mutex_lock(&first_mutex);
@@ -53,16 +45,16 @@ Intervalbb<T>::setRoot(const int *varOrder,int l1,int l2)
     pthread_mutex_unlock(&first_mutex);
 
     if(!_first){
+        //row 0 and direction have been saved (static)
         IVM->setRow(0,rootRow.data());
         IVM->setDirection(0,rootDir);
     }else{
         //first line of Matrix
-        for(int i=0; i<size; i++){
-            IVM->getNode().schedule[i] = pbb->root_sltn->perm[i];
-        }
-        IVM->setRow(0,pbb->root_sltn->perm);
+        IVM->setRow(0,varOrder);
+        IVM->decodeIVM();
 
         //compute children bounds (of IVM->node), choose Branching and modify IVM accordingly
+        pbb->sltn->getBest(prune->local_best);
         boundAndKeepSurvivors(IVM->getNode(),arguments::boundMode);
 
         FILE_LOG(logDEBUG) << "R\t" << IVM->getNode();
@@ -82,21 +74,6 @@ Intervalbb<T>::setRoot(const int *varOrder,int l1,int l2)
 
 
 template<typename T>
-void
-Intervalbb<T>::initFullInterval()
-{
-    std::vector<int> zeroFact(size,0);
-    std::vector<int> endFact(size,0);
-
-    for (int i = 0; i < size; i++) {
-        endFact[i]  = size - i - 1;
-    }
-
-    initAtInterval(zeroFact, endFact);
-}
-
-
-template<typename T>
 bool
 Intervalbb<T>::initAtInterval(std::vector<int> &pos, std::vector<int> &end)
 {
@@ -107,7 +84,6 @@ Intervalbb<T>::initAtInterval(std::vector<int> &pos, std::vector<int> &end)
 
     if (IVM->beforeEnd()) {
         unfold(arguments::boundMode);
-
         return true;
     }else{
         return false;
@@ -207,7 +183,7 @@ bool Intervalbb<T>::next()
             if (IVM->isLastLine()) {
                 count_leaves++;
                 boundLeaf(IVM->getNode());
-                // state = 0;
+                state = 0;
                 continue;
             }
             break;
@@ -231,6 +207,8 @@ Intervalbb<T>::unfold(int mode)
     assert(IVM->intervalValid());
     assert(IVM->getDepth() == 0);
 
+    pbb->sltn->getBest(prune->local_best);
+
     while (IVM->getDepth() < size - 2) {
         if (IVM->pruningCellState()) {
             IVM->alignLeft();
@@ -243,27 +221,6 @@ Intervalbb<T>::unfold(int mode)
 
         FILE_LOG(logDEBUG) << " === Unfold line: "<<IVM->getDepth();
         FILE_LOG(logDEBUG) << "U\t" << IVM->getNode();
-
-        //DEBUG
-        bool onezero =false;
-        bool twozeros=false;
-        subproblem p = IVM->getNode();
-
-        for(int i=0;i<pbb->size;i++)
-        {
-            if(p.schedule[i]==0){
-                if(onezero){
-                    twozeros=true;
-                }
-                onezero=true;
-            }
-        }
-
-        if(twozeros){
-            IVM->displayMatrix();
-        }
-
-
 
         boundAndKeepSurvivors(IVM->getNode(),mode);
 
@@ -280,6 +237,8 @@ Intervalbb<T>::boundLeaf(subproblem& node)
     bool better=false;
     int cost=primary_bound->evalSolution(node.schedule.data());
 
+    // std::cout<<cost<<"\t"<<prune->local_best<<"\n";
+
     if(!(*prune)(cost)){
         better=true;
 
@@ -290,10 +249,12 @@ Intervalbb<T>::boundLeaf(subproblem& node)
         pbb->foundAtLeastOneSolution.store(true);
         pbb->foundNewSolution.store(true);
 
+
         //print new best solution
         if(arguments::printSolutions){
             solution tmp(size);
             tmp.update(node.schedule.data(),cost);
+            FILE_LOG(logINFO) << tmp;
             std::cout<<"New Best:\t";
             tmp.print();
         }

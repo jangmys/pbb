@@ -103,7 +103,16 @@ main(int argc, char ** argv)
             );
 
             sbb->setRoot(pbb->root_sltn->perm,-1,pbb->size);
-            sbb->initFullInterval();
+
+            std::vector<int> zeroFact(pbb->size,0);
+            std::vector<int> endFact(pbb->size,0);
+
+            for (int i = 0; i < pbb->size; i++) {
+                endFact[i]  = pbb->size - i - 1;
+            }
+            sbb->initAtInterval(zeroFact, endFact);
+
+            // sbb->initFullInterval();
             sbb->run();
 
             break;

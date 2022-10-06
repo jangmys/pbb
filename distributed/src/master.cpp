@@ -240,8 +240,8 @@ master::run()
                     pbb->sltn->getBestSolution(sol_buf->perm,tmp);
                     sol_buf->cost.store(tmp);
 
-                    comm->send_sol(sol_buf, status.MPI_SOURCE, NIL);
-                    //MPI_Send(&pbb->sltn->bestcost,1,MPI_INT,status.MPI_SOURCE,NIL,MPI_COMM_WORLD);
+                    // comm->send_sol(sol_buf, status.MPI_SOURCE, NIL);
+                    MPI_Send(&pbb->sltn->cost,1,MPI_INT,status.MPI_SOURCE,NIL,MPI_COMM_WORLD);
                 }
                 // FILE_LOG(logINFO) << "State\t" << 3;
                 break;

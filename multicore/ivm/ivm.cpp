@@ -213,23 +213,25 @@ ivm::decodeIVM()
 {
     const int* const jM  = getRowPtr(0);
     const int* const pV  = posVect.data();
-    int _line = line;
+    // int _line = getDepth();
 
     node.limit1 = -1;
     node.limit2 = size;
 
-    for (int l = 0; l < _line; l++) {
+    //-----go down until row before current (already scheduled)-----
+    for (int l = 0; l < getDepth(); l++) {
         int pointed = pV[l];
         int job     = absolute(jM[l * size + pointed]);
-
+        //adjust subproblem limits
         if (dirVect[l] == 0) {
             node.schedule[++node.limit1] = job;
         } else {
             node.schedule[--node.limit2] = job;
         }
     }
-    for (int l = 0; l < size - _line; l++){
-        node.schedule[node.limit1 + 1 + l] = absolute(jM[_line * size + l]);
+    //-----fill remaining with jobs in current row-----
+    for (int l = 0; l < size - getDepth(); l++){
+        node.schedule[node.limit1 + 1 + l] = absolute(jM[getDepth() * size + l]);
     }
 
     FILE_LOG(logDEBUG) << "D\t" << node;
