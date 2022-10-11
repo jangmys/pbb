@@ -39,17 +39,14 @@ thread_controller::get_bbthread(int k)
 void
 thread_controller::counter_decrement()
 {
-    // pthread_mutex_lock(&mutex_end);
     end_counter--;
     FILE_LOG(logDEBUG) << " DECREMENT COUNTER :" << end_counter<<std::flush;
-    // pthread_mutex_unlock(&mutex_end);
 }
 
 /* end_counter is atomic*/
 bool
 thread_controller::counter_increment(unsigned id)
 {
-    // pthread_mutex_lock(&mutex_end);
     end_counter++;
 
     FILE_LOG(logDEBUG) << "+++ "<<id<<" INCREMENT COUNTER :" << end_counter<<std::flush;
@@ -58,7 +55,6 @@ thread_controller::counter_increment(unsigned id)
         allEnd.store(true);
         FILE_LOG(logDEBUG) << "+++END COUNTER (" << id << ") VAL: " <<end_counter.load()<<"/"<<M<<std::flush;
     }
-    // pthread_mutex_unlock(&mutex_end);
 
     return allEnd.load();
 }
@@ -215,15 +211,10 @@ thread_controller::get_num_threads()
 void
 thread_controller::stop(unsigned id)
 {
-    FILE_LOG(logDEBUG) << "=== begin thread_controller::stop ("<<id<<")";
-
     unlockWaiting(id);
-
-    FILE_LOG(logDEBUG) << "=== barrier.....("<<id<<")";
 
     int ret=pthread_barrier_wait(&barrier);
     if(ret==PTHREAD_BARRIER_SERIAL_THREAD){
-        FILE_LOG(logDEBUG) << "=== stop barrier ===";
+        FILE_LOG(logDEBUG) << "=== thread_controller::stop ("<<id<<")";
     }
-    FILE_LOG(logDEBUG) << "=== end thread_controller::stop ("<<id<<")";
 }

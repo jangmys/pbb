@@ -189,29 +189,12 @@ matrix_controller::explore_multicore()
 
     FILE_LOG(logDEBUG) << "=== Exit exploration loop";
 
-    // int *pos = new int[pbb->size];
-    // int *end = new int[pbb->size];
-    // std::static_pointer_cast<ivmthread>(bbb[id])->getInterval(pos,end);
-    //
-    // pthread_mutex_lock(&mutex_end);
-    // for(int i=0;i<pbb->size;i++)
-    //     std::cout<<pos[i]<<" ";
-    // std::cout<<"\n";
-    //
-    // for(int i=0;i<pbb->size;i++)
-    //     std::cout<<end[i]<<" ";
-    // std::cout<<"\n";
-    // pthread_mutex_unlock(&mutex_end);
-    //
-    // delete[] pos;
-    // delete[] end;
-
     pbb->stats.totDecomposed += std::static_pointer_cast<ivmthread>(bbb[id])->ivmbb->get_decomposed_count();
     pbb->stats.leaves += std::static_pointer_cast<ivmthread>(bbb[id])->ivmbb->get_leaves_count();
 
     allEnd.store(true);
-    FILE_LOG(logDEBUG) << "=== Decomposed: "<<std::static_pointer_cast<ivmthread>(bbb[id])->ivmbb->get_decomposed_count();
-    FILE_LOG(logDEBUG) << "=== Leaves: "<<std::static_pointer_cast<ivmthread>(bbb[id])->ivmbb->get_leaves_count();
+    FILE_LOG(logINFO) << "=== Decomposed: "<<std::static_pointer_cast<ivmthread>(bbb[id])->ivmbb->get_decomposed_count();
+    FILE_LOG(logINFO) << "=== Leaves: "<<std::static_pointer_cast<ivmthread>(bbb[id])->ivmbb->get_leaves_count();
     stop(id);
 }
 

@@ -194,7 +194,6 @@ bool Intervalbb<T>::next()
     if(state == 1)
     {
         boundAndKeepSurvivors(IVM->getNode(),arguments::boundMode);
-        FILE_LOG(logDEBUG) << "E\t" << IVM->getNode();
     }
 
     return (state == 1);
@@ -219,11 +218,7 @@ Intervalbb<T>::unfold(int mode)
         IVM->generateLine(IVM->getDepth(), false);
         IVM->decodeIVM();
 
-        FILE_LOG(logDEBUG) << " === Unfold line: "<<IVM->getDepth();
-        FILE_LOG(logDEBUG) << "U\t" << IVM->getNode();
-
         boundAndKeepSurvivors(IVM->getNode(),mode);
-
     }
 } // matrix::unfold
 

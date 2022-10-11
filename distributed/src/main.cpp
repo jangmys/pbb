@@ -45,7 +45,9 @@ main(int argc, char ** argv)
     FILELog::ReportingLevel() = logINFO;
 #ifndef NDEBUG
     FILELog::ReportingLevel() = logDEBUG;
+    std::cout<<"RUNNING IN DEBUG MODE\n";
 #endif
+
     char buf[100];
     if (myrank == 0) {
         snprintf(buf, sizeof(buf), "./logs/%s_master.txt", arguments::inst_name);
