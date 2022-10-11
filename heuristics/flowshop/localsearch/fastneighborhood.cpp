@@ -150,12 +150,10 @@ int fspnhood<T>::fastkImove(std::vector<int>& perm,int kmax)
     int rjob;
 
     cmax0=m->computeHeads(perm, len);
-    // printf("start with %d\n",cmax0);
 
     m->tabupos->clear();
     m->tabujobs->clear();
-    // int randpos = helper::intRand(0,N);
-    // rjob=m->remove(perm, len, pos);
+
     int pos=m->bestRemove2(perm, len, rjob, cmax1);
     m->tabujobs->add(rjob);
     m->tabupos->add(pos);
@@ -211,8 +209,6 @@ int fspnhood<T>::fastkImove(std::vector<int>& perm,int kmax,int l1,int l2)
         m->tabupos->add(i);
     }
 
-    // int pos = helper::intRand(l1,l2-1);
-    // rjob=m->remove(perm, len, pos);
     int pos=m->bestRemove(perm, len, rjob, cmax1);
     m->tabujobs->add(rjob);
     m->tabupos->add(pos);

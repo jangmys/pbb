@@ -38,15 +38,14 @@ public:
     addBackAndBound(int job, int &prio);
 
     void
-    boundChildren(int * permut, int limit1, int limit2, int * costsBegin, int * costsEnd, int * prioBegin,
-      int * prioEnd);
+    boundChildren(int * permut, int limit1, int limit2, int * costsBegin, int * costsEnd, int * prioBegin, int * prioEnd, int best);
 
     int
     evalSolution(int * permut);
 
     void
     bornes_calculer(int permutation[], int limite1, int limite2, int * couts, int best);
-    void
+    int
     bornes_calculer(int permutation[], int limite1, int limite2);
 private:
     //performance vs local + passing into functions ?

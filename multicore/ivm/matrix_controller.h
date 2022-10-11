@@ -19,7 +19,7 @@ class bbthread;
 class matrix_controller : public thread_controller{
     friend class worker_mc;
 public:
-    explicit matrix_controller(pbab* _pbb);
+    matrix_controller(pbab* _pbb,int _nthreads);
 
     std::shared_ptr<bbthread> make_bbexplorer();
     int work_share(unsigned id, unsigned thief);
@@ -28,10 +28,18 @@ public:
     void initFromFac(const unsigned int nbint, const int* ids, int*pos, int* end);
     int getSubproblem(int *ret, const int N);
 
-    void unlockWaiting(unsigned id);
+    // void unlockWaiting(unsigned id);
 
     bool next();
     void explore_multicore();
+
+    void set_distributed(){
+        _distributed = true;
+    }
+    bool is_distributed(){
+        return _distributed;
+    }
+
 private:
     int updatedIntervals = 1;
 
@@ -39,6 +47,8 @@ private:
     std::vector<int> state;
     std::vector<std::vector<int>> pos;
     std::vector<std::vector<int>> end;
+
+    bool _distributed = false;
 };
 
 #endif

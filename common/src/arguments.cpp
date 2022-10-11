@@ -13,8 +13,11 @@ char arguments::problem[50];
 
 //Bounding options
 int arguments::boundMode     = 2;
-bool arguments::earlyStopJohnson = true;
-int arguments::johnsonPairs      = 1;
+int arguments::primary_bound     = 0;
+int arguments::secondary_bound   = 1;
+
+bool arguments::earlyStopJohnson = false;
+int arguments::johnsonPairs      = 0;
 
 //Branching options
 int arguments::branchingMode = 3;
@@ -55,7 +58,7 @@ int arguments::cut_top         = 99999;
 int arguments::cut_bottom      = -1;
 
 //verbosity / logging
-bool arguments::printSolutions = true;
+bool arguments::printSolutions = false;
 char arguments::logfile[50] = "./logfile.txt";
 int arguments::logLevel = logINFO;
 
@@ -104,8 +107,12 @@ arguments::readIniFile()
     sortNodes    = reader.GetInteger("bb", "sortedDFS", 1);
     nodePriority = reader.GetInteger("bb", "sortingCriterion", 1);
 
+    //johnson bound
     earlyStopJohnson = reader.GetBoolean("bb", "earlyStopJohnson", true);
     boundMode        = reader.GetInteger("bb", "boundingMode", 2);
+    primary_bound = reader.GetInteger("bb", "primaryBound", 0);
+    secondary_bound = reader.GetInteger("bb", "secondaryBound", 1);
+
     johnsonPairs     = reader.GetInteger("bb", "JohnsonMode", 1);
 
     findAll    = reader.GetBoolean("bb", "findAll", false);
@@ -135,16 +142,16 @@ arguments::readIniFile()
     initial_work = reader.GetInteger("distributed", "initialWork", 3);
 } // arguments::readIniFile
 
-inline bool
-fexists(const std::string& name)
-{
-    struct stat buffer;
+// inline bool
+// fexists(const std::string& name)
+// {
+//     struct stat buffer;
+//
+//     return (stat(name.c_str(), &buffer) == 0);
+// }
 
-    return (stat(name.c_str(), &buffer) == 0);
-}
 
-
-#define OPTIONS "z:ftm" // vrtnqbiowcdugmsfh"
+#define OPTIONS "z:ftmab" // vrtnqbiowcdugmsfh"
 bool
 arguments::parse_arguments(int argc, char ** argv)
 {
@@ -160,10 +167,55 @@ arguments::parse_arguments(int argc, char ** argv)
         NULL
     };
 
-    int c = getopt_long(argc, argv, OPTIONS, NULL, NULL);
+    int option_index=0;
+    static struct option long_options[] = {
+                {"bound",   required_argument, NULL,  0 },
+                {"branch",  required_argument, NULL,  0 },
+                {"findall",  no_argument, NULL,  0 },
+                {"singlenode",  no_argument, NULL,  0 },
+                {"primary-bound",  required_argument, NULL,  0 },
+                {0,         0,                 0,  0 }
+            };
+
+    int c = getopt_long(argc, argv, OPTIONS, long_options, &option_index);
 
     while (c != -1) {
         switch (c) {
+            case 0: //long_options
+            {
+                if(strcmp(long_options[option_index].name,"bound") == 0)
+                {
+                    boundMode = atoi(optarg);
+                }
+                else if(strcmp(long_options[option_index].name,"branch")  == 0)
+                {
+                    branchingMode = atoi(optarg);
+                }
+                else if(strcmp(long_options[option_index].name,"findall")  == 0)
+                {
+                    findAll = true;
+                }
+                else if(strcmp(long_options[option_index].name,"singlenode")  == 0)
+                {
+                    singleNode = true;
+                }
+                else if(strcmp(long_options[option_index].name,"primary-bound") == 0)
+                {
+                    if(optarg[0]=='j')
+                    {
+                        primary_bound = 1;
+                    }else{
+                        primary_bound = 0;
+                    }
+                    // include johnson option in format "j:0:1:1"
+                    // printf(" == primary-bound %c\n",optarg[0]);
+                    // printf(" == primary-bound %c\n",optarg[2]);
+                    // printf(" == primary-bound %c\n",optarg[4]);
+                }
+
+                break;
+            }
+
             //-f ../multicore/mcconfig.ini
             case 'f': {
                 strcpy(inifile, argv[optind]);
@@ -196,8 +248,12 @@ arguments::parse_arguments(int argc, char ** argv)
                 singleNode = true;
                 break;
             }
+            case 'a': {
+                findAll = true;
+                break;
+            }
         }
-        c = getopt_long(argc, argv, OPTIONS, NULL, NULL);
+        c = getopt_long(argc, argv, OPTIONS, long_options, &option_index);
     }
 
     return ok;

@@ -145,7 +145,7 @@ bool IG::acceptance(int tempcost, int cost,float param)
     float earg=(float)cost-(float)tempcost;
     earg /= (param*avgPT/10.0);
 
-	float r = helper::floatRand(0.0, 1.0);
+	float r = pbb::random::floatRand(0.0, 1.0);
 
     float prob=exp(earg);
 

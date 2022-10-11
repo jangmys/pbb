@@ -32,7 +32,7 @@ gpubb::gpubb(pbab * _pbb)
     // as in 'ivm_bound' constructor (should make a function...)
     if (arguments::problem[0] == 'f') {
         bound_fsp_weak *bd=new bound_fsp_weak();
-        bd->init(pbb->instance);
+        bd->init(pbb->instance.get());
         bound=bd;
     }
 
@@ -1189,24 +1189,11 @@ gpubb::getIntervals(int * pos, int * end, int * ids, int &nb_intervals, const in
     for (int k = 0; k < nbIVM; k++) {
         if (state_h[k] != 0) {
             ids[nbActive] = k;
-            // states[nbActive] = matrices[k]->getState();
-
             memcpy(&pos[nbActive*size],&pos_h[k*size],size*sizeof(int));
             memcpy(&end[nbActive*size],&end_h[k*size],size*sizeof(int));
-            // for(int i=0;i<size;i++){
-            //     pos[nbActive * size + i] = pos_h[k*size + i];
-            //     end[nbActive * size + i] = end_h[k*size + i];
-            // }
 
-    //         matrices[k]->getInterval(&pos[nbActive * size], &end[nbActive * size]);
             nbActive++;
         }
-	//
-	//
-    //     //        printf("%d",matrices[k]->decomposedNodes);fflush(stdout);
-    //     // fwrk->nb_decomposed += matrices[k]->decomposedNodes;
-    //     // matrices[k]->decomposedNodes = 0;
-    //     // pthread_mutex_unlock(&matrices[k]->mutex_ivm);
     }
 
     unsigned int nodeCount;

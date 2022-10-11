@@ -1,8 +1,9 @@
 #include "ivmthread.h"
 
-ivmthread::ivmthread(pbab* _pbb) :
+ivmthread::ivmthread(pbab* _pbb, std::unique_ptr<Intervalbb<int>> _ibb) :
     bbthread(_pbb),
-    ivmbb(std::make_shared<sequentialbb<int>>(_pbb,_pbb->size))
+    ivmbb(std::move(_ibb))
+    // ivmbb(std::make_shared<Intervalbb<int>>(_pbb,_pbb->size))
 {
 };
 
@@ -15,8 +16,8 @@ bool ivmthread::bbStep(){
     return ivmbb->next();
 }
 
-void ivmthread::setRoot(const int* perm){
-    ivmbb->setRoot(perm);
+void ivmthread::setRoot(const int* perm, int l1, int l2){
+    ivmbb->setRoot(perm,-1,pbb->size);
 }
 
 

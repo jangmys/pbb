@@ -3,17 +3,32 @@
 
 #include "pbab.h"
 #include "bbthread.h"
-#include "sequentialbb.h"
+#include "intervalbb.h"
+#include "intervalbb_incr.h"
+#include "intervalbb_easy.h"
+
+static std::unique_ptr<Intervalbb<int>> make_interval_bb(pbab* pbb, unsigned bound_mode)
+{
+    if(arguments::boundMode == 0){
+        return std::make_unique<Intervalbb<int>>(pbb);
+    }else if(arguments::boundMode == 1){
+        return std::make_unique<IntervalbbEasy<int>>(pbb);
+    }else{
+        return std::make_unique<IntervalbbIncr<int>>(pbb);
+    }
+}
+
+
 
 class pbab;
 
 class ivmthread : public bbthread
 {
 public:
-    explicit ivmthread(pbab* _pbb);
+    ivmthread(pbab* _pbb, std::unique_ptr<Intervalbb<int>> _ibb);
     ~ivmthread();
 
-    std::shared_ptr<sequentialbb<int>> ivmbb;
+    std::shared_ptr<Intervalbb<int>> ivmbb;
 
     subproblem&
     getNode()
@@ -35,7 +50,7 @@ public:
     }
 
     bool bbStep();
-    void setRoot(const int* perm);
+    void setRoot(const int* perm, int l1, int l2);
 
     bool isEmpty(){
         return !ivmbb->get_ivm()->beforeEnd();

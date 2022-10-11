@@ -33,16 +33,16 @@ worker_mc::interrupt()
 bool
 worker_mc::doWork()
 {
+    FILE_LOG(logDEBUG) << " === worker_mc::doWork (rank " << comm->rank<<")";
+
     pbb->ttm->on(pbb->ttm->workerExploretime);
-
-    FILE_LOG(logDEBUG) << "=== dowork== " << comm->rank;
-
     pbb->foundNewSolution.store(false);
     pthread_mutex_lock_check(&mutex_wunit);
     mc->next();
     pthread_mutex_unlock(&mutex_wunit);
-
     pbb->ttm->off(pbb->ttm->workerExploretime);
+
+    FILE_LOG(logDEBUG) << " === worker_mc::doWork return from next (rank " << comm->rank<<")";
 
     setNewBest(pbb->foundNewSolution);
 
@@ -52,6 +52,8 @@ worker_mc::doWork()
 void
 worker_mc::updateWorkUnit()
 {
+    FILE_LOG(logDEBUG) << " === update work unit (rank " << comm->rank<<")";
+
     assert(work_buf->nb_intervals <= mc->get_num_threads());
     if (work_buf->nb_intervals == 0) {
         return;

@@ -3,6 +3,7 @@
 
 #include <memory>
 
+#include "pbab.h"
 #include "tree.h"
 #include "branching.h"
 #include "pruning.h"
@@ -20,13 +21,15 @@ struct prio_compare {
 
 class Beam{
 public:
-    Beam(instance_abstract* inst);
+    Beam(pbab* _pbb,instance_abstract* inst);
+
+    pbab* pbb;
 
     std::vector<std::unique_ptr<subproblem>>activeSet;
 
     std::unique_ptr<Tree> tr;
-    std::unique_ptr<pruning> prune;
-    std::unique_ptr<branching> branch;
+    std::unique_ptr<Pruning> prune;
+    std::unique_ptr<Branching> branch;
     std::unique_ptr<bound_fsp_weak_idle> eval;
 
     std::unique_ptr<subproblem> bestSolution;

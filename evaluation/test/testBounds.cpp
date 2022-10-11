@@ -145,7 +145,7 @@ int main(int argc,char **argv){
 
     clock_gettime(CLOCK_MONOTONIC,&t1);
     for(auto &p : solutions){
-        bound->boundChildren(p.data(), l1+5, l2-5, lb_begin.data(), lb_end.data(), prio_beginI.data(), prio_endI.data());
+        bound->boundChildren(p.data(), l1+5, l2-5, lb_begin.data(), lb_end.data(), prio_beginI.data(), prio_endI.data(),9999999);
     }
     clock_gettime(CLOCK_MONOTONIC,&t2);
     std::cout<<(t2.tv_sec-t1.tv_sec)+(t2.tv_nsec-t1.tv_nsec)/1e9<<"\n";

@@ -4,68 +4,97 @@
 #include <limits.h>
 #include <memory>
 
-// #define FRONT (0)
-// #define BACK (1)
-
 class pbab;
-class ivm;
 
-class branching{
+class Branching{
 public:
-    explicit branching(int _size) : size(_size)
+    // Used for array indexes!  Don't change the numbers!
+    enum branchingDirection{
+        Front = 0,
+        Back = 1
+    };
+    enum branchingType{
+        Forward = 0,
+        Backward = 1,
+        Bidirectional = 2
+    };
+
+    explicit Branching(int _size,Branching::branchingType _type) : size(_size),m_branchType(_type)
     {};
 
-    enum branchingDirection{Front,Back};
-
-    virtual ~branching(){};
+    virtual ~Branching(){};
     virtual int operator()(const int*cb, const int* ce, const int line) = 0;
+
+    virtual int pre_bound_choice(const int line) = 0;
+
+    virtual Branching::branchingType get_type()
+    {
+        return m_branchType;
+    }
 
 protected:
     int size;
+    Branching::branchingType m_branchType = Forward;
 };
 
 //static : only left to right
-class forwardBranching : public branching
+class forwardBranching : public Branching
 {
 public:
-    explicit forwardBranching(int _size) : branching(_size){};
+    explicit forwardBranching(int _size) :
+        Branching(_size,Branching::Forward){};
 
     //needs no argument...
     int operator()(const int*cb, const int* ce, const int line)
     {
         return Front;
     }
+
+    int pre_bound_choice(const int line)
+    {
+        return Front;
+    }
 };
 
 //static : only right to left
-class backwardBranching : public branching
+class backwardBranching : public Branching
 {
 public:
-    explicit backwardBranching(int _size) : branching(_size){};
+    explicit backwardBranching(int _size) : Branching(_size,Branching::Backward){};
 
     //needs no argument...
     int operator()(const int*cb, const int* ce, const int line)
     {
         return Back;
     }
+
+    int pre_bound_choice(const int line)
+    {
+        return Back;
+    }
 };
 
-//alternating : branching direction depends on depth
-class alternateBranching final : public branching
+//alternating : Branching direction depends on depth
+class alternateBranching final : public Branching
 {
 public:
-    explicit alternateBranching(int _size) : branching(_size){};
+    explicit alternateBranching(int _size) : Branching(_size,Branching::Bidirectional){};
 
     int operator()(const int*cb, const int* ce, const int line)
     {
         return (line%2)?Back:Front;
     }
+
+    int pre_bound_choice(const int line)
+    {
+        return (line%2)?Back:Front;
+    }
 };
 
-class maxSumBranching : public branching
+class maxSumBranching : public Branching
 {
 public:
-    explicit maxSumBranching(int _size) : branching(_size){};
+    explicit maxSumBranching(int _size) : Branching(_size,Branching::Bidirectional){};
 
     int operator()(const int*cb, const int* ce, const int line)
     {
@@ -77,12 +106,17 @@ public:
 
         return (sum < 0)?Back:Front; //choose larger sum, tiebreak : FRONT
     }
+
+    int pre_bound_choice(const int line)
+    {
+        return -1;
+    }
 };
 
-class minBranchBranching : public branching
+class minBranchBranching : public Branching
 {
 public:
-    explicit minBranchBranching(int _size,int UB = 0) : branching(_size),initialUB(UB)
+    explicit minBranchBranching(int _size,int UB = 0) : Branching(_size,Branching::Bidirectional),initialUB(UB)
     {};
 
 
@@ -104,20 +138,23 @@ public:
         else return (sum < 0)?Back:Front;
     }
 
+    int pre_bound_choice(const int line)
+    {
+        return -1;
+    }
+
 private:
     int initialUB;
 };
 
 
-class minMinBranching : public branching
+class minMinBranching : public Branching
 {
 public:
-    explicit minMinBranching(int _size,int UB) : branching(_size),initialUB(UB)
+    explicit minMinBranching(int _size,int UB) : Branching(_size,Branching::Bidirectional),initialUB(UB)
     {};
 
     int operator()(const int*cb, const int* ce, const int line){
-        // int ub=local_best;
-        // if(!arguments::singleNode)
         int ub=initialUB;
 
         int min=INT_MAX;
@@ -141,6 +178,12 @@ public:
         else if(minCount < 0)return Front;
         else return (elimCount > 0)?Front:Back;//break ties
     }
+
+    int pre_bound_choice(const int line)
+    {
+        return -1;
+    }
+
 private:
     int initialUB;
 };

@@ -21,8 +21,13 @@ public:
     static int initial_heuristic_iters;
     static char heuristic_type;
 
+    // --branch
     static int branchingMode;
+    // --bound
     static int boundMode;
+    //
+    static int primary_bound;
+    static int secondary_bound;
 
     // static char type;       //'g'PU or 'c'PU
     static bool singleNode; //no MPI = 1 ; distributed = 0

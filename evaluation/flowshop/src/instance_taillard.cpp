@@ -2,9 +2,10 @@
  * Flowshop instances defined by Taillard'93
  */
 
-// #include "instance_abstract.h"
+#include "instance_abstract.h"
 #include "instance_taillard.h"
 
+#include <pthread.h>
 #include <iostream>
 #include <sstream>
 #include <fstream>

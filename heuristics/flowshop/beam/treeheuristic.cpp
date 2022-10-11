@@ -2,9 +2,10 @@
 #include "operator_factory.h"
 
 
-Treeheuristic::Treeheuristic(instance_abstract* inst) :
+Treeheuristic::Treeheuristic(pbab* _pbb,instance_abstract* inst) :
+    pbb(_pbb),
     tr(std::make_unique<Tree>(inst,inst->size)),
-    prune(OperatorFactory::createPruning(arguments::findAll)),
+    prune(pbb->pruning_factory->make_pruning()),
     branch(OperatorFactory::createBranching(arguments::branchingMode,inst->size,99999)),
     eval(std::make_unique<bound_fsp_weak_idle>())
 {
@@ -15,7 +16,7 @@ Treeheuristic::Treeheuristic(instance_abstract* inst) :
 
     ls = std::make_unique<LocalSearch>(inst);
     ig = std::make_unique<IG>(inst);
-    beam = std::make_unique<Beam>(inst);
+    beam = std::make_unique<Beam>(pbb,inst);
 }
 
 
@@ -50,8 +51,8 @@ Treeheuristic::run(std::shared_ptr<subproblem>& s, int _ub)
 
     while(1){
         if(perturb){
-            int l = helper::intRand(2, tmpsol->size/5);
-            int r = helper::intRand(0, tmpsol->size - l);
+            int l = pbb::random::intRand(2, tmpsol->size/5);
+            int r = pbb::random::intRand(0, tmpsol->size - l);
 
             std::random_device rd;
             std::mt19937 g(rd());

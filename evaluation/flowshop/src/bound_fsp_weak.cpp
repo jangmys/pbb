@@ -18,6 +18,7 @@
 void
 bound_fsp_weak::init(instance_abstract * _instance)
 {
+    pthread_mutex_lock(&_instance->mutex_instance_data);
     // get instance parameters (N/M)
     (_instance->data)->seekg(0);
     (_instance->data)->clear();
@@ -27,9 +28,14 @@ bound_fsp_weak::init(instance_abstract * _instance)
     // read matrix of processing times from instance-data (stringstream)
     PTM = std::vector<std::vector<int> >(nbMachines, std::vector<int>(nbJob));
 
-    for (int j = 0; j < nbMachines; j++)
-        for (int i = 0; i < nbJob; i++)
+    for (int j = 0; j < nbMachines; j++){
+        for (int i = 0; i < nbJob; i++){
             *(_instance->data) >> PTM[j][i];
+            // std::cout<<PTM[j][i]<<"\t";
+        }
+        // std::cout<<"\n";
+    }
+    pthread_mutex_unlock(&_instance->mutex_instance_data);
 
     // fill auxiliary data for LB computation
     fillMinHeadsTails();
@@ -62,6 +68,9 @@ bound_fsp_weak::fillMinHeadsTails()
             min_heads[k] = (tmp[k - 1] < min_heads[k]) ? tmp[k - 1] : min_heads[k];
         }
     }
+    // for(auto &c: min_heads)
+    //     std::cout<<c<<" ";
+    // std::cout<<std::endl;
 
     // 2/ min run-out times on each machine
     std::fill(min_tails.begin(), min_tails.end(), INT_MAX);
@@ -79,6 +88,10 @@ bound_fsp_weak::fillMinHeadsTails()
             min_tails[k] = std::min(tmp[k + 1], min_tails[k]);
         }
     }
+
+    // for(auto &c: min_tails)
+    //     std::cout<<c<<" ";
+    // std::cout<<std::endl;
 }
 
 // ==============================================================
@@ -205,8 +218,7 @@ bound_fsp_weak::addBackAndBound(int job, int &idle)
 // get all lower bounds for all children
 // begin/end if both LB pointers are given
 void
-bound_fsp_weak::boundChildren(int * schedule, int limit1, int limit2, int * costsBegin, int * costsEnd, int * prioBegin,
-  int * prioEnd)
+bound_fsp_weak::boundChildren(int * schedule, int limit1, int limit2, int * costsBegin, int * costsEnd, int * prioBegin, int * prioEnd, int best)
 {
     if (costsBegin && costsEnd) {
         // BEGIN/END LOWER BOUNDS
@@ -235,7 +247,7 @@ bound_fsp_weak::boundChildren(int * schedule, int limit1, int limit2, int * cost
         computePartial(schedule, limit1, limit2);
         for (int i = limit1 + 1; i < limit2; i++) {
             int job = schedule[i];
-            costsBegin[job] = addBackAndBound(job, prioEnd[job]);
+            costsEnd[job] = addBackAndBound(job, prioEnd[job]);
         }
     }
 }
@@ -262,6 +274,15 @@ bound_fsp_weak::evalSolution(int * permut)
 void
 bound_fsp_weak::bornes_calculer(int permutation[], int limite1, int limite2, int * couts, int best)
 {
+    // printf("NB JOBS:%2d\t",nbJob);
+    // printf("NB MACH:%2d\t",nbMachines);
+    //
+    // for(int i=0; i<nbJob; i++)
+    // {
+    //     printf("%2d ",permutation[i]);
+    // }
+    // printf("\n");
+
     scheduleFront(permutation, limite1);
     scheduleBack(permutation, limite2);
     sumUnscheduled(permutation, limite1, limite2);
@@ -284,6 +305,6 @@ bound_fsp_weak::bornes_calculer(int permutation[], int limite1, int limite2, int
     couts[0] = lb;
 }
 
-void
+int
 bound_fsp_weak::bornes_calculer(int permutation[], int limite1, int limite2)
 { }

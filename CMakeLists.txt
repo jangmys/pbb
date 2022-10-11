@@ -10,16 +10,9 @@ LANGUAGES C CXX)
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_CXX_FLAGS "-Wall -Wno-unused-function -Wno-unused-variable -O2")
-set(CMAKE_CXX_FLAGS_DEBUG "-ggdb3 -O0" CACHE STRING "")
+set(CMAKE_CXX_FLAGS_DEBUG "-g -pg -O0 -rdynamic" CACHE STRING "")
 
 ######################################################################################
-
-#add lower bounds library
-add_subdirectory(evaluation)
-#add heuristics library
-add_subdirectory(heuristics)
-#add multicore IVM-based BB
-add_subdirectory(multicore)
 
 #optional : add GPUBB (requires CUDA)
 if(GPU)
@@ -30,8 +23,17 @@ endif()
 #optional : add distributed BB (requires MPI and GMP)
 if(MPI)
     add_definitions(-DWITH_MPI)
+    add_compile_definitions(WITH_MPI)
     add_subdirectory(distributed)
 endif()
+
+#add lower bounds library
+add_subdirectory(evaluation)
+#add heuristics library
+add_subdirectory(heuristics)
+#add multicore IVM-based BB
+add_subdirectory(multicore)
+
 
 ######################################################################################
 

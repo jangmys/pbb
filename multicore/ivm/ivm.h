@@ -17,9 +17,7 @@ private:
 public:
     explicit ivm(int _size);
 
-    //GETTERS / SETTERS =========================
     subproblem& getNode();
-    // void getSchedule(int *sch);
     //operate on line
     int getDepth() const;
     void setDepth(int _line);
@@ -35,7 +33,10 @@ public:
     int getEnd(const int _d) const;
     //direction vector
     int getDirection(const int _d) const;
+    int getDirection() const;
     void setDirection(int depth, int dir);
+    void setDirection(int dir);
+
     //matrix
     void setRow(int k, const int *row);
     int *getRowPtr(int i);

@@ -64,14 +64,10 @@ isSmaller(const int * a, const int * b, int N)
     return true;
 }
 
-// static float floatRand(const float min, const float max) {
-//     thread_local std::mt19937 generator(std::random_device{}());
-//     std::uniform_real_distribution<float> distribution(min, max);
-//     return distribution(generator);
-// }
 
-
-namespace helper {
+namespace pbb
+{
+namespace random {
 static int
 intRand(const int min, const int max)
 {
@@ -103,6 +99,7 @@ shuffle(int * array, size_t n)
             array[i] = t;
         }
     }
+}
 }
 }
 

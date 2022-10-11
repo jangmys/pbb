@@ -15,6 +15,7 @@
 void
 bound_fsp_strong::init(instance_abstract * _instance)
 {
+    pthread_mutex_lock(&_instance->mutex_instance_data);
     (_instance->data)->seekg(0);
     (_instance->data)->clear();
     *(_instance->data) >> nbJob;
@@ -28,6 +29,8 @@ bound_fsp_strong::init(instance_abstract * _instance)
     for (int j = 0; j < nbMachines; j++)
         for (int i = 0; i < nbJob; i++)
             *(_instance->data) >> PTM[j][i];
+    pthread_mutex_unlock(&_instance->mutex_instance_data);
+
 
     // fill auxiliary data for LB computation
     // [to be called in this order!!]
@@ -200,7 +203,7 @@ bound_fsp_strong::scheduleFront(int permutation[], int limite1, int limite2, int
         int job      = permutation[j];
         front[0] = front[0] + PTM[0][job];
         for (int m = 1; m < nbMachines; m++) {
-            *idle   += std::max(0, front[m - 1] - front[m]);
+            // *idle   += std::max(0, front[m - 1] - front[m]); //TMP!!!
             front[m] = std::max(front[m],
                 front[m - 1]) + PTM[m][job];
         }
@@ -447,7 +450,7 @@ bound_fsp_strong::setFlags(int permutation[], int limite1, int limite2)
 
 
 void
-bound_fsp_strong::bornes_calculer(int permutation[], const int limite1, const int limite2, int * couts, const int best)
+bound_fsp_strong::bornes_calculer(int permutation[], int limite1, int limite2, int * couts, int best)
 {
     if (limite2 - limite1 <= 2) {
         //        printf("this happens\n");
@@ -465,8 +468,37 @@ bound_fsp_strong::bornes_calculer(int permutation[], const int limite1, const in
         scheduleBack(permutation, limite2, &couts[1]);
 
         couts[0] = calculBorne(best);
+        // std::cout<<"LB "<<best<<" "<<couts[0]<<"\n";
     }
 }
+
+void
+bound_fsp_strong::boundChildren(int permutation[], int limit1, int limit2, int * costsBegin, int * costsEnd, int * prioBegin, int * prioEnd, int best)
+{
+    std::vector<int>costs(2,0);
+
+    for (int i = limit1 + 1; i < limit2; i++) {
+        int job = permutation[i];
+
+        //front
+        if(costsBegin){
+            std::swap(permutation[limit1 + 1], permutation[i]);
+            bornes_calculer(permutation, limit1 + 1, limit2, costs.data(), best);
+            costsBegin[job] = costs[0];
+            prioBegin[job]=costs[1];
+            std::swap(permutation[limit1 + 1], permutation[i]);
+        }
+        //back
+        if(costsEnd){
+            std::swap(permutation[limit2 - 1], permutation[i]);
+            bornes_calculer(permutation, limit1, limit2 - 1, costs.data(), best);
+            costsEnd[job] = costs[0];
+            prioEnd[job]=costs[1];
+            std::swap(permutation[limit2 - 1], permutation[i]);
+        }
+    }
+}
+
 
 int
 bound_fsp_strong::evalSolution(int * permut)
@@ -484,9 +516,10 @@ bound_fsp_strong::evalSolution(int * permut)
     return tmp[nbMachines - 1];
 }
 
-void
+int
 bound_fsp_strong::bornes_calculer(int * schedule, int limit1, int limit2)
 {
+    return 0;
     // bornes_calculer(p.permutation, p.limite1, p.limite2,p.couts,999999);
     // p.couts_nbMachinePairs=p.couts[0]+p.couts[1];
 }

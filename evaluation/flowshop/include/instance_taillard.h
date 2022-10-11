@@ -6,6 +6,7 @@
 
 #include "instance_abstract.h"
 
+#include <pthread.h>
 #include <sys/stat.h>
 #include <stdlib.h>
 #include <string.h>
@@ -44,7 +45,9 @@ struct instance_taillard : public instance_abstract {
 
         if (f_exists("../evaluation/flowshop/data/instances.data")) {
             infile = std::ifstream("../evaluation/flowshop/data/instances.data");
-        } else  {
+        } else if (f_exists("../../evaluation/flowshop/data/instances.data")) {
+            infile = std::ifstream("../../evaluation/flowshop/data/instances.data");
+        }else{
             std::cout << "Trying to read best-known solution from ../evaluation/flowshop/data/instances.data failed\n";
         }
 

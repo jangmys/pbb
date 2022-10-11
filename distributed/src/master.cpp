@@ -198,11 +198,11 @@ master::run()
 	solution* sol_buf=new solution(pbb->size);
 
     do{
+        //waiting for any message
         MPI_Probe(MPI_ANY_SOURCE,MPI_ANY_TAG,MPI_COMM_WORLD,&status);
 
-        iter++;
+        //master active now
         pbb->ttm->on(pbb->ttm->masterWalltime);
-
         switch (status.MPI_TAG) {
             case WORK:
             {
@@ -236,9 +236,12 @@ master::run()
                 }else{
                     //BEST
                     //request processed...
-                    pbb->sltn->getBestSolution(sol_buf->perm,sol_buf->cost);
-                    comm->send_sol(sol_buf, status.MPI_SOURCE, NIL);
-                    //MPI_Send(&pbb->sltn->bestcost,1,MPI_INT,status.MPI_SOURCE,NIL,MPI_COMM_WORLD);
+                    int tmp;
+                    pbb->sltn->getBestSolution(sol_buf->perm,tmp);
+                    sol_buf->cost.store(tmp);
+
+                    // comm->send_sol(sol_buf, status.MPI_SOURCE, NIL);
+                    MPI_Send(&pbb->sltn->cost,1,MPI_INT,status.MPI_SOURCE,NIL,MPI_COMM_WORLD);
                 }
                 // FILE_LOG(logINFO) << "State\t" << 3;
                 break;
@@ -272,12 +275,11 @@ master::run()
                 break;
             }
         }
-        // printf("count %d\n",count_out);
-
         pbb->ttm->off(pbb->ttm->masterWalltime);
 
 		wrks->save();
 
+        iter++;
     }while(count_out!=nProc-1);//(!M->end);
 
     pbb->ttm->off(pbb->ttm->wall);
