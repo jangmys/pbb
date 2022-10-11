@@ -235,6 +235,7 @@ comm_thread(void * arg)
     }
 
     FILE_LOG(logINFO) << "----------Worker Message Count----------";
+    FILE_LOG(logINFO) <<"Iterations\t"<<nbiter;
     FILE_LOG(logINFO) <<"WORK\t"<<msg_counter[WORK];
     FILE_LOG(logINFO) <<"BEST\t"<<msg_counter[BEST];
     FILE_LOG(logINFO) <<"NIL\t"<<msg_counter[NIL];
@@ -481,10 +482,9 @@ worker::run()
 
 
         // work is done here... explore intervals(s)
-        //        pbb->ttm->on(pbb->ttm->workerExploretime);
+       bool allEnd = doWork();
 
         // printf("Rank : %d\n",comm->rank);
-        bool allEnd = doWork();
 
         if(arguments::heuristic_threads)
             getSolutions();

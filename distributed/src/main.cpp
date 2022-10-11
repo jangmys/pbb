@@ -155,7 +155,7 @@ main(int argc, char ** argv)
                 char hostname[1024];
             	hostname[1023] = '\0';
             	gethostname(hostname, 1023);
-            	std::cout<<"Worker running on :\t"<<hostname<<std::flush;
+            	FILE_LOG(logINFO) << "Worker running on :\t"<<hostname<<std::flush;
 
                 // ==========================
                 #ifdef USE_GPU
