@@ -240,7 +240,8 @@ std::shared_ptr<work> work::divide(int max)
     if (isEmpty()) return tmp; //nothing to get
 
     mpz_class len(0);
-    mpz_class lar(362880);
+    mpz_class lar(120);//5!
+    // mpz_class lar(362880);//9!
     mpz_class coupe;
 
     int nb_stolen = 0;
