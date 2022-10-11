@@ -152,9 +152,10 @@ main(int argc, char ** argv)
                 MPI_Bcast(pbb->sltn->perm, pbb->size, MPI_INT, 0, MPI_COMM_WORLD);
                 MPI_Bcast(&pbb->sltn->cost, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
-
-                std::cout<<"Worker recvd "<<*(pbb->root_sltn)<<"\n";
-                std::cout<<"Worker recvd "<<*(pbb->sltn)<<"\n";
+                char hostname[1024];
+            	hostname[1023] = '\0';
+            	gethostname(hostname, 1023);
+            	std::cout<<"Worker running on :\t"<<hostname<<std::flush;
 
                 // ==========================
                 #ifdef USE_GPU
@@ -162,7 +163,7 @@ main(int argc, char ** argv)
                 #else
                 int nthreads = (arguments::nbivms_mc < 1) ? get_nprocs() : arguments::nbivms_mc;
                 worker *wrkr = new worker_mc(pbb,nthreads);
-                FILE_LOG(logDEBUG) << "Worker running with "<<nthreads<<" threads.\n";
+                FILE_LOG(logINFO) << "Worker running with "<<nthreads<<" threads.\n";
                 #endif
 
                 wrkr->run();

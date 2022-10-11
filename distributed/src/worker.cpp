@@ -468,14 +468,14 @@ worker::run()
 
         // if comm thread has set END flag, exit
         if (checkEnd()) {
-            FILE_LOG(logINFO) << "End detected";
+            FILE_LOG(logDEBUG1) << "Worker : End detected";
             break;
         }
 
         // if UPDATE flag set (by comm thread), apply update and signal
         // (comm thread is waiting until update applied)
         if (checkUpdate()) {
-            FILE_LOG(logDEBUG) << "Update work unit";
+            FILE_LOG(logDEBUG1) << "Worker : Update work unit";
             updateWorkUnit();// read buffer (RECV)
         }
 
