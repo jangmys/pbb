@@ -68,6 +68,7 @@ worker_mc::updateWorkUnit()
 
     pthread_mutex_lock_check(&mutex_updateAvail);
     updateAvailable = false;
+    pbb->workUpdateAvailable.store(false);
     pthread_mutex_unlock(&mutex_updateAvail);
     pthread_cond_signal(&cond_updateApplied);
 }

@@ -161,7 +161,6 @@ matrix_controller::explore_multicore()
         bool continuer = bbb[id]->bbStep();
 
         if (allEnd.load()) {
-            FILE_LOG(logDEBUG) << "=== ALL END ("<<id<<")";
             break;
         }else if (!continuer){
             request_work(id);
@@ -174,6 +173,13 @@ matrix_controller::explore_multicore()
         if(is_distributed())
         {
             bool passed=pbb->ttm->period_passed(WORKER_BALANCING);
+
+            // if(pbb->workUpdateAvailable)
+            if(pbb->workUpdateAvailable.load(std::memory_order_relaxed))
+            {
+                break;
+            }
+
             if(atom_nb_steals>1 || passed)
             // if(atom_nb_steals>get_num_threads() || passed)
             {
@@ -188,12 +194,13 @@ matrix_controller::explore_multicore()
 #endif
     }
 
+    allEnd.store(true);
+
     FILE_LOG(logDEBUG) << "=== Exit exploration loop";
 
     pbb->stats.totDecomposed += std::static_pointer_cast<ivmthread>(bbb[id])->ivmbb->get_decomposed_count();
     pbb->stats.leaves += std::static_pointer_cast<ivmthread>(bbb[id])->ivmbb->get_leaves_count();
 
-    allEnd.store(true);
     stop(id);
 }
 

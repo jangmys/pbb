@@ -71,6 +71,7 @@ worker::reset()
     end     = false;
     shareWithMaster = true;
     updateAvailable = false;
+    pbb->workUpdateAvailable.store(false,std::memory_order_relaxed);
 
     pbb->stats.totDecomposed = 0;
     pbb->stats.johnsonBounds = 0;
@@ -100,11 +101,15 @@ worker::wait_for_update_complete()
     pthread_mutex_lock_check(&mutex_updateAvail);
     // signal update
     updateAvailable = true;
+    pbb->workUpdateAvailable.store(true,std::memory_order_relaxed);
+
     // wait until done
     while (updateAvailable) {
         pthread_cond_wait(&cond_updateApplied, &mutex_updateAvail);
     }
     pthread_mutex_unlock(&mutex_updateAvail);
+
+
     // printf("... complete %d \n",comm->rank);
 }
 
