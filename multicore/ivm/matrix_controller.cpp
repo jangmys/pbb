@@ -174,7 +174,8 @@ matrix_controller::explore_multicore()
         if(is_distributed())
         {
             bool passed=pbb->ttm->period_passed(WORKER_BALANCING);
-            if(atom_nb_steals>get_num_threads() || passed)
+            if(atom_nb_steals>1 || passed)
+            // if(atom_nb_steals>get_num_threads() || passed)
             {
                 FILE_LOG(logDEBUG) << "=== BREAK (nb_steals "<<atom_nb_steals<<" )";
                 break;
