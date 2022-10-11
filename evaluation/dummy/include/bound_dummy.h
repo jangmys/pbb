@@ -24,8 +24,7 @@ public:
     // compute bounds of children nodes of subproblem p
     // goal: avoid redundant computation of parts that are common to children nodes
     void
-    boundChildren(int * schedule, int limit1, int limit2, int * costsBegin, int * costsEnd, int * prioBegin,
-      int * prioEnd){};
+    boundChildren(int * schedule, int limit1, int limit2, int * costsBegin, int * costsEnd, int * prioBegin, int * prioEnd, int best){};
 
     int evalSolution(int * permut){
         return 1;

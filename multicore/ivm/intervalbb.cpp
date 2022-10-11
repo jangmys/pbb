@@ -16,8 +16,7 @@ Intervalbb<T>::Intervalbb(pbab *_pbb) :
     prune = pbb->pruning_factory->make_pruning();
     branch = pbb->branching_factory->make_branching();
 
-    primary_bound = pbb->bound_factory->make_bound(pbb->instance,0);
-    // secondary_bound = pbb->bound_factory->make_bound(_pbb->instance,1);
+    primary_bound = pbb->bound_factory->make_bound(pbb->instance,arguments::primary_bound);
 
     if(rootRow.size()==0)
         rootRow = std::vector<T>(size,0);
@@ -113,15 +112,16 @@ void Intervalbb<T>::boundAndKeepSurvivors(subproblem& _subpb, const int mode)
     std::vector<std::vector<T>> lb(2,std::vector<T>(size,0));
     std::vector<std::vector<T>> prio(2,std::vector<T>(size,0));
 
+    //a priori choice of branching direction
     auto dir = branch->pre_bound_choice(IVM->getDepth());
     IVM->setDirection(dir);
 
-    if(dir<0){
+    if(dir<0){    //if undecided
         // get lower bounds : both directions
         primary_bound->boundChildren(
                 _subpb.schedule.data(),_subpb.limit1,_subpb.limit2,
                 lb[Branching::Front].data(),lb[Branching::Back].data(),
-                prio[Branching::Front].data(),prio[Branching::Back].data()
+                prio[Branching::Front].data(),prio[Branching::Back].data(),this->prune->local_best
             );
 
         //choose branching direction
@@ -135,14 +135,14 @@ void Intervalbb<T>::boundAndKeepSurvivors(subproblem& _subpb, const int mode)
         primary_bound->boundChildren(
                 _subpb.schedule.data(),_subpb.limit1,_subpb.limit2,
                 lb[Branching::Front].data(),nullptr,
-                prio[Branching::Front].data(),nullptr
+                prio[Branching::Front].data(),nullptr,this->prune->local_best
             );
     }else{
         // get lower bounds : backward only
         primary_bound->boundChildren(
                 _subpb.schedule.data(),_subpb.limit1,_subpb.limit2,
                 nullptr,lb[Branching::Back].data(),
-                nullptr,prio[Branching::Back].data()
+                nullptr,prio[Branching::Back].data(),this->prune->local_best
             );
     }
 

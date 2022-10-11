@@ -82,8 +82,7 @@ public:
     scheduleBack(int permutation[], int limite2, int * idle);
 
     void
-    boundChildren(int permutation[], int limite1, int limite2, int * costsBegin, int * costsEnd, int * prioBegin,
-      int * prioEnd){ };
+    boundChildren(int permutation[], int limite1, int limite2, int * costsBegin, int * costsEnd, int * prioBegin, int * prioEnd, int best);
 
     void
     bornes_calculer(int permutation[], int limite1, int limite2, int * couts, int);

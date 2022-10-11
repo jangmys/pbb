@@ -218,8 +218,7 @@ bound_fsp_weak::addBackAndBound(int job, int &idle)
 // get all lower bounds for all children
 // begin/end if both LB pointers are given
 void
-bound_fsp_weak::boundChildren(int * schedule, int limit1, int limit2, int * costsBegin, int * costsEnd, int * prioBegin,
-  int * prioEnd)
+bound_fsp_weak::boundChildren(int * schedule, int limit1, int limit2, int * costsBegin, int * costsEnd, int * prioBegin, int * prioEnd, int best)
 {
     if (costsBegin && costsEnd) {
         // BEGIN/END LOWER BOUNDS

@@ -38,8 +38,7 @@ public:
     addBackAndBound(int job, int &prio);
 
     void
-    boundChildren(int * permut, int limit1, int limit2, int * costsBegin, int * costsEnd, int * prioBegin,
-      int * prioEnd);
+    boundChildren(int * permut, int limit1, int limit2, int * costsBegin, int * costsEnd, int * prioBegin, int * prioEnd, int best);
 
     int
     evalSolution(int * permut);

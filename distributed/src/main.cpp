@@ -162,8 +162,8 @@ main(int argc, char ** argv)
                 #else
                 int nthreads = (arguments::nbivms_mc < 1) ? get_nprocs() : arguments::nbivms_mc;
                 worker *wrkr = new worker_mc(pbb,nthreads);
-                #endif
                 FILE_LOG(logDEBUG) << "Worker running with "<<nthreads<<" threads.\n";
+                #endif
 
                 wrkr->run();
             }

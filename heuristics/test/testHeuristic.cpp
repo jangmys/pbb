@@ -53,16 +53,23 @@ int main(int argc, char* argv[])
 
     std::cout<<argv[3]<<std::endl;
 
+    pbab * pbb = new pbab();
 
-    std::unique_ptr<PruningFactoryInterface> prune;
     if(arguments::findAll){
-        prune = std::make_unique<PruneLargerFactory>();
+        pbb->choose_pruning(pbab::prune_greater);
     }else{
-        prune = std::make_unique<PruneLargerEqualFactory>();
+        pbb->choose_pruning(pbab::prune_greater_equal);
     }
 
-    pbab * pbb = new pbab();
-    pbb->set_pruning_factory(std::move(prune));
+
+    // std::unique_ptr<PruningFactoryInterface> prune;
+    // if(arguments::findAll){
+    //     prune = std::make_unique<PruneLargerFactory>();
+    // }else{
+    //     prune = std::make_unique<PruneLargerEqualFactory>();
+    // }
+
+    // pbb->set_pruning_factory(std::move(prune));
 
     struct timespec t1,t2;
     clock_gettime(CLOCK_MONOTONIC,&t1);

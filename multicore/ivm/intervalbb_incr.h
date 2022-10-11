@@ -12,7 +12,7 @@ class IntervalbbIncr : public Intervalbb<T>{
 public:
     IntervalbbIncr(pbab* _pbb) : Intervalbb<T>(_pbb)
     {
-        secondary_bound = this->pbb->bound_factory->make_bound(_pbb->instance,1);
+        secondary_bound = this->pbb->bound_factory->make_bound(_pbb->instance,arguments::secondary_bound);
     };
 
 
@@ -28,7 +28,7 @@ public:
             this->primary_bound->boundChildren(
                     _subpb.schedule.data(),_subpb.limit1,_subpb.limit2,
                     lb[Branching::Front].data(),lb[Branching::Back].data(),
-                    prio[Branching::Front].data(),prio[Branching::Back].data()
+                    prio[Branching::Front].data(),prio[Branching::Back].data(),this->prune->local_best
                 );
             //choose branching direction
             dir = (*(this->branch))(
@@ -40,13 +40,13 @@ public:
             this->primary_bound->boundChildren(
                     _subpb.schedule.data(),_subpb.limit1,_subpb.limit2,
                     lb[Branching::Front].data(),nullptr,
-                    prio[Branching::Front].data(),nullptr
+                    prio[Branching::Front].data(),nullptr,this->prune->local_best
                 );
         }else if(dir==Branching::Back){
             this->primary_bound->boundChildren(
                     _subpb.schedule.data(),_subpb.limit1,_subpb.limit2,
                     nullptr,lb[Branching::Back].data(),
-                    nullptr,prio[Branching::Back].data()
+                    nullptr,prio[Branching::Back].data(),this->prune->local_best
                 );
         }
 
@@ -58,10 +58,13 @@ public:
         std::vector<bool>mask(this->size,false);
         for (int i = _subpb.limit1 + 1; i < _subpb.limit2; i++) {
             int job = _subpb.schedule[i];
+            // std::cout<<lb[dir][job]<<" "<<this->prune->local_best<<" "<<(*this->prune)(lb[dir][job])<<"\n";
             if(!(*this->prune)(lb[dir][job])){
                 mask[job] = true;
             }
         }
+        // std::cout<<"\n";
+
         if(dir==Branching::Front){
             int costs[2];
             for (int i = _subpb.limit1 + 1; i < _subpb.limit2; i++) {

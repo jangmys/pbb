@@ -92,7 +92,7 @@ Poolbb::decompose(
         //evaluate lower bounds and priority
         // bound->boundChildren(n.int * permut, int limit1, int limit2, int * costsBegin, int * costsEnd, int * prioBegin,
           // int * prioEnd);
-        bound->boundChildren(n.schedule.data(),n.limit1,n.limit2, costFwd.data(),costBwd.data(), prioFwd.data(),prioBwd.data());
+        bound->boundChildren(n.schedule.data(),n.limit1,n.limit2, costFwd.data(),costBwd.data(), prioFwd.data(),prioBwd.data(),this->prune->local_best);
 
         //branching heuristic
         int dir = (*branch)(costFwd.data(),costBwd.data(),n.depth);

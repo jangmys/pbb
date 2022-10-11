@@ -18,8 +18,8 @@ public:
         std::vector<std::vector<T>> lb(2,std::vector<T>(this->size,0));
         std::vector<std::vector<T>> prio(2,std::vector<T>(this->size,0));
 
+        //a priori choice of branching direction
         int dir = this->branch->pre_bound_choice(this->IVM->getDepth());
-
         std::vector<bool> mask(this->size,true);
 
         if(dir<0){
@@ -84,8 +84,6 @@ public:
             prio[dir]
         );
         this->eliminateJobs(lb[dir]);
-
-
     }
 };
 

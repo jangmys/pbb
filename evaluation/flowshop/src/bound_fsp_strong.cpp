@@ -450,7 +450,7 @@ bound_fsp_strong::setFlags(int permutation[], int limite1, int limite2)
 
 
 void
-bound_fsp_strong::bornes_calculer(int permutation[], const int limite1, const int limite2, int * couts, const int best)
+bound_fsp_strong::bornes_calculer(int permutation[], int limite1, int limite2, int * couts, int best)
 {
     if (limite2 - limite1 <= 2) {
         //        printf("this happens\n");
@@ -468,8 +468,37 @@ bound_fsp_strong::bornes_calculer(int permutation[], const int limite1, const in
         scheduleBack(permutation, limite2, &couts[1]);
 
         couts[0] = calculBorne(best);
+        // std::cout<<"LB "<<best<<" "<<couts[0]<<"\n";
     }
 }
+
+void
+bound_fsp_strong::boundChildren(int permutation[], int limit1, int limit2, int * costsBegin, int * costsEnd, int * prioBegin, int * prioEnd, int best)
+{
+    std::vector<int>costs(2,0);
+
+    for (int i = limit1 + 1; i < limit2; i++) {
+        int job = permutation[i];
+
+        //front
+        if(costsBegin){
+            std::swap(permutation[limit1 + 1], permutation[i]);
+            bornes_calculer(permutation, limit1 + 1, limit2, costs.data(), best);
+            costsBegin[job] = costs[0];
+            prioBegin[job]=costs[1];
+            std::swap(permutation[limit1 + 1], permutation[i]);
+        }
+        //back
+        if(costsEnd){
+            std::swap(permutation[limit2 - 1], permutation[i]);
+            bornes_calculer(permutation, limit1, limit2 - 1, costs.data(), best);
+            costsEnd[job] = costs[0];
+            prioEnd[job]=costs[1];
+            std::swap(permutation[limit2 - 1], permutation[i]);
+        }
+    }
+}
+
 
 int
 bound_fsp_strong::evalSolution(int * permut)
