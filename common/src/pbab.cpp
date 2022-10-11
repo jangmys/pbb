@@ -45,13 +45,23 @@ pbab::set_instance(std::unique_ptr<instance_abstract> _inst){
     sltn = new solution(size);
     root_sltn = new solution(size);
 
-    best_solution = std::make_unique<subproblem>(size);
+    // best_solution = std::make_unique<subproblem>(size);
 }
 
 
+void pbab::set_initial_solution(const int* perm, const int cost)
+{
+    for(int i=0; i<size; i++){
+        sltn->perm[i] = perm[i];
+    }
+    sltn->cost = cost;
+
+    *(root_sltn) = *(sltn);
+}
+
 void pbab::set_initial_solution()
 {
-    //by default initial upper bound in INFTY
+    //by default initial upper bound is INFTY
     sltn->cost = INT_MAX;
 
     switch (arguments::problem[0]) {
@@ -61,24 +71,29 @@ void pbab::set_initial_solution()
             switch (arguments::init_mode) {
                 case 0:
                 {
-                    if(arguments::problem[0] == 'd'){
-                        sltn->cost = 0;
-                        break;
+                    std::cout<<"\t#Get initial upper bound : FILE\n";
+
+                    std::vector<int>perm(size);
+                    int cost=INT_MAX;
+
+                    for(int i=0; i<size; i++){
+                        perm[i]=i;
                     }
 
-                    std::cout<<"\t#Get initial upper bound : FILE\n";
                     switch (arguments::inst_name[0]) {
                         case 't':
                         {
-                            sltn->cost = (static_cast<instance_taillard*>(instance.get()))->read_initial_ub_from_file(arguments::inst_name);
+                            cost = (static_cast<instance_taillard*>(instance.get()))->read_initial_ub_from_file(arguments::inst_name);
                             break;
                         }
                         case 'V':
                         {
-                            sltn->cost = (static_cast<instance_vrf*>(instance.get()))->get_initial_ub_from_file(arguments::inst_name);
+                            cost = (static_cast<instance_vrf*>(instance.get()))->get_initial_ub_from_file(arguments::inst_name);
                             break;
                         }
                     }
+                    set_initial_solution(perm.data(),cost);
+
                     break;
                 }
                 case 1:
@@ -96,10 +111,12 @@ void pbab::set_initial_solution()
 
                     p->set_fitness(fitness);
 
-                    for(int i=0; i<instance->size; i++){
-                        sltn->perm[i] = p->schedule[i];
-                    }
-                    sltn->cost = p->fitness();
+                    // for(int i=0; i<instance->size; i++){
+                    //     sltn->perm[i] = p->schedule[i];
+                    // }
+                    // sltn->cost = p->fitness();
+
+                    set_initial_solution(p->schedule.data(),p->fitness());
 
                     break;
                 }
@@ -111,10 +128,7 @@ void pbab::set_initial_solution()
 
                     bs.run_loop(1<<14,p.get());
 
-                    for(int i=0; i<instance->size; i++){
-                        sltn->perm[i] = bs.bestSolution->schedule[i];
-                    }
-                    sltn->cost = p->fitness();
+                    set_initial_solution(bs.bestSolution->schedule.data(),p->fitness());
 
                     break;
                 }
@@ -132,18 +146,12 @@ void pbab::set_initial_solution()
         }
         case 'd':
         {
-            for(int i=0; i<instance->size; i++){
-                sltn->perm[i] = i;
-            }
-            sltn->cost = INT_MAX;
+            set_initial_solution(sltn->perm,INT_MAX);
             break;
         }
     }
 
-    *(root_sltn) = *(sltn);
 
-    // FILE_LOG(logDEBUG) << "Initializing at optimum " << sltn->cost;
-    // FILE_LOG(logDEBUG) << "Guiding solution " << *(root_sltn);
 }
 
 

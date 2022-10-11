@@ -28,19 +28,17 @@ public:
     pbab();
     ~pbab();
 
-    // pbab(std::unique_ptr<instance_abstract> _inst);
-
     std::unique_ptr<instance_abstract> instance;
     int size;
 
-    // void set_instance(char problem[], char inst_name[]);
     void set_instance(std::unique_ptr<instance_abstract> _inst);
 
-    std::unique_ptr<subproblem> best_solution;
     solution * sltn;
     solution * root_sltn;
 
     void set_initial_solution();
+    void set_initial_solution(const int* permutation, const int cost);
+
 
     std::atomic<bool> foundAtLeastOneSolution{false};
     std::atomic<bool> foundNewSolution{false};
@@ -66,10 +64,10 @@ public:
     void choose_pruning(int choice){
         switch (choice) {
             case prune_greater:
-                set_pruning_factory(std::make_unique<PruneLargerFactory>());
+                pruning_factory = std::make_unique<PruneLargerFactory>();
                 break;
             case prune_greater_equal:
-                set_pruning_factory(std::make_unique<PruneLargerEqualFactory>());
+                pruning_factory = std::make_unique<PruneLargerEqualFactory>();
                 break;
 
             case prune_less:
@@ -80,9 +78,9 @@ public:
         }
     }
     std::unique_ptr<PruningFactoryInterface> pruning_factory;
-    void set_pruning_factory(std::unique_ptr<PruningFactoryInterface> p){
-        pruning_factory = std::move(p);
-    }
+    // void set_pruning_factory(std::unique_ptr<PruningFactoryInterface> p){
+    //     pruning_factory = std::move(p);
+    // }
 
     //------------------------branching-------------------------
     std::unique_ptr<BranchingFactoryInterface> branching_factory;

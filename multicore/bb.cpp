@@ -5,6 +5,7 @@
 #include "ttime.h"
 
 #include "libbounds.h"
+#include "libheuristic.h"
 #include "matrix_controller.h"
 #include "pool_controller.h"
 
@@ -38,8 +39,6 @@ main(int argc, char ** argv)
     pbab* pbb = new pbab();
 
     //------------------SET INSTANCE----------------------
-    InstanceFactory inst_factory;
-
     pbb->set_instance(
         pbb_instance::make_instance(arguments::problem, arguments::inst_name)
     );
