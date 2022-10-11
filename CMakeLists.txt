@@ -9,7 +9,7 @@ LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
-set(CMAKE_CXX_FLAGS_RELEASE "-Wall -Wno-unused-function -Wno-unused-variable -O2")
+set(CMAKE_CXX_FLAGS_RELEASE "-Wall -Wno-unused-function -Wno-unused-variable -O2 -DNDEBUG")
 set(CMAKE_CXX_FLAGS_DEBUG "-g -pg -O0 -rdynamic" CACHE STRING "")
 
 ######################################################################################
