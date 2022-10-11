@@ -182,8 +182,6 @@ comm_thread(void * arg)
                 w->comm->recv_work(rwrk, 0, MPI_ANY_TAG, &status);
                 w->work_buf->dec2fact(rwrk);
 
-                std::cout<<"worker receive : ";
-
                 // wait unitl update applied
                 w->wait_for_update_complete();
                 break;
