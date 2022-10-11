@@ -179,9 +179,10 @@ comm_thread(void * arg)
                 //the receive buffer...
                 std::shared_ptr<work> rwrk(new work());
 
-                FILE_LOG(logDEBUG4)<<"worker receives";
                 w->comm->recv_work(rwrk, 0, MPI_ANY_TAG, &status);
                 w->work_buf->dec2fact(rwrk);
+
+                std::cout<<"worker receive : ";
 
                 // wait unitl update applied
                 w->wait_for_update_complete();

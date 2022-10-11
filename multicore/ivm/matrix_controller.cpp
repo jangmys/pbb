@@ -176,7 +176,7 @@ matrix_controller::explore_multicore()
             bool passed=pbb->ttm->period_passed(WORKER_BALANCING);
             if(atom_nb_steals>get_num_threads() || passed)
             {
-                FILE_LOG(logDEBUG) << "=== BREAK (nb_steals)";
+                FILE_LOG(logDEBUG) << "=== BREAK (nb_steals "<<atom_nb_steals<<" )";
                 break;
             }
             if(pbb->foundNewSolution){
@@ -193,8 +193,6 @@ matrix_controller::explore_multicore()
     pbb->stats.leaves += std::static_pointer_cast<ivmthread>(bbb[id])->ivmbb->get_leaves_count();
 
     allEnd.store(true);
-    FILE_LOG(logINFO) << "=== Decomposed: "<<std::static_pointer_cast<ivmthread>(bbb[id])->ivmbb->get_decomposed_count();
-    FILE_LOG(logINFO) << "=== Leaves: "<<std::static_pointer_cast<ivmthread>(bbb[id])->ivmbb->get_leaves_count();
     stop(id);
 }
 
