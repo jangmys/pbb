@@ -84,7 +84,7 @@ master::initWorks(int initMode)
 //Return : True if worker needs update
 
 static bool debug = false;
-bool master::processRequest(std::shared_ptr<work> w){ //, bool &terminate) {
+bool master::processRequest(std::shared_ptr<work> w, bool &shutdown) {
     bool updateWorker=false;    //return true if worker needs update
 
     //DEBUG
@@ -111,6 +111,7 @@ bool master::processRequest(std::shared_ptr<work> w){ //, bool &terminate) {
             //copy wasn't modified : just replace
             tmp->Uinterval=w->Uinterval;
             wrks->sizes_update(tmp);
+            return false;
         }else{
 			FILE_LOG(logDEBUG1) << "Full intersection";
             updateWorker=tmp->intersection(w);
@@ -127,13 +128,16 @@ bool master::processRequest(std::shared_ptr<work> w){ //, bool &terminate) {
 
     //if result of intersection is empty...
     if (steal) {
+        tmp = wrks->acquireNewWork(w->max_intervals,shutdown);
+        updateWorker=true;
+
         if(wrks->isEmpty()){
+
             FILE_LOG(logDEBUG1) << "SHUTDOWN";
             end = true;
             return false;//true;
         }
 
-        tmp = wrks->acquireNewWork(w->max_intervals,stopSharing);//terminate);
         FILE_LOG(logDEBUG4) << "#unassigned " << wrks->unassigned.size();
 
         if(tmp==nullptr){
@@ -151,6 +155,8 @@ bool master::processRequest(std::shared_ptr<work> w){ //, bool &terminate) {
 
     FILE_LOG(logINFO) << "ActiveSize: "<<wrks->size<<"\t Remain#: "<<wrks->unassigned.size()
 	<<"\t Active#: "<<wrks->ids.size();
+
+    std::cout<<"WORKSIZE : "<<wrks->size<<std::endl;
 
     //DEBUG
     if (debug) {
@@ -214,12 +220,16 @@ master::run()
                 pbb->stats.totDecomposed += wrk->exploredNodes;
                 pbb->stats.leaves += wrk->nbLeaves;
 
+
+
                 pbb->ttm->on(pbb->ttm->processRequest);
-                bool modified=processRequest(wrk);//,shutdownWorker);
+                bool shutdownWorker=false;
+                bool modified=processRequest(wrk,shutdownWorker);
                 pbb->ttm->off(pbb->ttm->processRequest);
 
                 //END
                 if(end){
+                    printf("send DIE! to %d\n",status.MPI_SOURCE);
                     FILE_LOG(logDEBUG1) << "send termination signal to " << status.MPI_SOURCE;
                     MPI_Send(&aaa,1,MPI_INT,status.MPI_SOURCE,END,MPI_COMM_WORLD);
                 }else if(modified){
@@ -228,11 +238,11 @@ master::run()
                     // printf("send WORK to %d\n",status.MPI_SOURCE);//status.MPI_SOURCE);
                     comm->send_work(wrk,status.MPI_SOURCE, WORK);
                     work_out++;
-                // }
-				// else if(stopSharing){
-                //     FILE_LOG(logDEBUG1) << "send SLEEP! to " << status.MPI_SOURCE;
-                //     MPI_Send(&aaa,1,MPI_INT,status.MPI_SOURCE,END,MPI_COMM_WORLD);
-                //     MPI_Send(&aaa,1,MPI_INT,status.MPI_SOURCE,SLEEP,MPI_COMM_WORLD);
+                }
+				else if(stopSharing){
+                    FILE_LOG(logDEBUG1) << "send SLEEP! to " << status.MPI_SOURCE;
+                    // MPI_Send(&aaa,1,MPI_INT,status.MPI_SOURCE,END,MPI_COMM_WORLD);
+                    MPI_Send(&aaa,1,MPI_INT,status.MPI_SOURCE,SLEEP,MPI_COMM_WORLD);
                 }else{
                     //BEST
                     //request processed...

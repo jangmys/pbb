@@ -40,7 +40,7 @@ public:
     void reset();
 
     void initWorks(int initMode);
-    bool processRequest(std::shared_ptr<work> w);//, bool &shutdownWorker);
+    bool processRequest(std::shared_ptr<work> w, bool &shutdownWorker);
     void shutdown();
     void run();
     // void test();
