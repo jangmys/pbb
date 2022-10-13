@@ -39,6 +39,7 @@ main(int argc, char ** argv)
 
 // -----------------------Parse args----------------------
 // .. pass ini file with -f <path-to-ini-file> option !
+    arguments::readIniFile();
     arguments::parse_arguments(argc, argv);
 
 // --------------------Set up logging--------------------
