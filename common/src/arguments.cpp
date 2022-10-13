@@ -39,7 +39,7 @@ int arguments::nbivms_gpu = 4096;
 //load balance / fault tolerance
 int arguments::checkpointv = 1;
 int arguments::balancingv  = 1;
-char arguments::mc_ws_select = 'o';
+char arguments::mc_ws_select = 'a'; //random
 
 //heuristic...
 int arguments::heuristic_threads       = 1;
@@ -126,7 +126,7 @@ arguments::readIniFile()
     // if(printSolutions)
     //     std::cout<<"Printing Solutions..."<<std::endl;
 
-    mc_ws_select = *(reader.Get("multicore", "worksteal", "r").c_str());
+    mc_ws_select = *(reader.Get("multicore", "worksteal", "a").c_str());
     // type         = reader.Get("bb", "type", "c")[0];
 
     truncateDepth  = reader.GetInteger("truncate", "truncDepth", 0);
