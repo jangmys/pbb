@@ -93,10 +93,11 @@ bool master::processRequest(std::shared_ptr<work> w, bool &shutdown) {
         w->displayUinterval();
     }
 
+    bool steal=false;
+
     //find copy of work in works by its ID
     std::shared_ptr<work> tmp = wrks->id_find(w->id);
 
-	bool steal=false;
     if(tmp == nullptr){
         //work with requested ID doesn't exist
         steal=true;
@@ -129,10 +130,10 @@ bool master::processRequest(std::shared_ptr<work> w, bool &shutdown) {
     //if result of intersection is empty...
     if (steal) {
         tmp = wrks->acquireNewWork(w->max_intervals,shutdown);
-        updateWorker=true;
+
+        // updateWorker=true;
 
         if(wrks->isEmpty()){
-
             FILE_LOG(logDEBUG1) << "SHUTDOWN";
             end = true;
             return false;//true;
@@ -141,6 +142,7 @@ bool master::processRequest(std::shared_ptr<work> w, bool &shutdown) {
         FILE_LOG(logDEBUG4) << "#unassigned " << wrks->unassigned.size();
 
         if(tmp==nullptr){
+            // end=true;
             //steal may fail ...
             return false;
         }else{
@@ -238,11 +240,12 @@ master::run()
                     // printf("send WORK to %d\n",status.MPI_SOURCE);//status.MPI_SOURCE);
                     comm->send_work(wrk,status.MPI_SOURCE, WORK);
                     work_out++;
-                }
-				else if(stopSharing){
-                    FILE_LOG(logDEBUG1) << "send SLEEP! to " << status.MPI_SOURCE;
-                    // MPI_Send(&aaa,1,MPI_INT,status.MPI_SOURCE,END,MPI_COMM_WORLD);
-                    MPI_Send(&aaa,1,MPI_INT,status.MPI_SOURCE,SLEEP,MPI_COMM_WORLD);
+                //}
+				// else if(shutdownWorker){
+                //     printf("send SLEEP to %d",status.MPI_SOURCE);
+                //     // FILE_LOG(logDEBUG1) << "send SLEEP! to " << status.MPI_SOURCE;
+                //     // MPI_Send(&aaa,1,MPI_INT,status.MPI_SOURCE,END,MPI_COMM_WORLD);
+                //     MPI_Send(&aaa,1,MPI_INT,status.MPI_SOURCE,SLEEP,MPI_COMM_WORLD);
                 }else{
                     //BEST
                     //request processed...

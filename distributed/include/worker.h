@@ -54,7 +54,7 @@ public:
     virtual bool doWork() = 0;
     virtual void interrupt() = 0;
 
-    // pthread_barrier_t barrier;
+    pthread_barrier_t barrier;
     pthread_mutex_t mutex_inst;
     pthread_mutex_t mutex_end;
     pthread_mutex_t mutex_wunit;

@@ -235,44 +235,7 @@ works::id_delete(std::shared_ptr<work> w)
     }
 }
 
-// void
-// works::id_update(std::shared_ptr<work> w)
-// {
-//     id_delete(w);
-//     w->set_id();
-//     id_insert(w);
-// }
-
-// ========================================================================================
-
-// void
-// works::times_insert(std::shared_ptr<work> w, bool fault)
-// {
-//     if (fault) w->timeSinceLastUpdate = 0; else w->set_time();
-//     times.insert(times_type::value_type(w->timeSinceLastUpdate, w));
-// }
-
-//
-// void
-// works::times_delete(std::shared_ptr<work> w)
-// {
-//     std::pair<times_iterator, times_iterator> range = times.equal_range(w->timeSinceLastUpdate);
-//     for (times_iterator i = range.first; i != range.second; i++)
-//         if (i->second->id == w->id) {
-//             times.erase(i);
-//             break;
-//         }
-// }
-
-//
-// void
-// works::times_update(const std::shared_ptr<work> &w)
-// {
-//     times_delete(w);
-//     times_insert(w);
-// }
-
-// ===============================================================================================
+//===============================================================================================
 std::shared_ptr<work>
 works::id_find(const int _id)
 {
@@ -322,41 +285,12 @@ works::ids_oldest() const
     return nullptr;
 }
 
-// std::shared_ptr<work>
-// works::times_oldest()
-// {
-//     return times.begin()->second;
-// }
-
-// ===============================================================================================
-// bool fault;
-
-// bool
-// works::dropWork(std::shared_ptr<work> tmp)
-// {
-//     bool dropped=false;
-//
-//     int sz=(tmp->Uinterval).size();
-//
-//     mpz_class lar(3628800);
-//
-//     if(unassigned.size()<100 && tmp->size > sz*lar){
-//         std::shared_ptr<work> tmp2(std::move(tmp->divide(sz)));
-//         if(!tmp2->isEmpty()){
-//             tmp->end_updated=1;
-//             unassigned.push_back(std::move(tmp2));
-//             sizes_update(tmp);
-//             dropped=true;
-//         }
-//     }
-//     return dropped;
-// }
-
 std::shared_ptr<work>
 works::acquireNewWork(int max, bool &tooSmall)
 {
-    // if(ids.size()<2){
-    if (!unassigned.empty())   {
+    if(isEmpty()){
+        return nullptr;
+    }else if (!unassigned.empty())   {
         return _adopt(max);
     } else  {
         return steal(max, tooSmall);
@@ -378,8 +312,10 @@ works::steal(unsigned int max, bool &tooSmall)
 
     // DUPLICATION (interval too small)
     if (tmp2->isEmpty()) {
-        FILE_LOG(logINFO)<<"TOO SMALL";
-        tooSmall = true;
+        // FILE_LOG(logINFO)<<"TOO SMALL";
+        std::cout<<"duplicate\n"<<std::flush;
+        // tooSmall = true;
+        return nullptr;
 
         if ((tmp1->Uinterval).size() <= max) {
             tmp1->end_updated = 1;
@@ -387,15 +323,13 @@ works::steal(unsigned int max, bool &tooSmall)
             tmp2->set_id();
         }
     } else  {
+        FILE_LOG(logINFO) <<"STOLE "<<tmp1->size;//<<std::endl;
         // tmp1 was modified
         tmp1->end_updated = 1;
         //            tmp2->split(max);//split into max parts
         sizes_update(tmp1);
-
-        FILE_LOG(logINFO) <<"STOLE "<<tmp1->size;//<<std::endl;
         sizes_insert(tmp2);    // insert created work
         id_insert(tmp2);    // insert created work
-
         // times_insert(tmp2);    // insert created work
     }
 
@@ -446,12 +380,6 @@ works::_adopt(int max)
         //		std::shared_ptr<work> tmp2(std::move(tmp->divide(max)));
         std::shared_ptr<work> tmp2(std::move(tmp->take(max)));
 
-        // if(!(tmp->Uinterval).empty()){
-        //     std::cout<<(num++)<<" "<<((tmp->Uinterval).back())->lb<<"\t"<<
-        //     pbb->mstr->master_sol->bestcost<<std::endl;
-        //
-        // }
-
         tmp2->set_id();
 
         id_insert(tmp2);
@@ -462,21 +390,6 @@ works::_adopt(int max)
     }
 } // works::_adopt
 
-/*
- * //std::shared_ptr<work> works::_oldest(int max)
- * //{
- * //	std::shared_ptr<work> tmp = times_oldest();
- *
- * //	if((tmp->Uinterval).size()<=max){
- * //		times_update(tmp);
- * //		return tmp;
- * //	}else{
- * //		return NULL;
- * //	}
- * //}
- *
- * //===============================================================================================
- */
 bool
 works::isEmpty()
 {

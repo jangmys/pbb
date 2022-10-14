@@ -87,7 +87,7 @@ matrix_controller::work_share(unsigned id, unsigned thief)
 
     int ret = std::static_pointer_cast<ivmthread>(bbb[id])->shareWork(std::static_pointer_cast<ivmthread>(bbb[thief]));
 
-    return ret;
+    return (int)(ret>0);
 }
 
 // run by multiple threads!!!
@@ -172,7 +172,10 @@ matrix_controller::explore_multicore()
 #ifdef WITH_MPI
         if(is_distributed())
         {
-            bool passed=pbb->ttm->period_passed(WORKER_BALANCING);
+            if(pbb->foundNewSolution){
+                FILE_LOG(logDEBUG) << "=== BREAK (new sol)";
+                break;
+            }
 
             // if(pbb->workUpdateAvailable)
             if(pbb->workUpdateAvailable.load(std::memory_order_relaxed))
@@ -180,14 +183,11 @@ matrix_controller::explore_multicore()
                 break;
             }
 
-            if(atom_nb_steals>1 || passed)
-            // if(atom_nb_steals>get_num_threads() || passed)
+            bool loadbal = (atom_nb_steals.load()>10);
+            bool passed=pbb->ttm->period_passed(WORKER_BALANCING);
+            if(loadbal || passed)
             {
                 FILE_LOG(logDEBUG) << "=== BREAK (nb_steals "<<atom_nb_steals<<" )";
-                break;
-            }
-            if(pbb->foundNewSolution){
-                FILE_LOG(logDEBUG) << "=== BREAK (new sol)";
                 break;
             }
         }

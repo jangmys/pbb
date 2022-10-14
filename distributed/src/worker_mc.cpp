@@ -53,9 +53,7 @@ worker_mc::updateWorkUnit()
     FILE_LOG(logDEBUG) << " === update work unit (rank " << comm->rank<<")";
 
     assert(work_buf->nb_intervals <= mc->get_num_threads());
-    if (work_buf->nb_intervals == 0) {
-        return;
-    }
+    // if (work_buf->nb_intervals == 0) {        return;    }
 
     pthread_mutex_lock_check(&mutex_wunit);
     mc->initFromFac(

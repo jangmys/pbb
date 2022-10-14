@@ -190,8 +190,8 @@ void
 thread_controller::resetExplorationState()
 {
     //reset global variables
-    end_counter.store(0);// termination counter
     allEnd.store(false);
+    end_counter.store(0);// termination counter
     atom_nb_explorers.store(0);// id_generator
     atom_nb_steals.store(0);//count work thefts
 }

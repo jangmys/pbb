@@ -25,6 +25,8 @@ worker::worker(pbab * _pbb) : pbb(_pbb),size(pbb->size)
 {
     dwrk = std::make_shared<work>();
 
+    pthread_barrier_init(&barrier, NULL, 2);// sync worker and helper thread
+
     pthread_mutexattr_t attr;
     pthread_mutexattr_init(&attr);
     pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_ERRORCHECK);
@@ -53,6 +55,8 @@ worker::worker(pbab * _pbb) : pbb(_pbb),size(pbb->size)
 
 worker::~worker()
 {
+    pthread_barrier_destroy(&barrier);
+
     pthread_mutex_destroy(&mutex_wunit);
     pthread_mutex_destroy(&mutex_inst);
     pthread_mutex_destroy(&mutex_best);
@@ -122,6 +126,8 @@ comm_thread(void * arg)
     w->sendRequestReady = true;
     w->sendRequest      = false;
     w->setNewBest(false);
+
+    pthread_barrier_wait(&w->barrier);
 
     int nbiter = 0;
     int dummy  = 11;
@@ -462,7 +468,11 @@ worker::run()
     FILE_LOG(logDEBUG) << "Created " << nbHeuThds << " heuristic threads.";
     int workeriter = 0;
 
+    pthread_barrier_wait(&barrier);// synchronize with communication thread
+
     // printf("RUN %d\n",M);fflush(stdout);
+
+    int count_updates = 0;
 
     // ==========================================
     // worker main-loop :
@@ -481,6 +491,7 @@ worker::run()
         // (comm thread is waiting until update applied)
         if (checkUpdate()) {
             FILE_LOG(logDEBUG1) << "Worker : Update work unit";
+            count_updates++;
             updateWorkUnit();// read buffer (RECV)
         }
 
@@ -498,7 +509,7 @@ worker::run()
             FILE_LOG(logDEBUG) << "Try launch best-communication";
             tryLaunchCommBest();
         }
-        else if(shareWithMaster || allEnd){
+        else if(allEnd){
             FILE_LOG(logDEBUG) << "Try launch work-communicaion";
             tryLaunchCommWork();
         }
@@ -510,6 +521,8 @@ worker::run()
     {
         FILE_LOG(logDEBUG) << "Failed to join comm thread " << strerror(err);
     }
+
+    FILE_LOG(logINFO) << "#updates: "<<count_updates;
 
     pbb->ttm->logElapsed(pbb->ttm->workerExploretime, "Worker exploration time\t");
 
