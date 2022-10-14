@@ -172,24 +172,33 @@ matrix_controller::explore_multicore()
 #ifdef WITH_MPI
         if(is_distributed())
         {
-            bool passed=pbb->ttm->period_passed(WORKER_BALANCING);
-
             // if(pbb->workUpdateAvailable)
             if(pbb->workUpdateAvailable.load(std::memory_order_relaxed))
             {
+                FILE_LOG(logINFO) << "=== BREAK (update avail)";
                 break;
             }
-
-            if(atom_nb_steals>1 || passed)
+            if(atom_nb_steals>1)
             // if(atom_nb_steals>get_num_threads() || passed)
             {
-                FILE_LOG(logDEBUG) << "=== BREAK (nb_steals "<<atom_nb_steals<<" )";
+                FILE_LOG(logINFO) << "=== BREAK (nb_steals "<<atom_nb_steals<<" )";
                 break;
             }
             if(pbb->foundNewSolution){
-                FILE_LOG(logDEBUG) << "=== BREAK (new sol)";
+                FILE_LOG(logINFO) << "=== BREAK (new sol)";
                 break;
             }
+
+            bool passed=pbb->ttm->period_passed(WORKER_BALANCING);
+            if(passed)
+            // if(atom_nb_steals>get_num_threads() || passed)
+            {
+                FILE_LOG(logINFO) << "=== BREAK (time passed)";
+                break;
+            }
+
+
+
         }
 #endif
     }

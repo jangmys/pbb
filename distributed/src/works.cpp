@@ -27,10 +27,7 @@
 // =======================================================
 // default
 works::works()
-{
-    //	panne = nouveau = actif = 0;
-    //	pr = NULL;
-}
+{}
 
 void
 works::init_complete(pbab * _pbb)
