@@ -157,29 +157,24 @@ matrix_controller::explore_multicore()
         pbb->sltn->getBest(bestCost);
         //set local UB
         bbb[id]->setLocalBest(bestCost);
-        //GO ON!
-        bool continuer = bbb[id]->bbStep();
 
         if (allEnd.load()) {
             break;
-        }else if (!continuer){
+        }else if (!bbb[id]->bbStep()){
             request_work(id);
         }else{
             try_answer_request(id);
         }
-        // break;
 
 #ifdef WITH_MPI
         if(is_distributed())
         {
-            // if(pbb->workUpdateAvailable)
             if(pbb->workUpdateAvailable.load(std::memory_order_relaxed))
             {
                 FILE_LOG(logINFO) << "=== BREAK (update avail)";
                 break;
             }
             if(atom_nb_steals>1)
-            // if(atom_nb_steals>get_num_threads() || passed)
             {
                 FILE_LOG(logINFO) << "=== BREAK (nb_steals "<<atom_nb_steals<<" )";
                 break;
@@ -191,14 +186,10 @@ matrix_controller::explore_multicore()
 
             bool passed=pbb->ttm->period_passed(WORKER_BALANCING);
             if(passed)
-            // if(atom_nb_steals>get_num_threads() || passed)
             {
                 FILE_LOG(logINFO) << "=== BREAK (time passed)";
                 break;
             }
-
-
-
         }
 #endif
     }
