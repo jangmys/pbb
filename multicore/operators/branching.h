@@ -116,7 +116,7 @@ public:
 class minBranchBranching : public Branching
 {
 public:
-    explicit minBranchBranching(int _size,int UB = 0) : Branching(_size,Branching::Bidirectional),initialUB(UB)
+    explicit minBranchBranching(int _size,int UB) : Branching(_size,Branching::Bidirectional),initialUB(UB)
     {};
 
 
@@ -127,10 +127,9 @@ public:
         int sum = 0;
 
         for (int i = 0; i < size; ++i) {
-            if (cb[i]>=ub)elim++; //"pruned"
-            else sum += cb[i];
-            if (ce[i]>=ub)elim--; //"pruned"
-            else sum -=ce[i];
+            if (cb[i]>=initialUB)elim++; //"pruned"
+            if (ce[i]>=initialUB)elim--; //"pruned"
+            sum += (cb[i]-ce[i]);
         }
         //take set with lss open nodes / tiebreaker: greater average LB
         if(elim > 0)return Front;

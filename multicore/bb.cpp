@@ -60,16 +60,17 @@ main(int argc, char ** argv)
         pbb->choose_pruning(pbab::prune_greater_equal);
     }
 
+    //------------------BUILD INITIAL SOLUTION------------------
+    pbb->set_initial_solution();
 
     //------------------SET BRANCHING------------------
+    std::cout<<"Branching:\t"<<arguments::branchingMode<<" "<<pbb->initialUB<<std::endl;
     pbb->set_branching_factory(std::make_unique<PFSPBranchingFactory>(
         arguments::branchingMode,
         pbb->size,
         pbb->initialUB
     ));
 
-    //------------------BUILD INITIAL SOLUTION------------------
-    pbb->set_initial_solution();
 
     //------------------CHOOSE ALGORITHM-----------------------
     enum algo{
@@ -148,6 +149,23 @@ main(int argc, char ** argv)
             matrix_controller mc(pbb,nthreads);
 
             mc.set_victim_select(make_victim_selector(nthreads,arguments::mc_ws_select));
+
+            std::vector<int>_id(nthreads,0);
+            std::vector<int>_pos(nthreads*pbb->size,0);
+            std::vector<int>_end(nthreads*pbb->size,0);
+
+            for (int i = 0; i < pbb->size; i++) {
+                _end[i]  = pbb->size - i - 1;
+            }
+
+            mc.initFromFac(1,_id.data(),_pos.data(),_end.data());
+
+            // delete[] id;
+            // delete[] pos;
+            // delete[] end;
+
+            // std::fill(std::begin(mc.state),std::end(mc.state),0);
+
 		    mc.initFullInterval();
 			mc.next();
 

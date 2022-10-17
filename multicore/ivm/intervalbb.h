@@ -26,9 +26,9 @@ public:
     void eliminateJobs(std::vector<T> lb);
     bool boundLeaf(subproblem& node);
 
-    static std::vector<T> rootRow;
-    static int rootDir;
-    static int first;
+    int first;
+    int rootDir;
+    std::vector<T> rootRow;
 
     virtual void boundAndKeepSurvivors(subproblem& subproblem,const int);
 
@@ -66,12 +66,12 @@ protected:
 };
 
 //static members
-template<typename T>
-std::vector<T> Intervalbb<T>::rootRow;
-template<typename T>
-int Intervalbb<T>::rootDir = 0;
-template<typename T>
-int Intervalbb<T>::first = true;
+// template<typename T>
+// std::vector<T> Intervalbb<T>::rootRow;
+// template<typename T>
+// int Intervalbb<T>::rootDir = 0;
+// template<typename T>
+// int Intervalbb<T>::first = true;
 
 
 #endif

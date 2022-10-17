@@ -66,11 +66,9 @@ matrix_controller::initFromFac(const unsigned int nbint, const int * ids, int * 
         unsigned int id = ids[k];
         assert(id < get_num_threads());
 
-        // victim_list.remove(id);
-        // victim_list.push_front(id);// put in front
         state[id]=1;
 
-        bbb[id]->setRoot(pbb->root_sltn->perm, -1, pbb->size);
+        // bbb[id]->setRoot(pbb->root_sltn->perm, -1, pbb->size);
         for (int i = 0; i < pbb->size; i++) {
             pos[id][i] = _pos[k * pbb->size + i];
             end[id][i] = _end[k * pbb->size + i];
@@ -90,6 +88,22 @@ matrix_controller::work_share(unsigned id, unsigned thief)
     return (int)(ret>0);
 }
 
+int
+stick_this_thread_to_core(int core_id)
+{
+    int num_cores = sysconf(_SC_NPROCESSORS_ONLN);
+
+    if (core_id < 0 || core_id >= num_cores)
+        return EINVAL;
+
+    cpu_set_t cpuset;
+    CPU_ZERO(&cpuset);
+    CPU_SET(core_id, &cpuset);
+
+    pthread_t current_thread = pthread_self();
+    return pthread_setaffinity_np(current_thread, sizeof(cpu_set_t), &cpuset);
+}
+
 // run by multiple threads!!!
 // in distributed setting re-entry is possible
 void
@@ -98,6 +112,8 @@ matrix_controller::explore_multicore()
     //---------------get unique ID---------------
     int id = explorer_get_new_id();
     FILE_LOG(logDEBUG) << "=== got ID " << id;
+
+    // stick_this_thread_to_core(id);
 
     //------check if explorer already exists------
     if(!bbb[id]){
@@ -138,6 +154,8 @@ matrix_controller::explore_multicore()
         bbb[id]->set_work_state(false);
     }
 
+    // bbb[id]->setRoot(pbb->root_sltn->perm, -1, pbb->size);
+
     //reset counters and request queue
     bbb[id]->reset_request_queue();
     std::static_pointer_cast<ivmthread>(bbb[id])->ivmbb->reset_node_counter();
@@ -149,8 +167,6 @@ matrix_controller::explore_multicore()
         updatedIntervals = 0;
         FILE_LOG(logDEBUG) << "=== start "<<get_num_threads()<<" exploration threads ===";
     }
-
-
 
     while (1) {
         //get global best UB
@@ -196,9 +212,6 @@ matrix_controller::explore_multicore()
                 FILE_LOG(logINFO) << "=== BREAK (time passed)";
                 break;
             }
-
-
-
         }
 #endif
     }
@@ -225,8 +238,6 @@ bool
 matrix_controller::next()
 {
     resetExplorationState();
-
-    pthread_t threads[100];
 
     for (unsigned i = 0; i < get_num_threads(); i++)
         pthread_create(&threads[i], NULL, mcbb_thread, (void *) this);

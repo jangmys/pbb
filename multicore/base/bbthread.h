@@ -27,7 +27,6 @@ public:
     ~bbthread();
 
     pthread_mutex_t mutex_ivm;
-    // pthread_mutex_t mutex_workState;
     pthread_mutex_t mutex_workRequested;
     pthread_mutex_t mutex_shared;
     pthread_cond_t cond_shared;
