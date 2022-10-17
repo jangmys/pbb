@@ -110,7 +110,7 @@ ivm::getCell(int i, int j) const{
 */
 void ivm::clearInterval()
 {
-    std::fill(std::begin(jobMat),std::end(jobMat),0);
+    // std::fill(std::begin(jobMat),std::end(jobMat),0);
     std::fill(std::begin(posVect),std::end(posVect),0);
     std::fill(std::begin(endVect),std::end(endVect),0);
     posVect[0]=size;

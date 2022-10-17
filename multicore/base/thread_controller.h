@@ -25,6 +25,8 @@ public:
 protected:
     pbab* pbb;
 
+    pthread_t *threads;
+
     unsigned int get_num_threads();
     void interruptExploration();
     std::shared_ptr<bbthread>get_bbthread(int k);

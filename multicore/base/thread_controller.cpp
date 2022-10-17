@@ -10,6 +10,8 @@ thread_controller::thread_controller(pbab * _pbb, int _nthreads) : pbb(_pbb),M(_
     //set number of BB-explorers (threads)
     bbb = std::vector<std::shared_ptr<bbthread>>(M,nullptr);
 
+    threads = (pthread_t*)malloc(M*sizeof(threads));
+
     //barrier for syncing all explorer threads
     pthread_barrier_init(&barrier, NULL, M);
 
@@ -25,6 +27,8 @@ thread_controller::thread_controller(pbab * _pbb, int _nthreads) : pbb(_pbb),M(_
 
 thread_controller::~thread_controller()
 {
+    free(threads);
+
     // pthread_mutex_destroy(&mutex_end);
     pthread_barrier_destroy(&barrier);
 }

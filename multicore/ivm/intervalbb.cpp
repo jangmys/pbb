@@ -9,8 +9,7 @@
 #include "operator_factory.h"
 
 template<typename T>
-Intervalbb<T>::Intervalbb(pbab *_pbb) :
-    pbb(_pbb),size(_pbb->size),IVM(std::make_shared<ivm>(size)),count_leaves(0),count_decomposed(0)
+Intervalbb<T>::Intervalbb(pbab *_pbb) : first(true), pbb(_pbb), size(_pbb->size),IVM(std::make_shared<ivm>(size)),count_leaves(0),count_decomposed(0)
 {
     //why not pass operators to the ctor?
     prune = pbb->pruning_factory->make_pruning();
@@ -18,8 +17,7 @@ Intervalbb<T>::Intervalbb(pbab *_pbb) :
 
     primary_bound = pbb->bound_factory->make_bound(pbb->instance,arguments::primary_bound);
 
-    if(rootRow.size()==0)
-        rootRow = std::vector<T>(size,0);
+    rootRow = std::vector<T>(size,0);
 
     pthread_mutex_init(&first_mutex,NULL);
 }
@@ -38,13 +36,14 @@ Intervalbb<T>::setRoot(const int *varOrder,int l1,int l2)
     IVM->clearInterval();
     IVM->setDepth(0);
 
-    bool _first;
-    pthread_mutex_lock(&first_mutex);
-    _first=first;
-    pthread_mutex_unlock(&first_mutex);
+    // bool _first;
+    // pthread_mutex_lock(&first_mutex);
+    // _first=first;
+    // pthread_mutex_unlock(&first_mutex);
+    std::cout<<"set root\n"<<std::flush;
 
-    if(!_first){
-        //row 0 and direction have been saved (static)
+    if(!first){
+        //row 0 and direction have been saved
         IVM->setRow(0,rootRow.data());
         IVM->setDirection(0,rootDir);
     }else{
@@ -56,6 +55,7 @@ Intervalbb<T>::setRoot(const int *varOrder,int l1,int l2)
         pbb->sltn->getBest(prune->local_best);
         boundAndKeepSurvivors(IVM->getNode(),arguments::boundMode);
 
+        std::cout<<"Root\t" << IVM->getNode()<<"\n"<<std::flush;
         FILE_LOG(logDEBUG) << "R\t" << IVM->getNode();
 
         pthread_mutex_lock(&first_mutex);

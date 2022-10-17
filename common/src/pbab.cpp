@@ -55,6 +55,7 @@ void pbab::set_initial_solution(const int* perm, const int cost)
         sltn->perm[i] = perm[i];
     }
     sltn->cost = cost;
+    initialUB = cost;
 
     *(root_sltn) = *(sltn);
 }
