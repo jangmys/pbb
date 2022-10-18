@@ -33,14 +33,8 @@ template<typename T>
 void
 Intervalbb<T>::setRoot(const int *varOrder,int l1,int l2)
 {
-    IVM->clearInterval();
+    // IVM->clearInterval();
     IVM->setDepth(0);
-
-    // bool _first;
-    // pthread_mutex_lock(&first_mutex);
-    // _first=first;
-    // pthread_mutex_unlock(&first_mutex);
-    std::cout<<"set root\n"<<std::flush;
 
     if(!first){
         //row 0 and direction have been saved
@@ -55,19 +49,15 @@ Intervalbb<T>::setRoot(const int *varOrder,int l1,int l2)
         pbb->sltn->getBest(prune->local_best);
         boundAndKeepSurvivors(IVM->getNode(),arguments::boundMode);
 
-        std::cout<<"Root\t" << IVM->getNode()<<"\n"<<std::flush;
-        FILE_LOG(logDEBUG) << "R\t" << IVM->getNode();
-
-        pthread_mutex_lock(&first_mutex);
         //save first line of matrix (bounded root decomposition)
         rootDir = IVM->getDirection(0);
         int c=0;
         for(auto &i : rootRow)
             i=IVM->getCell(0,c++);
-        FILE_LOG(logDEBUG) << " === Root Bound: "<<rootDir<<"\n";
 
         first = false;
-        pthread_mutex_unlock(&first_mutex);
+
+        FILE_LOG(logDEBUG) << " === Root : ["<<rootDir<<"]"<<IVM->getNode()<<"\n";
     }
 }
 
@@ -77,6 +67,22 @@ bool
 Intervalbb<T>::initAtInterval(std::vector<int> &pos, std::vector<int> &end)
 {
     IVM->setDepth(0);
+
+    // std::vector<int>tmppos(size);
+    // std::vector<int>tmpend(size);
+    //
+    // IVM->getInterval(tmppos.data(),tmpend.data());
+    //
+    // if(IVM->vectorCompare(tmpend.data(),end.data()) != 0 ||
+    //     IVM->vectorCompare(tmppos.data(),pos.data()) < 0)
+    // {
+    //     std::cout<<"current\n";
+    //     IVM->displayVector(tmppos.data());
+    //     IVM->displayVector(tmpend.data());
+    //     std::cout<<"new\n";
+    //     IVM->displayVector(pos.data());
+    //     IVM->displayVector(end.data());
+    // }
 
     IVM->setPosition(pos.data());
     IVM->setEnd(end.data());

@@ -76,6 +76,38 @@ main(int argc, char ** argv)
         std::cout<<"\t#ProblemSize:\t\t"<<pbb->size<<std::endl;
     }
 
+    //MAKE INITIAL SOLUTION (rank 0 --> could run multiple and min-reduce...)
+    if(myrank==0){
+        FILE_LOG(logINFO) <<"----Initialize incumbent----";
+        struct timespec t1,t2;
+        clock_gettime(CLOCK_MONOTONIC,&t1);
+
+        pbb->set_initial_solution();
+
+        pbb->sltn->save();
+        FILE_LOG(logINFO) << "Initial solution:\t" <<*(pbb->sltn);
+
+        clock_gettime(CLOCK_MONOTONIC,&t2);
+        FILE_LOG(logINFO) <<"Time(InitialSolution):\t"<<(t2.tv_sec-t1.tv_sec)+(t2.tv_nsec-t1.tv_nsec)/1e9;
+
+        MPI_Barrier(MPI_COMM_WORLD);
+        MPI_Bcast(pbb->root_sltn->perm, pbb->size, MPI_INT, 0, MPI_COMM_WORLD);
+        MPI_Bcast(&pbb->root_sltn->cost, 1, MPI_INT, 0, MPI_COMM_WORLD);
+
+        MPI_Bcast(pbb->sltn->perm, pbb->size, MPI_INT, 0, MPI_COMM_WORLD);
+        MPI_Bcast(&pbb->sltn->cost, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    }else{
+        MPI_Barrier(MPI_COMM_WORLD);
+
+        MPI_Bcast(pbb->root_sltn->perm, pbb->size, MPI_INT, 0, MPI_COMM_WORLD);
+        MPI_Bcast(&pbb->root_sltn->cost, 1, MPI_INT, 0, MPI_COMM_WORLD);
+
+        MPI_Bcast(pbb->sltn->perm, pbb->size, MPI_INT, 0, MPI_COMM_WORLD);
+        MPI_Bcast(&pbb->sltn->cost, 1, MPI_INT, 0, MPI_COMM_WORLD);
+
+        pbb->initialUB = pbb->sltn->cost;
+    }
+
     //LOWER BOUND
     if(arguments::problem[0]=='f'){
         pbb->set_bound_factory(std::make_unique<BoundFactory>());
@@ -91,26 +123,12 @@ main(int argc, char ** argv)
     }
 
     //BRANCHING
+    std::cout<<"Rank "<<myrank<<" Branching:\t"<<arguments::branchingMode<<" "<<pbb->initialUB<<std::endl;
     pbb->set_branching_factory(std::make_unique<PFSPBranchingFactory>(
         arguments::branchingMode,
         pbb->size,
         pbb->initialUB
     ));
-
-    //MAKE INITIAL SOLUTION (rank 0 --> could run multiple and min-reduce...)
-    if(myrank==0){
-        FILE_LOG(logINFO) <<"----Initialize incumbent----";
-        struct timespec t1,t2;
-        clock_gettime(CLOCK_MONOTONIC,&t1);
-
-        pbb->set_initial_solution();
-
-        pbb->sltn->save();
-        FILE_LOG(logINFO) << "Initial solution:\t" <<*(pbb->sltn);
-
-        clock_gettime(CLOCK_MONOTONIC,&t2);
-        FILE_LOG(logINFO) <<"Time(InitialSolution):\t"<<(t2.tv_sec-t1.tv_sec)+(t2.tv_nsec-t1.tv_nsec)/1e9;
-    }
 
     enum bb_mode{
         STANDARD,
@@ -133,12 +151,6 @@ main(int argc, char ** argv)
                 //make sure all workers have initialized pbb
                 MPI_Barrier(MPI_COMM_WORLD);
 
-                MPI_Bcast(pbb->root_sltn->perm, pbb->size, MPI_INT, 0, MPI_COMM_WORLD);
-                MPI_Bcast(&pbb->root_sltn->cost, 1, MPI_INT, 0, MPI_COMM_WORLD);
-
-                MPI_Bcast(pbb->sltn->perm, pbb->size, MPI_INT, 0, MPI_COMM_WORLD);
-                MPI_Bcast(&pbb->sltn->cost, 1, MPI_INT, 0, MPI_COMM_WORLD);
-
                 mstr->run();
 
                 clock_gettime(CLOCK_MONOTONIC, &tend);
@@ -148,12 +160,6 @@ main(int argc, char ** argv)
             {
                 //make sure all workers have initialized pbb
                 MPI_Barrier(MPI_COMM_WORLD);
-
-                MPI_Bcast(pbb->root_sltn->perm, pbb->size, MPI_INT, 0, MPI_COMM_WORLD);
-                MPI_Bcast(&pbb->root_sltn->cost, 1, MPI_INT, 0, MPI_COMM_WORLD);
-
-                MPI_Bcast(pbb->sltn->perm, pbb->size, MPI_INT, 0, MPI_COMM_WORLD);
-                MPI_Bcast(&pbb->sltn->cost, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
                 char hostname[1024];
             	hostname[1023] = '\0';

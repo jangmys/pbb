@@ -73,7 +73,6 @@ void
 worker::reset()
 {
     end     = false;
-    shareWithMaster = true;
     updateAvailable = false;
     pbb->workUpdateAvailable.store(false,std::memory_order_relaxed);
 
@@ -105,16 +104,13 @@ worker::wait_for_update_complete()
     pthread_mutex_lock_check(&mutex_updateAvail);
     // signal update
     updateAvailable = true;
-    pbb->workUpdateAvailable.store(true,std::memory_order_relaxed);
+    pbb->workUpdateAvailable.store(true,std::memory_order_relaxed);//break exploration loop
 
     // wait until done
     while (updateAvailable) {
         pthread_cond_wait(&cond_updateApplied, &mutex_updateAvail);
     }
     pthread_mutex_unlock(&mutex_updateAvail);
-
-
-    // printf("... complete %d \n",comm->rank);
 }
 
 // use main thread....
@@ -156,6 +152,8 @@ comm_thread(void * arg)
 
             //convert to mpz integer intervals and sort...
             w->work_buf->fact2dec(w->dwrk);
+            // FILE_LOG(logINFO) <<"SEDN WORK\t"<<*(w->dwrk);
+
             //...send to MASTER
             w->comm->send_work(w->dwrk, 0, WORK);
         } else if (doBest) {
@@ -191,10 +189,32 @@ comm_thread(void * arg)
                 std::shared_ptr<work> rwrk(new work());
 
                 w->comm->recv_work(rwrk, 0, MPI_ANY_TAG, &status);
-                w->work_buf->dec2fact(rwrk);
 
-                // wait unitl update applied
-                w->wait_for_update_complete();
+                auto sendsz = w->dwrk->wsize();
+                auto recvsz = rwrk->wsize();
+
+                if(sendsz != recvsz){
+                    FILE_LOG(logINFO) << "RECEIVE\t"<< rwrk->wsize()<< "\t"<< w->dwrk->wsize();
+                    w->work_buf->dec2fact(rwrk);
+                    // wait unitl update applied
+                    w->wait_for_update_complete();
+                }else{
+                    FILE_LOG(logINFO) << "RECEIVE\t"<< rwrk->wsize()<< "\t"<< w->dwrk->wsize();
+                    w->work_buf->dec2fact(rwrk);
+
+                    pthread_mutex_lock_check(&w->mutex_updateAvail);
+                    // signal update
+                    w->updateAvailable = true;
+                    w->pbb->workUpdateAvailable.store(true,std::memory_order_relaxed);//break exploration loop
+
+                    // wait until done
+                    while (w->updateAvailable) {
+                        pthread_cond_wait(&w->cond_updateApplied, &w->mutex_updateAvail);
+                    }
+                    pthread_mutex_unlock(&w->mutex_updateAvail);
+                }
+                // FILE_LOG(logINFO) << "RECEIVE\t"<< *rwrk;
+
                 break;
             }
             case BEST: /* improved best */
@@ -215,7 +235,6 @@ comm_thread(void * arg)
             {
                 // w->comm->recv_sol(mastersol, 0, NIL, &status);
                 // w->pbb->sltn->update(mastersol->perm,mastersol->cost);
-
                 MPI_Recv(&masterbest, 1, MPI_INT, 0, NIL, MPI_COMM_WORLD, &status);
                 w->pbb->sltn->updateCost(masterbest);
 
@@ -223,9 +242,9 @@ comm_thread(void * arg)
             }
             case SLEEP:
             {
+                //master has no free work units and steal fails...retry, but wait a little (1 millisec)
                 MPI_Recv(&dummy, 1, MPI_INT, 0, SLEEP, MPI_COMM_WORLD, &status);
-                usleep(10);
-                w->shareWithMaster=false;
+                usleep(1000);
                 break;
             }
             default:
@@ -255,14 +274,9 @@ comm_thread(void * arg)
 
     delete[] msg_counter;
 
-    // // confirm that termination signal received... comm thread will be joined
-    // MPI_Send(&dummy, 1, MPI_INT, 0, END, MPI_COMM_WORLD);
-    // printf("end-comm / iter:\t %d\n",nbiter);fflush(stdout);
-
     FILE_LOG(logDEBUG1) << "comm thread return";
 
     pthread_exit(0);
-    // return NULL;
 } // comm_thread
 
 bool
@@ -351,32 +365,19 @@ heu_thread2(void * arg)
     worker * w = (worker *) arg;
 
     // pthread_mutex_lock_check(&w->pbb->mutex_instance);
-    // std::unique_ptr<fastNEH> neh = std::make_unique<fastNEH>(w->pbb->instance);
     std::unique_ptr<IG> ils = std::make_unique<IG>(w->pbb->instance.get());
-    // IG ils(w->pbb->instance);
-//     IG* ils=new IG(w->pbb->instance);
-//     th->strategy=PRIOQ;
     // pthread_mutex_unlock(&w->pbb->mutex_instance);
-//
+
     int N=w->pbb->size;
     subproblem *s=new subproblem(N);
-//
+
     int gbest;
-//     int cost;
-//
     bool take=false;
-//     std::cout<<"1 heuristic thread\n";
-//
+
     while(!w->checkEnd()){
         w->pbb->sltn->getBestSolution(s->schedule.data(),gbest);// lock on pbb->sltn
-//         // cost = gbest;
-//
-//         int c;
-//         // w->local_sol->getBestSolution(s->schedule,c);
-//
         int r=pbb::random::intRand(0,100);
-//
-//         take=false;
+
         pthread_mutex_lock_check(&w->mutex_solutions);
         if(w->sol_ind_begin < w->sol_ind_end && r<80){
             take=true;
@@ -388,44 +389,14 @@ heu_thread2(void * arg)
             for(int i=0;i<N;i++){
                 s->schedule[i]=w->solutions[w->sol_ind_begin*N+i];
             }
-
-            // std::cout<<*s<<std::endl;
-//
             w->sol_ind_begin++;
         }
         pthread_mutex_unlock(&w->mutex_solutions);
 
         s->limit1=-1;
         s->limit2=w->pbb->size;
-//
-//         // ils->perturbation(s->schedule, 3, 0, w->pbb->size);
-//         // ils->igiter=100;
-//         // ils->acceptanceParameter=1.6;
+
         int cost=ils->runIG(s);
-//         // }
-//         if(!take){
-//             ils->perturbation(s->schedule, 3, 0, w->pbb->size);
-//             ils->igiter=200;
-//             ils->acceptanceParameter=1.5;
-//             cost=ils->runIG(s);
-//     		// subproblem reduced(w->pbb->size);
-//             // int destroy=5;
-//             // ils->destruction(s->schedule, reduced.schedule, destroy);
-//     		// ils->localSearchPartial(s->schedule,w->pbb->size-destroy);
-//             // ils->construction(s->schedule, reduced.schedule, destroy, 0, w->pbb->size);
-//             // cost = ils->makespan(s);
-//         }
-//         // else{
-//         //     ils->igiter=100;
-//         //     // ils->acceptanceParameter=1.0;
-//         //     cost=ils->runIG(s);
-//         //     // cost = ils->makespan(s);
-//         //     // ils->perturbation(s->schedule, 2, 0, w->pbb->size);
-//         //
-//         // }
-//
-//         cost=th->ITS(s,ccc);
-//         // printf("heueuhh %d %d %d\n",ccc,cost,w->pbb->sltn->getBest());
 //
         if (cost<w->pbb->sltn->getBest()){
             w->pbb->sltn->update(s->schedule.data(),cost);
@@ -436,12 +407,7 @@ heu_thread2(void * arg)
             FILE_LOG(logINFO)<<"LocalBest "<<cost<<"\t"<<*(w->local_sol);
         }
     }
-//
-//     delete ils;
-//     delete th;
-//
     pthread_exit(0);
-//     // return NULL;
 }
 
 
@@ -483,16 +449,15 @@ worker::run()
 
         // if comm thread has set END flag, exit
         if (checkEnd()) {
-            FILE_LOG(logDEBUG1) << "Worker : End detected";
+            FILE_LOG(logINFO) << "Worker : End detected";
             break;
         }
 
         // if UPDATE flag set (by comm thread), apply update and signal
         // (comm thread is waiting until update applied)
         if (checkUpdate()) {
-            FILE_LOG(logDEBUG1) << "Worker : Update work unit";
             count_updates++;
-            updateWorkUnit();// read buffer (RECV)
+            updateWorkUnit();// read buffer (RECV) --- SYNC WITH COMM THREAD
         }
 
 

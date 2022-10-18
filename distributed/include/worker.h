@@ -65,7 +65,6 @@ public:
     pthread_mutex_t mutex_trigger;
     pthread_cond_t cond_trigger;
 
-    volatile bool shareWithMaster;
     volatile bool end;
     volatile bool trigger;
     volatile bool updateAvailable;

@@ -7,9 +7,8 @@
 #include "work.h"
 #include "master.h"
 
-//Constructeurs ===================
 //===============================================================
-work::work(const work& w) // copie exacte
+work::work(const work& w)
 {
     size = w.size;// ?
 
@@ -23,8 +22,7 @@ work::work(const work& w) // copie exacte
     Uinterval = w.Uinterval;
 }
 
-work::work() // constructeur d'work le non alloué
-{
+work::work(){
     if (!isEmpty()) Uinterval.clear();
 
     exploredNodes = 0;
@@ -38,10 +36,10 @@ work::work(std::istream& stream)
     stream >> *this;
 }
 
-
 work::~work(){ }
-//========================================================
-//=======================================
+//===============================================================
+
+
 size_t
 work::writeToFile(FILE * bp)
 {
@@ -119,11 +117,8 @@ work::set_size()
     // sum up the interval lengths
     for (it = Uinterval.begin(); it != Uinterval.end(); ++it) {
         if ((*it)->end > (*it)->begin)
-            size += ((*it)->end - (*it)->begin);
+            size += ((*it)->end - (*it)->begin) + 1;
     }
-
-    // it=Uinterval.begin();
-    // size=mpz_class("3041409320171337804361260816606476884437764156896050000000000000") - (*it)->begin;
 }
 
 static int id_generator = 0;
@@ -132,23 +127,6 @@ work::set_id()
 {
     id = (++id_generator);
 }
-
-// work operator ==============================================================================
-// mpz_class
-// mpzmin(const mpz_class i1, const mpz_class i2)
-// {
-//     return (i1 < i2) ? i1 : i2;
-// }
-
-// mpz_class
-// mpzmax(const mpz_class i1, const mpz_class i2)
-// {
-//     return (i2 > i1) ? i2 : i1;
-// }
-
-// static int zero = 0;
-// static int replace = 0;
-// static int inter = 0;
 
 // =========================================================
 // intersect w (worker) with this (server) and write to this
@@ -240,8 +218,11 @@ std::shared_ptr<work> work::divide(int max)
     if (isEmpty()) return tmp; //nothing to get
 
     mpz_class len(0);
-    mpz_class lar(720);//6!
-    // mpz_class lar(362880);//9!
+
+    // mpz_class lar(2432902008176640000);
+    // mpz_class lar(6402373705728000);
+    mpz_class lar(362880);//9!
+    // mpz_class lar(720);//6!
     mpz_class coupe;
 
     int nb_stolen = 0;
@@ -392,59 +373,59 @@ work::split2(size_t n)
 }
 
 /*
- * //operators =====================================================================================
- * mpz_class work::wsize()
- * {
- *  mpz_class ret(0);
- *
- *  for(INTERVAL_IT it = Uinterval.begin(); it != Uinterval.end(); ++it){
- *      ret += (*it)->end - (*it)->begin;
- *  }
- *
- *  return ret;
- * }
- *
- *
- * bool work::equal(work& w)
- * {
- *  bool result=true;
- *
- *  if(Uinterval.size() != w.Uinterval.size())result=false;
- *  else if(Uinterval != w.Uinterval)result=false;
- *
- * //	if((begin != w.begin) || (end != w.end))result=false;
- *
- *  return result;
- * }
- *
- * bool work::differ(std::shared_ptr<work>& w)
- * {
- *  //bool result=false;
- *  size_t numintervals = Uinterval.size();
- *
- *  //#intervals differs => this work & work w differ
- *  if(numintervals != w->Uinterval.size()){
- *      //printf("Dsize\n");
- *      //displayUinterval();w.displayUinterval();
- *      return true; //result=true;
- *  }
- *
- *  for(unsigned int i=0; i<numintervals; i++){
- *      std::shared_ptr<interval>tmp = Uinterval.at(i);
- *      std::shared_ptr<interval>tmpW = (w->Uinterval).at(i);
- *
- *      if(tmpW->id != tmp->id){//printf("Did\n");
- *      return true;}
- *      if(tmpW->begin != tmp->begin){//printf("Dbegin\n");displayUinterval();w.displayUinterval();
- *      return true;}
- *      if(tmpW->end != tmp->end){//printf("Dend\n");displayUinterval();w.displayUinterval();displayUinterval();w.displayUinterval();
- *      return true;}
- *  }
- *  //std::cout<<"Dsame"<<std::endl<<std::flush;
- *
- *  return false;
- * }
- */
+ * //operators =====================================================================================*/
+mpz_class work::wsize()
+{
+    mpz_class ret(0);
+
+    for(INTERVAL_IT it = Uinterval.begin(); it != Uinterval.end(); ++it){
+        ret += (*it)->end - (*it)->begin + 1;
+    }
+
+    return ret;
+}
+
+ //
+ // * bool work::equal(work& w)
+ // * {
+ // *  bool result=true;
+ // *
+ // *  if(Uinterval.size() != w.Uinterval.size())result=false;
+ // *  else if(Uinterval != w.Uinterval)result=false;
+ // *
+ // * //	if((begin != w.begin) || (end != w.end))result=false;
+ // *
+ // *  return result;
+ // * }
+ // *
+ // * bool work::differ(std::shared_ptr<work>& w)
+ // * {
+ // *  //bool result=false;
+ // *  size_t numintervals = Uinterval.size();
+ // *
+ // *  //#intervals differs => this work & work w differ
+ // *  if(numintervals != w->Uinterval.size()){
+ // *      //printf("Dsize\n");
+ // *      //displayUinterval();w.displayUinterval();
+ // *      return true; //result=true;
+ // *  }
+ // *
+ // *  for(unsigned int i=0; i<numintervals; i++){
+ // *      std::shared_ptr<interval>tmp = Uinterval.at(i);
+ // *      std::shared_ptr<interval>tmpW = (w->Uinterval).at(i);
+ // *
+ // *      if(tmpW->id != tmp->id){//printf("Did\n");
+ // *      return true;}
+ // *      if(tmpW->begin != tmp->begin){//printf("Dbegin\n");displayUinterval();w.displayUinterval();
+ // *      return true;}
+ // *      if(tmpW->end != tmp->end){//printf("Dend\n");displayUinterval();w.displayUinterval();displayUinterval();w.displayUinterval();
+ // *      return true;}
+ // *  }
+ // *  //std::cout<<"Dsame"<<std::endl<<std::flush;
+ // *
+ // *  return false;
+ // * }
+ // */
 void
 work::operator = (work& w)
 {
@@ -488,6 +469,7 @@ work::displayUinterval()
 {
     INTERVAL_IT it;
 
+    std::cout<<"ID "<<id<<std::endl;
 //    printf("displ\n");
 
     if (isEmpty()){
@@ -570,7 +552,7 @@ work::writeIntervals(std::ostream& stream) const
                                          << (*it)->end << "\n" << std::flush;
         }
     }
-    stream << size << std::endl;
+    stream << size;
 
     if (stream.fail()) std::cout << "writeIntervals fail\n" << std::flush;
 }

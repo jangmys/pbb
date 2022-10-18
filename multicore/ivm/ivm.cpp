@@ -203,6 +203,17 @@ ivm::beforeEnd() const
     return true;
 }
 
+int
+ivm::vectorCompare(const int* a,const int* b)
+{
+    for (int i = 0; i < size; i++) {
+        if(a[i]==b[i])continue;
+        if(a[i]<b[i])return -1;
+        if(a[i]>b[i])return 1;
+    }
+    return 0;
+}
+
 
 
 

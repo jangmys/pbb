@@ -302,31 +302,47 @@ works::steal(unsigned int max, bool &tooSmall)
     std::shared_ptr<work> tmp1 = sizes_big();
     // std::shared_ptr<work> tmp1 = ids_oldest();
 
-    if(tmp1==nullptr)return nullptr;
+    //if sizes_big returned nothing
+    if(!tmp1)return nullptr;
 
     //create new work by division of tmp1
     std::shared_ptr<work> tmp2(std::move(tmp1->divide(max)));
 
+
+    //no steal
+    // if(tmp1)
+    //     tmp1->end_updated=1;
+    // return nullptr;
+
+
+
     // DUPLICATION (interval too small)
     if (tmp2->isEmpty()) {
         // FILE_LOG(logINFO)<<"TOO SMALL";
-        std::cout<<"duplicate\n"<<std::flush;
+        // std::cout<<"duplicate\n"<<std::flush;
         // tooSmall = true;
         return nullptr;
 
-        if ((tmp1->Uinterval).size() <= max) {
-            tmp1->end_updated = 1;
-            *tmp2 = *tmp1;
-            tmp2->set_id();
-        }
+        // if ((tmp1->Uinterval).size() <= max) {
+        //     tmp1->end_updated = 1;
+        //     *tmp2 = *tmp1;
+        //     tmp2->set_id();
+        // }
     } else  {
-        FILE_LOG(logINFO) <<"STOLE "<<tmp1->size;//<<std::endl;
         // tmp1 was modified
         tmp1->end_updated = 1;
-        //            tmp2->split(max);//split into max parts
+        tmp2->end_updated = 0;
         sizes_update(tmp1);
         sizes_insert(tmp2);    // insert created work
         id_insert(tmp2);    // insert created work
+
+        // std::cout<<"stole from "<<tmp1->id<<"\n";
+        // std::cout<<"new work "<<tmp2->id<<"\n";
+
+        FILE_LOG(logDEBUG) <<"STOLE"<<tmp1->size;//<<std::endl;
+        FILE_LOG(logDEBUG) <<"<<< old \n >>> new";
+        FILE_LOG(logDEBUG) <<*tmp2;//<<std::endl;
+        //            tmp2->split(max);//split into max parts
         // times_insert(tmp2);    // insert created work
     }
 

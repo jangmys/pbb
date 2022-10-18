@@ -111,8 +111,6 @@ main(int argc, char ** argv)
                 endFact[i]  = pbb->size - i - 1;
             }
             sbb->initAtInterval(zeroFact, endFact);
-
-            // sbb->initFullInterval();
             sbb->run();
 
             break;
@@ -159,15 +157,7 @@ main(int argc, char ** argv)
             }
 
             mc.initFromFac(1,_id.data(),_pos.data(),_end.data());
-
-            // delete[] id;
-            // delete[] pos;
-            // delete[] end;
-
-            // std::fill(std::begin(mc.state),std::end(mc.state),0);
-
-		    mc.initFullInterval();
-			mc.next();
+            mc.next();
 
 			break;
 		}

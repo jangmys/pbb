@@ -220,7 +220,7 @@ thread_controller::stop(unsigned id)
     int ret=pthread_barrier_wait(&barrier);
     if(ret==PTHREAD_BARRIER_SERIAL_THREAD){
         FILE_LOG(logDEBUG) << "=== thread_controller::stop ("<<id<<")";
-        FILE_LOG(logINFO) << "=== Decomposed: "<<pbb->stats.totDecomposed;
-        FILE_LOG(logINFO) << "=== Leaves: "<<pbb->stats.leaves;
+        FILE_LOG(logDEBUG) << "=== Decomposed: "<<pbb->stats.totDecomposed;
+        FILE_LOG(logDEBUG) << "=== Leaves: "<<pbb->stats.leaves;
     }
 }

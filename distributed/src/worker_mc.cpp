@@ -50,18 +50,37 @@ worker_mc::doWork()
 void
 worker_mc::updateWorkUnit()
 {
-    FILE_LOG(logDEBUG) << " === update work unit (rank " << comm->rank<<")";
+    pthread_mutex_lock_check(&mutex_wunit);
+    auto oldsz = dwrk->wsize();
+    work_buf->fact2dec(dwrk);
+    auto newsz = dwrk->wsize();
+
+    // FILE_LOG(logINFO) << "UPDATE\t"<< oldsz << "\t"<< newsz;
+    pthread_mutex_unlock(&mutex_wunit);
+
+    // FILE_LOG(logDEBUG) << " === update work unit (rank " << comm->rank<<")";
 
     assert(work_buf->nb_intervals <= mc->get_num_threads());
 
-    pthread_mutex_lock_check(&mutex_wunit);
-    mc->initFromFac(
-        work_buf->nb_intervals,
-        work_buf->ids,
-        work_buf->pos,
-        work_buf->end
-    );
-    pthread_mutex_unlock(&mutex_wunit);
+    if(oldsz != newsz){
+        pthread_mutex_lock_check(&mutex_wunit);
+        mc->initFromFac(
+            work_buf->nb_intervals,
+            work_buf->ids,
+            work_buf->pos,
+            work_buf->end
+        );
+        pthread_mutex_unlock(&mutex_wunit);
+    }else{
+        pthread_mutex_lock_check(&mutex_wunit);
+        mc->initFromFac(
+            work_buf->nb_intervals,//0,
+            work_buf->ids,
+            work_buf->pos,
+            work_buf->end
+        );
+        pthread_mutex_unlock(&mutex_wunit);
+    }
 
     pthread_mutex_lock_check(&mutex_updateAvail);
     updateAvailable = false;
@@ -81,6 +100,7 @@ worker_mc::getIntervals()
 
     assert(work_buf->max_intervals >= mc->get_num_threads());
 
+    // std::cout<<"GET INTERVAL===============\n";
     int nbActive = 0;
     for (unsigned int k = 0; k < mc->get_num_threads(); k++) {
         if (!mc->get_bbthread(k)->isEmpty()) {

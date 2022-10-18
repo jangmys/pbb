@@ -35,8 +35,7 @@ public:
     int end_updated;//flag : was end modified?
     int nb_updates;
 
-    mpz_class size;//, begin-end;
-    // time_t timeSinceLastUpdate; // Dernière date de mise à jour, utilisé par le coordinateur et le processus B&B
+    mpz_class size;
 
     //Constructeurs
     work();
