@@ -29,8 +29,8 @@ public:
     int id;//work ID
     int nb_intervals;
     int max_intervals;
-    int exploredNodes;
-    int nbLeaves;
+    int nb_decomposed;
+    int nb_leaves;
 
     int end_updated;//flag : was end modified?
     int nb_updates;

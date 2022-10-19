@@ -85,7 +85,7 @@ master::initWorks(int initMode)
 //Return : Reply message type
 static bool debug = false;
 int master::processRequest(std::shared_ptr<work> w) {
-    bool updateWorker=false;    //return true if worker needs update
+    int return_type=NIL;
 
     //DEBUG
     if (debug) {
@@ -115,7 +115,7 @@ int master::processRequest(std::shared_ptr<work> w) {
             auto wsz = w->wsize(); //worker size
 
             if(tmpsz<wsz){
-                std::cout<<"xxxxxxxxxxxx "<<tmpsz<<" > "<<wsz<<std::endl;
+                std::cout<<"xxxxxxxxxxxx M "<<tmpsz<<" > W  "<<wsz<<std::endl;
                 tmp->displayUinterval();
                 std::cout<<"<< M ================================ W >>\n";
                 w->displayUinterval();
@@ -140,9 +140,9 @@ int master::processRequest(std::shared_ptr<work> w) {
             FILE_LOG(logDEBUG4) <<"<< M ===============***================= W >>";
             FILE_LOG(logDEBUG4) <<*w;//<<std::endl;
 
-			// FILE_LOG(logDEBUG1) << "Full intersection";
-            updateWorker=tmp->intersection(w);
+            return_type=tmp->intersection(w)?WORK:NIL;
             wrks->sizes_update(tmp);
+
         }
 
         //if result of intersection is empty work
@@ -151,6 +151,7 @@ int master::processRequest(std::shared_ptr<work> w) {
             wrks->id_delete(tmp);
             tmp=nullptr;
             steal=true;
+            return_type=NIL;
         }
     }
 
@@ -161,7 +162,7 @@ int master::processRequest(std::shared_ptr<work> w) {
             return END;//true;
         }else if (!wrks->unassigned.empty())   {
             tmp=wrks->_adopt(w->max_intervals);
-            updateWorker=true;
+            return_type=NEWWORK;
         }else if(isSharing) {
             bool too_small;
             if(tmp){
@@ -172,7 +173,7 @@ int master::processRequest(std::shared_ptr<work> w) {
                 }
             }
             tmp=wrks->steal(w->max_intervals, too_small);
-            updateWorker=true;
+            return_type=NEWWORK;
         }else{
             return SLEEP;
         }
@@ -196,11 +197,12 @@ int master::processRequest(std::shared_ptr<work> w) {
 
     //DEBUG
     if (debug) {
-        std::cout<<(updateWorker?"changed...\n":"unchanged...\n");
+        std::cout<<((return_type!=NIL)?"changed...\n":"unchanged...\n");
         std::cout << "work out : " << (w->Uinterval).size() << " items | ID=" << w->id << std::endl; w->displayUinterval();
     }
 
-    return (updateWorker?WORK:NIL);
+    return return_type;
+    // return (updateWorker?WORK:NIL);
 }
 
 //static bool first=true;
@@ -248,9 +250,9 @@ master::run()
                 wrk->clear();
                 comm->recv_work(wrk, status.MPI_SOURCE, WORK, &status);
 
-                FILE_LOG(logDEBUG1) << "Receive node count: " << wrk->exploredNodes;
-                pbb->stats.totDecomposed += wrk->exploredNodes;
-                pbb->stats.leaves += wrk->nbLeaves;
+                FILE_LOG(logDEBUG1) << "Receive node count: " << wrk->nb_decomposed;
+                pbb->stats.totDecomposed += wrk->nb_decomposed;
+                pbb->stats.leaves += wrk->nb_leaves;
 
                 pbb->ttm->on(pbb->ttm->processRequest);
                 // bool shutdown_worker=false;
@@ -258,17 +260,20 @@ master::run()
                 pbb->ttm->off(pbb->ttm->processRequest);
 
                 //END
-                switch (reply_type) {
+                switch (reply_type)
+                {
                     case END: // NO MORE WORK LEFT
                     {
                         printf("send termination signal to %d\n",status.MPI_SOURCE);
                         MPI_Send(&aaa,1,MPI_INT,status.MPI_SOURCE,END,MPI_COMM_WORLD);
                         break;
                     }
-                    case WORK: //SEND UPDATED WORK UNIT
+                    //SEND NEW / UPDATED WORK UNIT
+                    case NEWWORK:
+                    case WORK:
                     {
                         // FILE_LOG(logINFO) << "send work "<<*wrk<<" to " << status.MPI_SOURCE;
-                        comm->send_work(wrk,status.MPI_SOURCE, WORK);
+                        comm->send_work(wrk,status.MPI_SOURCE, reply_type);
                         work_out++;
                         break;
                     }
@@ -287,8 +292,10 @@ master::run()
                         MPI_Send(&aaa,1,MPI_INT,status.MPI_SOURCE,SLEEP,MPI_COMM_WORLD);
                         break;
                     }
-                    default:
+                    default: {
                         std::cout<<"unknown return type\n";
+                        break;
+                    }
                 }
                 break;
             }

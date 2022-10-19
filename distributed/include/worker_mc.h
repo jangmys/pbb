@@ -45,6 +45,8 @@ public:
     void interrupt();
     void updateWorkUnit();
     bool doWork();
+
+    fact_work get_intervals();    
     void getIntervals();
     void getSolutions();
 

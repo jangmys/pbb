@@ -132,7 +132,7 @@ comm_thread(void * arg)
 
     int masterbest;
 
-    int *msg_counter = new int[5];
+    int *msg_counter = new int[10];
 
     while (1) {
         //----------CHECK WORKER TERMINATION----------
@@ -151,7 +151,9 @@ comm_thread(void * arg)
             pthread_mutex_unlock(&w->mutex_trigger);
 
             //convert to mpz integer intervals and sort...
+            // w->dwrk = convert::fact2dec(w->work_buf,w->pbb->size);
             w->work_buf->fact2dec(w->dwrk);
+
             // FILE_LOG(logINFO) <<"SEDN WORK\t"<<*(w->dwrk);
 
             //...send to MASTER
@@ -183,37 +185,18 @@ comm_thread(void * arg)
 
         switch(status.MPI_TAG)
         {
-            case WORK: /* new work */
-            {
-                //the receive buffer...
-                std::shared_ptr<work> rwrk(new work());
-
-                w->comm->recv_work(rwrk, 0, MPI_ANY_TAG, &status);
-
-                auto sendsz = w->dwrk->wsize();
-                auto recvsz = rwrk->wsize();
-
-                if(sendsz != recvsz){
-                    FILE_LOG(logINFO) << "RECEIVE\t"<< rwrk->wsize()<< "\t"<< w->dwrk->wsize();
-                    w->work_buf->dec2fact(rwrk);
-                    // wait unitl update applied
-                    w->wait_for_update_complete();
-                }else{
-                    FILE_LOG(logINFO) << "RECEIVE\t"<< rwrk->wsize()<< "\t"<< w->dwrk->wsize();
-                    w->work_buf->dec2fact(rwrk);
-
-                    pthread_mutex_lock_check(&w->mutex_updateAvail);
-                    // signal update
-                    w->updateAvailable = true;
-                    w->pbb->workUpdateAvailable.store(true,std::memory_order_relaxed);//break exploration loop
-
-                    // wait until done
-                    while (w->updateAvailable) {
-                        pthread_cond_wait(&w->cond_updateApplied, &w->mutex_updateAvail);
-                    }
-                    pthread_mutex_unlock(&w->mutex_updateAvail);
-                }
-                // FILE_LOG(logINFO) << "RECEIVE\t"<< *rwrk;
+            /* new work */
+            case WORK:
+            case NEWWORK: {
+                //the receive buffer (decimal intervals)...
+                auto rwrk = std::make_shared<work>();
+                //receive
+                w->comm->recv_work(rwrk, 0, status.MPI_TAG, &status);
+                //convert to factoradic
+                // w->work_buf = convert::dec2fact(rwrk,w->pbb->size);
+                w->work_buf->dec2fact(rwrk);
+                //signal and wait
+                w->wait_for_update_complete();
 
                 break;
             }
@@ -266,6 +249,7 @@ comm_thread(void * arg)
     FILE_LOG(logINFO) << "----------Worker Message Count----------";
     FILE_LOG(logINFO) <<"Iterations\t"<<nbiter;
     FILE_LOG(logINFO) <<"WORK\t"<<msg_counter[WORK];
+    FILE_LOG(logINFO) <<"NEWWORK\t"<<msg_counter[NEWWORK];
     FILE_LOG(logINFO) <<"BEST\t"<<msg_counter[BEST];
     FILE_LOG(logINFO) <<"NIL\t"<<msg_counter[NIL];
     FILE_LOG(logINFO) <<"END\t"<<msg_counter[END];

@@ -14,7 +14,8 @@ work::work(const work& w)
 
     id = w.id;
     max_intervals = w.max_intervals;
-    exploredNodes = w.exploredNodes;
+    nb_decomposed = w.nb_decomposed;
+    nb_leaves = w.nb_leaves;
     end_updated   = w.end_updated;
     nb_updates = w.nb_updates;
 
@@ -25,7 +26,8 @@ work::work(const work& w)
 work::work(){
     if (!isEmpty()) Uinterval.clear();
 
-    exploredNodes = 0;
+    nb_decomposed = 0;
+    nb_leaves = 0;
     nb_updates = 0;
     end_updated = 0;
     size = 0;
@@ -437,7 +439,8 @@ work::operator = (work& w)
     // Uinterval.assign((w.Uinterval).begin(),(w.Uinterval).end());
     Uinterval = w.Uinterval;
 
-    exploredNodes = w.exploredNodes;
+    nb_decomposed = w.nb_decomposed;
+    nb_leaves = w.nb_leaves;
     size = w.size;
 
     id = w.id;
@@ -488,7 +491,7 @@ work::readHeader(std::istream& stream)
     stream >> id; // int
     stream >> end_updated;// int
     stream >> max_intervals;// int
-    stream >> exploredNodes;// mpz_class int
+    stream >> nb_decomposed;// mpz_class int
     stream >> nb_intervals; // size_t
 
     if (stream.fail()) printf("fail. unable to read header\n");
@@ -523,7 +526,8 @@ work::writeHeader(std::ostream& stream) const
     // how many intervals can work w hold?
     stream << max_intervals << " ";
     // stats
-    stream << exploredNodes << " ";
+    stream << nb_decomposed << " ";
+    // stream << exploredNodes << " ";
     // nb_intervals=Uinterval.size();
     stream << Uinterval.size() << "\n";
 
