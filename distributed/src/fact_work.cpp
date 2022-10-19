@@ -91,6 +91,8 @@ fact_work::fact2dec(std::shared_ptr<work> dw)
     dw->id = this->id;
     dw->nb_intervals  = nb_intervals;
     dw->max_intervals = max_intervals;
+    dw->nb_decomposed = nb_decomposed;
+    dw->nb_leaves = nb_leaves;
 
     dw->Uinterval.clear();
 
@@ -125,6 +127,8 @@ fact_work::dec2fact(std::shared_ptr<work> dw)
     id = dw->id;
     nb_intervals  = dw->Uinterval.size();
     max_intervals = dw->max_intervals;
+    nb_decomposed = dw->nb_decomposed;
+    nb_leaves = dw->nb_leaves;
 
     for (unsigned k = 0; k < nb_intervals; k++) {
         ids[k] = dw->Uinterval[k]->id;
