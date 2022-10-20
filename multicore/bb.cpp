@@ -48,7 +48,7 @@ main(int argc, char ** argv)
     //we'll just define factory methods here that will be passed to each thread through the pbab class
     //each thread will build it's own bound, branch and prune operators later.
     if(arguments::problem[0]=='f'){
-        pbb->set_bound_factory(std::make_unique<BoundFactory>());
+        pbb->set_bound_factory(std::make_unique<BoundFactory>(arguments::earlyStopJohnson,arguments::johnsonPairs));
     }else if(arguments::problem[0]=='d'){
         pbb->set_bound_factory(std::make_unique<DummyBoundFactory>());
     }
