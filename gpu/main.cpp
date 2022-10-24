@@ -12,26 +12,35 @@
 int
 main(int argc, char ** argv)
 {
+    //------------------PARAMETER PARSING-----------------
     arguments::parse_arguments(argc, argv);
     std::cout<<" === solving "<<arguments::problem<<" - instance "<<arguments::inst_name<<std::endl;
 
-    /*SET UP LOGGING*/
-    FILELog::ReportingLevel() = logINFO;
+    //------------------SET UP LOGGING--------------------
+    FILELog::ReportingLevel() = logERROR;
+#ifndef NDEBUG
+    FILELog::ReportingLevel() = logDEBUG;
+#endif
     FILE* log_fd = fopen(arguments::logfile, "w" );
     Output2FILE::Stream() = log_fd;
 
     pbab * pbb = new pbab();
+
+    //------------------SET INSTANCE----------------------
+    pbb->set_instance(
+        pbb_instance::make_instance(arguments::problem, arguments::inst_name)
+    );
+
     pbb->set_initial_solution();
     std::cout<<"initial solution "<<*(pbb->sltn);
 
-	arguments::singleNode=true;
 
-    FILELog::ReportingLevel() = logINFO;
+	arguments::singleNode=true;
+    cudaFree(0);
 
     struct timespec tstart, tend;
     clock_gettime(CLOCK_MONOTONIC, &tstart);
 
-    cudaFree(0);
 
     int device_nb = 0;
     cudaSetDevice(device_nb);

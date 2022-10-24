@@ -11,6 +11,8 @@ char arguments::work_directory[50] = "../../bbworks/";
 char arguments::inst_name[50];
 char arguments::problem[50];
 
+char arguments::worker_type='c';
+
 //Bounding options
 int arguments::boundMode     = 2;
 int arguments::primary_bound     = 0;
@@ -174,6 +176,7 @@ arguments::parse_arguments(int argc, char ** argv)
                 {"findall",  no_argument, NULL,  0 },
                 {"singlenode",  no_argument, NULL,  0 },
                 {"primary-bound",  required_argument, NULL,  0 },
+                {"gpu", no_argument, NULL, 0},
                 {0,         0,                 0,  0 }
             };
 
@@ -183,6 +186,10 @@ arguments::parse_arguments(int argc, char ** argv)
         switch (c) {
             case 0: //long_options
             {
+                if(strcmp(long_options[option_index].name,"gpu") == 0)
+                {
+                    worker_type='g';
+                }
                 if(strcmp(long_options[option_index].name,"bound") == 0)
                 {
                     boundMode = atoi(optarg);

@@ -21,7 +21,8 @@
 #include "work.h"
 #include "communicator.h"
 
-worker::worker(pbab * _pbb) : pbb(_pbb),size(pbb->size)
+worker::worker(pbab * _pbb, unsigned int nbIVM) : pbb(_pbb),size(pbb->size),M(nbIVM),comm(std::make_unique<communicator>(M, size)),
+        work_buf(std::make_shared<fact_work>(M, size))
 {
     dwrk = std::make_shared<work>();
 

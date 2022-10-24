@@ -24,11 +24,11 @@
 #include "../../multicore/ivm/matrix_controller.h"
 
 
-void
-worker_mc::interrupt()
-{
-    mc->interruptExploration();
-}
+// void
+// worker_mc::interrupt()
+// {
+//     mc->interruptExploration();
+// }
 
 bool
 worker_mc::doWork()

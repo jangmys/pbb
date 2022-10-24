@@ -60,24 +60,26 @@ public:
     int max_intervals;
     int nb_decomposed;//decomposed nodes since last update
     int nb_leaves;
+    int pbsize;
 
     int *ids;
     int *pos;
     int *end;
 
-    int pbsize;
     int *states;
 
-    weights* wghts;
 
     fact_work(int _size);
     fact_work(int _max, int _size);
 
-    void BigintToVect(mpz_class begin, mpz_class end, int * posV, int * endV);
+    // void BigintToVect(mpz_class begin, mpz_class end, int * posV, int * endV);
+    void BigintToVect(mpz_class begin, int * posV);
     void VectToBigint(const int * posV, const int * endV, mpz_class &begin, mpz_class &end);
 
     void fact2dec(std::shared_ptr<work>);
     void dec2fact(std::shared_ptr<work>);
+private:
+    weights wghts;
 };
 
 #endif

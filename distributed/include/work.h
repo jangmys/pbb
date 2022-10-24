@@ -71,7 +71,6 @@ public:
 
     void set_size();
     void set_time();
-    // void set_peer(peer& p);
     void set_finished();
     void set_null();
     void set_id();
@@ -87,9 +86,6 @@ public:
     void operator=(work& w);
     bool equal(work& w);
     bool differ(std::shared_ptr<work>& w);
-
-    void VectToBigint(const int *posV,const int *endV, mpz_class &begin, mpz_class &end);
-    void BigintToVect(mpz_class begin,mpz_class end, int *posV, int *endV);
 
     //new...
     void split(size_t n);

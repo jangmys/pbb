@@ -121,8 +121,6 @@ public:
 
 
     int operator()(const int*cb, const int* ce, const int line){
-        int ub = initialUB;
-
         int elim = 0;
         int sum = 0;
 

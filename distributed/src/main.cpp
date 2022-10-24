@@ -5,16 +5,18 @@
 #include "ttime.h"
 #include "solution.h"
 
+#include <sys/sysinfo.h>
+
 //INCLUDE INSTANCES
 #include "libbounds.h"
 
 #include <mpi.h>
 
+#include "worker_mc.h"
 #ifdef USE_GPU
 #include "worker_gpu.h"
-#else
-#include "worker_mc.h"
 #endif
+
 
 #include "master.h"
 
@@ -167,15 +169,24 @@ main(int argc, char ** argv)
             	FILE_LOG(logINFO) << "Worker running on :\t"<<hostname<<std::flush;
 
                 // ==========================
-                #ifdef USE_GPU
-                worker *wrkr = new worker_gpu(pbb);
-                #else
                 int nthreads = (arguments::nbivms_mc < 1) ? get_nprocs() : arguments::nbivms_mc;
-                worker *wrkr = new worker_mc(pbb,nthreads);
-                FILE_LOG(logINFO) << "Worker running with "<<nthreads<<" threads.\n";
+
+                worker *wrkr;
+                #ifdef USE_GPU
+                if(arguments::worker_type=='g'){
+                    wrkr = new worker_gpu(pbb,arguments::nbivms_gpu);
+                }else{
+                    wrkr = new worker_mc(pbb,nthreads);
+                }
+                #else
+                wrkr = new worker_mc(pbb,nthreads);
                 #endif
 
+                FILE_LOG(logINFO) << "Worker running with "<<nthreads<<" threads.\n";
+
                 wrkr->run();
+
+                delete wrkr;
             }
             break;
         }
@@ -216,7 +227,7 @@ main(int argc, char ** argv)
             {
                 // ==========================
                 #ifdef USE_GPU
-                worker *wrkr = new worker_gpu(pbb);
+                worker *wrkr = new worker_gpu(pbb,arguments::nbivms_gpu);
                 #else
                 int nthreads = (arguments::nbivms_mc < 1) ? get_nprocs() : arguments::nbivms_mc;
                 worker *wrkr = new worker_mc(pbb,nthreads);

@@ -21,6 +21,8 @@ public:
     static int initial_heuristic_iters;
     static char heuristic_type;
 
+    static char worker_type;
+
     // --branch
     static int branchingMode;
     // --bound

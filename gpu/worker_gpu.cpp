@@ -6,41 +6,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <mpi.h>
 
-#include "macros.h"
-#include "pbab.h"
-#include "solution.h"
-#include "ttime.h"
-
-#include "worker.h"
-#include "fact_work.h"
-#include "work.h"
 #include "communicator.h"
-
-#ifdef USE_GPU
 #include "worker_gpu.h"
-#include "gpubb.h"
-#endif
 
-void
-worker_gpu::interrupt()
-{
-    gbb->interruptExploration();
-}
 
 bool
 worker_gpu::doWork()
 {
     pbb->ttm->on(pbb->ttm->workerExploretime);
-
-    //    printf("dowork///\n");
     bool allEnd = false;
-
-    #ifdef USE_GPU
     allEnd = gbb->next();
-    #endif
-
     pbb->ttm->off(pbb->ttm->workerExploretime);
 
     setNewBest(gbb->localFoundNew);
@@ -52,14 +28,12 @@ void
 worker_gpu::updateWorkUnit()
 {
     pthread_mutex_lock_check(&mutex_wunit);
-    #ifdef USE_GPU
     gbb->initFromFac(
         work_buf->nb_intervals,
         work_buf->ids,
         work_buf->pos,
         work_buf->end
     );
-    #endif
     pthread_mutex_unlock(&mutex_wunit);
 
     pthread_mutex_lock_check(&mutex_updateAvail);
@@ -74,7 +48,6 @@ worker_gpu::updateWorkUnit()
 void
 worker_gpu::getIntervals()
 {
-    #ifdef USE_GPU
     gbb->getIntervals(
         work_buf->pos,
         work_buf->end,
@@ -83,19 +56,16 @@ worker_gpu::getIntervals()
         work_buf->max_intervals
     );
 
-
-    dwrk->exploredNodes      = pbb->stats.totDecomposed;
-    dwrk->nbLeaves           = pbb->stats.leaves;
+    work_buf->nb_decomposed = pbb->stats.totDecomposed;
+    work_buf->nb_leaves     = pbb->stats.leaves;
     pbb->stats.totDecomposed = 0;
     pbb->stats.leaves        = 0;
-    #endif
 }
 
 void
 worker_gpu::getSolutions()
 {
     pthread_mutex_lock_check(&mutex_solutions);
-
     if(sol_ind_begin >= sol_ind_end){
         int nb=gbb->getDeepSubproblem(solutions,max_sol_ind);
 
@@ -104,6 +74,5 @@ worker_gpu::getSolutions()
             sol_ind_end=nb;
         }
     }
-
     pthread_mutex_unlock(&mutex_solutions);
 }

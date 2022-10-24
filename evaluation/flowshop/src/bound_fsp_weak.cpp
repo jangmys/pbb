@@ -307,4 +307,4 @@ bound_fsp_weak::bornes_calculer(int permutation[], int limite1, int limite2, int
 
 int
 bound_fsp_weak::bornes_calculer(int permutation[], int limite1, int limite2)
-{ }
+{ return 0;}

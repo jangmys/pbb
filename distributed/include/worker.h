@@ -4,16 +4,11 @@
 #include <atomic>
 #include <memory>
 
+#include "macros.h"
+#include "communicator.h"
+#include "pbab.h"
+#include "fact_work.h"
 
-class pbab;
-class communicator;
-class matrix_controller;
-
-class work;
-class fact_work;
-class solution;
-
-class gpubb;
 
 class worker {
     // private:
@@ -23,15 +18,9 @@ public:
     int M;
 
     std::unique_ptr<communicator> comm;
-
-    matrix_controller * mc;
-    gpubb * gbb;
-
     std::shared_ptr<fact_work> work_buf;
     std::shared_ptr<work> dwrk;
 
-//    fact_work * work_buf;
-    // solution * best_buf;
     solution * local_sol;
 
     unsigned int sol_ind_begin;
@@ -40,8 +29,8 @@ public:
     int *solutions;
     pthread_mutex_t mutex_solutions;
 
-    worker(pbab * _pbb);
-    ~worker();
+    worker(pbab * _pbb, unsigned int _nbIVM);
+    virtual ~worker();
 
     int best;
 
@@ -52,7 +41,6 @@ public:
     virtual void getIntervals() = 0;
     virtual void updateWorkUnit() = 0;
     virtual bool doWork() = 0;
-    virtual void interrupt() = 0;
 
     pthread_barrier_t barrier;
     pthread_mutex_t mutex_inst;
@@ -74,7 +62,6 @@ public:
     volatile bool newBest;
     bool foundNewBest();
     void setNewBest(bool _v);
-
 
     void wait_for_trigger(bool& check, bool& best);
     void wait_for_update_complete();
