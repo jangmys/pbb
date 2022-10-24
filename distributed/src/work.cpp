@@ -168,11 +168,14 @@ work::intersection(const std::shared_ptr<work>& w)
             //it and jt overlap
             else if (((*it)->end > (jt)->begin) && ((*it)->begin < (jt)->end)){
                 intersected = true;
-                result.emplace_back(new interval(
-                    std::max((*it)->begin, (jt)->begin),
-                    std::min((*it)->end, (jt)->end),
-                    (jt)->id)
-                );
+                result.emplace_back(std::make_shared<interval>(intersect(*(*it),*jt)));
+
+
+                // result.emplace_back(new interval(
+                //     std::max((*it)->begin, (jt)->begin),
+                //     std::min((*it)->end, (jt)->end),
+                //     (jt)->id)
+                // );
 
                 // there can be at most one interval in copy with non-empty intresection
                 break;
@@ -251,19 +254,7 @@ std::shared_ptr<work> work::divide(int max)
     return tmp;
 } // work::divide
 
-/*
- * //return highest id assigned + 1
- * int work::renumber()
- * {
- *  INTERVAL_IT it;
- *
- *  int _id=0;
- *  for(it = Uinterval.begin(); it != Uinterval.end(); ++it){
- *      (*it)->id=_id++;
- *  }
- *  return _id;
- * }
- */
+
 void
 work::split(size_t n)
 {
@@ -387,47 +378,6 @@ mpz_class work::wsize()
     return ret;
 }
 
- //
- // * bool work::equal(work& w)
- // * {
- // *  bool result=true;
- // *
- // *  if(Uinterval.size() != w.Uinterval.size())result=false;
- // *  else if(Uinterval != w.Uinterval)result=false;
- // *
- // * //	if((begin != w.begin) || (end != w.end))result=false;
- // *
- // *  return result;
- // * }
- // *
- // * bool work::differ(std::shared_ptr<work>& w)
- // * {
- // *  //bool result=false;
- // *  size_t numintervals = Uinterval.size();
- // *
- // *  //#intervals differs => this work & work w differ
- // *  if(numintervals != w->Uinterval.size()){
- // *      //printf("Dsize\n");
- // *      //displayUinterval();w.displayUinterval();
- // *      return true; //result=true;
- // *  }
- // *
- // *  for(unsigned int i=0; i<numintervals; i++){
- // *      std::shared_ptr<interval>tmp = Uinterval.at(i);
- // *      std::shared_ptr<interval>tmpW = (w->Uinterval).at(i);
- // *
- // *      if(tmpW->id != tmp->id){//printf("Did\n");
- // *      return true;}
- // *      if(tmpW->begin != tmp->begin){//printf("Dbegin\n");displayUinterval();w.displayUinterval();
- // *      return true;}
- // *      if(tmpW->end != tmp->end){//printf("Dend\n");displayUinterval();w.displayUinterval();displayUinterval();w.displayUinterval();
- // *      return true;}
- // *  }
- // *  //std::cout<<"Dsame"<<std::endl<<std::flush;
- // *
- // *  return false;
- // * }
- // */
 void
 work::operator = (work& w)
 {
@@ -453,19 +403,6 @@ work::isEmpty()
 {
     return Uinterval.empty();
 }
-
-/*
-  * //=======================================================================================
- * //bool work::intervalSmaller(const interval *A, const interval *B)
- * //{
- * //	return (A->begin < B->begin);
- * //}
- *
- * void work_free(work*w)
- * {
- *  delete w;
- * }
- */
 
 void
 work::displayUinterval()
@@ -585,6 +522,16 @@ operator >> (std::istream& stream, work& w)
     }
     return stream;
 }
+
+work
+intersect(const work& w1, const work& w2)
+{
+    work tmp(w1);
+
+    tmp.intersection(std::make_shared<work>(w2));
+    return tmp;
+}
+
 
 size_t
 work::readFromFile(FILE * bp)

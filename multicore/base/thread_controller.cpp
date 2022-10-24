@@ -19,8 +19,6 @@ thread_controller::thread_controller(pbab * _pbb, int _nthreads) : pbb(_pbb),M(_
     pthread_mutexattr_init(&attr);
     pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_ERRORCHECK);
 
-    // pthread_mutex_init(&mutex_end, &attr);
-
     atom_nb_explorers.store(0);// id_generator
     allEnd.store(false);
 }
@@ -29,7 +27,6 @@ thread_controller::~thread_controller()
 {
     free(threads);
 
-    // pthread_mutex_destroy(&mutex_end);
     pthread_barrier_destroy(&barrier);
 }
 

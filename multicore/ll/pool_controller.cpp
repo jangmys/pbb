@@ -28,7 +28,6 @@ PoolController::explore_multicore()
     int ret = pthread_barrier_wait(&barrier);
     if(ret==PTHREAD_BARRIER_SERIAL_THREAD)
     {
-        // updatedIntervals = 0;
         FILE_LOG(logDEBUG) << "=== start "<<get_num_threads()<<" exploration threads ===";
 
         std::cout<< "=== start "<<get_num_threads()<<" exploration threads ===\n";

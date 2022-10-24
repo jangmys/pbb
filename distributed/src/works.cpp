@@ -45,8 +45,6 @@ works::init_complete(pbab * _pbb)
     b -= 1;//...minus one (needed to avoid segfault on conversion to factoradic).
 
     (w->Uinterval).emplace_back(new interval(a, b, 0));
-
-    //    while(!unassigned.empty())unassigned.pop_front();
     unassigned.push_back(w);
 
     FILE_LOG(logINFO)<<"INITIAL WORK UNITS: "<<unassigned.size();
@@ -175,7 +173,6 @@ void works::clear()
 {
     size = 0;
     for (id_iterator i = ids.begin(); i != ids.end(); ++i){
-        // work_free(i->second);
         (i->second)->clear();
     }
     ids.clear(); sizes.clear();

@@ -15,12 +15,9 @@ public:
             MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     };
 
-    int M;
-    int size;
-    int rank;
-
-    void send_fwork(int dest, int tag);
-    void recv_fwork(int src, int tag, MPI_Status* status);
+    int M; //commsize
+    int size; //pbsize
+    int rank; //rank
 
     void send_work(std::shared_ptr<work> src_wrk, int dest, int tag);
     void recv_work(std::shared_ptr<work> dst_wrk, int src, int tag, MPI_Status* status);

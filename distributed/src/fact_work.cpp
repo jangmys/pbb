@@ -3,11 +3,9 @@
 
 #include "log.h"
 
-#include "weights.h"
 #include "work.h"
 #include "fact_work.h"
 
-class weights;
 
 // in case max is not known yet
 fact_work::fact_work(int _size)
@@ -59,15 +57,6 @@ fact_work::BigintToVect(mpz_class begin, mpz_class end, int * posV, int * endV)
         mpz_tdiv_qr(q.get_mpz_t(), r.get_mpz_t(), r.get_mpz_t(), wghts->depth[pbsize - i + 1].get_mpz_t());
         endV[pbsize - i] = q.get_ui();
     }
-
-    // for(int i=0;i<pbsize;i++){
-    //  printf("%d ",posV[i]);
-    // }
-    // printf("\n");
-    // for(int i=0;i<pbsize;i++){
-    //  printf("%d ",endV[i]);
-    // }
-    // printf("\n");
 }
 
 void
@@ -77,12 +66,9 @@ fact_work::VectToBigint(const int * posV, const int * endV, mpz_class &begin, mp
     end   = 0;
 
     for (int i = pbsize - 1; i >= 0; i--) {
-        // std::cout<<posV[i]<<":::"<<endV[i]<<std::endl;
-        // std::cout<<wghts->W[i + 1][posV[i]]<<":::"<<wghts->W[i + 1][endV[i]]<<std::endl;
         begin += wghts->W[i + 1][posV[i]];
-        end   += wghts->W[i + 1][endV[i]];// *mpz_class(endV[i]);
+        end   += wghts->W[i + 1][endV[i]];
     }
-    // std::cout<<begin<<" "<<end<<std::endl;
 }
 
 void

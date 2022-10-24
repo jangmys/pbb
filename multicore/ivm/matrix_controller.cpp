@@ -48,38 +48,28 @@ matrix_controller::initFromFac(const unsigned int nbint, const int * ids, int * 
 {
     FILE_LOG(logINFO) << "=== init from fac";
 
-    updatedIntervals=true;
+    updatedIntervals=1;
 
-    if(nbint>0){
-        //CLEAR ALL BEFORE REFILL
-        for(unsigned i=0;i<get_num_threads();i++){
-            state[i]=0;
-            for (int j = 0; j < pbb->size; j++) {
-                pos[i][j] = 0;//_pos[k * pbb->size + i];
-                end[i][j] = 0;//_end[k * pbb->size + i];
-            }
-            pos[i][0]=pbb->size;
+    //CLEAR ALL BEFORE REFILL
+    for(unsigned i=0;i<get_num_threads();i++){
+        state[i]=0;
+        for (int j = 0; j < pbb->size; j++) {
+            pos[i][j] = 0;
+            end[i][j] = 0;
         }
+        pos[i][0]=pbb->size;
+    }
 
-        for (unsigned int k = 0; k < nbint; k++) {
-            unsigned int id = ids[k];
-            assert(id < get_num_threads());
+    for (unsigned int k = 0; k < nbint; k++) {
+        unsigned int id = ids[k];
+        assert(id < get_num_threads());
 
-            state[id]=1;
+        state[id]=1;
 
-            // bbb[id]->setRoot(pbb->root_sltn->perm, -1, pbb->size);
-            for (int i = 0; i < pbb->size; i++) {
-                pos[id][i] = _pos[k * pbb->size + i];
-                end[id][i] = _end[k * pbb->size + i];
-            }
-            // std::cout<<"init\n";
-            // for(auto& c : pos[id])
-            //     std::cout<<c<<" ";
-            // std::cout<<"\n";
-            //
-            // for(auto& c : end[id])
-            //     std::cout<<c<<" ";
-            // std::cout<<"\n";
+        // bbb[id]->setRoot(pbb->root_sltn->perm, -1, pbb->size);
+        for (int i = 0; i < pbb->size; i++) {
+            pos[id][i] = _pos[k * pbb->size + i];
+            end[id][i] = _end[k * pbb->size + i];
         }
     }
 }

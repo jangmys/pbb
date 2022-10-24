@@ -10,7 +10,48 @@
 #include "gmpxx.h"
 
 class work;
-class weights;
+
+#define MAX_JOBS 800
+
+//// TODO : move weights and decimal stuff to work ?
+
+/*
+(N+1)*(N+1) table storing values
+
+i*(j!) for i=0,1,...,N ; for j=0,1,...,N
+
+Comes in handy when converting factoradic numbers to decimal and vice-versa
+*/
+class weights
+{
+public:
+    //0 (N-1)!  2*(N-1)!    3*(N-1)!    ... (N-1)*(N-1)! N*(N-1)!
+    //...
+    //24
+    //6
+    //2
+    //1
+    //0 1   2   3   4   5   ... N-1 N
+    weights(int _size)
+    {
+        depth[_size]     = 1;
+        depth[_size - 1] = 1;
+        for (int i = _size - 2, j = 2; i >= 0; i--, j++) {
+            depth[i]  = j*depth[i + 1];
+        }
+
+        for (int i = 0; i <= _size; i++) {
+            for (int j = 0; j <= _size; j++) {
+                W[i][j] = j * depth[i];
+            }
+        }
+    }
+
+    mpz_class depth[MAX_JOBS+1];
+    mpz_class W[MAX_JOBS+1][MAX_JOBS+1];
+};
+
+
 
 class fact_work{
 public:
@@ -37,66 +78,6 @@ public:
 
     void fact2dec(std::shared_ptr<work>);
     void dec2fact(std::shared_ptr<work>);
-
-    // void initAtNFact(int N);
-    // void gather(std::vector<std::shared_ptr<fact_work>> fworks,const int best);
 };
-
-
-// namespace convert
-// {
-//     static std::shared_ptr<fact_work> dec2fact(std::shared_ptr<work> dw, int pbsize)
-//     {
-//         auto ret = std::make_shared<fact_work>(dw->max_intervals, pbsize);
-//
-//         ret->id = dw->id;
-//         ret->nb_intervals  = dw->Uinterval.size();
-//         ret->max_intervals = dw->max_intervals;
-//         ret->nb_decomposed = dw->nb_decomposed;
-//         ret->nb_leaves = dw->nb_leaves;
-//
-//         for (unsigned k = 0; k < ret->nb_intervals; k++) {
-//             ret->ids[k] = dw->Uinterval[k]->id;
-//             ret->BigintToVect(
-//                 dw->Uinterval[k]->begin, dw->Uinterval[k]->end,
-//                 ret->pos + k * pbsize, ret->end + k * pbsize
-//             );
-//         }
-//         return ret;
-//     }
-//
-//     static std::shared_ptr<work> fact2dec(std::shared_ptr<fact_work> fw, int pbsize)
-//     {
-//         auto ret = std::make_shared<work>();
-//
-//         ret->id = fw->id;
-//         ret->nb_intervals  = fw->nb_intervals;
-//         ret->max_intervals = fw->max_intervals;
-//         ret->nb_decomposed = fw->nb_decomposed;
-//         ret->nb_leaves = fw->nb_leaves;
-//
-//         ret->Uinterval.clear();
-//
-//         mpz_class tmpb(0);
-//         mpz_class tmpe(0);
-//
-//         for (unsigned i = 0; i < fw->nb_intervals; i++) {
-//             fw->VectToBigint(fw->pos + i * pbsize, fw->end + i * pbsize, tmpb, tmpe);
-//             // std::cout<<"V2I\t"<<tmpb<<" "<<tmpe<<std::endl;
-//
-//             if (tmpb < tmpe) {
-//                 ret->Uinterval.emplace_back(new interval(tmpb, tmpe, fw->ids[i]));
-//             }
-//         }
-//
-//         ret->sortIntervals();
-//         return ret;
-//         // dw->displayUinterval();
-//     }
-//
-//
-// }
-
-
 
 #endif

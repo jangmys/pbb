@@ -27,8 +27,6 @@ public:
     void initFromFac(const unsigned int nbint, const int* ids, int*pos, int* end);
     int getSubproblem(int *ret, const int N);
 
-    // void unlockWaiting(unsigned id);
-
     bool next();
     void explore_multicore();
 
