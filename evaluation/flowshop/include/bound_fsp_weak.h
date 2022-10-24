@@ -8,7 +8,11 @@
 
 #include "bound_abstract.h"
 
-class pbab;
+
+
+
+
+// class pbab;
 
 //PFSP : fitness and data are integer...
 class bound_fsp_weak : public bound_abstract<int> {
@@ -20,6 +24,8 @@ public:
 
     // this is CONSTANT data. in multi-core BB each thread will instantiate the lower bound. making the following static will save some space ("shared"), but performance hits are observed especially on dual-socket NUMA nodes.
     std::vector<std::vector<int>> PTM;
+
+    std::vector<int> p_times;
     // for each machine k, minimum time between t=0 and start of any job
     std::vector<int> min_heads;
     // for each machine k, minimum time between release of any job and end of processing on the last machine
@@ -54,11 +60,11 @@ private:
     std::vector<int> remain;
 
     void
-    scheduleFront(int * permut, int limit1);
+    scheduleFront(const int * permut, const int limit1);
     void
-    scheduleBack(int * permut, int limit2);
+    scheduleBack(const int * permut, const int limit2);
     void
-    sumUnscheduled(int * permut, int limit1, int limit2);
+    sumUnscheduled(const int * permut, const int limit1, const int limit2);
 };
 
 #endif // ifndef BOUND_FSP_WEAK_H

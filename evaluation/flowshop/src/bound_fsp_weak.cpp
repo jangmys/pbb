@@ -5,8 +5,11 @@
 #include <memory>
 #include <vector>
 #include <algorithm>
+#include <stdlib.h>
 
 #include "bound_fsp_weak.h"
+
+#include "c_bound_simple.h"
 
 // lower bound and evaluation function for the PFSP
 //
@@ -28,12 +31,14 @@ bound_fsp_weak::init(instance_abstract * _instance)
     // read matrix of processing times from instance-data (stringstream)
     PTM = std::vector<std::vector<int> >(nbMachines, std::vector<int>(nbJob));
 
+    p_times = std::vector<int>(nbJob*nbMachines);
+
     for (int j = 0; j < nbMachines; j++){
         for (int i = 0; i < nbJob; i++){
             *(_instance->data) >> PTM[j][i];
-            // std::cout<<PTM[j][i]<<"\t";
+
+            p_times[j*nbJob + i] = PTM[j][i];
         }
-        // std::cout<<"\n";
     }
     pthread_mutex_unlock(&_instance->mutex_instance_data);
 
@@ -94,12 +99,17 @@ bound_fsp_weak::fillMinHeadsTails()
     // std::cout<<std::endl;
 }
 
+
+
+
+
+
 // ==============================================================
 // Lower bound computation
 // ==============================================================
 // set heads : partial scheduling of 'permut' up to position limit1 (included)
 void
-bound_fsp_weak::scheduleFront(int * permut, int limit1)
+bound_fsp_weak::scheduleFront(const int * permut, const int limit1)
 {
     // no jobs scheduled in front
     if (limit1 == -1) {
@@ -110,19 +120,12 @@ bound_fsp_weak::scheduleFront(int * permut, int limit1)
 
     std::fill(front.begin(), front.end(), 0);
 
-    // forward schedule
-    for (int i = 0; i < limit1 + 1; i++) {
-        int job = permut[i];
-        front[0] += PTM[0][job];
-        for (int j = 1; j < nbMachines; j++) {
-            front[j] = std::max(front[j - 1], front[j]) + PTM[j][job];
-        }
-    }
+    schedule_front(permut,limit1,p_times.data(),nbJob,nbMachines,front.data());
 }
 
 // set tails : reverse partial scheduling of 'permut' from end to position limit2
 void
-bound_fsp_weak::scheduleBack(int * permut, int limit2)
+bound_fsp_weak::scheduleBack(const int * permut, const int limit2)
 {
     // no jobs in back
     if (limit2 == nbJob) {
@@ -134,27 +137,14 @@ bound_fsp_weak::scheduleBack(int * permut, int limit2)
     std::fill(back.begin(), back.end(), 0);
 
     // reverse schedule
-    for (int k = nbJob - 1; k >= limit2; k--) {
-        int job = permut[k];
-        back[nbMachines - 1] += PTM[nbMachines - 1][job];
-        for (int j = nbMachines - 2; j >= 0; j--) {
-            back[j] = std::max(back[j], back[j + 1]) + PTM[j][job];
-        }
-    }
+    schedule_back(permut,limit2,p_times.data(),nbJob,nbMachines,back.data());
 }
 
 // sum of processing time for unscheduled jobs
 void
-bound_fsp_weak::sumUnscheduled(int * permut, int limit1, int limit2)
+bound_fsp_weak::sumUnscheduled(const int * permut, const int limit1, const int limit2)
 {
-    std::fill(remain.begin(), remain.end(), 0);
-
-    for (int k = limit1 + 1; k < limit2; k++) {
-        int job = permut[k];
-        for (int j = 0; j < nbMachines; j++) {
-            remain[j] += PTM[j][job];// ptm[j * nbJob + job];
-        }
-    }
+    sum_unscheduled(permut, limit1, limit2, p_times.data(), nbJob, nbMachines, remain.data());
 }
 
 void
@@ -228,6 +218,7 @@ bound_fsp_weak::boundChildren(int * schedule, int limit1, int limit2, int * cost
         computePartial(schedule, limit1, limit2);
         for (int i = limit1 + 1; i < limit2; i++) {
             int job = schedule[i];
+            // costsBegin[job] = add_front_and_bound(job,front.data(),back.data(),remain.data(),p_times.data(),nbJob,nbMachines);
             costsBegin[job] = addFrontAndBound(job, prioBegin[job]);
             costsEnd[job]   = addBackAndBound(job, prioEnd[job]);
         }
@@ -238,6 +229,7 @@ bound_fsp_weak::boundChildren(int * schedule, int limit1, int limit2, int * cost
         computePartial(schedule, limit1, limit2);
         for (int i = limit1 + 1; i < limit2; i++) {
             int job = schedule[i];
+            // costsBegin[job] = add_front_and_bound(job,front.data(),back.data(),remain.data(),p_times.data(),nbJob,nbMachines);
             costsBegin[job] = addFrontAndBound(job, prioBegin[job]);
         }
     } else if (costsEnd) {
@@ -274,35 +266,11 @@ bound_fsp_weak::evalSolution(int * permut)
 void
 bound_fsp_weak::bornes_calculer(int permutation[], int limite1, int limite2, int * couts, int best)
 {
-    // printf("NB JOBS:%2d\t",nbJob);
-    // printf("NB MACH:%2d\t",nbMachines);
-    //
-    // for(int i=0; i<nbJob; i++)
-    // {
-    //     printf("%2d ",permutation[i]);
-    // }
-    // printf("\n");
-
     scheduleFront(permutation, limite1);
     scheduleBack(permutation, limite2);
     sumUnscheduled(permutation, limite1, limite2);
 
-    int lb;
-    int tmp0, tmp1, cmax;
-
-    tmp0 = front[0] + remain[0];
-    lb   = tmp0 + back[0];
-
-    for (int j = 1; j < nbMachines; j++) {
-        tmp1 = front[j] + remain[j];
-        tmp1 = std::max(tmp1, tmp0);
-        cmax = tmp1 + back[j];
-        //        printf("%d\n",cmax);
-        lb   = std::max(lb, cmax);
-        tmp0 = tmp1;
-    }
-
-    couts[0] = lb;
+    couts[0] = machine_bound_from_parts(front.data(),back.data(),remain.data(),nbMachines);
 }
 
 int
