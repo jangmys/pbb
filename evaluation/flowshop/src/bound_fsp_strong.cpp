@@ -194,11 +194,11 @@ bound_fsp_strong::scheduleFront(int permutation[], int limite1, int limite2, int
     if (limite1 == -1) {
         for (int i = 0; i < nbMachines; i++)
             front[i] = min_heads[i];
-        *idle = 0;
+        // *idle = 0;
         return;
     }
-    std::fill(front.begin(),front.end(),0);
 
+    std::fill(front.begin(),front.end(),0);
     for (int j = 0; j <= limite1; j++) {
         int job      = permutation[j];
         front[0] = front[0] + PTM[0][job];
@@ -218,7 +218,7 @@ bound_fsp_strong::scheduleBack(int permutation[], int limite2, int * idle)
         for (int i = 0; i < nbMachines; i++)
             back[i] = min_tails[i];
         // memcpy(back, minTempsDep, nbMachines * sizeof(int));
-        *idle = 0;
+        // *idle = 0;
         return;
     }
     std::fill(back.begin(),back.end(),0);
@@ -228,7 +228,7 @@ bound_fsp_strong::scheduleBack(int permutation[], int limite2, int * idle)
 
         back[nbMachines - 1] += PTM[(nbMachines - 1)][jobCour];
         for (int j = nbMachines - 2; j >= 0; j--) {
-            *idle  += std::max(0, back[j + 1] - back[j]);
+            // *idle  += std::max(0, back[j + 1] - back[j]);
             back[j] = std::max(back[j], back[j + 1]) + PTM[j][jobCour];
         }
     }
@@ -309,7 +309,7 @@ bound_fsp_strong::borneInfMakespan(int * valBorneInf, int minCmax)
 
     // sort machine-pairs by success-count (if earlyExit enabled)
     // at most one swap...
-    if (earlyExit) {
+    if (reorderMachinePairs) {
         int i = 1;
         int j = 2;
         while (i < nbMachinePairs) {
@@ -452,8 +452,8 @@ bound_fsp_strong::setFlags(int permutation[], int limite1, int limite2)
 void
 bound_fsp_strong::bornes_calculer(int permutation[], int limite1, int limite2, int * couts, int best)
 {
-    if (limite2 - limite1 <= 2) {
-        //        printf("this happens\n");
+    if (limite2 - limite1 == 1) {
+        printf("this happens\n");
         couts[0] = evalSolution(permutation);
         //        couts[1]=couts[0];
     } else {

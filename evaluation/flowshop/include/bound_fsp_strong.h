@@ -23,6 +23,7 @@ public:
     int          branchingMode;
     int          earlyExit;
     int          machinePairs;
+    // bool    reorderMachinePairs = false;
 
     // this is CONSTANT data. in multi-core BB each thread will instantiate the lower bound. making the following static will save some space ("shared"), but performance hits are observed especially on dual-socket NUMA nodes.
     std::vector<std::vector<int>> PTM;
