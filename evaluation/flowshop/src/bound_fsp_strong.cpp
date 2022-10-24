@@ -309,17 +309,17 @@ bound_fsp_strong::borneInfMakespan(int * valBorneInf, int minCmax)
 
     // sort machine-pairs by success-count (if earlyExit enabled)
     // at most one swap...
-    if (reorderMachinePairs) {
-        int i = 1;
-        int j = 2;
-        while (i < nbMachinePairs) {
-            if (countMachinePairs[machinePairOrder[i - 1]] < countMachinePairs[machinePairOrder[i]]) {
-                std::swap(machinePairOrder[i - 1],machinePairOrder[i]);
-                if ((--i)) continue;
-            }
-            i = j++;
-        }
-    }
+    // if (reorderMachinePairs) {
+    //     int i = 1;
+    //     int j = 2;
+    //     while (i < nbMachinePairs) {
+    //         if (countMachinePairs[machinePairOrder[i - 1]] < countMachinePairs[machinePairOrder[i]]) {
+    //             std::swap(machinePairOrder[i - 1],machinePairOrder[i]);
+    //             if ((--i)) continue;
+    //         }
+    //         i = j++;
+    //     }
+    // }
 
     // for all machine-pairs : O(m^2) m*(m-1)/2
     for (int l = 0; l < nbMachinePairs; l++) {
