@@ -18,7 +18,7 @@ int arguments::boundMode     = 2;
 int arguments::primary_bound     = 0;
 int arguments::secondary_bound   = 1;
 
-bool arguments::earlyStopJohnson = false;
+bool arguments::earlyStopJohnson = true;
 int arguments::johnsonPairs      = 0;
 
 //Branching options
