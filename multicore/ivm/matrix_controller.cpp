@@ -253,6 +253,7 @@ matrix_controller::next()
             return err;
         }
     }
+
     return allEnd.load();
 }
 

@@ -195,9 +195,9 @@ main(int argc, char ** argv)
             if (myrank == 0){
                 master* mstr = new master(pbb);
 
-                pbb->buildInitialUB();
-                printf("Initial Solution:\n");
-                pbb->sltn->print();
+                // pbb->buildInitialUB();
+                // printf("Initial Solution:\n");
+                // pbb->sltn->print();
 
                 struct timespec tstart, tend;
                 clock_gettime(CLOCK_MONOTONIC, &tstart);

@@ -357,7 +357,6 @@ heu_thread2(void * arg)
     subproblem *s=new subproblem(N);
 
     int gbest;
-    bool take=false;
 
     while(!w->checkEnd()){
         w->pbb->sltn->getBestSolution(s->schedule.data(),gbest);// lock on pbb->sltn
@@ -365,8 +364,6 @@ heu_thread2(void * arg)
 
         pthread_mutex_lock_check(&w->mutex_solutions);
         if(w->sol_ind_begin < w->sol_ind_end && r<80){
-            take=true;
-
             if(w->sol_ind_begin >= w->max_sol_ind){
                 FILE_LOG(logERROR) << "Index out of bounds";
                 exit(-1);

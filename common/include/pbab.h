@@ -91,8 +91,8 @@ public:
         branching_factory = std::move(b);
     }
 
-    void
-    buildInitialUB();
+    // void
+    // buildInitialUB();
 
     int initialUB;
 };
