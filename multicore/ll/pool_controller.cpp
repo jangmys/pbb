@@ -72,4 +72,6 @@ PoolController::next()
             return err;
         }
     }
+
+    return true;
 }

@@ -126,7 +126,7 @@ void IG::construction(std::vector<int>& perm, std::vector<int>& permOut, int k,i
     for(int i=0;i<=a;i++){
         nhood->m->tabupos->add(i);
     }
-    for(int i=b;i<perm.size();i++){
+    for(unsigned int i=b;i<perm.size();i++){
         nhood->m->tabupos->add(i);
     }
 

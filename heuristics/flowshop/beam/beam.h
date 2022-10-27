@@ -38,10 +38,10 @@ public:
     int run(const int maxBeamWidth, subproblem* p);
     int run_loop(const int maxBeamWidth, subproblem* p);
 
-    bool step(int beamWidth,int localBest);
-    bool step_loop(int beamWidth,int localBest);
-    bool step_loop_pq(int beamWidth,int localBest);
-    bool step_loop_local_pq(int beamWidth,int localBest);
+    bool step(unsigned int beamWidth,int localBest);
+    bool step_loop(unsigned int beamWidth,int localBest);
+    bool step_loop_pq(unsigned int beamWidth,int localBest);
+    bool step_loop_local_pq(unsigned int beamWidth,int localBest);
 
     void decompose(const subproblem& n, std::vector<std::unique_ptr<subproblem>>& ns);
     // std::vector<subproblem*> decompose(const subproblem& n);

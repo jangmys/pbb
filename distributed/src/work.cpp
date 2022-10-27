@@ -195,7 +195,7 @@ work::take(int max){
     // a new work
     std::shared_ptr<work> tmp(new work());
 
-    if(Uinterval.size()<max){printf("impossible\n");return tmp;}
+    if(Uinterval.size()<(unsigned)max){printf("impossible\n");return tmp;}
 
 //    tmp->set_id();
 

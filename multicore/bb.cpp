@@ -36,7 +36,7 @@ main(int argc, char ** argv)
 
 
     //------------------B&B components-------------------
-    pbab* pbb = new pbab();
+    std::shared_ptr<pbab> pbb = std::make_shared<pbab>();
 
     //------------------SET INSTANCE----------------------
     pbb->set_instance(
@@ -99,7 +99,7 @@ main(int argc, char ** argv)
             std::cout<<" === Run single-threaded IVM-BB"<<std::endl;
 
             std::unique_ptr<Intervalbb<int>>sbb(
-                make_interval_bb(pbb,arguments::boundMode)
+                make_interval_bb(pbb.get(),arguments::boundMode)
             );
 
             sbb->setRoot(pbb->root_sltn->perm,-1,pbb->size);
@@ -128,7 +128,7 @@ main(int argc, char ** argv)
             }
             p.push(std::move(root));
 
-            Poolbb sbb(pbb);
+            Poolbb sbb(pbb.get());
             // p.set_root(pbb->root_sltn->perm,-1,pbb->size);
 
             // std::unique_ptr<Poolbb>sbb;
@@ -144,7 +144,7 @@ main(int argc, char ** argv)
             int nthreads = (arguments::nbivms_mc < 1) ? get_nprocs() : arguments::nbivms_mc;
 			std::cout<<" === Run multi-core IVM-based BB with "<<nthreads<<" threads"<<std::endl;
 
-            matrix_controller mc(pbb,nthreads);
+            matrix_controller mc(pbb.get(),nthreads);
 
             mc.set_victim_select(make_victim_selector(nthreads,arguments::mc_ws_select));
 
@@ -166,13 +166,14 @@ main(int argc, char ** argv)
             std::cout<<" === Run multi-core LL-based BB ..."<<std::endl;
 
             int nthreads = (arguments::nbivms_mc < 1) ? get_nprocs() : arguments::nbivms_mc;
-            PoolController pc(pbb,nthreads);
+            PoolController pc(pbb.get(),nthreads);
 
             pc.next();
+            break;
         }
     }
-	pbb->printStats();
 
+	pbb->printStats();
     pbb->ttm->off(pbb->ttm->wall);
     pbb->ttm->printElapsed(pbb->ttm->wall,"Walltime");
 

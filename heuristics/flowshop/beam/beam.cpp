@@ -34,6 +34,8 @@ Beam::run(const int maxBeamWidth, subproblem* p)
     }while(beamWidth < maxBeamWidth);
 
     *p = *bestSolution;
+
+    return 0;//p->cost;
  }
 
  int
@@ -59,10 +61,12 @@ Beam::run(const int maxBeamWidth, subproblem* p)
      }while(beamWidth < maxBeamWidth);
 
      *p = *bestSolution;
+
+     return 0;
 }
 
 bool
-Beam::step_loop_local_pq(int beamWidth,int localBest){
+Beam::step_loop_local_pq(unsigned int beamWidth,int localBest){
     int n_parents = activeSet.size();
 
     if(n_parents>0 && activeSet[0]->depth == bestSolution->size-1){
@@ -165,7 +169,7 @@ Beam::step_loop_local_pq(int beamWidth,int localBest){
 
 
 bool
-Beam::step_loop_pq(int beamWidth,int localBest){
+Beam::step_loop_pq(unsigned int beamWidth,int localBest){
     int n_parents = activeSet.size();
 
     if(n_parents>0 && activeSet[0]->depth == bestSolution->size-1){
@@ -250,7 +254,7 @@ Beam::step_loop_pq(int beamWidth,int localBest){
 }
 
 bool
-Beam::step_loop(int beamWidth,int localBest){
+Beam::step_loop(unsigned int beamWidth,int localBest){
     int n_parents = activeSet.size();
 
     if(n_parents>0 && activeSet[0]->depth == bestSolution->size-1){

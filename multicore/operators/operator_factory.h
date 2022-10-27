@@ -128,6 +128,7 @@ public:
                 return bd;
             }
         }
+        return nullptr;
     }
 };
 
