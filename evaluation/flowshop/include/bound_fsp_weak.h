@@ -8,8 +8,7 @@
 
 #include "bound_abstract.h"
 
-
-
+#include "c_bound_simple.h"
 
 
 // class pbab;
@@ -18,18 +17,17 @@
 class bound_fsp_weak : public bound_abstract<int> {
 public:
     bound_fsp_weak(){};
+    ~bound_fsp_weak(){
+        free_bound_data(data);
+    };
 
     int nbJob;
     int nbMachines;
 
+    bound_data *data;
+
     // this is CONSTANT data. in multi-core BB each thread will instantiate the lower bound. making the following static will save some space ("shared"), but performance hits are observed especially on dual-socket NUMA nodes.
     std::vector<std::vector<int>> PTM;
-
-    std::vector<int> p_times;
-    // for each machine k, minimum time between t=0 and start of any job
-    std::vector<int> min_heads;
-    // for each machine k, minimum time between release of any job and end of processing on the last machine
-    std::vector<int> min_tails;
 
     void
     init(instance_abstract * _instance);
@@ -38,10 +36,10 @@ public:
 
     void
     computePartial(int * permut, int limit1, int limit2);
-    int
-    addFrontAndBound(int job, int &prio);
-    int
-    addBackAndBound(int job, int &prio);
+    // int
+    // addFrontAndBound(int job, int &prio);
+    // int
+    // addBackAndBound(int job, int &prio);
 
     void
     boundChildren(int * permut, int limit1, int limit2, int * costsBegin, int * costsEnd, int * prioBegin, int * prioEnd, int best);
@@ -58,13 +56,6 @@ private:
     std::vector<int> front;
     std::vector<int> back;
     std::vector<int> remain;
-
-    void
-    scheduleFront(const int * permut, const int limit1);
-    void
-    scheduleBack(const int * permut, const int limit2);
-    void
-    sumUnscheduled(const int * permut, const int limit1, const int limit2);
 };
 
 #endif // ifndef BOUND_FSP_WEAK_H
