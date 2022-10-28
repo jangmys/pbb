@@ -179,22 +179,23 @@ void set_flags(const int *const permutation, const int limit1, const int limit2,
 }
 
 
-
-inline int compute_cmax_johnson(const bound_data* const bd, const johnson_bd_data* const jhnsn, const int* const flag, int *tmp0, int *tmp1, int ma0, int ma1, int ind)
+// inline int compute_cmax_johnson(const int* const p_times, const int *const johnson, const int* const lags, const int nb_jobs, const int* const flag, int *tmp0, int *tmp1, int ma0, int ma1, int ind)
+inline int compute_cmax_johnson(const bound_data* const bd, const johnson_bd_data* const jhnsn, const int* const flag, int *tmp0, int *tmp1, const int ma0, const int ma1, const int ind)
 {
-    int nb_jobs = bd->nb_jobs;
+    const int nb_jobs = bd->nb_jobs;
+    const int *const p_times = bd->p_times;
+    const int *const johnson = jhnsn->johnson_schedules + ind*nb_jobs;
+    const int *const lags = jhnsn->lags + ind*nb_jobs;
+    // int ptm0,ptm1;
 
     for (int j = 0; j < nb_jobs; j++) {
-        int job = jhnsn->johnson_schedules[ind*nb_jobs + j];
+        const int job = johnson[j];
         // j-loop is on unscheduled jobs... (==0 if jobCour is unscheduled)
         if (flag[job] == 0) {
-            int ptm0 = bd->p_times[ma0*nb_jobs + job];
-            int ptm1 = bd->p_times[ma1*nb_jobs + job];
-            int lag = jhnsn->lags[ind*nb_jobs + job];
             // add job on ma0 and ma1
-            *tmp0 += ptm0;
-            *tmp1 = MAX(*tmp1,*tmp0 + lag);
-            *tmp1 += ptm1;
+            *tmp0 += p_times[ma0*nb_jobs + job];
+            *tmp1 = MAX(*tmp1,*tmp0 + lags[job]);
+            *tmp1 += p_times[ma1*nb_jobs + job];
         }
     }
 
@@ -221,6 +222,7 @@ int lb_makespan(const bound_data* const bd, const johnson_bd_data* const jhnsn, 
         lb=MAX(lb,tmp1);
 
         if(lb>minCmax){
+            // printf("%d %d\n",lb,minCmax);
             break;
         }
     }

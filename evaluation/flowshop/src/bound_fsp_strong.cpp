@@ -51,6 +51,8 @@ bound_fsp_strong::init(instance_abstract * _instance)
     fill_johnson_schedules(data_lb1,data_lb2);
 
     rewards = std::vector<int>(data_lb2->nb_machine_pairs,0);
+
+    machinePairs = 0;
 }
 
 void
