@@ -110,7 +110,7 @@ ivm::getCell(int i, int j) const{
 */
 void ivm::clearInterval()
 {
-    std::fill(std::begin(jobMat),std::end(jobMat),0);
+    // std::fill(std::begin(jobMat),std::end(jobMat),0);
     std::fill(std::begin(posVect),std::end(posVect),0);
     std::fill(std::begin(endVect),std::end(endVect),0);
     posVect[0]=size;
@@ -201,6 +201,17 @@ ivm::beforeEnd() const
         if (posVect[i] > endVect[i]) return false;
     }
     return true;
+}
+
+int
+ivm::vectorCompare(const int* a,const int* b)
+{
+    for (int i = 0; i < size; i++) {
+        if(a[i]==b[i])continue;
+        if(a[i]<b[i])return -1;
+        if(a[i]>b[i])return 1;
+    }
+    return 0;
 }
 
 

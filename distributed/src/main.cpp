@@ -5,16 +5,18 @@
 #include "ttime.h"
 #include "solution.h"
 
+#include <sys/sysinfo.h>
+
 //INCLUDE INSTANCES
 #include "libbounds.h"
 
 #include <mpi.h>
 
+#include "worker_mc.h"
 #ifdef USE_GPU
 #include "worker_gpu.h"
-#else
-#include "worker_mc.h"
 #endif
+
 
 #include "master.h"
 
@@ -39,13 +41,16 @@ main(int argc, char ** argv)
 
 // -----------------------Parse args----------------------
 // .. pass ini file with -f <path-to-ini-file> option !
+    arguments::readIniFile();
     arguments::parse_arguments(argc, argv);
 
 // --------------------Set up logging--------------------
     FILELog::ReportingLevel() = logINFO;
 #ifndef NDEBUG
     FILELog::ReportingLevel() = logDEBUG;
+    std::cout<<"RUNNING IN DEBUG MODE\n";
 #endif
+
     char buf[100];
     if (myrank == 0) {
         snprintf(buf, sizeof(buf), "./logs/%s_master.txt", arguments::inst_name);
@@ -73,27 +78,6 @@ main(int argc, char ** argv)
         std::cout<<"\t#ProblemSize:\t\t"<<pbb->size<<std::endl;
     }
 
-    //LOWER BOUND
-    if(arguments::problem[0]=='f'){
-        pbb->set_bound_factory(std::make_unique<BoundFactory>());
-    }else if(arguments::problem[0]=='d'){
-        pbb->set_bound_factory(std::make_unique<DummyBoundFactory>());
-    }
-
-    //PRUNING
-    if(arguments::findAll){
-        pbb->choose_pruning(pbab::prune_greater);
-    }else{
-        pbb->choose_pruning(pbab::prune_greater_equal);
-    }
-
-    //BRANCHING
-    pbb->set_branching_factory(std::make_unique<PFSPBranchingFactory>(
-        arguments::branchingMode,
-        pbb->size,
-        pbb->initialUB
-    ));
-
     //MAKE INITIAL SOLUTION (rank 0 --> could run multiple and min-reduce...)
     if(myrank==0){
         FILE_LOG(logINFO) <<"----Initialize incumbent----";
@@ -107,7 +91,46 @@ main(int argc, char ** argv)
 
         clock_gettime(CLOCK_MONOTONIC,&t2);
         FILE_LOG(logINFO) <<"Time(InitialSolution):\t"<<(t2.tv_sec-t1.tv_sec)+(t2.tv_nsec-t1.tv_nsec)/1e9;
+
+        MPI_Barrier(MPI_COMM_WORLD);
+        MPI_Bcast(pbb->root_sltn->perm, pbb->size, MPI_INT, 0, MPI_COMM_WORLD);
+        MPI_Bcast(&pbb->root_sltn->cost, 1, MPI_INT, 0, MPI_COMM_WORLD);
+
+        MPI_Bcast(pbb->sltn->perm, pbb->size, MPI_INT, 0, MPI_COMM_WORLD);
+        MPI_Bcast(&pbb->sltn->cost, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    }else{
+        MPI_Barrier(MPI_COMM_WORLD);
+
+        MPI_Bcast(pbb->root_sltn->perm, pbb->size, MPI_INT, 0, MPI_COMM_WORLD);
+        MPI_Bcast(&pbb->root_sltn->cost, 1, MPI_INT, 0, MPI_COMM_WORLD);
+
+        MPI_Bcast(pbb->sltn->perm, pbb->size, MPI_INT, 0, MPI_COMM_WORLD);
+        MPI_Bcast(&pbb->sltn->cost, 1, MPI_INT, 0, MPI_COMM_WORLD);
+
+        pbb->initialUB = pbb->sltn->cost;
     }
+
+    //LOWER BOUND
+    if(arguments::problem[0]=='f'){
+        pbb->set_bound_factory(std::make_unique<BoundFactory>(arguments::earlyStopJohnson,arguments::johnsonPairs));
+    }else if(arguments::problem[0]=='d'){
+        pbb->set_bound_factory(std::make_unique<DummyBoundFactory>());
+    }
+
+    //PRUNING
+    if(arguments::findAll){
+        pbb->choose_pruning(pbab::prune_greater);
+    }else{
+        pbb->choose_pruning(pbab::prune_greater_equal);
+    }
+
+    //BRANCHING
+    std::cout<<"Rank "<<myrank<<" Branching:\t"<<arguments::branchingMode<<" "<<pbb->initialUB<<std::endl;
+    pbb->set_branching_factory(std::make_unique<PFSPBranchingFactory>(
+        arguments::branchingMode,
+        pbb->size,
+        pbb->initialUB
+    ));
 
     enum bb_mode{
         STANDARD,
@@ -130,12 +153,6 @@ main(int argc, char ** argv)
                 //make sure all workers have initialized pbb
                 MPI_Barrier(MPI_COMM_WORLD);
 
-                MPI_Bcast(pbb->root_sltn->perm, pbb->size, MPI_INT, 0, MPI_COMM_WORLD);
-                MPI_Bcast(&pbb->root_sltn->cost, 1, MPI_INT, 0, MPI_COMM_WORLD);
-
-                MPI_Bcast(pbb->sltn->perm, pbb->size, MPI_INT, 0, MPI_COMM_WORLD);
-                MPI_Bcast(&pbb->sltn->cost, 1, MPI_INT, 0, MPI_COMM_WORLD);
-
                 mstr->run();
 
                 clock_gettime(CLOCK_MONOTONIC, &tend);
@@ -146,26 +163,30 @@ main(int argc, char ** argv)
                 //make sure all workers have initialized pbb
                 MPI_Barrier(MPI_COMM_WORLD);
 
-                MPI_Bcast(pbb->root_sltn->perm, pbb->size, MPI_INT, 0, MPI_COMM_WORLD);
-                MPI_Bcast(&pbb->root_sltn->cost, 1, MPI_INT, 0, MPI_COMM_WORLD);
-
-                MPI_Bcast(pbb->sltn->perm, pbb->size, MPI_INT, 0, MPI_COMM_WORLD);
-                MPI_Bcast(&pbb->sltn->cost, 1, MPI_INT, 0, MPI_COMM_WORLD);
-
-
-                std::cout<<"Worker recvd "<<*(pbb->root_sltn)<<"\n";
-                std::cout<<"Worker recvd "<<*(pbb->sltn)<<"\n";
+                char hostname[1024];
+            	hostname[1023] = '\0';
+            	gethostname(hostname, 1023);
+            	FILE_LOG(logINFO) << "Worker running on :\t"<<hostname<<std::flush;
 
                 // ==========================
-                #ifdef USE_GPU
-                worker *wrkr = new worker_gpu(pbb);
-                #else
                 int nthreads = (arguments::nbivms_mc < 1) ? get_nprocs() : arguments::nbivms_mc;
-                worker *wrkr = new worker_mc(pbb,nthreads);
-                FILE_LOG(logDEBUG) << "Worker running with "<<nthreads<<" threads.\n";
+
+                worker *wrkr;
+                #ifdef USE_GPU
+                if(arguments::worker_type=='g'){
+                    wrkr = new worker_gpu(pbb,arguments::nbivms_gpu);
+                }else{
+                    wrkr = new worker_mc(pbb,nthreads);
+                }
+                #else
+                wrkr = new worker_mc(pbb,nthreads);
                 #endif
 
+                FILE_LOG(logINFO) << "Worker running with "<<nthreads<<" threads.\n";
+
                 wrkr->run();
+
+                delete wrkr;
             }
             break;
         }
@@ -174,9 +195,9 @@ main(int argc, char ** argv)
             if (myrank == 0){
                 master* mstr = new master(pbb);
 
-                pbb->buildInitialUB();
-                printf("Initial Solution:\n");
-                pbb->sltn->print();
+                // pbb->buildInitialUB();
+                // printf("Initial Solution:\n");
+                // pbb->sltn->print();
 
                 struct timespec tstart, tend;
                 clock_gettime(CLOCK_MONOTONIC, &tstart);
@@ -206,7 +227,7 @@ main(int argc, char ** argv)
             {
                 // ==========================
                 #ifdef USE_GPU
-                worker *wrkr = new worker_gpu(pbb);
+                worker *wrkr = new worker_gpu(pbb,arguments::nbivms_gpu);
                 #else
                 int nthreads = (arguments::nbivms_mc < 1) ? get_nprocs() : arguments::nbivms_mc;
                 worker *wrkr = new worker_mc(pbb,nthreads);

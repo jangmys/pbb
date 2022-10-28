@@ -105,6 +105,7 @@ static std::unique_ptr<VictimSelector> make_victim_selector(const unsigned _nthr
             return std::make_unique<HonestVictimSelector>(_nthreads);
         }
     }
+    return nullptr;
 }
 
 

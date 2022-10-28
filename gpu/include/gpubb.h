@@ -9,6 +9,7 @@
 #include <memory>
 #include <atomic>
 
+#include "libbounds.h"
 #include "./gpuerrchk.h"
 
 #define MAX_HYPERCUBE_DIMS 20
@@ -170,6 +171,6 @@ public:
 
     //for worker-mode (distributed) only
     void initFromFac(const int nbint, const int* ids, int*pos, int* end);
-    void getIntervals(int *pos, int* end, int *ids, int &nb_intervals, const int max_intervals);
+    void getIntervals(int *pos, int* end, int *ids, unsigned &nb_intervals, const int max_intervals);
 };
 #endif

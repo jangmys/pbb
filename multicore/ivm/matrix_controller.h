@@ -24,11 +24,8 @@ public:
     std::shared_ptr<bbthread> make_bbexplorer();
     int work_share(unsigned id, unsigned thief);
 
-    void initFullInterval();
     void initFromFac(const unsigned int nbint, const int* ids, int*pos, int* end);
     int getSubproblem(int *ret, const int N);
-
-    // void unlockWaiting(unsigned id);
 
     bool next();
     void explore_multicore();
@@ -39,6 +36,8 @@ public:
     bool is_distributed(){
         return _distributed;
     }
+
+    pthread_mutex_t mutex_buffer;
 
 private:
     int updatedIntervals = 1;

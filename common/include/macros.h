@@ -9,6 +9,7 @@
 #define END 3
 #define NIL 4
 #define SLEEP 5
+#define NEWWORK 6
 
 #define _1MB 1048576
 #define _2MB 2097152

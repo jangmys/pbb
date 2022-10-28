@@ -4,19 +4,21 @@
 #include "../include/arguments.h"
 
 //initialization files
-char arguments::inifile[50] = "./bbconfig.ini";
+char arguments::inifile[50] = "../bbconfig.ini";
 char arguments::work_directory[50] = "../../bbworks/";
 
 //instance / problem
 char arguments::inst_name[50];
 char arguments::problem[50];
 
+char arguments::worker_type='c';
+
 //Bounding options
 int arguments::boundMode     = 2;
 int arguments::primary_bound     = 0;
 int arguments::secondary_bound   = 1;
 
-bool arguments::earlyStopJohnson = false;
+bool arguments::earlyStopJohnson = true;
 int arguments::johnsonPairs      = 0;
 
 //Branching options
@@ -39,7 +41,7 @@ int arguments::nbivms_gpu = 4096;
 //load balance / fault tolerance
 int arguments::checkpointv = 1;
 int arguments::balancingv  = 1;
-char arguments::mc_ws_select = 'o';
+char arguments::mc_ws_select = 'a'; //random
 
 //heuristic...
 int arguments::heuristic_threads       = 1;
@@ -126,7 +128,7 @@ arguments::readIniFile()
     // if(printSolutions)
     //     std::cout<<"Printing Solutions..."<<std::endl;
 
-    mc_ws_select = *(reader.Get("multicore", "worksteal", "r").c_str());
+    mc_ws_select = *(reader.Get("multicore", "worksteal", "a").c_str());
     // type         = reader.Get("bb", "type", "c")[0];
 
     truncateDepth  = reader.GetInteger("truncate", "truncDepth", 0);
@@ -174,6 +176,7 @@ arguments::parse_arguments(int argc, char ** argv)
                 {"findall",  no_argument, NULL,  0 },
                 {"singlenode",  no_argument, NULL,  0 },
                 {"primary-bound",  required_argument, NULL,  0 },
+                {"gpu", no_argument, NULL, 0},
                 {0,         0,                 0,  0 }
             };
 
@@ -183,6 +186,10 @@ arguments::parse_arguments(int argc, char ** argv)
         switch (c) {
             case 0: //long_options
             {
+                if(strcmp(long_options[option_index].name,"gpu") == 0)
+                {
+                    worker_type='g';
+                }
                 if(strcmp(long_options[option_index].name,"bound") == 0)
                 {
                     boundMode = atoi(optarg);

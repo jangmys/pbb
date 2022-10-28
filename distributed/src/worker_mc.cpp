@@ -24,25 +24,23 @@
 #include "../../multicore/ivm/matrix_controller.h"
 
 
-void
-worker_mc::interrupt()
-{
-    mc->interruptExploration();
-}
+// void
+// worker_mc::interrupt()
+// {
+//     mc->interruptExploration();
+// }
 
 bool
 worker_mc::doWork()
 {
-    FILE_LOG(logDEBUG) << " === worker_mc::doWork (rank " << comm->rank<<")";
+    FILE_LOG(logDEBUG1) << " === worker_mc::doWork (rank " << comm->rank<<")";
 
     pbb->ttm->on(pbb->ttm->workerExploretime);
     pbb->foundNewSolution.store(false);
-    pthread_mutex_lock_check(&mutex_wunit);
     mc->next();
-    pthread_mutex_unlock(&mutex_wunit);
     pbb->ttm->off(pbb->ttm->workerExploretime);
 
-    FILE_LOG(logDEBUG) << " === worker_mc::doWork return from next (rank " << comm->rank<<")";
+    FILE_LOG(logDEBUG1) << " === worker_mc::doWork return from next (rank " << comm->rank<<")";
 
     setNewBest(pbb->foundNewSolution);
 
@@ -52,12 +50,41 @@ worker_mc::doWork()
 void
 worker_mc::updateWorkUnit()
 {
-    FILE_LOG(logDEBUG) << " === update work unit (rank " << comm->rank<<")";
+    //INTERSECT IF UPDATE (not new work)?
+    FILE_LOG(logINFO) << "ID "<< dwrk->id << " "<<work_buf->id;
+    //
+    // if(dwrk->id == work_buf->id){
+    //     pthread_mutex_lock_check(&mutex_wunit);
+    //     auto oldsz = dwrk->wsize();
+    //     FILE_LOG(logINFO) << "OLD "<<*dwrk;
+    //
+    //     auto tmpwrk = std::make_shared<work>();
+    //     auto recvwrk = std::make_shared<work>();
+    //
+    //     auto tmp_fwrk = get_intervals();
+        // tmp_fwrk.fact2dec(tmpwrk);
+    //     FILE_LOG(logINFO) << "CURRENT "<<*tmpwrk;
+    //
+    //     // getIntervals();
+    //     // work_buf->fact2dec(tmpwrk);
+    //
+    //     work_buf->fact2dec(recvwrk);
+    //     FILE_LOG(logINFO) << "RECV "<<*recvwrk;
+    //     // FILE_LOG(logINFO) << *recvwrk;
+    //     auto newsz = tmpwrk->wsize();
+    //     // FILE_LOG(logINFO) << "UPDATE\t"<< oldsz << "\t"<< newsz << " "<< oldsz-newsz;
+    //
+    //     recvwrk->intersection(tmpwrk);
+    //     FILE_LOG(logINFO) << "INTERSECT "<<*recvwrk;
+    //
+    //     work_buf->dec2fact(recvwrk);
+    //
+    //     pthread_mutex_unlock(&mutex_wunit);
+    // }
+
+    // FILE_LOG(logDEBUG) << " === update work unit (rank " << comm->rank<<")";
 
     assert(work_buf->nb_intervals <= mc->get_num_threads());
-    if (work_buf->nb_intervals == 0) {
-        return;
-    }
 
     pthread_mutex_lock_check(&mutex_wunit);
     mc->initFromFac(
@@ -70,6 +97,7 @@ worker_mc::updateWorkUnit()
 
     pthread_mutex_lock_check(&mutex_updateAvail);
     updateAvailable = false;
+    pbb->workUpdateAvailable.store(false);
     pthread_mutex_unlock(&mutex_updateAvail);
     pthread_cond_signal(&cond_updateApplied);
 }
@@ -85,6 +113,7 @@ worker_mc::getIntervals()
 
     assert(work_buf->max_intervals >= mc->get_num_threads());
 
+    // std::cout<<"GET INTERVAL===============\n";
     int nbActive = 0;
     for (unsigned int k = 0; k < mc->get_num_threads(); k++) {
         if (!mc->get_bbthread(k)->isEmpty()) {
@@ -95,11 +124,50 @@ worker_mc::getIntervals()
     }
     work_buf->nb_intervals = nbActive;
 
-    dwrk->exploredNodes      = pbb->stats.totDecomposed;
-    dwrk->nbLeaves           = pbb->stats.leaves;
+    work_buf->nb_decomposed = pbb->stats.totDecomposed;
+    work_buf->nb_leaves     = pbb->stats.leaves;
+
+    // dwrk->nb_decomposed      = pbb->stats.totDecomposed;
+    // dwrk->nb_leaves           = pbb->stats.leaves;
     pbb->stats.totDecomposed = 0;
     pbb->stats.leaves        = 0;
 }
+
+
+
+
+fact_work
+worker_mc::get_intervals()
+{
+    fact_work tmp(M,size);
+
+    memset(tmp.pos, 0, work_buf->max_intervals * pbb->size * sizeof(int));
+    memset(tmp.end, 0, work_buf->max_intervals * pbb->size * sizeof(int));
+    memset(tmp.ids, 0, work_buf->max_intervals * sizeof(int));
+
+    assert(tmp.max_intervals >= mc->get_num_threads());
+
+    // std::cout<<"GET INTERVAL===============\n";
+    int nbActive = 0;
+    for (unsigned int k = 0; k < mc->get_num_threads(); k++) {
+        if (!mc->get_bbthread(k)->isEmpty()) {
+            tmp.ids[nbActive] = k;
+            std::static_pointer_cast<ivmthread>(mc->get_bbthread(k))->getInterval(&tmp.pos[nbActive * size],&tmp.end[nbActive * size]);
+            nbActive++;
+        }
+    }
+    tmp.nb_intervals = nbActive;
+
+    dwrk->nb_decomposed      = pbb->stats.totDecomposed;
+    dwrk->nb_leaves           = pbb->stats.leaves;
+    pbb->stats.totDecomposed = 0;
+    pbb->stats.leaves        = 0;
+
+    return tmp;
+}
+
+
+
 
 
 void

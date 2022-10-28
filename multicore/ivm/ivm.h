@@ -27,10 +27,13 @@ public:
     void setPosition(int* pos);
     void setPosition(int depth, int pos);
     int getPosition(const int _d) const;
+    // int* getPosition() const;
+
     //operate on end vector
     void setEnd(int* end);
     void setEnd(int depth, int end);
     int getEnd(const int _d) const;
+    // int* getEnd() const;
     //direction vector
     int getDirection(const int _d) const;
     int getDirection() const;
@@ -64,6 +67,8 @@ public:
     bool beforeEnd() const; //interval not empty
 
     void generateLine(const int line, const bool explore);
+
+    int vectorCompare(const int* a,const int* b);
 
     //Display methods
     void displayVector(int* ptr) const;

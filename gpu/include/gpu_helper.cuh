@@ -121,7 +121,6 @@ get_available_devices(int& nb_block, int& block_size)
 
     nb_block   = prop.maxThreadsDim[0] / 2;
     block_size = prop.maxThreadsPerBlock / 2;
-    // freemem();
     return count;
 } // get_available_devices
 

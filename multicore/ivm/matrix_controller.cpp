@@ -29,6 +29,8 @@ matrix_controller::matrix_controller(pbab* _pbb,int _nthreads) : thread_controll
         pos.emplace_back(std::vector<int>(_pbb->size,0));
         end.emplace_back(std::vector<int>(_pbb->size,0));
     }
+
+    pthread_mutex_init(&mutex_buffer,NULL);
 };
 
 std::shared_ptr<bbthread>
@@ -40,37 +42,31 @@ matrix_controller::make_bbexplorer(){
     );
 }
 
-void
-matrix_controller::initFullInterval()
-{
-    //all empty
-    std::fill(std::begin(state),std::end(state),0);
-
-    //explorer 0 gets complete interval [0,n![
-    for (int i = 0; i < pbb->size; i++) {
-        pos[0][i] = 0;
-        end[0][i]  = pbb->size - i - 1;
-    }
-    state[0]=1;
-
-    // Intervalbb<int>::first=true;
-}
-
 //nbint := number received intervals
 void
 matrix_controller::initFromFac(const unsigned int nbint, const int * ids, int * _pos, int * _end)
 {
-    updatedIntervals = 1;
+    FILE_LOG(logINFO) << "=== init from fac";
+
+    updatedIntervals=1;
+
+    //CLEAR ALL BEFORE REFILL
+    for(unsigned i=0;i<get_num_threads();i++){
+        state[i]=0;
+        for (int j = 0; j < pbb->size; j++) {
+            pos[i][j] = 0;
+            end[i][j] = 0;
+        }
+        pos[i][0]=pbb->size;
+    }
 
     for (unsigned int k = 0; k < nbint; k++) {
         unsigned int id = ids[k];
         assert(id < get_num_threads());
 
-        // victim_list.remove(id);
-        // victim_list.push_front(id);// put in front
         state[id]=1;
 
-        bbb[id]->setRoot(pbb->root_sltn->perm, -1, pbb->size);
+        // bbb[id]->setRoot(pbb->root_sltn->perm, -1, pbb->size);
         for (int i = 0; i < pbb->size; i++) {
             pos[id][i] = _pos[k * pbb->size + i];
             end[id][i] = _end[k * pbb->size + i];
@@ -87,7 +83,23 @@ matrix_controller::work_share(unsigned id, unsigned thief)
 
     int ret = std::static_pointer_cast<ivmthread>(bbb[id])->shareWork(std::static_pointer_cast<ivmthread>(bbb[thief]));
 
-    return ret;
+    return (int)(ret>0);
+}
+
+int
+stick_this_thread_to_core(int core_id)
+{
+    int num_cores = sysconf(_SC_NPROCESSORS_ONLN);
+
+    if (core_id < 0 || core_id >= num_cores)
+        return EINVAL;
+
+    cpu_set_t cpuset;
+    CPU_ZERO(&cpuset);
+    CPU_SET(core_id, &cpuset);
+
+    pthread_t current_thread = pthread_self();
+    return pthread_setaffinity_np(current_thread, sizeof(cpu_set_t), &cpuset);
 }
 
 // run by multiple threads!!!
@@ -99,6 +111,8 @@ matrix_controller::explore_multicore()
     int id = explorer_get_new_id();
     FILE_LOG(logDEBUG) << "=== got ID " << id;
 
+    // stick_this_thread_to_core(id);
+
     //------check if explorer already exists------
     if(!bbb[id]){
         //make sequential bb-explorer
@@ -109,7 +123,7 @@ matrix_controller::explore_multicore()
         FILE_LOG(logDEBUG) << "=== made explorer ("<<id<<")";
         FILE_LOG(logDEBUG) << *(pbb->root_sltn);
         updatedIntervals = 1;
-        // state[id]=1;
+        state[id]=1;
     }else{
         FILE_LOG(logDEBUG) << "=== explorer ("<<id<<") is ready";
     }
@@ -122,21 +136,33 @@ matrix_controller::explore_multicore()
     bbb[id]->setLocalBest(bestCost);
 
 
-    if(state[id]==1){
-        //has non-empty interval ...
-        FILE_LOG(logDEBUG) << "=== state 1 ("<<id<<")";
+    if(updatedIntervals){
+        pthread_mutex_lock(&mutex_buffer);
+        // std::cout<<"ID "<<id<<" init at interval\n";
+        bool _active = std::static_pointer_cast<ivmthread>(bbb[id])->ivmbb->initAtInterval(pos[id], end[id]);
+        pthread_mutex_unlock(&mutex_buffer);
 
-        if(updatedIntervals){
-            std::static_pointer_cast<ivmthread>(bbb[id])->ivmbb->initAtInterval(pos[id], end[id]);
-        }
+        bbb[id]->set_work_state(_active);
 
-        bbb[id]->set_work_state(true);
-    }else{
-        //has empty interval
-        FILE_LOG(logDEBUG) << "=== state 0 ("<<id<<")";
-        std::static_pointer_cast<ivmthread>(bbb[id])->ivmbb->clear();
-        bbb[id]->set_work_state(false);
+        // if(state[id]==1){
+        //     //has non-empty interval ...
+        //     FILE_LOG(logDEBUG) << "=== state 1 ("<<id<<")";
+        //
+        //     // std::cout<<"INIT AT INTERVAL\n";
+        //
+        //     bool _active = std::static_pointer_cast<ivmthread>(bbb[id])->ivmbb->initAtInterval(pos[id], end[id]);
+        //
+        //     bbb[id]->set_work_state(_active);
+        // }else{
+        //     //has empty interval
+        //     FILE_LOG(logDEBUG) << "=== state 0 ("<<id<<")";
+        //     std::static_pointer_cast<ivmthread>(bbb[id])->ivmbb->clear();
+        //     bbb[id]->set_work_state(false);
+        // }
     }
+
+    // bbb[id]->set_work_state(bbb[id]->isEmpty());
+    // bbb[id]->setRoot(pbb->root_sltn->perm, -1, pbb->size);
 
     //reset counters and request queue
     bbb[id]->reset_request_queue();
@@ -150,68 +176,55 @@ matrix_controller::explore_multicore()
         FILE_LOG(logDEBUG) << "=== start "<<get_num_threads()<<" exploration threads ===";
     }
 
-
-
     while (1) {
         //get global best UB
         pbb->sltn->getBest(bestCost);
         //set local UB
         bbb[id]->setLocalBest(bestCost);
-        //GO ON!
-        bool continuer = bbb[id]->bbStep();
 
         if (allEnd.load()) {
-            FILE_LOG(logDEBUG) << "=== ALL END ("<<id<<")";
             break;
-        }else if (!continuer){
+        }else if (!bbb[id]->bbStep()){
             request_work(id);
         }else{
             try_answer_request(id);
         }
-        // break;
 
 #ifdef WITH_MPI
         if(is_distributed())
         {
-            bool passed=pbb->ttm->period_passed(WORKER_BALANCING);
-            if(atom_nb_steals>get_num_threads() || passed)
+            if(pbb->workUpdateAvailable.load(std::memory_order_relaxed))
             {
-                FILE_LOG(logDEBUG) << "=== BREAK (nb_steals)";
+                // FILE_LOG(logINFO) << "=== BREAK (update avail)";
+                break;
+            }
+            if(atom_nb_steals>1)
+            {
+                // FILE_LOG(logINFO) << "=== BREAK (nb_steals "<<atom_nb_steals<<" )";
                 break;
             }
             if(pbb->foundNewSolution){
-                FILE_LOG(logDEBUG) << "=== BREAK (new sol)";
+                // FILE_LOG(logINFO) << "=== BREAK (new sol)";
+                break;
+            }
+
+            bool passed=pbb->ttm->period_passed(WORKER_BALANCING);
+            if(passed)
+            {
+                // FILE_LOG(logINFO) << "=== BREAK (time passed)";
                 break;
             }
         }
 #endif
     }
 
-    FILE_LOG(logDEBUG) << "=== Exit exploration loop";
+    allEnd.store(true);
 
-    // int *pos = new int[pbb->size];
-    // int *end = new int[pbb->size];
-    // std::static_pointer_cast<ivmthread>(bbb[id])->getInterval(pos,end);
-    //
-    // pthread_mutex_lock(&mutex_end);
-    // for(int i=0;i<pbb->size;i++)
-    //     std::cout<<pos[i]<<" ";
-    // std::cout<<"\n";
-    //
-    // for(int i=0;i<pbb->size;i++)
-    //     std::cout<<end[i]<<" ";
-    // std::cout<<"\n";
-    // pthread_mutex_unlock(&mutex_end);
-    //
-    // delete[] pos;
-    // delete[] end;
+    FILE_LOG(logDEBUG) << "=== Exit exploration loop";
 
     pbb->stats.totDecomposed += std::static_pointer_cast<ivmthread>(bbb[id])->ivmbb->get_decomposed_count();
     pbb->stats.leaves += std::static_pointer_cast<ivmthread>(bbb[id])->ivmbb->get_leaves_count();
 
-    allEnd.store(true);
-    FILE_LOG(logDEBUG) << "=== Decomposed: "<<std::static_pointer_cast<ivmthread>(bbb[id])->ivmbb->get_decomposed_count();
-    FILE_LOG(logDEBUG) << "=== Leaves: "<<std::static_pointer_cast<ivmthread>(bbb[id])->ivmbb->get_leaves_count();
     stop(id);
 }
 
@@ -228,8 +241,6 @@ matrix_controller::next()
 {
     resetExplorationState();
 
-    pthread_t threads[100];
-
     for (unsigned i = 0; i < get_num_threads(); i++)
         pthread_create(&threads[i], NULL, mcbb_thread, (void *) this);
 
@@ -242,6 +253,7 @@ matrix_controller::next()
             return err;
         }
     }
+
     return allEnd.load();
 }
 

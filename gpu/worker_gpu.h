@@ -1,70 +1,39 @@
 #ifndef WORKER_GPU_H
 #define WORKER_GPU_H
 
-#include <cuda.h>
-#include <cuda_runtime.h>
-#include <cuda_runtime_api.h>
-#include <cuda_profiler_api.h>
-
 #include <atomic>
 #include <memory>
+#include <cuda.h>
 
 #include "log.h"
 #include "gpubb.h"
-
-#include "communicator.h"
 #include "worker.h"
-#include "fact_work.h"
 
-class pbab;
-class communicator;
-class matrix_controller;
 
-class work;
-class fact_work;
-class solution;
-
-class gpubb;
-
+//wrap GPU-BB to adapt it to the distributed setting
 class worker_gpu : public worker {
 public:
-    worker_gpu(pbab * _pbb) : worker(_pbb)
+    worker_gpu(pbab * _pbb, unsigned int _nbIVM) :
+        worker(_pbb,_nbIVM),
+        gbb(std::make_unique<gpubb>(pbb))
     {
-        // M : how many intervals can be handled?
-        #ifdef USE_GPU
-        M    = arguments::nbivms_gpu;
-        comm = std::make_unique<communicator>(M, pbb->size);
-        cudaFree(0);
-
+        //-----------mapping MPI_ranks to devices-----------
         int num_devices = 0;
         cudaGetDeviceCount(&num_devices);
+        cudaSetDevice((comm->rank) % num_devices);
 
-        //mapping MPI_ranks to devices
-        int device_nb = (comm->rank) % num_devices;
-        cudaSetDevice(device_nb);
-
-        int device,count;
-        cudaGetDeviceCount(&count);
+        int device;
         cudaGetDevice(&device);
-        FILE_LOG(logINFO) << comm->rank << " using device" << device <<"/" << count;
+        FILE_LOG(logINFO) << comm->rank << " using device" << device <<"/" << num_devices;
 
-        gbb = new gpubb(pbb);
+        //------------GPU-BB------------------------
         gbb->initialize();// allocate IVM on host/device
         gbb->initializeBoundFSP();
-        //	gbb->initializeBoundQAP();
-        //	gbb->initializeBoundNQ();
-
         gbb->copyH2D();
         FILE_LOG(logDEBUG1) << "GPU Bound initialized";
-
-        // for mpi calls...
-        work_buf = std::make_shared<fact_work>(M, size);
-        work_buf->max_intervals = M;
-        work_buf->id = 0;
-        #endif // ifdef USE_GPU
     }
 
-    gpubb * gbb;
+    std::unique_ptr<gpubb> gbb;
 
     void
     updateWorkUnit();
@@ -75,8 +44,6 @@ public:
 
     void
     getSolutions();
-
-    void interrupt();
 };
 
 #endif // ifndef WORKER_GPU_H

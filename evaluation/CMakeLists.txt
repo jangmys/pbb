@@ -14,3 +14,7 @@ target_link_libraries(bounds PUBLIC Threads::Threads)
 
 add_executable(testBounds test/testBounds.cpp)
 target_link_libraries(testBounds bounds)
+
+add_executable(ctest test/c_test.c)
+target_include_directories(ctest PUBLIC ${PROJECT_SOURCE_DIR}/evaluation/flowshop/include)
+target_link_libraries(ctest bounds)

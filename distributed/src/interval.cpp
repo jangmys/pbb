@@ -38,3 +38,12 @@ interval::operator = (interval& i)
     end   = i.end;
     id    = i.id;
 }
+
+interval intersect(const interval& a, const interval& b)
+{
+    return interval(
+        std::max(a.begin, b.begin),
+        std::min(a.end, b.end),
+        b.id
+    );
+}

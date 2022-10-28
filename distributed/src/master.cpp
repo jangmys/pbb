@@ -27,6 +27,8 @@ master::master(pbab* _pbb) : pbb(_pbb)
 
     wrk = std::make_shared<work>();
 
+    isSharing = true;
+
     reset();
 }
 
@@ -39,9 +41,8 @@ master::~master()
 void
 master::reset()
 {
-    end=false;
+    globalEnd=false;
     first=true;
-	stopSharing=false;
 
     pbb->foundAtLeastOneSolution.store(false);
     pbb->stats.totDecomposed = 0;
@@ -75,17 +76,16 @@ master::initWorks(int initMode)
 
     FILE_LOG(logINFO) << "Start with "<< *(pbb->root_sltn);
 
-    end = false;
+    globalEnd = false;
 }
 
 //InOut : w
 //work unit received from worker
 //Out : terminate (true if termination condition met)
-//Return : True if worker needs update
-
+//Return : Reply message type
 static bool debug = false;
-bool master::processRequest(std::shared_ptr<work> w){ //, bool &terminate) {
-    bool updateWorker=false;    //return true if worker needs update
+int master::processRequest(std::shared_ptr<work> w) {
+    int return_type=NIL;
 
     //DEBUG
     if (debug) {
@@ -93,10 +93,11 @@ bool master::processRequest(std::shared_ptr<work> w){ //, bool &terminate) {
         w->displayUinterval();
     }
 
+    bool steal=false;
+
     //find copy of work in works by its ID
     std::shared_ptr<work> tmp = wrks->id_find(w->id);
 
-	bool steal=false;
     if(tmp == nullptr){
         //work with requested ID doesn't exist
         steal=true;
@@ -105,43 +106,83 @@ bool master::processRequest(std::shared_ptr<work> w){ //, bool &terminate) {
         tmp->nb_updates++;
 
         //intersection: const w, tmp can be changed and become empty
-        if (w->isEmpty()){//trivial:intersect is empty
+        if (w->isEmpty()){//trivial: result of intersection is empty
             tmp->Uinterval.clear();
-        }else if(!tmp->end_updated){//non-trivial
+        }else if(!tmp->end_updated){//trivial : tmp hasn't changed since last time... replace!
+
+            //-----------sanity check : size shouldn't increase!!!-----------
+            auto tmpsz = tmp->wsize(); //master size
+            auto wsz = w->wsize(); //worker size
+
+            if(tmpsz<wsz){
+                std::cout<<"xxxxxxxxxxxx M "<<tmpsz<<" > W  "<<wsz<<std::endl;
+                tmp->displayUinterval();
+                std::cout<<"<< M ================================ W >>\n";
+                w->displayUinterval();
+                std::cout<<std::endl;
+
+                FILE_LOG(logINFO)<<"*********** "<<tmpsz<<" > "<<wsz;
+                FILE_LOG(logINFO)<<*tmp;
+                FILE_LOG(logINFO)<<"<< M ================================ W >>";
+                FILE_LOG(logINFO)<<*w;
+            }
+
             //copy wasn't modified : just replace
             tmp->Uinterval=w->Uinterval;
+            tmp->end_updated=false;
             wrks->sizes_update(tmp);
+            FILE_LOG(logDEBUG4)<<"REPLACED "<<w->id<<"\t: "<<wrks->size;
+            return NIL;
         }else{
-			FILE_LOG(logDEBUG1) << "Full intersection";
-            updateWorker=tmp->intersection(w);
+            FILE_LOG(logDEBUG4)<<"Full Intersect "<<w->id<<"\t: "<<wrks->size;
+
+            FILE_LOG(logDEBUG4) <<*tmp;//<<std::endl;
+            FILE_LOG(logDEBUG4) <<"<< M ===============***================= W >>";
+            FILE_LOG(logDEBUG4) <<*w;//<<std::endl;
+
+            return_type=tmp->intersection(w)?WORK:NIL;
             wrks->sizes_update(tmp);
+
         }
 
         //if result of intersection is empty work
         if(tmp->isEmpty()){
             wrks->sizes_delete(tmp);
             wrks->id_delete(tmp);
+            tmp=nullptr;
             steal=true;
+            return_type=NIL;
         }
     }
 
     //if result of intersection is empty...
     if (steal) {
         if(wrks->isEmpty()){
-            FILE_LOG(logDEBUG1) << "SHUTDOWN";
-            end = true;
-            return false;//true;
+            FILE_LOG(logINFO)<<"END : "<<wrks->size;
+            return END;//true;
+        }else if (!wrks->unassigned.empty())   {
+            tmp=wrks->_adopt(w->max_intervals);
+            return_type=NEWWORK;
+        }else if(isSharing) {
+            bool too_small;
+            if(tmp){
+                std::cout<<"tmp not NULL\n";
+                if(!tmp->isEmpty()){
+                    std::cout<<"tmp not empty\n";
+                    std::cout<<*tmp<<std::endl;
+                }
+            }
+            tmp=wrks->steal(w->max_intervals, too_small);
+            return_type=NEWWORK;
+        }else{
+            return SLEEP;
         }
+        // tmp = wrks->acquireNewWork(w->max_intervals,shutdown);
 
-        tmp = wrks->acquireNewWork(w->max_intervals,stopSharing);//terminate);
         FILE_LOG(logDEBUG4) << "#unassigned " << wrks->unassigned.size();
 
         if(tmp==nullptr){
-            //steal may fail ...
-            return false;
-        }else{
-            //steal succeeded ...
-            updateWorker = true;
+            return NIL;
         }
     }
 
@@ -149,16 +190,19 @@ bool master::processRequest(std::shared_ptr<work> w){ //, bool &terminate) {
     w->id = tmp->id;
     tmp->end_updated=false;
 
+    //---------------------------------output---------------------------------
     FILE_LOG(logINFO) << "ActiveSize: "<<wrks->size<<"\t Remain#: "<<wrks->unassigned.size()
 	<<"\t Active#: "<<wrks->ids.size();
+    std::cout<<"WORKSIZE : "<<wrks->size<<std::endl;
 
     //DEBUG
     if (debug) {
-        printf("%s", updateWorker ? "changed...\n" : "unchanged...\n");
-                std::cout << "work out : " << (w->Uinterval).size() << " items | ID=" << w->id << std::endl; w->displayUinterval();
+        std::cout<<((return_type!=NIL)?"changed...\n":"unchanged...\n");
+        std::cout << "work out : " << (w->Uinterval).size() << " items | ID=" << w->id << std::endl; w->displayUinterval();
     }
 
-    return updateWorker;
+    return return_type;
+    // return (updateWorker?WORK:NIL);
 }
 
 //static bool first=true;
@@ -167,18 +211,13 @@ void master::shutdown() {
         std::cout<<" = master:\t shutting down\n";
 
         first=false;
-        end = true;
-
-        std::cout << " = master:\t #processed work-in messages: "<<work_in<<"\n";
-        std::cout << " = master:\t #processed work-out messages: "<<work_out<<std::endl;
+        // globalEnd = true;
 
         std::cout<<"MASTER %\t\t:\t"<<pbb->ttm->masterLoadPerc()<<std::endl;
         pbb->ttm->printElapsed(pbb->ttm->processRequest,"ProcessREQUEST\t");
-
         pbb->printStats();
     }else{
         std::cout<<" = master:\t shutting down\n";
-        return;
     }
 }
 
@@ -194,7 +233,8 @@ master::run()
     int aaa=999;
     int iter=0;
 
-    work_in=0; work_out=0;
+    int work_in=0, work_out=0;
+
 	solution* sol_buf=new solution(pbb->size);
 
     do{
@@ -210,40 +250,53 @@ master::run()
                 wrk->clear();
                 comm->recv_work(wrk, status.MPI_SOURCE, WORK, &status);
 
-                FILE_LOG(logDEBUG1) << "Receive node count: " << wrk->exploredNodes;
-                pbb->stats.totDecomposed += wrk->exploredNodes;
-                pbb->stats.leaves += wrk->nbLeaves;
+                FILE_LOG(logDEBUG1) << "Receive node count: " << wrk->nb_decomposed;
+                pbb->stats.totDecomposed += wrk->nb_decomposed;
+                pbb->stats.leaves += wrk->nb_leaves;
 
                 pbb->ttm->on(pbb->ttm->processRequest);
-                bool modified=processRequest(wrk);//,shutdownWorker);
+                // bool shutdown_worker=false;
+                int reply_type=processRequest(wrk);
                 pbb->ttm->off(pbb->ttm->processRequest);
 
                 //END
-                if(end){
-                    FILE_LOG(logDEBUG1) << "send termination signal to " << status.MPI_SOURCE;
-                    MPI_Send(&aaa,1,MPI_INT,status.MPI_SOURCE,END,MPI_COMM_WORLD);
-                }else if(modified){
-                    //WORK
-                    FILE_LOG(logDEBUG1) << "send work to " << status.MPI_SOURCE;
-                    // printf("send WORK to %d\n",status.MPI_SOURCE);//status.MPI_SOURCE);
-                    comm->send_work(wrk,status.MPI_SOURCE, WORK);
-                    work_out++;
-                // }
-				// else if(stopSharing){
-                //     FILE_LOG(logDEBUG1) << "send SLEEP! to " << status.MPI_SOURCE;
-                //     MPI_Send(&aaa,1,MPI_INT,status.MPI_SOURCE,END,MPI_COMM_WORLD);
-                //     MPI_Send(&aaa,1,MPI_INT,status.MPI_SOURCE,SLEEP,MPI_COMM_WORLD);
-                }else{
-                    //BEST
-                    //request processed...
-                    int tmp;
-                    pbb->sltn->getBestSolution(sol_buf->perm,tmp);
-                    sol_buf->cost.store(tmp);
+                switch (reply_type)
+                {
+                    case END: // NO MORE WORK LEFT
+                    {
+                        printf("send termination signal to %d\n",status.MPI_SOURCE);
+                        MPI_Send(&aaa,1,MPI_INT,status.MPI_SOURCE,END,MPI_COMM_WORLD);
+                        break;
+                    }
+                    //SEND NEW / UPDATED WORK UNIT
+                    case NEWWORK:
+                    case WORK:
+                    {
+                        // FILE_LOG(logINFO) << "send work "<<*wrk<<" to " << status.MPI_SOURCE;
+                        comm->send_work(wrk,status.MPI_SOURCE, reply_type);
+                        work_out++;
+                        break;
+                    }
+                    case NIL: //SEND BESTCOST (confirm reception)
+                    {
+                        //request processed...
+                        int tmp;
+                        pbb->sltn->getBestSolution(sol_buf->perm,tmp);
+                        sol_buf->cost.store(tmp);
 
-                    // comm->send_sol(sol_buf, status.MPI_SOURCE, NIL);
-                    MPI_Send(&pbb->sltn->cost,1,MPI_INT,status.MPI_SOURCE,NIL,MPI_COMM_WORLD);
+                        MPI_Send(&pbb->sltn->cost,1,MPI_INT,status.MPI_SOURCE,NIL,MPI_COMM_WORLD);
+                        break;
+                    }
+                    case SLEEP:
+                    {
+                        MPI_Send(&aaa,1,MPI_INT,status.MPI_SOURCE,SLEEP,MPI_COMM_WORLD);
+                        break;
+                    }
+                    default: {
+                        std::cout<<"unknown return type\n";
+                        break;
+                    }
                 }
-                // FILE_LOG(logINFO) << "State\t" << 3;
                 break;
             }
             case BEST:
@@ -255,12 +308,13 @@ master::run()
                 if(pbb->sltn->update(candidate->perm,candidate->cost))
                 {
                     pbb->foundAtLeastOneSolution.store(true);
+                    pbb->sltn->save();
                     // printf("\t\tmaster_sol: %d\n",pbb->sltn->cost);
-					pbb->sltn->save();
-                }
-                if(end){
-                    FILE_LOG(logDEBUG1) << "send termination signal to " << status.MPI_SOURCE;
-                    MPI_Send(&aaa,1,MPI_INT,status.MPI_SOURCE,END,MPI_COMM_WORLD);
+                // }
+                // if(globalEnd){
+                //     FILE_LOG(logDEBUG1) << "send termination signal to " << status.MPI_SOURCE;
+                //     MPI_Send(&aaa,1,MPI_INT,status.MPI_SOURCE,END,MPI_COMM_WORLD);
+                    MPI_Send(&pbb->sltn->cost,1,MPI_INT,status.MPI_SOURCE,BEST,MPI_COMM_WORLD);
                 }else{
                     //if updatedBest
                     MPI_Send(&pbb->sltn->cost,1,MPI_INT,status.MPI_SOURCE,BEST,MPI_COMM_WORLD);
@@ -270,26 +324,29 @@ master::run()
             case END:
             {
                 MPI_Recv(&aaa, 1, MPI_INT, status.MPI_SOURCE, END, MPI_COMM_WORLD, &status);
-				count_out++;
-				FILE_LOG(logDEBUG1) << "...END " << status.MPI_SOURCE << " " << count_out;
+                count_out++;
                 break;
             }
         }
         pbb->ttm->off(pbb->ttm->masterWalltime);
 
 		wrks->save();
-
         iter++;
     }while(count_out!=nProc-1);//(!M->end);
 
     pbb->ttm->off(pbb->ttm->wall);
 
-	sleep(1);
+    globalEnd=true;
+
+	usleep(100);
 
 	FILE_LOG(logINFO) << "master iterations: "<<iter<< " master terminates...";
     FILE_LOG(logINFO) << "processed work in: "<<work_in<<"\t work out:"<<work_out;fflush(stdout);
 
 	delete sol_buf;
+
+    std::cout << " = master:\t #processed work-in messages: "<<work_in<<"\n";
+    std::cout << " = master:\t #processed work-out messages: "<<work_out<<std::endl;
 
     shutdown();
 }

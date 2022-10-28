@@ -29,4 +29,7 @@ public:
   bool operator==(interval& i) const;
 };
 
+interval intersect(const interval& a, const interval& b);
+
+
 #endif

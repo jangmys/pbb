@@ -18,21 +18,16 @@ class master{
 public:
     pbab* pbb;
 
-    unsigned int work_in;
-    unsigned int work_out;
     int nProc;
 
     works* wrks;
-    // solution* master_sol;
     communicator* comm;
 
     std::shared_ptr<work> wrk;//(new work(pbb));
 
-    bool end;
+    bool globalEnd;
     bool first;
-    bool stopSharing;
-    // bool foundSolution;
-
+    bool isSharing;
 
     master(pbab* _pbb);
     ~master();
@@ -40,10 +35,9 @@ public:
     void reset();
 
     void initWorks(int initMode);
-    bool processRequest(std::shared_ptr<work> w);//, bool &shutdownWorker);
+    int processRequest(std::shared_ptr<work> w);
     void shutdown();
     void run();
-    // void test();
 };
 
 #endif

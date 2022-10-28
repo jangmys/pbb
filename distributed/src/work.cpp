@@ -7,15 +7,15 @@
 #include "work.h"
 #include "master.h"
 
-//Constructeurs ===================
 //===============================================================
-work::work(const work& w) // copie exacte
+work::work(const work& w)
 {
     size = w.size;// ?
 
     id = w.id;
     max_intervals = w.max_intervals;
-    exploredNodes = w.exploredNodes;
+    nb_decomposed = w.nb_decomposed;
+    nb_leaves = w.nb_leaves;
     end_updated   = w.end_updated;
     nb_updates = w.nb_updates;
 
@@ -23,11 +23,11 @@ work::work(const work& w) // copie exacte
     Uinterval = w.Uinterval;
 }
 
-work::work() // constructeur d'work le non alloué
-{
+work::work(){
     if (!isEmpty()) Uinterval.clear();
 
-    exploredNodes = 0;
+    nb_decomposed = 0;
+    nb_leaves = 0;
     nb_updates = 0;
     end_updated = 0;
     size = 0;
@@ -38,10 +38,10 @@ work::work(std::istream& stream)
     stream >> *this;
 }
 
-
 work::~work(){ }
-//========================================================
-//=======================================
+//===============================================================
+
+
 size_t
 work::writeToFile(FILE * bp)
 {
@@ -119,11 +119,8 @@ work::set_size()
     // sum up the interval lengths
     for (it = Uinterval.begin(); it != Uinterval.end(); ++it) {
         if ((*it)->end > (*it)->begin)
-            size += ((*it)->end - (*it)->begin);
+            size += ((*it)->end - (*it)->begin) + 1;
     }
-
-    // it=Uinterval.begin();
-    // size=mpz_class("3041409320171337804361260816606476884437764156896050000000000000") - (*it)->begin;
 }
 
 static int id_generator = 0;
@@ -132,23 +129,6 @@ work::set_id()
 {
     id = (++id_generator);
 }
-
-// work operator ==============================================================================
-// mpz_class
-// mpzmin(const mpz_class i1, const mpz_class i2)
-// {
-//     return (i1 < i2) ? i1 : i2;
-// }
-
-// mpz_class
-// mpzmax(const mpz_class i1, const mpz_class i2)
-// {
-//     return (i2 > i1) ? i2 : i1;
-// }
-
-// static int zero = 0;
-// static int replace = 0;
-// static int inter = 0;
 
 // =========================================================
 // intersect w (worker) with this (server) and write to this
@@ -188,11 +168,14 @@ work::intersection(const std::shared_ptr<work>& w)
             //it and jt overlap
             else if (((*it)->end > (jt)->begin) && ((*it)->begin < (jt)->end)){
                 intersected = true;
-                result.emplace_back(new interval(
-                    std::max((*it)->begin, (jt)->begin),
-                    std::min((*it)->end, (jt)->end),
-                    (jt)->id)
-                );
+                result.emplace_back(std::make_shared<interval>(intersect(*(*it),*jt)));
+
+
+                // result.emplace_back(new interval(
+                //     std::max((*it)->begin, (jt)->begin),
+                //     std::min((*it)->end, (jt)->end),
+                //     (jt)->id)
+                // );
 
                 // there can be at most one interval in copy with non-empty intresection
                 break;
@@ -212,7 +195,7 @@ work::take(int max){
     // a new work
     std::shared_ptr<work> tmp(new work());
 
-    if(Uinterval.size()<max){printf("impossible\n");return tmp;}
+    if(Uinterval.size()<(unsigned)max){printf("impossible\n");return tmp;}
 
 //    tmp->set_id();
 
@@ -240,7 +223,11 @@ std::shared_ptr<work> work::divide(int max)
     if (isEmpty()) return tmp; //nothing to get
 
     mpz_class len(0);
-    mpz_class lar(362880);
+
+    // mpz_class lar(2432902008176640000);
+    // mpz_class lar(6402373705728000);
+    mpz_class lar(362880);//9!
+    // mpz_class lar(720);//6!
     mpz_class coupe;
 
     int nb_stolen = 0;
@@ -267,19 +254,7 @@ std::shared_ptr<work> work::divide(int max)
     return tmp;
 } // work::divide
 
-/*
- * //return highest id assigned + 1
- * int work::renumber()
- * {
- *  INTERVAL_IT it;
- *
- *  int _id=0;
- *  for(it = Uinterval.begin(); it != Uinterval.end(); ++it){
- *      (*it)->id=_id++;
- *  }
- *  return _id;
- * }
- */
+
 void
 work::split(size_t n)
 {
@@ -391,59 +366,18 @@ work::split2(size_t n)
 }
 
 /*
- * //operators =====================================================================================
- * mpz_class work::wsize()
- * {
- *  mpz_class ret(0);
- *
- *  for(INTERVAL_IT it = Uinterval.begin(); it != Uinterval.end(); ++it){
- *      ret += (*it)->end - (*it)->begin;
- *  }
- *
- *  return ret;
- * }
- *
- *
- * bool work::equal(work& w)
- * {
- *  bool result=true;
- *
- *  if(Uinterval.size() != w.Uinterval.size())result=false;
- *  else if(Uinterval != w.Uinterval)result=false;
- *
- * //	if((begin != w.begin) || (end != w.end))result=false;
- *
- *  return result;
- * }
- *
- * bool work::differ(std::shared_ptr<work>& w)
- * {
- *  //bool result=false;
- *  size_t numintervals = Uinterval.size();
- *
- *  //#intervals differs => this work & work w differ
- *  if(numintervals != w->Uinterval.size()){
- *      //printf("Dsize\n");
- *      //displayUinterval();w.displayUinterval();
- *      return true; //result=true;
- *  }
- *
- *  for(unsigned int i=0; i<numintervals; i++){
- *      std::shared_ptr<interval>tmp = Uinterval.at(i);
- *      std::shared_ptr<interval>tmpW = (w->Uinterval).at(i);
- *
- *      if(tmpW->id != tmp->id){//printf("Did\n");
- *      return true;}
- *      if(tmpW->begin != tmp->begin){//printf("Dbegin\n");displayUinterval();w.displayUinterval();
- *      return true;}
- *      if(tmpW->end != tmp->end){//printf("Dend\n");displayUinterval();w.displayUinterval();displayUinterval();w.displayUinterval();
- *      return true;}
- *  }
- *  //std::cout<<"Dsame"<<std::endl<<std::flush;
- *
- *  return false;
- * }
- */
+ * //operators =====================================================================================*/
+mpz_class work::wsize()
+{
+    mpz_class ret(0);
+
+    for(INTERVAL_IT it = Uinterval.begin(); it != Uinterval.end(); ++it){
+        ret += (*it)->end - (*it)->begin + 1;
+    }
+
+    return ret;
+}
+
 void
 work::operator = (work& w)
 {
@@ -455,7 +389,8 @@ work::operator = (work& w)
     // Uinterval.assign((w.Uinterval).begin(),(w.Uinterval).end());
     Uinterval = w.Uinterval;
 
-    exploredNodes = w.exploredNodes;
+    nb_decomposed = w.nb_decomposed;
+    nb_leaves = w.nb_leaves;
     size = w.size;
 
     id = w.id;
@@ -469,24 +404,12 @@ work::isEmpty()
     return Uinterval.empty();
 }
 
-/*
-  * //=======================================================================================
- * //bool work::intervalSmaller(const interval *A, const interval *B)
- * //{
- * //	return (A->begin < B->begin);
- * //}
- *
- * void work_free(work*w)
- * {
- *  delete w;
- * }
- */
-
 void
 work::displayUinterval()
 {
     INTERVAL_IT it;
 
+    std::cout<<"ID "<<id<<std::endl;
 //    printf("displ\n");
 
     if (isEmpty()){
@@ -505,7 +428,7 @@ work::readHeader(std::istream& stream)
     stream >> id; // int
     stream >> end_updated;// int
     stream >> max_intervals;// int
-    stream >> exploredNodes;// mpz_class int
+    stream >> nb_decomposed;// mpz_class int
     stream >> nb_intervals; // size_t
 
     if (stream.fail()) printf("fail. unable to read header\n");
@@ -540,7 +463,8 @@ work::writeHeader(std::ostream& stream) const
     // how many intervals can work w hold?
     stream << max_intervals << " ";
     // stats
-    stream << exploredNodes << " ";
+    stream << nb_decomposed << " ";
+    // stream << exploredNodes << " ";
     // nb_intervals=Uinterval.size();
     stream << Uinterval.size() << "\n";
 
@@ -569,7 +493,7 @@ work::writeIntervals(std::ostream& stream) const
                                          << (*it)->end << "\n" << std::flush;
         }
     }
-    stream << size << std::endl;
+    stream << size;
 
     if (stream.fail()) std::cout << "writeIntervals fail\n" << std::flush;
 }
@@ -598,6 +522,16 @@ operator >> (std::istream& stream, work& w)
     }
     return stream;
 }
+
+work
+intersect(const work& w1, const work& w2)
+{
+    work tmp(w1);
+
+    tmp.intersection(std::make_shared<work>(w2));
+    return tmp;
+}
+
 
 size_t
 work::readFromFile(FILE * bp)

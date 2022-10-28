@@ -21,9 +21,12 @@
 #include "work.h"
 #include "communicator.h"
 
-worker::worker(pbab * _pbb) : pbb(_pbb),size(pbb->size)
+worker::worker(pbab * _pbb, unsigned int nbIVM) : pbb(_pbb),size(pbb->size),M(nbIVM),comm(std::make_unique<communicator>(M, size)),
+        work_buf(std::make_shared<fact_work>(M, size))
 {
     dwrk = std::make_shared<work>();
+
+    pthread_barrier_init(&barrier, NULL, 2);// sync worker and helper thread
 
     pthread_mutexattr_t attr;
     pthread_mutexattr_init(&attr);
@@ -53,6 +56,8 @@ worker::worker(pbab * _pbb) : pbb(_pbb),size(pbb->size)
 
 worker::~worker()
 {
+    pthread_barrier_destroy(&barrier);
+
     pthread_mutex_destroy(&mutex_wunit);
     pthread_mutex_destroy(&mutex_inst);
     pthread_mutex_destroy(&mutex_best);
@@ -69,8 +74,8 @@ void
 worker::reset()
 {
     end     = false;
-    shareWithMaster = true;
     updateAvailable = false;
+    pbb->workUpdateAvailable.store(false,std::memory_order_relaxed);
 
     pbb->stats.totDecomposed = 0;
     pbb->stats.johnsonBounds = 0;
@@ -100,12 +105,13 @@ worker::wait_for_update_complete()
     pthread_mutex_lock_check(&mutex_updateAvail);
     // signal update
     updateAvailable = true;
+    pbb->workUpdateAvailable.store(true,std::memory_order_relaxed);//break exploration loop
+
     // wait until done
     while (updateAvailable) {
         pthread_cond_wait(&cond_updateApplied, &mutex_updateAvail);
     }
     pthread_mutex_unlock(&mutex_updateAvail);
-    // printf("... complete %d \n",comm->rank);
 }
 
 // use main thread....
@@ -118,6 +124,8 @@ comm_thread(void * arg)
     w->sendRequest      = false;
     w->setNewBest(false);
 
+    pthread_barrier_wait(&w->barrier);
+
     int nbiter = 0;
     int dummy  = 11;
 
@@ -125,7 +133,7 @@ comm_thread(void * arg)
 
     int masterbest;
 
-    int *msg_counter = new int[5];
+    int *msg_counter = new int[10];
 
     while (1) {
         //----------CHECK WORKER TERMINATION----------
@@ -144,7 +152,11 @@ comm_thread(void * arg)
             pthread_mutex_unlock(&w->mutex_trigger);
 
             //convert to mpz integer intervals and sort...
+            // w->dwrk = convert::fact2dec(w->work_buf,w->pbb->size);
             w->work_buf->fact2dec(w->dwrk);
+
+            // FILE_LOG(logINFO) <<"SEDN WORK\t"<<*(w->dwrk);
+
             //...send to MASTER
             w->comm->send_work(w->dwrk, 0, WORK);
         } else if (doBest) {
@@ -174,17 +186,19 @@ comm_thread(void * arg)
 
         switch(status.MPI_TAG)
         {
-            case WORK: /* new work */
-            {
-                //the receive buffer...
-                std::shared_ptr<work> rwrk(new work());
-
-                FILE_LOG(logDEBUG4)<<"worker receives";
-                w->comm->recv_work(rwrk, 0, MPI_ANY_TAG, &status);
+            /* new work */
+            case WORK:
+            case NEWWORK: {
+                //the receive buffer (decimal intervals)...
+                auto rwrk = std::make_shared<work>();
+                //receive
+                w->comm->recv_work(rwrk, 0, status.MPI_TAG, &status);
+                //convert to factoradic
+                // w->work_buf = convert::dec2fact(rwrk,w->pbb->size);
                 w->work_buf->dec2fact(rwrk);
-
-                // wait unitl update applied
+                //signal and wait
                 w->wait_for_update_complete();
+
                 break;
             }
             case BEST: /* improved best */
@@ -205,7 +219,6 @@ comm_thread(void * arg)
             {
                 // w->comm->recv_sol(mastersol, 0, NIL, &status);
                 // w->pbb->sltn->update(mastersol->perm,mastersol->cost);
-
                 MPI_Recv(&masterbest, 1, MPI_INT, 0, NIL, MPI_COMM_WORLD, &status);
                 w->pbb->sltn->updateCost(masterbest);
 
@@ -213,9 +226,9 @@ comm_thread(void * arg)
             }
             case SLEEP:
             {
+                //master has no free work units and steal fails...retry, but wait a little (1 millisec)
                 MPI_Recv(&dummy, 1, MPI_INT, 0, SLEEP, MPI_COMM_WORLD, &status);
-                usleep(10);
-                w->shareWithMaster=false;
+                usleep(1000);
                 break;
             }
             default:
@@ -235,7 +248,9 @@ comm_thread(void * arg)
     }
 
     FILE_LOG(logINFO) << "----------Worker Message Count----------";
+    FILE_LOG(logINFO) <<"Iterations\t"<<nbiter;
     FILE_LOG(logINFO) <<"WORK\t"<<msg_counter[WORK];
+    FILE_LOG(logINFO) <<"NEWWORK\t"<<msg_counter[NEWWORK];
     FILE_LOG(logINFO) <<"BEST\t"<<msg_counter[BEST];
     FILE_LOG(logINFO) <<"NIL\t"<<msg_counter[NIL];
     FILE_LOG(logINFO) <<"END\t"<<msg_counter[END];
@@ -244,14 +259,9 @@ comm_thread(void * arg)
 
     delete[] msg_counter;
 
-    // // confirm that termination signal received... comm thread will be joined
-    // MPI_Send(&dummy, 1, MPI_INT, 0, END, MPI_COMM_WORLD);
-    // printf("end-comm / iter:\t %d\n",nbiter);fflush(stdout);
-
     FILE_LOG(logDEBUG1) << "comm thread return";
 
     pthread_exit(0);
-    // return NULL;
 } // comm_thread
 
 bool
@@ -340,36 +350,20 @@ heu_thread2(void * arg)
     worker * w = (worker *) arg;
 
     // pthread_mutex_lock_check(&w->pbb->mutex_instance);
-    // std::unique_ptr<fastNEH> neh = std::make_unique<fastNEH>(w->pbb->instance);
     std::unique_ptr<IG> ils = std::make_unique<IG>(w->pbb->instance.get());
-    // IG ils(w->pbb->instance);
-//     IG* ils=new IG(w->pbb->instance);
-//     th->strategy=PRIOQ;
     // pthread_mutex_unlock(&w->pbb->mutex_instance);
-//
+
     int N=w->pbb->size;
     subproblem *s=new subproblem(N);
-//
+
     int gbest;
-//     int cost;
-//
-    bool take=false;
-//     std::cout<<"1 heuristic thread\n";
-//
+
     while(!w->checkEnd()){
         w->pbb->sltn->getBestSolution(s->schedule.data(),gbest);// lock on pbb->sltn
-//         // cost = gbest;
-//
-//         int c;
-//         // w->local_sol->getBestSolution(s->schedule,c);
-//
         int r=pbb::random::intRand(0,100);
-//
-//         take=false;
+
         pthread_mutex_lock_check(&w->mutex_solutions);
         if(w->sol_ind_begin < w->sol_ind_end && r<80){
-            take=true;
-
             if(w->sol_ind_begin >= w->max_sol_ind){
                 FILE_LOG(logERROR) << "Index out of bounds";
                 exit(-1);
@@ -377,44 +371,14 @@ heu_thread2(void * arg)
             for(int i=0;i<N;i++){
                 s->schedule[i]=w->solutions[w->sol_ind_begin*N+i];
             }
-
-            // std::cout<<*s<<std::endl;
-//
             w->sol_ind_begin++;
         }
         pthread_mutex_unlock(&w->mutex_solutions);
 
         s->limit1=-1;
         s->limit2=w->pbb->size;
-//
-//         // ils->perturbation(s->schedule, 3, 0, w->pbb->size);
-//         // ils->igiter=100;
-//         // ils->acceptanceParameter=1.6;
+
         int cost=ils->runIG(s);
-//         // }
-//         if(!take){
-//             ils->perturbation(s->schedule, 3, 0, w->pbb->size);
-//             ils->igiter=200;
-//             ils->acceptanceParameter=1.5;
-//             cost=ils->runIG(s);
-//     		// subproblem reduced(w->pbb->size);
-//             // int destroy=5;
-//             // ils->destruction(s->schedule, reduced.schedule, destroy);
-//     		// ils->localSearchPartial(s->schedule,w->pbb->size-destroy);
-//             // ils->construction(s->schedule, reduced.schedule, destroy, 0, w->pbb->size);
-//             // cost = ils->makespan(s);
-//         }
-//         // else{
-//         //     ils->igiter=100;
-//         //     // ils->acceptanceParameter=1.0;
-//         //     cost=ils->runIG(s);
-//         //     // cost = ils->makespan(s);
-//         //     // ils->perturbation(s->schedule, 2, 0, w->pbb->size);
-//         //
-//         // }
-//
-//         cost=th->ITS(s,ccc);
-//         // printf("heueuhh %d %d %d\n",ccc,cost,w->pbb->sltn->getBest());
 //
         if (cost<w->pbb->sltn->getBest()){
             w->pbb->sltn->update(s->schedule.data(),cost);
@@ -425,12 +389,7 @@ heu_thread2(void * arg)
             FILE_LOG(logINFO)<<"LocalBest "<<cost<<"\t"<<*(w->local_sol);
         }
     }
-//
-//     delete ils;
-//     delete th;
-//
     pthread_exit(0);
-//     // return NULL;
 }
 
 
@@ -457,7 +416,11 @@ worker::run()
     FILE_LOG(logDEBUG) << "Created " << nbHeuThds << " heuristic threads.";
     int workeriter = 0;
 
+    pthread_barrier_wait(&barrier);// synchronize with communication thread
+
     // printf("RUN %d\n",M);fflush(stdout);
+
+    int count_updates = 0;
 
     // ==========================================
     // worker main-loop :
@@ -468,23 +431,22 @@ worker::run()
 
         // if comm thread has set END flag, exit
         if (checkEnd()) {
-            FILE_LOG(logINFO) << "End detected";
+            FILE_LOG(logINFO) << "Worker : End detected";
             break;
         }
 
         // if UPDATE flag set (by comm thread), apply update and signal
         // (comm thread is waiting until update applied)
         if (checkUpdate()) {
-            FILE_LOG(logDEBUG) << "Update work unit";
-            updateWorkUnit();// read buffer (RECV)
+            count_updates++;
+            updateWorkUnit();// read buffer (RECV) --- SYNC WITH COMM THREAD
         }
 
 
         // work is done here... explore intervals(s)
-        //        pbb->ttm->on(pbb->ttm->workerExploretime);
+       bool allEnd = doWork();
 
         // printf("Rank : %d\n",comm->rank);
-        bool allEnd = doWork();
 
         if(arguments::heuristic_threads)
             getSolutions();
@@ -494,7 +456,7 @@ worker::run()
             FILE_LOG(logDEBUG) << "Try launch best-communication";
             tryLaunchCommBest();
         }
-        else if(shareWithMaster || allEnd){
+        else if(allEnd){
             FILE_LOG(logDEBUG) << "Try launch work-communicaion";
             tryLaunchCommWork();
         }
@@ -506,6 +468,8 @@ worker::run()
     {
         FILE_LOG(logDEBUG) << "Failed to join comm thread " << strerror(err);
     }
+
+    FILE_LOG(logINFO) << "#updates: "<<count_updates;
 
     pbb->ttm->logElapsed(pbb->ttm->workerExploretime, "Worker exploration time\t");
 

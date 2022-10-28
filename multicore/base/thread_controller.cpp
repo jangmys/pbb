@@ -10,6 +10,8 @@ thread_controller::thread_controller(pbab * _pbb, int _nthreads) : pbb(_pbb),M(_
     //set number of BB-explorers (threads)
     bbb = std::vector<std::shared_ptr<bbthread>>(M,nullptr);
 
+    threads = (pthread_t*)malloc(M*sizeof(threads));
+
     //barrier for syncing all explorer threads
     pthread_barrier_init(&barrier, NULL, M);
 
@@ -17,15 +19,14 @@ thread_controller::thread_controller(pbab * _pbb, int _nthreads) : pbb(_pbb),M(_
     pthread_mutexattr_init(&attr);
     pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_ERRORCHECK);
 
-    // pthread_mutex_init(&mutex_end, &attr);
-
     atom_nb_explorers.store(0);// id_generator
     allEnd.store(false);
 }
 
 thread_controller::~thread_controller()
 {
-    // pthread_mutex_destroy(&mutex_end);
+    free(threads);
+
     pthread_barrier_destroy(&barrier);
 }
 
@@ -39,17 +40,14 @@ thread_controller::get_bbthread(int k)
 void
 thread_controller::counter_decrement()
 {
-    // pthread_mutex_lock(&mutex_end);
     end_counter--;
     FILE_LOG(logDEBUG) << " DECREMENT COUNTER :" << end_counter<<std::flush;
-    // pthread_mutex_unlock(&mutex_end);
 }
 
 /* end_counter is atomic*/
 bool
 thread_controller::counter_increment(unsigned id)
 {
-    // pthread_mutex_lock(&mutex_end);
     end_counter++;
 
     FILE_LOG(logDEBUG) << "+++ "<<id<<" INCREMENT COUNTER :" << end_counter<<std::flush;
@@ -58,7 +56,6 @@ thread_controller::counter_increment(unsigned id)
         allEnd.store(true);
         FILE_LOG(logDEBUG) << "+++END COUNTER (" << id << ") VAL: " <<end_counter.load()<<"/"<<M<<std::flush;
     }
-    // pthread_mutex_unlock(&mutex_end);
 
     return allEnd.load();
 }
@@ -194,8 +191,8 @@ void
 thread_controller::resetExplorationState()
 {
     //reset global variables
-    end_counter.store(0);// termination counter
     allEnd.store(false);
+    end_counter.store(0);// termination counter
     atom_nb_explorers.store(0);// id_generator
     atom_nb_steals.store(0);//count work thefts
 }
@@ -215,15 +212,12 @@ thread_controller::get_num_threads()
 void
 thread_controller::stop(unsigned id)
 {
-    FILE_LOG(logDEBUG) << "=== begin thread_controller::stop ("<<id<<")";
-
     unlockWaiting(id);
-
-    FILE_LOG(logDEBUG) << "=== barrier.....("<<id<<")";
 
     int ret=pthread_barrier_wait(&barrier);
     if(ret==PTHREAD_BARRIER_SERIAL_THREAD){
-        FILE_LOG(logDEBUG) << "=== stop barrier ===";
+        FILE_LOG(logDEBUG) << "=== thread_controller::stop ("<<id<<")";
+        FILE_LOG(logDEBUG) << "=== Decomposed: "<<pbb->stats.totDecomposed;
+        FILE_LOG(logDEBUG) << "=== Leaves: "<<pbb->stats.leaves;
     }
-    FILE_LOG(logDEBUG) << "=== end thread_controller::stop ("<<id<<")";
 }

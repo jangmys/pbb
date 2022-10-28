@@ -36,7 +36,7 @@ main(int argc, char ** argv)
 
 
     //------------------B&B components-------------------
-    pbab* pbb = new pbab();
+    std::shared_ptr<pbab> pbb = std::make_shared<pbab>();
 
     //------------------SET INSTANCE----------------------
     pbb->set_instance(
@@ -48,7 +48,7 @@ main(int argc, char ** argv)
     //we'll just define factory methods here that will be passed to each thread through the pbab class
     //each thread will build it's own bound, branch and prune operators later.
     if(arguments::problem[0]=='f'){
-        pbb->set_bound_factory(std::make_unique<BoundFactory>());
+        pbb->set_bound_factory(std::make_unique<BoundFactory>(arguments::earlyStopJohnson,arguments::johnsonPairs));
     }else if(arguments::problem[0]=='d'){
         pbb->set_bound_factory(std::make_unique<DummyBoundFactory>());
     }
@@ -60,16 +60,17 @@ main(int argc, char ** argv)
         pbb->choose_pruning(pbab::prune_greater_equal);
     }
 
+    //------------------BUILD INITIAL SOLUTION------------------
+    pbb->set_initial_solution();
 
     //------------------SET BRANCHING------------------
+    std::cout<<"Branching:\t"<<arguments::branchingMode<<" "<<pbb->initialUB<<std::endl;
     pbb->set_branching_factory(std::make_unique<PFSPBranchingFactory>(
         arguments::branchingMode,
         pbb->size,
         pbb->initialUB
     ));
 
-    //------------------BUILD INITIAL SOLUTION------------------
-    pbb->set_initial_solution();
 
     //------------------CHOOSE ALGORITHM-----------------------
     enum algo{
@@ -98,7 +99,7 @@ main(int argc, char ** argv)
             std::cout<<" === Run single-threaded IVM-BB"<<std::endl;
 
             std::unique_ptr<Intervalbb<int>>sbb(
-                make_interval_bb(pbb,arguments::boundMode)
+                make_interval_bb(pbb.get(),arguments::boundMode)
             );
 
             sbb->setRoot(pbb->root_sltn->perm,-1,pbb->size);
@@ -110,8 +111,6 @@ main(int argc, char ** argv)
                 endFact[i]  = pbb->size - i - 1;
             }
             sbb->initAtInterval(zeroFact, endFact);
-
-            // sbb->initFullInterval();
             sbb->run();
 
             break;
@@ -129,7 +128,7 @@ main(int argc, char ** argv)
             }
             p.push(std::move(root));
 
-            Poolbb sbb(pbb);
+            Poolbb sbb(pbb.get());
             // p.set_root(pbb->root_sltn->perm,-1,pbb->size);
 
             // std::unique_ptr<Poolbb>sbb;
@@ -145,11 +144,20 @@ main(int argc, char ** argv)
             int nthreads = (arguments::nbivms_mc < 1) ? get_nprocs() : arguments::nbivms_mc;
 			std::cout<<" === Run multi-core IVM-based BB with "<<nthreads<<" threads"<<std::endl;
 
-            matrix_controller mc(pbb,nthreads);
+            matrix_controller mc(pbb.get(),nthreads);
 
             mc.set_victim_select(make_victim_selector(nthreads,arguments::mc_ws_select));
-		    mc.initFullInterval();
-			mc.next();
+
+            std::vector<int>_id(nthreads,0);
+            std::vector<int>_pos(nthreads*pbb->size,0);
+            std::vector<int>_end(nthreads*pbb->size,0);
+
+            for (int i = 0; i < pbb->size; i++) {
+                _end[i]  = pbb->size - i - 1;
+            }
+
+            mc.initFromFac(1,_id.data(),_pos.data(),_end.data());
+            mc.next();
 
 			break;
 		}
@@ -158,13 +166,14 @@ main(int argc, char ** argv)
             std::cout<<" === Run multi-core LL-based BB ..."<<std::endl;
 
             int nthreads = (arguments::nbivms_mc < 1) ? get_nprocs() : arguments::nbivms_mc;
-            PoolController pc(pbb,nthreads);
+            PoolController pc(pbb.get(),nthreads);
 
             pc.next();
+            break;
         }
     }
-	pbb->printStats();
 
+	pbb->printStats();
     pbb->ttm->off(pbb->ttm->wall);
     pbb->ttm->printElapsed(pbb->ttm->wall,"Walltime");
 

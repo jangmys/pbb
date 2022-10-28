@@ -43,6 +43,9 @@ public:
     std::atomic<bool> foundAtLeastOneSolution{false};
     std::atomic<bool> foundNewSolution{false};
 
+    std::atomic<bool> workUpdateAvailable{false};
+
+
     ttime * ttm;
 
     statistics stats;//(0,0,0,0);
@@ -88,8 +91,8 @@ public:
         branching_factory = std::move(b);
     }
 
-    void
-    buildInitialUB();
+    // void
+    // buildInitialUB();
 
     int initialUB;
 };

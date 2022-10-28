@@ -29,8 +29,8 @@ void communicator::send_work(std::shared_ptr<work> src_wrk, int dest, int tag)
     src_wrk->nb_intervals=(src_wrk->Uinterval).size();
     MPI_Pack(&src_wrk->nb_intervals, 1, MPI_INT, buffer, MAX_COMM_BUFFER, &pos, MPI_COMM_WORLD);
     MPI_Pack(&src_wrk->max_intervals, 1, MPI_INT, buffer, MAX_COMM_BUFFER, &pos, MPI_COMM_WORLD);
-    MPI_Pack(&src_wrk->exploredNodes, 1, MPI_INT, buffer, MAX_COMM_BUFFER, &pos, MPI_COMM_WORLD);
-    MPI_Pack(&src_wrk->nbLeaves, 1, MPI_INT, buffer, MAX_COMM_BUFFER, &pos, MPI_COMM_WORLD);
+    MPI_Pack(&src_wrk->nb_decomposed, 1, MPI_INT, buffer, MAX_COMM_BUFFER, &pos, MPI_COMM_WORLD);
+    MPI_Pack(&src_wrk->nb_leaves, 1, MPI_INT, buffer, MAX_COMM_BUFFER, &pos, MPI_COMM_WORLD);
 
     char ptr[MAX_MPZLEN];
     FILE* bp = fmemopen(ptr, MAX_MPZLEN, "w");
@@ -71,8 +71,8 @@ void communicator::recv_work(std::shared_ptr<work> dst_wrk, int src, int tag, MP
     MPI_Unpack(rbuffer, MAX_COMM_BUFFER, &pos, &dst_wrk->id, 1, MPI_INT, MPI_COMM_WORLD);
     MPI_Unpack(rbuffer, MAX_COMM_BUFFER, &pos, &dst_wrk->nb_intervals, 1, MPI_INT, MPI_COMM_WORLD);
     MPI_Unpack(rbuffer, MAX_COMM_BUFFER, &pos, &dst_wrk->max_intervals, 1, MPI_INT, MPI_COMM_WORLD);
-    MPI_Unpack(rbuffer, MAX_COMM_BUFFER, &pos, &dst_wrk->exploredNodes, 1, MPI_INT, MPI_COMM_WORLD);
-    MPI_Unpack(rbuffer, MAX_COMM_BUFFER, &pos, &dst_wrk->nbLeaves, 1, MPI_INT, MPI_COMM_WORLD);
+    MPI_Unpack(rbuffer, MAX_COMM_BUFFER, &pos, &dst_wrk->nb_decomposed, 1, MPI_INT, MPI_COMM_WORLD);
+    MPI_Unpack(rbuffer, MAX_COMM_BUFFER, &pos, &dst_wrk->nb_leaves, 1, MPI_INT, MPI_COMM_WORLD);
 //    printf("received work %d, nb intervals %d\n",dst_wrk->id,dst_wrk->nb_intervals);
 //    fflush(stdout);
 

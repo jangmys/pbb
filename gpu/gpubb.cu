@@ -28,8 +28,6 @@ gpubb::gpubb(pbab * _pbb)
     nbIVM    = arguments::nbivms_gpu;
     ringsize = nbIVM;
 
-    // CPU-based bound (simple) : needed for solution eval on CPU
-    // as in 'ivm_bound' constructor (should make a function...)
     if (arguments::problem[0] == 'f') {
         bound_fsp_weak *bd=new bound_fsp_weak();
         bd->init(pbb->instance.get());
@@ -1166,7 +1164,7 @@ gpubb::triggeredNext(int& best, int& iter)
 
 
 void
-gpubb::getIntervals(int * pos, int * end, int * ids, int &nb_intervals, const int max_intervals)
+gpubb::getIntervals(int * pos, int * end, int * ids, unsigned &nb_intervals, const int max_intervals)
 {
     memset(pos, 0, max_intervals * size * sizeof(int));
     memset(end, 0, max_intervals * size * sizeof(int));

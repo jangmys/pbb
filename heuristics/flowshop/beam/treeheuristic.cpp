@@ -88,6 +88,8 @@ Treeheuristic::run(std::shared_ptr<subproblem>& s, int _ub)
     tr->clearPool();
 
     *s = *bsol;
+
+    return 0;
 }
 
 void
