@@ -1,4 +1,4 @@
-FILE(GLOB MyCppSources *.cpp)
+FILE(GLOB MyCppSources *.cpp *.c)
 
 if (TARGET bb)
     target_sources(bb PUBLIC ${MyCppSources})

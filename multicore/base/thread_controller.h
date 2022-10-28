@@ -10,9 +10,6 @@
 #include <victim_selector.h>
 #include "bbthread.h"
 
-class pbab;
-class bbthread;
-
 class thread_controller{
 public:
     thread_controller(pbab * _pbb,int _nthreads);

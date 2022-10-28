@@ -3,7 +3,8 @@
 
 #include <memory>
 
-#include "../../common/include/misc.h"
+#include "../../common/include/rand.hpp"
+// #include "../../common/include/misc.h"
 #include "subproblem.h"
 
 

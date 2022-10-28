@@ -113,6 +113,8 @@ solution::getBest(int& _cost)
     return;
 }
 
+pthread_mutex_t print_mutex = PTHREAD_MUTEX_INITIALIZER;
+
 void
 solution::print()
 {

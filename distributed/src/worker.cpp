@@ -13,6 +13,7 @@
 #include "solution.h"
 #include "ttime.h"
 #include "log.h"
+#include "rand.hpp"
 
 #include "libheuristic.h"
 
@@ -25,6 +26,8 @@ worker::worker(pbab * _pbb, unsigned int nbIVM) : pbb(_pbb),size(pbb->size),M(nb
         work_buf(std::make_shared<fact_work>(M, size))
 {
     dwrk = std::make_shared<work>();
+
+    nb_heuristic_threads = arguments::heuristic_threads;
 
     pthread_barrier_init(&barrier, NULL, 2);// sync worker and helper thread
 
@@ -42,7 +45,7 @@ worker::worker(pbab * _pbb, unsigned int nbIVM) : pbb(_pbb),size(pbb->size),M(nb
     pthread_mutex_init(&mutex_solutions, &attr);
     sol_ind_begin=0;
     sol_ind_end=0;
-    max_sol_ind=2*arguments::heuristic_threads;
+    max_sol_ind=2*nb_heuristic_threads;
     solutions=(int*)malloc(max_sol_ind*size*sizeof(int));
 
     pthread_cond_init(&cond_updateApplied, NULL);
@@ -128,9 +131,6 @@ comm_thread(void * arg)
 
     int nbiter = 0;
     int dummy  = 11;
-
-    solution* mastersol=new solution(w->pbb->size);
-
     int masterbest;
 
     int *msg_counter = new int[10];
@@ -217,8 +217,6 @@ comm_thread(void * arg)
             }
             case NIL: /*nothing : still receive master-best*/
             {
-                // w->comm->recv_sol(mastersol, 0, NIL, &status);
-                // w->pbb->sltn->update(mastersol->perm,mastersol->cost);
                 MPI_Recv(&masterbest, 1, MPI_INT, 0, NIL, MPI_COMM_WORLD, &status);
                 w->pbb->sltn->updateCost(masterbest);
 
@@ -360,7 +358,7 @@ heu_thread2(void * arg)
 
     while(!w->checkEnd()){
         w->pbb->sltn->getBestSolution(s->schedule.data(),gbest);// lock on pbb->sltn
-        int r=pbb::random::intRand(0,100);
+        int r=intRand(0,100);
 
         pthread_mutex_lock_check(&w->mutex_solutions);
         if(w->sol_ind_begin < w->sol_ind_end && r<80){
@@ -407,7 +405,7 @@ worker::run()
     pthread_create(comm_thd, &attr, comm_thread, (void *) this);
 
     //-------------create heuristic threads-------------
-    int nbHeuThds=arguments::heuristic_threads;
+    int nbHeuThds=nb_heuristic_threads;
     pthread_t heur_thd[100];
     for(int i=0;i<nbHeuThds;i++)
     {
@@ -448,7 +446,7 @@ worker::run()
 
         // printf("Rank : %d\n",comm->rank);
 
-        if(arguments::heuristic_threads)
+        if(nb_heuristic_threads)
             getSolutions();
 
         if(foundNewBest()){

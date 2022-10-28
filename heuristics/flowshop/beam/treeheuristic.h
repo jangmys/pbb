@@ -1,6 +1,8 @@
 #ifndef TREEHEURISTIC_H
 #define TREEHEURISTIC_H
 
+#include "../../common/include/rand.hpp"
+
 #include <memory>
 
 #include "pbab.h"

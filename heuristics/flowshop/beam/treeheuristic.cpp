@@ -51,8 +51,8 @@ Treeheuristic::run(std::shared_ptr<subproblem>& s, int _ub)
 
     while(1){
         if(perturb){
-            int l = pbb::random::intRand(2, tmpsol->size/5);
-            int r = pbb::random::intRand(0, tmpsol->size - l);
+            int l = intRand(2, tmpsol->size/5);
+            int r = intRand(0, tmpsol->size - l);
 
             std::random_device rd;
             std::mt19937 g(rd());

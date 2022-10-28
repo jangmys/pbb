@@ -9,10 +9,10 @@
 #include "gmp.h"
 #include "gmpxx.h"
 
-class pbab;
-class work;
-class works;
-class communicator;
+#include "pbab.h"
+#include "work.h"
+#include "works.h"
+#include "communicator.h"
 
 class master{
 public:

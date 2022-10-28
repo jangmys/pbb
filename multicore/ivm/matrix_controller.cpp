@@ -31,15 +31,14 @@ matrix_controller::matrix_controller(pbab* _pbb,int _nthreads) : thread_controll
     }
 
     pthread_mutex_init(&mutex_buffer,NULL);
+
+    bound_mode = arguments::boundMode;
 };
 
 std::shared_ptr<bbthread>
 matrix_controller::make_bbexplorer(){
     //initialize local (sequential) BB ----> different options...!
-    return std::make_shared<ivmthread>(
-        pbb,
-        make_interval_bb(pbb,arguments::boundMode)
-    );
+    return std::make_shared<ivmthread>(pbb,make_interval_bb(pbb,bound_mode));
 }
 
 //nbint := number received intervals

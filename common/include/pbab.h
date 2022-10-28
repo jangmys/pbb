@@ -17,9 +17,9 @@
 
 #include "operator_factory.h"
 
-class instance_abstract;
-class solution;
-class ttime;
+// class instance_abstract;
+// class solution;
+// class ttime;
 
 
 class pbab

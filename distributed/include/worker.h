@@ -4,6 +4,7 @@
 #include <atomic>
 #include <memory>
 
+#include "rand.hpp"
 #include "macros.h"
 #include "communicator.h"
 #include "pbab.h"
@@ -16,6 +17,8 @@ public:
     pbab * pbb;
     int size;
     int M;
+    unsigned nb_heuristic_threads;
+
 
     std::unique_ptr<communicator> comm;
     std::shared_ptr<fact_work> work_buf;

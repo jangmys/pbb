@@ -12,7 +12,7 @@
 #include "gmp.h"
 #include "gmpxx.h"
 
-class interval;
+// class interval;
 
 typedef std::shared_ptr<interval> INTERVAL_PTR;
 typedef std::vector<std::shared_ptr<interval>> INTERVAL_VEC;

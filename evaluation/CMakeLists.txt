@@ -3,9 +3,12 @@ find_package(Threads REQUIRED)
 
 add_library(bounds)
 
+target_sources(bounds PRIVATE instance_factory.cpp bound_abstract.cpp)
+
 add_subdirectory(${PROJECT_SOURCE_DIR}/evaluation/flowshop)
 add_subdirectory(${PROJECT_SOURCE_DIR}/evaluation/dummy)
 target_include_directories(bounds PUBLIC ${PROJECT_SOURCE_DIR}/evaluation)
+
 
 target_link_libraries(bounds PUBLIC Threads::Threads)
 

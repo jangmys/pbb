@@ -4,7 +4,12 @@
 #include <bbthread.h>
 #include <random>
 #include <vector>
+#include <memory>
+#include <list>
 
+// namespace victim_selector
+// {
+// }
 class VictimSelector
 {
 public:
@@ -88,25 +93,6 @@ private:
 };
 
 
-//_type --> arguments::mc_ws_select
-static std::unique_ptr<VictimSelector> make_victim_selector(const unsigned _nthreads, const char _type)
-{
-    switch (_type) {
-        case 'r':
-        {
-            return std::make_unique<RingVictimSelector>(_nthreads);
-        }
-        case 'a':
-        {
-            return std::make_unique<RandomVictimSelector>(_nthreads);
-        }
-        case 'o':
-        {
-            return std::make_unique<HonestVictimSelector>(_nthreads);
-        }
-    }
-    return nullptr;
-}
-
+std::unique_ptr<VictimSelector> make_victim_selector(const unsigned _nthreads, const char _type);
 
 #endif

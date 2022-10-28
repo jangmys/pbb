@@ -9,7 +9,7 @@
 #include "gmp.h"
 #include "gmpxx.h"
 
-class work;
+// class work;
 
 #define MAX_JOBS 800
 

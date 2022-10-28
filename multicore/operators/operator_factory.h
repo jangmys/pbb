@@ -94,63 +94,17 @@ public:
 //===================================================================
 //===================================================================
 
-template<typename T>
-class BoundFactoryInterface
-{
-public:
-    // BoundFactoryInterface(int bound_mode) : _bound_mode(bound_mode){};
-
-    virtual std::unique_ptr<bound_abstract<T>> make_bound(std::unique_ptr<instance_abstract>& inst, int bound_mode) = 0;
-
-// protected:
-//     int _bound_mode;
-};
-
-template<typename T>
-class PFSPBoundFactory : public BoundFactoryInterface<T>
-{
-public:
-    std::unique_ptr<bound_abstract<T>> make_bound(std::unique_ptr<instance_abstract>& inst, int bound_mode) override
-    {
-        switch (bound_mode) {
-            case 0:
-            {
-                std::unique_ptr<bound_fsp_weak> bd = std::make_unique<bound_fsp_weak>();
-                bd->init(inst.get());
-                return bd;
-            }
-            case 1:
-            {
-                std::unique_ptr<bound_fsp_strong> bd = std::make_unique<bound_fsp_strong>();
-                bd->init(inst.get());
-                bd->earlyExit=arguments::earlyStopJohnson;
-                bd->machinePairs=arguments::johnsonPairs;
-                return bd;
-            }
-        }
-        return nullptr;
-    }
-};
-
-
-
+// template<typename T>
+// class BoundFactoryInterface
+// {
+// public:
+//     virtual std::unique_ptr<bound_abstract<T>> make_bound(std::unique_ptr<instance_abstract>& inst, int bound_mode) = 0;
+// };
 
 
 class OperatorFactory
 {
   public:
-    // int a;
-
-    // static std::unique_ptr<Pruning> createPruning(bool findAll)
-    // {
-    //     if(!findAll)
-    //     {
-    //         return std::make_unique<keepSmaller>();
-    //     }else{
-    //         return std::make_unique<keepEqualOrSmaller>();
-    //     }
-    // }
-
     static std::unique_ptr<Branching> createBranching(int choice, int size, int initialUB)
     {
         switch (choice) {
@@ -179,47 +133,6 @@ class OperatorFactory
         }
         return nullptr;
     }
-
-
-    // static std::unique_ptr<Evaluator<int>> createEvaluator(std::unique_ptr<bound_abstract<int>> lb1, std::unique_ptr<bound_abstract<int>> lb2)
-    // {
-    //     switch (arguments::problem[0]) {
-    //         case 'f':
-    //         {
-    //             switch (arguments::boundMode) {
-    //                 case 0:{
-    //                     auto ev = std::make_unique<Evaluator<int>>(
-    //                         std::move(lb1)
-    //                     );
-    //                     return ev;
-    //                 }
-    //                 case 1:{
-    //                     auto ev = std::make_unique<Evaluator<int>>(
-    //                         std::move(lb1),
-    //                         std::move(lb2)
-    //                     );
-    //                     return ev;
-    //                 }
-    //                 case 2:{
-    //                     auto ev = std::make_unique<Evaluator<int>>(
-    //                         std::move(lb1),
-    //                         std::move(lb2)
-    //                     );
-    //                     return ev;
-    //                 }
-    //             }
-    //         }
-    //         case 'd':
-    //         {
-    //             auto ev = std::make_unique<Evaluator<int>>(
-    //                         std::make_unique<bound_dummy>()
-    //                     );
-    //                     // ev->lb->init(instance);
-    //             return ev;
-    //         }
-    //     }
-    //     return nullptr;
-    // }
 };
 
 

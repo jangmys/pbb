@@ -6,7 +6,7 @@
 #include <climits>
 #include <pthread.h>
 
-static pthread_mutex_t print_mutex = PTHREAD_MUTEX_INITIALIZER;
+
 
 /*
  * this class and subproblem are somewhat redundant....

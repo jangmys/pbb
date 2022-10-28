@@ -13,9 +13,6 @@
 #include "ivmthread.h"
 #include "thread_controller.h"
 
-class pbab;
-class bbthread;
-
 class matrix_controller : public thread_controller{
     friend class worker_mc;
 public:
@@ -48,6 +45,7 @@ private:
     std::vector<std::vector<int>> end;
 
     bool _distributed = false;
+    int bound_mode = 0;
 };
 
 #endif

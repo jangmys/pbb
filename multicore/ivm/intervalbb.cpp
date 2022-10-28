@@ -8,6 +8,17 @@
 #include "intervalbb.h"
 #include "operator_factory.h"
 
+std::unique_ptr<Intervalbb<int>> make_interval_bb(pbab* pbb, unsigned bound_mode)
+{
+    if(arguments::boundMode == 0){
+        return std::make_unique<Intervalbb<int>>(pbb);
+    }else if(arguments::boundMode == 1){
+        return std::make_unique<IntervalbbEasy<int>>(pbb);
+    }else{
+        return std::make_unique<IntervalbbIncr<int>>(pbb);
+    }
+}
+
 template<typename T>
 Intervalbb<T>::Intervalbb(pbab *_pbb) : first(true), pbb(_pbb), size(_pbb->size),IVM(std::make_shared<ivm>(size)),count_leaves(0),count_decomposed(0)
 {
@@ -47,7 +58,7 @@ Intervalbb<T>::setRoot(const int *varOrder,int l1,int l2)
 
         //compute children bounds (of IVM->node), choose Branching and modify IVM accordingly
         pbb->sltn->getBest(prune->local_best);
-        boundAndKeepSurvivors(IVM->getNode(),arguments::boundMode);
+        boundAndKeepSurvivors(IVM->getNode());
 
         //save first line of matrix (bounded root decomposition)
         rootDir = IVM->getDirection(0);
@@ -88,7 +99,7 @@ Intervalbb<T>::initAtInterval(std::vector<int> &pos, std::vector<int> &end)
     IVM->setEnd(end.data());
 
     if (IVM->beforeEnd()) {
-        unfold(arguments::boundMode);
+        unfold();
         return true;
     }else{
         return false;
@@ -113,7 +124,7 @@ void Intervalbb<T>::run()
 //using boundChildren
 //BEGIN_END OPTIONAL PARAMETER in boundChildren?
 template<typename T>
-void Intervalbb<T>::boundAndKeepSurvivors(subproblem& _subpb, const int mode)
+void Intervalbb<T>::boundAndKeepSurvivors(subproblem& _subpb)
 {
     std::vector<std::vector<T>> lb(2,std::vector<T>(size,0));
     std::vector<std::vector<T>> prio(2,std::vector<T>(size,0));
@@ -199,7 +210,7 @@ bool Intervalbb<T>::next()
     //bound, set Branching direction, prune
     if(state == 1)
     {
-        boundAndKeepSurvivors(IVM->getNode(),arguments::boundMode);
+        boundAndKeepSurvivors(IVM->getNode());
     }
 
     return (state == 1);
@@ -207,7 +218,7 @@ bool Intervalbb<T>::next()
 
 template<typename T>
 void
-Intervalbb<T>::unfold(int mode)
+Intervalbb<T>::unfold()
 {
     assert(IVM->intervalValid());
     assert(IVM->getDepth() == 0);
@@ -224,7 +235,7 @@ Intervalbb<T>::unfold(int mode)
         IVM->generateLine(IVM->getDepth(), false);
         IVM->decodeIVM();
 
-        boundAndKeepSurvivors(IVM->getNode(),mode);
+        boundAndKeepSurvivors(IVM->getNode());
     }
 } // matrix::unfold
 

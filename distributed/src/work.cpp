@@ -281,8 +281,6 @@ work::split(size_t n)
     result.clear();
     result.reserve(nb*ratio);
 
-    int ind=0;
-
     for (INTERVAL_IT it = Uinterval.begin(); it != Uinterval.end(); it++) {
         len  = (*it)->length();
         part = len / ratio;
@@ -295,8 +293,6 @@ work::split(size_t n)
     }
 
     Uinterval = std::move(result);
-
-    //std::cout << Uinterval.size() << std::endl;
 }
 
 
@@ -326,8 +322,6 @@ work::split2(size_t n)
     INTERVAL_VEC result;// temp
     result.clear();
     result.reserve(nb*ratio);
-
-    int ind=0;
 
     mpz_class b(0);
     mpz_class e(0);
@@ -573,7 +567,7 @@ work::readFromFile(FILE * bp)
     //    for(int i=0;i<16384;i++){
     int iid;
     for (int i = 0; i < nb_intervals; i++) {
-        fread(&iid, sizeof(int), 1, bp);
+        err = fread(&iid, sizeof(int), 1, bp);
         if (!err) { printf("read: interval id not read\n"); exit(-1); } else { size += sizeof(int); }
 
         size += mpz_inp_raw(tmpb, bp);

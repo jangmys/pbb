@@ -10,13 +10,11 @@
 #include "pool_controller.h"
 
 #include "../ivm/intervalbb.h"
-#include "../ivm/intervalbb_incr.h"
-#include "../ivm/intervalbb_easy.h"
 
 #include "../ll/pool.h"
 #include "../ll/poolbb.h"
 
-template class PFSPBoundFactory<int>;
+// template class PFSPBoundFactory<int>;
 
 
 int

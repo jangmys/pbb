@@ -5,9 +5,8 @@
 #include <mpi.h>
 #include <memory>
 
-
-class work;
-class solution;
+#include "work.h"
+#include "solution.h"
 
 class communicator{
 public:
