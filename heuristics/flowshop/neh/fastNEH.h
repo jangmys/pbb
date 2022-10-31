@@ -21,5 +21,8 @@ private:
     // instance_abstract * instance;
 };
 
+template<typename key_type>
+void sort_by_key(std::vector<int>& prmu, const std::vector<key_type>& key);
+
 
 #endif

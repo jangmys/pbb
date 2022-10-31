@@ -5,6 +5,17 @@
 #include "fastNEH.h"
 #include "fastinsertremove.h"
 
+template<typename key_type>
+void sort_by_key(std::vector<int>& prmu, const std::vector<key_type>& key)
+{
+    std::sort(prmu.begin(),prmu.end(),
+    [&](const int a,const int b)
+    {
+        return key[a] > key[b];
+    }
+    );
+}
+
 void fastNEH::initialSort(std::vector<int>& perm){
     std::sort(perm.begin(),perm.end(),
     [&](const int a,const int b)
