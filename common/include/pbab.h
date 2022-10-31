@@ -3,9 +3,8 @@
 
 #include <atomic>
 #include <memory>
-
 #include <pthread.h>
-#include <semaphore.h>
+
 #include "../include/misc.h"
 #include "../include/arguments.h"
 #include "../include/statistics.h"
@@ -17,11 +16,12 @@
 
 #include "operator_factory.h"
 
-// class instance_abstract;
-// class solution;
-// class ttime;
-
-
+/*
+- instance
+- bb operator factories
+- best
+- stats
+*/
 class pbab
 {
 public:
@@ -72,27 +72,19 @@ public:
             case prune_greater_equal:
                 pruning_factory = std::make_unique<PruneLargerEqualFactory>();
                 break;
-
             case prune_less:
                 break;
-
             case prune_less_equal:
                 break;
         }
     }
     std::unique_ptr<PruningFactoryInterface> pruning_factory;
-    // void set_pruning_factory(std::unique_ptr<PruningFactoryInterface> p){
-    //     pruning_factory = std::move(p);
-    // }
 
     //------------------------branching-------------------------
     std::unique_ptr<BranchingFactoryInterface> branching_factory;
     void set_branching_factory(std::unique_ptr<BranchingFactoryInterface> b){
         branching_factory = std::move(b);
     }
-
-    // void
-    // buildInitialUB();
 
     int initialUB;
 };

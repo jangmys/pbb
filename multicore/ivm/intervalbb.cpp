@@ -10,9 +10,9 @@
 
 std::unique_ptr<Intervalbb<int>> make_interval_bb(pbab* pbb, unsigned bound_mode)
 {
-    if(arguments::boundMode == 0){
+    if(bound_mode == 0){
         return std::make_unique<Intervalbb<int>>(pbb);
-    }else if(arguments::boundMode == 1){
+    }else if(bound_mode == 1){
         return std::make_unique<IntervalbbEasy<int>>(pbb);
     }else{
         return std::make_unique<IntervalbbIncr<int>>(pbb);
@@ -25,11 +25,9 @@ Intervalbb<T>::Intervalbb(pbab *_pbb) : first(true), pbb(_pbb), size(_pbb->size)
     //why not pass operators to the ctor?
     prune = pbb->pruning_factory->make_pruning();
     branch = pbb->branching_factory->make_branching();
-
     primary_bound = pbb->bound_factory->make_bound(pbb->instance,arguments::primary_bound);
 
     rootRow = std::vector<T>(size,0);
-
     pthread_mutex_init(&first_mutex,NULL);
 }
 

@@ -5,6 +5,23 @@
 
 #include "fastinsertremove.h"
 
+fastInsertRemove::fastInsertRemove(const std::vector<std::vector<int>> p_times,const int N, const int M) : nbJob(N),nbMachines(M),PTM(p_times){
+    head  = std::vector<std::vector<int> >(nbMachines, std::vector<int>(nbJob));
+    tail  = std::vector<std::vector<int> >(nbMachines, std::vector<int>(nbJob));
+    inser = std::vector<std::vector<int> >(nbMachines, std::vector<int>(nbJob));
+    sumPT = std::vector<int>(nbJob);
+
+    for (int i = 0; i < nbJob; i++){
+        sumPT[i]=0;
+        for (int j = 0; j < nbMachines; j++){
+            sumPT[i]+=PTM[j][i];
+        }
+    }
+
+    tabujobs=std::make_unique<forbidden_list>(nbJob);
+    tabupos=std::make_unique<forbidden_list>(nbJob);
+};
+
 fastInsertRemove::fastInsertRemove(instance_abstract * _instance)
 {
     (_instance->data)->seekg(0);
@@ -37,9 +54,19 @@ fastInsertRemove::fastInsertRemove(instance_abstract * _instance)
 }
 
 
+void fastInsertRemove::reset()
+{
+    for(int i=0;i<nbMachines;i++){
+        std::fill(head[i].begin(),head[i].end(),0);
+        std::fill(tail[i].begin(),tail[i].end(),0);
+        std::fill(inser[i].begin(),inser[i].end(),0);
+    }
+}
+
+
 //returns makespan of (partial) schedule [ perm[0],perm[1],...perm[len-1] ]
 //keeps all completion times in heads
-int fastInsertRemove::computeHeads(const std::vector<int>& perm, int len)
+int fastInsertRemove::computeHeads(const std::vector<int>& perm, const int len)
 {
     //machine 0
     head[0][0]=PTM[0][perm[0]];

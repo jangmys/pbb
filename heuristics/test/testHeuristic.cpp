@@ -4,6 +4,8 @@
 #include "libbounds.h"
 #include "libheuristic.h"
 
+#include "flowshop/include/c_taillard.h"
+
 #include <memory>
 #include <iostream>
 
@@ -25,6 +27,27 @@ int main(int argc, char* argv[])
     std::cout<<" === solving "<<arguments::problem<<" - instance "<<arguments::inst_name<<std::endl;
 
     std::shared_ptr<instance_abstract>instance = pbb_instance::make_instance(arguments::problem, arguments::inst_name);
+
+    std::cout<<" === solving "<<arguments::problem<<" - instance "<<atoi(arguments::inst_name+2)<<std::endl;
+
+
+    //INSTANCE
+    int inst_id = atoi(arguments::inst_name+2);
+
+    int N,M;
+    N=taillard_get_nb_jobs(inst_id);
+    M=taillard_get_nb_machines(inst_id);
+
+    std::vector<int>ptm(N*M,0);
+    taillard_get_processing_times(ptm.data(),inst_id);
+
+    std::vector<std::vector<int>>p_times(M,std::vector<int>(N,0));
+    for(int i=0;i<M;i++){
+        for(int j=0;j<N;j++){
+            p_times[i][j] = ptm[i*N+j];
+        }
+    }
+
 
     //initial solution
     // int cost;
@@ -49,13 +72,15 @@ int main(int argc, char* argv[])
     {
         case 0:
         {
-            fastNEH neh(instance.get());
+            fastNEH neh(p_times,N,M);
+            // fastNEH neh(instance.get());
 
             int fitness;
+            std::vector<int>prmu;
 
-            neh.initialSort(p->schedule);
-            neh.runNEH(p->schedule,fitness);
+            neh.run(prmu,fitness);
 
+            p->schedule = prmu;
             p->set_fitness(fitness);
 
             std::cout<<" = NEH :\t";

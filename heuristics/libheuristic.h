@@ -1,6 +1,8 @@
 #ifndef LIBHEURISTIC_H_
 #define LIBHEURISTIC_H_
 
+#include "flowshop/util.h"
+
 #include "flowshop/neh/fastinsertremove.h"
 #include "flowshop/neh/fastNEH.h"
 

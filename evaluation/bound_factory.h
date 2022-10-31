@@ -13,14 +13,10 @@ class BoundFactoryBase
 public:
     BoundFactoryBase(){};
 
-    // BoundFactoryBase(std::unique_ptr<instance_abstract> _inst) : inst(std::move(_inst))
-    // {};
-
     virtual std::unique_ptr<bound_abstract<int>>
         make_bound(std::unique_ptr<instance_abstract>& inst, int bound_type) = 0;
 
 protected:
-    // std::unique_ptr<instance_abstract> inst;
     int bound_mode;
 };
 

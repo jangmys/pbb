@@ -45,6 +45,7 @@ struct forbidden_list
 // Laurent Deroussi, Michel Gourgand, Sylvie Norre, New effective neighborhoods for the permutation flow shop problem, Research Report LIMOS/RR-06-09
 class fastInsertRemove{
 public:
+    fastInsertRemove(const std::vector<std::vector<int>> p_times,const int N, const int M);
     fastInsertRemove(instance_abstract* inst);
 
     int nbJob;
@@ -60,10 +61,12 @@ public:
     std::unique_ptr<forbidden_list> tabujobs;
     std::unique_ptr<forbidden_list> tabupos;
 
+    void reset();
+
     int insertMakespans(const std::vector<int>& perm, int len, int job, std::vector<int>& makespans);
     int removeMakespans(const std::vector<int>& perm, int len, std::vector<int>& makespans);
 
-    int computeHeads(const std::vector<int>& perm, int len);
+    int computeHeads(const std::vector<int>& perm, const int len);
     void computeTails(const std::vector<int>& perm, int len);
     void computeInser(const std::vector<int>& perm, int len, int job);
 
