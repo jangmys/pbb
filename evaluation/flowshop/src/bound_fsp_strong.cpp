@@ -21,17 +21,18 @@ bound_fsp_strong::init(instance_abstract * _instance)
 {
     pthread_mutex_lock(&_instance->mutex_instance_data);
     //read N,M from instance stream
+    int N,M;
     (_instance->data)->seekg(0);
     (_instance->data)->clear();
-    *(_instance->data) >> nbJob;
-    *(_instance->data) >> nbMachines;
+    *(_instance->data) >> N;
+    *(_instance->data) >> M;
 
     //allocate bound struct (for LB1)
-    data_lb1 = new_bound_data(nbJob,nbMachines);
+    data_lb1 = new_bound_data(N,M);
 
-    for (int j = 0; j < nbMachines; j++){
-        for (int i = 0; i < nbJob; i++){
-            *(_instance->data) >> data_lb1->p_times[j*nbJob + i];
+    for (int j = 0; j < M; j++){
+        for (int i = 0; i < N; i++){
+            *(_instance->data) >> data_lb1->p_times[j*N + i];
         }
     }
     pthread_mutex_unlock(&_instance->mutex_instance_data);
@@ -96,7 +97,7 @@ bound_fsp_strong::borneInfLearn(int *flags, const int *const front, const int* c
     int bestind = 0;
 
     // restrict to best nbMachines
-    int nbPairs = nbMachines;
+    int nbPairs = data_lb1->nb_machines;
     // learn...
     int best = UB;
     if (nbbounds < 2 * data_lb1->nb_jobs){

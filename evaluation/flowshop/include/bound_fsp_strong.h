@@ -15,9 +15,6 @@
 #include "c_bound_simple.h"
 #include "c_bound_johnson.h"
 
-class pbab;
-
-typedef std::pair<int,int> machine_pair;
 
 class bound_fsp_strong : public bound_abstract<int> {
 public:
@@ -30,10 +27,6 @@ public:
 
     enum lb2_variant lb2_type;
 
-    int nbJob;
-    int nbMachines;
-    int nbMachinePairs;
-
     bound_data* data_lb1;
     johnson_bd_data* data_lb2;
 
@@ -41,29 +34,15 @@ public:
     int          earlyExit;
     int          machinePairs;
 
-    std::vector<machine_pair> machine_pairs;
-
-    // void fillMinHeadsTails();
-    // void fillMachinePairs();
-
     std::vector<int> rewards;
-
-    // int *        machinePairOrder;
 
     void
     init(instance_abstract * _instance);
     void
     configureBound(const int, const int, const int);
 
-    // void initCmax(std::pair<int,int>& tmp, machine_pair& ma, int ind);
-    // void cmaxFin(std::pair<int,int>& tmp, machine_pair ma);
-    // void heuristiqueCmax(int *flag, std::pair<int,int>& tmp, machine_pair ma, int ind);
-    // int
-    // borneInfMakespan(int * valBorneInf, int minCmax);
-
     int
     borneInfLearn(int * flags,  const int *const front, const int* const back, int UB, bool earlyExit);
-
 
     int nbbounds;
 
