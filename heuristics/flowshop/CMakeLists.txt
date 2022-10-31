@@ -7,6 +7,7 @@ set(MyCppSources
     beam/beam.cpp
     beam/tree.cpp
     beam/treeheuristic.cpp
+    util.cpp
 )
 
 # target_include_directories(fspHeuristic PUBLIC ./include)
