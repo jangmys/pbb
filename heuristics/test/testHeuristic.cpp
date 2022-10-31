@@ -24,26 +24,7 @@ int main(int argc, char* argv[])
     arguments::parse_arguments(argc, argv);
     std::cout<<" === solving "<<arguments::problem<<" - instance "<<arguments::inst_name<<std::endl;
 
-    std::shared_ptr<instance_abstract> instance;
-
-    switch (arguments::inst_name[0]) {//DIFFERENT INSTANCES...
-        case 't': {
-            instance = std::make_shared<instance_taillard>(arguments::inst_name);
-            break;
-        }
-        case 'V': {
-            instance = std::make_shared<instance_vrf>(arguments::inst_name);
-            break;
-        }
-        case 'r': {
-            instance = std::make_shared<instance_random>(arguments::inst_name);
-            break;
-        }
-        case '.': {
-            instance = std::make_shared<instance_filename>(arguments::inst_name);
-            break;
-        }
-    }
+    std::shared_ptr<instance_abstract>instance = pbb_instance::make_instance(arguments::problem, arguments::inst_name);
 
     //initial solution
     // int cost;
@@ -60,16 +41,6 @@ int main(int argc, char* argv[])
     }else{
         pbb->choose_pruning(pbab::prune_greater_equal);
     }
-
-
-    // std::unique_ptr<PruningFactoryInterface> prune;
-    // if(arguments::findAll){
-    //     prune = std::make_unique<PruneLargerFactory>();
-    // }else{
-    //     prune = std::make_unique<PruneLargerEqualFactory>();
-    // }
-
-    // pbb->set_pruning_factory(std::move(prune));
 
     struct timespec t1,t2;
     clock_gettime(CLOCK_MONOTONIC,&t1);
