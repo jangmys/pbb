@@ -40,6 +40,8 @@ void fill_johnson_schedules(const bound_data *const lb1, const johnson_bd_data *
 //helper
 void set_flags(const int *const permutation, const int limit1, const int limit2, const int N, int* flags);
 
+inline void swap(int *a, int *b);
+
 //-------------compute lower bounds-------------
 int compute_cmax_johnson(const bound_data* const bd, const johnson_bd_data* const jhnsn, const int* const flag, int* tmp0, int* tmp1, const int ma0, const int ma1, const int ind);
 
