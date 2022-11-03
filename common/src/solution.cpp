@@ -145,9 +145,6 @@ solution::operator=(solution& s)
     size = s.size;
 
     cost.store(s.cost.load());
-    // std::atomic_store(mInt, std::atomic_load(pOther.mInt, memory_order_relaxed), memory_order_relaxed);
-    // cost   = s.cost;
-    // newBest    = s.newBest;
 
     for(int i=0;i<size;i++)
     {

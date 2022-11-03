@@ -36,13 +36,13 @@ worker_mc::doWork()
     FILE_LOG(logDEBUG1) << " === worker_mc::doWork (rank " << comm->rank<<")";
 
     pbb->ttm->on(pbb->ttm->workerExploretime);
-    pbb->foundNewSolution.store(false);
+    pbb->foundNewSolution.store(false,std::memory_order_relaxed);
     mc->next();
     pbb->ttm->off(pbb->ttm->workerExploretime);
 
     FILE_LOG(logDEBUG1) << " === worker_mc::doWork return from next (rank " << comm->rank<<")";
 
-    setNewBest(pbb->foundNewSolution);
+    setNewBest(pbb->foundNewSolution.load());
 
     return true; //triggerComm;// comm condition met
 }

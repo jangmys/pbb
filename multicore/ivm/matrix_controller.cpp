@@ -136,10 +136,10 @@ matrix_controller::explore_multicore()
 
 
     if(updatedIntervals){
-        pthread_mutex_lock(&mutex_buffer);
+        // pthread_mutex_lock(&mutex_buffer);
         // std::cout<<"ID "<<id<<" init at interval\n";
         bool _active = std::static_pointer_cast<ivmthread>(bbb[id])->ivmbb->initAtInterval(pos[id], end[id]);
-        pthread_mutex_unlock(&mutex_buffer);
+        // pthread_mutex_unlock(&mutex_buffer);
 
         bbb[id]->set_work_state(_active);
 
@@ -197,7 +197,7 @@ matrix_controller::explore_multicore()
                 // FILE_LOG(logINFO) << "=== BREAK (update avail)";
                 break;
             }
-            if(atom_nb_steals.load(std::memory_order_relaxed)>1)
+            if(atom_nb_steals.load(std::memory_order_relaxed)>(get_num_threads()/4))
             {
                 // FILE_LOG(logINFO) << "=== BREAK (nb_steals "<<atom_nb_steals<<" )";
                 break;
