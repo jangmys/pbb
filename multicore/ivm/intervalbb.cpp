@@ -225,6 +225,7 @@ Intervalbb<T>::unfold()
 
     while (IVM->getDepth() < size - 2) {
         if (IVM->pruningCellState()) {
+            IVM->goRight();
             IVM->alignLeft();
             break;
         }
