@@ -181,7 +181,7 @@ matrix_controller::explore_multicore()
         //set local UB
         bbb[id]->setLocalBest(bestCost);
 
-        if (allEnd.load()) {
+        if (allEnd.load(std::memory_order_relaxed)) {
             break;
         }else if (!bbb[id]->bbStep()){
             request_work(id);
@@ -197,20 +197,18 @@ matrix_controller::explore_multicore()
                 // FILE_LOG(logINFO) << "=== BREAK (update avail)";
                 break;
             }
-            if(atom_nb_steals>1)
+            if(atom_nb_steals.load(std::memory_order_relaxed)>1)
             {
                 // FILE_LOG(logINFO) << "=== BREAK (nb_steals "<<atom_nb_steals<<" )";
                 break;
             }
-            if(pbb->foundNewSolution){
-                // FILE_LOG(logINFO) << "=== BREAK (new sol)";
+            if(pbb->foundNewSolutionload(std::memory_order_relaxed){
                 break;
             }
 
             bool passed=pbb->ttm->period_passed(WORKER_BALANCING);
             if(passed)
             {
-                // FILE_LOG(logINFO) << "=== BREAK (time passed)";
                 break;
             }
         }
@@ -253,7 +251,7 @@ matrix_controller::next()
         }
     }
 
-    return allEnd.load();
+    return allEnd.load(std::memory_order_relaxed);
 }
 
 
