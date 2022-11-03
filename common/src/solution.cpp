@@ -97,7 +97,7 @@ solution::getBest()
     int ret;
 
     // pthread_rwlock_rdlock(&lock_sol);
-    ret=cost.load();
+    ret=cost.load(std::memory_order_relaxed);
     // pthread_rwlock_unlock(&lock_sol);
     return ret;
 }
@@ -107,7 +107,7 @@ solution::getBest(int& _cost)
 {
     // pthread_rwlock_rdlock(&lock_sol);
     if (cost.load() < _cost) {
-        _cost = cost.load();
+        _cost = cost.load(std::memory_order_relaxed);
     }
     // pthread_rwlock_unlock(&lock_sol);
     return;

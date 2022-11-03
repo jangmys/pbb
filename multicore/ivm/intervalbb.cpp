@@ -214,6 +214,7 @@ bool Intervalbb<T>::next()
     return (state == 1);
 }
 
+//initializes IVM at a given interval
 template<typename T>
 void
 Intervalbb<T>::unfold()
