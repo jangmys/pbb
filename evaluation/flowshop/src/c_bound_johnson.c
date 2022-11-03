@@ -278,7 +278,7 @@ int lb2_bound(const bound_data* const lb1_data, const johnson_bd_data* const lb2
     return lb_makespan(lb1_data,lb2_data,flags,front,back,best_cmax);
 }
 
-inline void swap(int *a, int *b){
+void swap(int *a, int *b){
     int tmp = *a;
     *a = *b;
     *b = tmp;
