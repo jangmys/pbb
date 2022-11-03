@@ -202,7 +202,7 @@ matrix_controller::explore_multicore()
                 // FILE_LOG(logINFO) << "=== BREAK (nb_steals "<<atom_nb_steals<<" )";
                 break;
             }
-            if(pbb->foundNewSolution.load(std::memory_order_relaxed){
+            if(pbb->foundNewSolution.load(std::memory_order_relaxed)){
                 break;
             }
 
