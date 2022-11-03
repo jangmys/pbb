@@ -28,7 +28,6 @@ Intervalbb<T>::Intervalbb(pbab *_pbb) : first(true), pbb(_pbb), size(_pbb->size)
     primary_bound = pbb->bound_factory->make_bound(pbb->instance,arguments::primary_bound);
 
     rootRow = std::vector<T>(size,0);
-    pthread_mutex_init(&first_mutex,NULL);
 }
 
 template<typename T>

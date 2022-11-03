@@ -31,7 +31,6 @@ ttime::ttime()
     workerExploretime = new mytimer();
 
     pthread_mutex_init(&mutex_lasttime, NULL);
-    // printElapsed(wserver,"WSERVER");
 }
 
 ttime::~ttime()
@@ -56,10 +55,6 @@ void ttime::reset()
     masterWalltime->isOn=false;
     masterWalltime->elapsed.tv_sec=0;
     masterWalltime->elapsed.tv_nsec=0;
-
-//     masterWalltime.tv_nsec=0;
-//     processRequest.tv_sec=0;
-//     processRequest.tv_nsec=0;
 }
 
 time_t
@@ -71,17 +66,17 @@ ttime::time_get()
     return tmp;
 }
 
-void
-ttime::wait(int index)
-{
-    srand48(getpid());
-    double t = (unsigned int) (periods[index] * 1.0) * drand48();
-    std::cout << (unsigned int) t << std::endl << std::flush;
-
-    std::cout << "debut" << std::endl << std::flush;
-    sleep((unsigned int) t);
-    std::cout << "fin" << std::endl << std::flush;
-}
+// void
+// ttime::wait(int index)
+// {
+//     srand48(getpid());
+//     double t = (unsigned int) (periods[index] * 1.0) * drand48();
+//     std::cout << (unsigned int) t << std::endl << std::flush;
+//
+//     std::cout << "debut" << std::endl << std::flush;
+//     sleep((unsigned int) t);
+//     std::cout << "fin" << std::endl << std::flush;
+// }
 
 // ___________________________________________
 

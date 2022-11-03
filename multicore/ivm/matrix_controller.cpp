@@ -142,26 +142,7 @@ matrix_controller::explore_multicore()
         // pthread_mutex_unlock(&mutex_buffer);
 
         bbb[id]->set_work_state(_active);
-
-        // if(state[id]==1){
-        //     //has non-empty interval ...
-        //     FILE_LOG(logDEBUG) << "=== state 1 ("<<id<<")";
-        //
-        //     // std::cout<<"INIT AT INTERVAL\n";
-        //
-        //     bool _active = std::static_pointer_cast<ivmthread>(bbb[id])->ivmbb->initAtInterval(pos[id], end[id]);
-        //
-        //     bbb[id]->set_work_state(_active);
-        // }else{
-        //     //has empty interval
-        //     FILE_LOG(logDEBUG) << "=== state 0 ("<<id<<")";
-        //     std::static_pointer_cast<ivmthread>(bbb[id])->ivmbb->clear();
-        //     bbb[id]->set_work_state(false);
-        // }
     }
-
-    // bbb[id]->set_work_state(bbb[id]->isEmpty());
-    // bbb[id]->setRoot(pbb->root_sltn->perm, -1, pbb->size);
 
     //reset counters and request queue
     bbb[id]->reset_request_queue();
@@ -181,6 +162,7 @@ matrix_controller::explore_multicore()
         //set local UB
         bbb[id]->setLocalBest(bestCost);
 
+
         if (allEnd.load(std::memory_order_relaxed)) {
             break;
         }else if (!bbb[id]->bbStep()){
@@ -194,18 +176,15 @@ matrix_controller::explore_multicore()
         {
             if(pbb->workUpdateAvailable.load(std::memory_order_relaxed))
             {
-                // FILE_LOG(logINFO) << "=== BREAK (update avail)";
                 break;
             }
             if(atom_nb_steals.load(std::memory_order_relaxed)>(get_num_threads()/4))
             {
-                // FILE_LOG(logINFO) << "=== BREAK (nb_steals "<<atom_nb_steals<<" )";
                 break;
             }
             if(pbb->foundNewSolution.load(std::memory_order_relaxed)){
                 break;
             }
-
             bool passed=pbb->ttm->period_passed(WORKER_BALANCING);
             if(passed)
             {

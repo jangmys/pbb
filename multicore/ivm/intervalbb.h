@@ -59,8 +59,6 @@ protected:
     std::unique_ptr<bound_abstract<T>> primary_bound ;
 
     void unfold();
-
-    pthread_mutex_t first_mutex;
 };
 
 template<typename T>

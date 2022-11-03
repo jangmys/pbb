@@ -42,8 +42,9 @@ public:
 
     static time_t
     time_get();
-    void
-    wait(int index);
+
+    // void
+    // wait(int index);
     void
     period_set(int index, time_t t);
     bool

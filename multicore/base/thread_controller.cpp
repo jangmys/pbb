@@ -154,25 +154,23 @@ thread_controller::request_work(unsigned id)
 bool
 thread_controller::try_answer_request(unsigned id)
 {
-    bool ret = false;
-
     //check if request queue empty ... called very often! some performance gain is possible by maintaining a separate boolean variable, but complicates code
     if(!bbb[id]->has_request())return false;
 
     unsigned thief = pull_request(id);
-
-    assert(!bbb[thief]->get_work_state());
+    assert(!bbb[thief]->get_work_state()); //really, thief work state must be FALSE
 
     pthread_mutex_lock_check(&bbb[thief]->mutex_ivm);
-    atom_nb_steals += work_share(id, thief);
+    int stolen = work_share(id, thief);
     pthread_mutex_unlock(&bbb[thief]->mutex_ivm);
+    atom_nb_steals += stolen;
 
     counter_decrement();
     FILE_LOG(logDEBUG) << id << " answer " << thief << " counter: " << end_counter.load() << std::flush;
 
     unlock_waiting_thread(thief);
 
-    return ret;
+    return stolen;
 } // thread_controller::try_answer_request
 
 void
