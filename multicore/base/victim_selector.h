@@ -6,10 +6,10 @@
 #include <vector>
 #include <memory>
 #include <list>
+#include <ctime>
 
-// namespace victim_selector
-// {
-// }
+#include "rand.hpp"
+
 class VictimSelector
 {
 public:
@@ -35,7 +35,14 @@ public:
 class RandomVictimSelector : public VictimSelector
 {
 public:
-    explicit RandomVictimSelector(unsigned _nthreads) : VictimSelector(_nthreads),unif(std::uniform_int_distribution<int>(0,nthreads)){};
+    explicit RandomVictimSelector(unsigned _nthreads) : VictimSelector(_nthreads)
+    {
+
+        auto seed = static_cast<long int>(std::time(nullptr));
+        random_engine = std::mt19937(size_t(seed));
+        // generator = std::random_device{ } ();
+        unif = std::uniform_int_distribution<int>(0,nthreads-1);
+    };
 
     unsigned operator()(unsigned id,std::vector<std::shared_ptr<bbthread>>& bbs)
     {
@@ -44,14 +51,16 @@ public:
 
         do {
             // randomly select active thread (at most nbIVM attempts...otherwise loop may be infinite)
-            victim = rand() / (RAND_MAX /  nthreads);
+            victim = unif(random_engine);
+            // victim = intRand(0,nthreads-1);
+            // victim = rand() / (RAND_MAX /  nthreads);
             if(++attempts > nthreads)break;
         }while(victim == id || !bbs[victim]->get_work_state());
 
         return victim;
     }
 private:
-    std::default_random_engine generator;
+    std::mt19937 random_engine;
     std::uniform_int_distribution<int> unif;
 };
 
