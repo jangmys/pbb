@@ -1,6 +1,5 @@
 #include "arguments.h"
 #include "pbab.h"
-#include "solution.h"
 #include "ttime.h"
 #include "log.h"
 
@@ -24,12 +23,12 @@ main(int argc, char ** argv)
     FILE* log_fd = fopen(arguments::logfile, "w" );
     Output2FILE::Stream() = log_fd;
 
-    pbab * pbb = new pbab();
+    pbab * pbb = new pbab(        pbb_instance::make_inst(arguments::problem, arguments::inst_name));
 
     //------------------SET INSTANCE----------------------
-    pbb->set_instance(
-        pbb_instance::make_instance(arguments::problem, arguments::inst_name)
-    );
+    // pbb->set_instance(
+    //     pbb_instance::make_instance(arguments::problem, arguments::inst_name)
+    // );
 
     pbb->set_initial_solution();
     std::cout<<"initial solution "<<*(pbb->sltn);

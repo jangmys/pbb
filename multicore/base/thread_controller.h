@@ -8,12 +8,13 @@
 #include <iostream>
 
 #include <victim_selector.h>
-#include "bbthread.h"
+#include <request_queue.h>
 
-class thread_controller{
+
+class ThreadController{
 public:
-    thread_controller(pbab * _pbb,int _nthreads);
-    virtual ~thread_controller();
+    ThreadController(pbab * _pbb,int _nthreads);
+    virtual ~ThreadController();
 
     void set_victim_select(std::unique_ptr<VictimSelector> _select)
     {
@@ -21,17 +22,14 @@ public:
     }
 protected:
     pbab* pbb;
-
     pthread_t *threads;
 
     unsigned int get_num_threads();
     void interruptExploration();
-    std::shared_ptr<bbthread>get_bbthread(int k);
 
-    virtual std::shared_ptr<bbthread> make_bbexplorer() = 0;
     virtual int work_share(unsigned id, unsigned dest) = 0;
 
-    std::vector<std::shared_ptr<bbthread>>bbb;
+    std::vector<RequestQueue> requests;
 
     std::atomic<unsigned int> atom_nb_explorers{0};
     std::atomic<unsigned int> atom_nb_steals{0};
@@ -55,6 +53,8 @@ protected:
     void resetExplorationState();
 
     std::unique_ptr<VictimSelector> victim_select;
+    std::vector<std::atomic<bool>> vec_received_work;
+    std::vector<std::atomic<bool>> vec_has_work;
 private:
     unsigned M;
 

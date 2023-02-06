@@ -2,7 +2,7 @@
  * "global" part of multi-core b&b
  * - work stealing
  * - termination detection (local)
- * - best (in pbb->sltn)
+ * - best (in pbb->best_found)
  */
 #include <sys/sysinfo.h>
 #include <unistd.h>
@@ -10,18 +10,18 @@
 
 #include <memory>
 
-#include "../../common/include/pbab.h"
-#include "../../common/include/solution.h"
-#include "../../common/include/ttime.h"
-#include "../../common/include/macros.h"
-#include "../../common/include/log.h"
+#include <pbab.h>
+#include <ttime.h>
+#include <macros.h>
+#include <log.h>
 
-#include "bbthread.h"
-#include "intervalbb.h"
-#include "matrix_controller.h"
+#include <intervalbb.h>
+#include <matrix_controller.h>
 
-matrix_controller::matrix_controller(pbab* _pbb,int _nthreads) : thread_controller(_pbb,_nthreads){
-    resetExplorationState();
+#include "make_ivm_algo.h"
+
+matrix_controller::matrix_controller(pbab* _pbb,int _nthreads) : ThreadController(_pbb,_nthreads){
+    ivmbb = std::vector< std::shared_ptr<Intervalbb<int>> >(get_num_threads(),nullptr);
 
     state = std::vector<int>(get_num_threads(),0);
 
@@ -33,19 +33,15 @@ matrix_controller::matrix_controller(pbab* _pbb,int _nthreads) : thread_controll
     pthread_mutex_init(&mutex_buffer,NULL);
 
     bound_mode = arguments::boundMode;
-};
 
-std::shared_ptr<bbthread>
-matrix_controller::make_bbexplorer(){
-    //initialize local (sequential) BB ----> different options...!
-    return std::make_shared<ivmthread>(pbb,make_interval_bb(pbb,bound_mode));
-}
+    set_victim_select(make_victim_selector(_nthreads,arguments::mc_ws_select));
+};
 
 //nbint := number received intervals
 void
 matrix_controller::initFromFac(const unsigned int nbint, const int * ids, int * _pos, int * _end)
 {
-    FILE_LOG(logINFO) << "=== init from fac";
+    FILE_LOG(logINFO) << "=== init from factorial ";
 
     updatedIntervals=1;
 
@@ -65,7 +61,6 @@ matrix_controller::initFromFac(const unsigned int nbint, const int * ids, int * 
 
         state[id]=1;
 
-        // bbb[id]->setRoot(pbb->root_sltn->perm, -1, pbb->size);
         for (int i = 0; i < pbb->size; i++) {
             pos[id][i] = _pos[k * pbb->size + i];
             end[id][i] = _end[k * pbb->size + i];
@@ -74,15 +69,43 @@ matrix_controller::initFromFac(const unsigned int nbint, const int * ids, int * 
 }
 
 int
-matrix_controller::work_share(unsigned id, unsigned thief)
+matrix_controller::work_share(unsigned id, unsigned thief_id)
 {
     assert(id != thief);
     assert(id < get_num_threads());
     assert(thief < get_num_threads());
 
-    int ret = std::static_pointer_cast<ivmthread>(bbb[id])->shareWork(std::static_pointer_cast<ivmthread>(bbb[thief]));
+    int numShared = 0;
+    int l         = 0;
 
-    return (int)(ret>0);
+    std::shared_ptr<ivm> thief(ivmbb[thief_id]->get_ivm());
+    std::shared_ptr<ivm> IVM(ivmbb[id]->get_ivm());
+
+    while (IVM->getPosition(l) == IVM->getEnd(l) && l < IVM->getDepth() && l < pbb->size - 4) l++;
+
+    if (IVM->getPosition(l) < IVM->getEnd(l))
+    {
+        numShared++;
+        for (int i = 0; i < l; i++) {
+            thief->setPosition(i, IVM->getPosition(i));
+            thief->setRow(i,IVM->getRowPtr(i));
+            thief->setDirection(i, IVM->getDirection(i));
+        }
+        for (int i = 0; i < pbb->size; i++) thief->setEnd(i, IVM->getEnd(i));
+
+        thief->setRow(l,IVM->getRowPtr(l));
+        thief->setDirection(l, IVM->getDirection(l));
+        thief->setPosition(l,IVM->cuttingPosition(l, 2));
+        IVM->setEnd(l, thief->getPosition(l) - 1);
+
+        // remaining levels : align thief left, victim right
+        for (int i = l + 1; i < pbb->size; i++) thief->setPosition(i, 0);
+        for (int i = l + 1; i < pbb->size; i++) IVM->setEnd(i, pbb->size - i - 1);
+
+        thief->setDepth(l);
+    }
+
+    return (int)(numShared>0);
 }
 
 int
@@ -113,59 +136,39 @@ matrix_controller::explore_multicore()
     // stick_this_thread_to_core(id);
 
     //------check if explorer already exists------
-    if(!bbb[id]){
+    if(!ivmbb[id]){
         //make sequential bb-explorer
-        bbb[id] = make_bbexplorer();
+        ivmbb[id] = make_ivmbb<int>(pbb);
 
         //set level 0 subproblems
-        bbb[id]->setRoot(pbb->root_sltn->perm, -1, pbb->size);
-        FILE_LOG(logDEBUG) << "=== made explorer ("<<id<<")";
-        FILE_LOG(logDEBUG) << *(pbb->root_sltn);
+        ivmbb[id]->setRoot(pbb->best_found.initial_perm.data());
         updatedIntervals = 1;
         state[id]=1;
     }else{
         FILE_LOG(logDEBUG) << "=== explorer ("<<id<<") is ready";
     }
 
+    (void)pthread_barrier_wait(&barrier);
+
     int bestCost=INT_MAX;
 
     //get global best UB
-    pbb->sltn->getBest(bestCost);
+    pbb->best_found.getBest(bestCost);
     //set local UB
-    bbb[id]->setLocalBest(bestCost);
-
+    ivmbb[id]->setBest(bestCost);
 
     if(updatedIntervals){
         pthread_mutex_lock(&mutex_buffer);
         // std::cout<<"ID "<<id<<" init at interval\n";
-        bool _active = std::static_pointer_cast<ivmthread>(bbb[id])->ivmbb->initAtInterval(pos[id], end[id]);
+        bool _active = ivmbb[id]->initAtInterval(pos[id], end[id]);
         pthread_mutex_unlock(&mutex_buffer);
 
-        bbb[id]->set_work_state(_active);
-
-        // if(state[id]==1){
-        //     //has non-empty interval ...
-        //     FILE_LOG(logDEBUG) << "=== state 1 ("<<id<<")";
-        //
-        //     // std::cout<<"INIT AT INTERVAL\n";
-        //
-        //     bool _active = std::static_pointer_cast<ivmthread>(bbb[id])->ivmbb->initAtInterval(pos[id], end[id]);
-        //
-        //     bbb[id]->set_work_state(_active);
-        // }else{
-        //     //has empty interval
-        //     FILE_LOG(logDEBUG) << "=== state 0 ("<<id<<")";
-        //     std::static_pointer_cast<ivmthread>(bbb[id])->ivmbb->clear();
-        //     bbb[id]->set_work_state(false);
-        // }
+        vec_has_work[id].store(_active);
     }
 
-    // bbb[id]->set_work_state(bbb[id]->isEmpty());
-    // bbb[id]->setRoot(pbb->root_sltn->perm, -1, pbb->size);
-
     //reset counters and request queue
-    bbb[id]->reset_request_queue();
-    std::static_pointer_cast<ivmthread>(bbb[id])->ivmbb->reset_node_counter();
+    requests[id].reset_request_queue();
+    ivmbb[id]->reset_node_counter();
 
     //make sure all are initialized
     int ret = pthread_barrier_wait(&barrier);
@@ -177,14 +180,15 @@ matrix_controller::explore_multicore()
 
     while (1) {
         //get global best UB
-        pbb->sltn->getBest(bestCost);
+        pbb->best_found.getBest(bestCost);
         //set local UB
-        bbb[id]->setLocalBest(bestCost);
+        ivmbb[id]->setBest(bestCost);
 
         if (allEnd.load()) {
             break;
-        }else if (!bbb[id]->bbStep()){
+        }else if (!ivmbb[id]->next()){
             request_work(id);
+            vec_has_work[id].store(ivmbb[id]->get_ivm()->beforeEnd());
         }else{
             try_answer_request(id);
         }
@@ -202,7 +206,7 @@ matrix_controller::explore_multicore()
                 // FILE_LOG(logINFO) << "=== BREAK (nb_steals "<<atom_nb_steals<<" )";
                 break;
             }
-            if(pbb->foundNewSolution){
+            if(pbb->best_found.foundNewSolution){
                 // FILE_LOG(logINFO) << "=== BREAK (new sol)";
                 break;
             }
@@ -221,8 +225,8 @@ matrix_controller::explore_multicore()
 
     FILE_LOG(logDEBUG) << "=== Exit exploration loop";
 
-    pbb->stats.totDecomposed += std::static_pointer_cast<ivmthread>(bbb[id])->ivmbb->get_decomposed_count();
-    pbb->stats.leaves += std::static_pointer_cast<ivmthread>(bbb[id])->ivmbb->get_leaves_count();
+    pbb->stats.totDecomposed += ivmbb[id]->get_decomposed_count();
+    pbb->stats.leaves += ivmbb[id]->get_leaves_count();
 
     stop(id);
 }
@@ -264,7 +268,7 @@ matrix_controller::getSubproblem(int *ret, const int N)
     int countActive=0;
     //how many active?
     for (unsigned i = 0; i < get_num_threads(); i++){
-        if( !bbb[i]->isEmpty() ){
+        if( ivmbb[i]->get_ivm()->beforeEnd() ){
             countActive++;
         }
     }
@@ -279,10 +283,10 @@ matrix_controller::getSubproblem(int *ret, const int N)
     {
         if(countTake>=nb)break;
 
-        if(!bbb[i]->isEmpty())
+        if(ivmbb[i]->get_ivm()->beforeEnd())
         {
             memcpy(&ret[countTake*pbb->size],
-                std::static_pointer_cast<ivmthread>(bbb[i])->getNode().schedule.data(),
+                ivmbb[i]->get_ivm()->getNode().schedule.data(),
                 pbb->size*sizeof(int)
             );
             countTake++;

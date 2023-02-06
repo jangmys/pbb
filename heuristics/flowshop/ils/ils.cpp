@@ -4,7 +4,7 @@
 #include "ils.h"
 #include "ls.h"
 
-IG::IG(instance_abstract * inst) :
+IG::IG(instance_abstract& inst) :
     neh(std::make_unique<fastNEH>(inst)),
     nhood(std::make_unique<fspnhood<int>>(inst)),
     ls(std::make_unique<LocalSearch>(inst))

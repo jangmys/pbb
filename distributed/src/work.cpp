@@ -1,7 +1,6 @@
 #include <pthread.h>
 #include "ttime.h"
 #include "pbab.h"
-#include "solution.h"
 #include "log.h"
 
 #include "work.h"

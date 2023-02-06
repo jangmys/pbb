@@ -6,21 +6,27 @@
 #include "pruning.h"
 #include "ivm.h"
 
+#include "mcbb.h"
+
 #include "libbounds.h"
 
 template<typename T>
-class Intervalbb{
+class Intervalbb : public MCbb<T>{
 public:
     Intervalbb(pbab* _pbb);
 
     bool initAtInterval(std::vector<int>& pos, std::vector<int>& end);
-    void setRoot(const int* varOrder, int l1, int l2);
+    void setRoot(const int* varOrder);
 
     void run();
     bool next();
     void clear();
 
+    void setLocalBest(const int best){
+        setBest(best);
+    }
     void setBest(const int);
+
     void eliminateJobs(std::vector<T> lb);
     bool boundLeaf(subproblem& node);
 
@@ -30,33 +36,25 @@ public:
 
     virtual void boundAndKeepSurvivors(subproblem& subproblem);
 
-    long long int get_leaves_count() const
-    {
-        return count_leaves;
-    }
-    long long int get_decomposed_count() const
-    {
-        return count_decomposed;
-    }
-    void reset_node_counter(){
-        count_leaves = 0;
-        count_decomposed = 0;
-    }
-
     std::shared_ptr<ivm> get_ivm(){
         return IVM;
     }
+
+    subproblem&
+    getNode()
+    {
+        return get_ivm()->getNode();
+    }
+
+    void
+    getInterval(int *pos,int *end){
+        get_ivm()->getInterval(pos, end);
+    }
+
 protected:
     pbab* pbb;
     int size;
     std::shared_ptr<ivm> IVM;
-
-    long long int count_leaves;
-    long long int count_decomposed;
-
-    std::unique_ptr<Pruning> prune;
-    std::unique_ptr<Branching> branch;
-    std::unique_ptr<bound_abstract<T>> primary_bound ;
 
     void unfold();
 
@@ -67,10 +65,7 @@ template<typename T>
 class IntervalbbIncr : public Intervalbb<T>{
 public:
     IntervalbbIncr(pbab* _pbb) : Intervalbb<T>(_pbb)
-    {
-        secondary_bound = this->pbb->bound_factory->make_bound(_pbb->instance,arguments::secondary_bound);
-    };
-
+    {};
 
     void boundAndKeepSurvivors(subproblem& _subpb) override
     {
@@ -79,6 +74,7 @@ public:
 
         int dir = this->branch->pre_bound_choice(this->IVM->getDepth());
 
+
         if(dir<0){
             //get bounds for both children sets using incremental evaluator
             this->primary_bound->boundChildren(
@@ -86,6 +82,7 @@ public:
                     lb[Branching::Front].data(),lb[Branching::Back].data(),
                     prio[Branching::Front].data(),prio[Branching::Back].data(),this->prune->local_best
                 );
+
             //choose branching direction
             dir = (*(this->branch))(
                 lb[Branching::Front].data(),
@@ -119,7 +116,6 @@ public:
                 mask[job] = true;
             }
         }
-        // std::cout<<"\n";
 
         if(dir==Branching::Front){
             int costs[2];
@@ -127,7 +123,7 @@ public:
                 int job = _subpb.schedule[i];
                 if(mask[job]){
                     std::swap(_subpb.schedule[_subpb.limit1 + 1], _subpb.schedule[i]);
-                this->secondary_bound->bornes_calculer(_subpb.schedule.data(), _subpb.limit1 + 1, _subpb.limit2, costs, this->prune->local_best);
+                    this->secondary_bound->bornes_calculer(_subpb.schedule.data(), _subpb.limit1 + 1, _subpb.limit2, costs, this->prune->local_best);
                     lb[Branching::Front][job] = costs[0];
                     prio[Branching::Front][job]=costs[1];
                     std::swap(_subpb.schedule[_subpb.limit1 + 1], _subpb.schedule[i]);
@@ -153,8 +149,6 @@ public:
         );
         this->eliminateJobs(lb[dir]);
     }
-
-    std::unique_ptr<bound_abstract<T>> secondary_bound ;
 };
 
 
@@ -237,17 +231,6 @@ public:
         this->eliminateJobs(lb[dir]);
     }
 };
-
-std::unique_ptr<Intervalbb<int>> make_interval_bb(pbab* pbb, unsigned bound_mode);
-
-
-//static members
-// template<typename T>
-// std::vector<T> Intervalbb<T>::rootRow;
-// template<typename T>
-// int Intervalbb<T>::rootDir = 0;
-// template<typename T>
-// int Intervalbb<T>::first = true;
 
 
 #endif

@@ -47,10 +47,17 @@ subproblem::subproblem(const subproblem& s)
 subproblem::subproblem(const subproblem& father, int indice, int begin_end)
 {
     size = father.size;
-    schedule = std::vector<int>(size);
+    schedule = father.schedule;//std::vector<int>(size);
 
-    limites_set(father, begin_end);
-    permutation_set(father, indice, begin_end);
+    limit1 = father.limit1 + 1 - begin_end;
+    limit2 = father.limit2 - begin_end;
+
+    if(begin_end == FWDBR)
+	{
+        remove_insert_left(schedule.data(),limit1,indice);
+	}else{
+        remove_insert_right(schedule.data(),indice,limit2);
+	}
 
     depth=father.depth+1;
     _cost = 0;
@@ -73,74 +80,6 @@ void subproblem::swap(int a, int b)
     int tmp = schedule[a];
     schedule[a] = schedule[b];
     schedule[b] = tmp;
-}
-
-void subproblem::removeInsertLeft(int a, int b)
-{
-    int tmp = schedule[b];
-
-    for(int i=b;i>a;i--)
-    {
-        schedule[i] = schedule[i-1];
-    }
-
-    schedule[a] = tmp;
-}
-
-void subproblem::removeInsertRight(int a, int b)
-{
-    int tmp = schedule[a];
-
-    for(int i=a;i<b;i++)
-    {
-        schedule[i] = schedule[i+1];
-    }
-
-    schedule[b] = tmp;
-}
-
-
-
-
-
-void
-subproblem::limites_set(const subproblem& father, int begin_end)
-{
-    int a = (begin_end == FWDBR)?0:1;
-    limit1 = father.limit1 + 1 - a;
-    limit2 = father.limit2 - a;
-}
-
-void
-subproblem::permutation_set(const subproblem& father, int indice, int begin_end)
-{
-    // job = father.schedule[indice];
-    for (int j = 0; j < size; j++)
-        schedule[j] = father.schedule[j];
-
-    //swap
-    // int tmp_indice = (begin_end == FWDBR) ? father.limit1 + 1 : father.limit2 - 1;
-	// int tmp        = schedule[tmp_indice];
-    // schedule[tmp_indice] = schedule[indice];
-    // schedule[indice]     = tmp;
-
-	//insert
-	if(begin_end == FWDBR)
-	{
-		int tmp = schedule[indice];
-		for(int j = indice; j > father.limit1+1; j--)
-		{
-			schedule[j]=schedule[j-1];
-		}
-		schedule[father.limit1+1]=tmp;
-	}else{
-		int tmp = schedule[indice];
-		for(int j = indice; j < father.limit2-1; j++)
-		{
-			schedule[j]=schedule[j+1];
-		}
-		schedule[father.limit2-1]=tmp;
-	}
 }
 
 bool

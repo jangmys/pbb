@@ -12,6 +12,8 @@ add_subdirectory(${PARENT_DIR}/common/src ./build_common_heulib)
 
 target_include_directories(fspHeuristic PUBLIC ${PARENT_DIR}/common/include)
 target_include_directories(fspHeuristic PUBLIC ${PARENT_DIR}/multicore/operators)
+target_include_directories(fspHeuristic PUBLIC ${PARENT_DIR}/multicore/base)
+target_include_directories(fspHeuristic PUBLIC ${PARENT_DIR}/multicore/do)
 target_include_directories(fspHeuristic PUBLIC ${PARENT_DIR}/evaluation)
 
 target_include_directories(fspHeuristic PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/)

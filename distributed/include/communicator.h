@@ -6,7 +6,6 @@
 #include <memory>
 
 #include "work.h"
-#include "solution.h"
 
 class communicator{
 public:
@@ -21,8 +20,8 @@ public:
     void send_work(std::shared_ptr<work> src_wrk, int dest, int tag);
     void recv_work(std::shared_ptr<work> dst_wrk, int src, int tag, MPI_Status* status);
 
-    void send_sol(solution* sol, int dest, int tag);
-    void recv_sol(solution* sol, int dest, int tag, MPI_Status* status);
+    void send_sol(const int* const arr, int cost, int dest, int tag);
+    void recv_sol(int* arr, int& cost, int dest, int tag, MPI_Status* status);
 };
 
 #endif

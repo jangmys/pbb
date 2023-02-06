@@ -2,19 +2,20 @@
 
 #include "omp.h"
 #include "beam.h"
-#include "operator_factory.h"
+#include "set_operators.h"
 
-Beam::Beam(pbab* _pbb, instance_abstract* inst) :
+Beam::Beam(pbab* _pbb, instance_abstract& inst) :
     pbb(_pbb),
-    tr(std::make_unique<Tree>(inst,inst->size)),
-    prune(pbb->pruning_factory->make_pruning()),
-    branch(OperatorFactory::createBranching(arguments::branchingMode,inst->size,99999)),
+    tr(std::make_unique<Tree>(inst,inst.size)),
     eval(std::make_unique<bound_fsp_weak_idle>())
 {
+    prune = make_prune_ptr<int>(_pbb);
+    branch = make_branch_ptr<int>(_pbb);
+
     tr->strategy = DEQUE;
     eval->init(inst);
 
-    bestSolution = std::make_unique<subproblem>(inst->size);
+    bestSolution = std::make_unique<subproblem>(inst.size);
 }
 
 int

@@ -1,5 +1,5 @@
 #include "../include/pbab.h"
-#include "../include/solution.h"
+#include "../include/incumbent.h"
 #include "../include/macros.h"
 
 #include "../include/log.h"
@@ -7,20 +7,22 @@
 #include <pthread.h>
 #include <atomic>
 
-
-solution::solution(int _size)
+template<typename T>
+Incumbent<T>::Incumbent(int _size)
 {
     size = _size;
 
-    perm = (int *)calloc(size,sizeof(int));
+    perm = std::vector<int>(size,0);
+    initial_perm = std::vector<int>(size,0);
+
     for(int i=0;i<size;i++)
     {
         perm[i]=i;
+        initial_perm[i]=i;
     }
 
     cost   = ATOMIC_VAR_INIT(INT_MAX);
-    // std::atomic<int>{INT_MAX};
-    // newBest    = false;
+    initial_cost   = ATOMIC_VAR_INIT(INT_MAX);
 
     pthread_mutexattr_t attr;
     pthread_mutexattr_init(&attr);
@@ -31,8 +33,8 @@ solution::solution(int _size)
 
 }
 
-int
-solution::update(const int * candidate, const int _cost)
+template<typename T>
+int Incumbent<T>::update(const int * candidate, const int _cost)
 {
     int ret = 0;
     // pthread_mutex_lock(&mutex_sol);
@@ -49,8 +51,8 @@ solution::update(const int * candidate, const int _cost)
     return ret;
 }
 
-int
-solution::updateCost(const int _cost)
+template<typename T>
+int Incumbent<T>::updateCost(const int _cost)
 {
     int ret = 0;
     pthread_mutex_lock_check(&mutex_sol);
@@ -62,8 +64,8 @@ solution::updateCost(const int _cost)
     return ret;
 }
 
-void
-solution::getBestSolution(int *_perm, int &_cost)
+template<typename T>
+void Incumbent<T>::getBestSolution(int *_perm, int &_cost)
 {
     pthread_mutex_lock_check(&mutex_sol);
     _cost = cost.load();
@@ -91,8 +93,8 @@ void update_minimum(std::atomic<T>& minimum_value, T const& value) noexcept
         {}
 }
 
-int
-solution::getBest()
+template<typename T>
+int Incumbent<T>::getBest()
 {
     int ret;
 
@@ -102,8 +104,8 @@ solution::getBest()
     return ret;
 }
 
-void
-solution::getBest(int& _cost)
+template<typename T>
+void Incumbent<T>::getBest(int& _cost)
 {
     // pthread_rwlock_rdlock(&lock_sol);
     if (cost.load() < _cost) {
@@ -113,22 +115,22 @@ solution::getBest(int& _cost)
     return;
 }
 
-pthread_mutex_t print_mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t print_incumbent_mutex = PTHREAD_MUTEX_INITIALIZER;
 
-void
-solution::print()
+template<typename T>
+void Incumbent<T>::print()
 {
-    pthread_mutex_lock_check(&print_mutex);
+    pthread_mutex_lock_check(&print_incumbent_mutex);
     std::cout<<cost.load()<<",[";
     for (int i = 0; i < size; i++) {
         std::cout<<perm[i]<<" ";
     }
     std::cout<<"]"<<std::endl;
-    pthread_mutex_unlock(&print_mutex);
+    pthread_mutex_unlock(&print_incumbent_mutex);
 }
 
-void
-solution::save()
+template<typename T>
+void Incumbent<T>::save()
 {
     pthread_mutex_lock_check(&mutex_sol);
     FILE_LOG(logINFO) << "SAVE SOLUTION " << this->cost.load() << " to " << ("./output/sol" + std::string(arguments::inst_name) + ".save");
@@ -139,8 +141,8 @@ solution::save()
     pthread_mutex_unlock(&mutex_sol);
 }
 
-solution&
-solution::operator=(solution& s)
+template<typename T>
+Incumbent<T>& Incumbent<T>::operator=(Incumbent<T>& s)
 {
     size = s.size;
 
@@ -156,31 +158,4 @@ solution::operator=(solution& s)
     return *this;
 }
 
-// write solution to stream
-std::ostream&
-operator << (std::ostream& stream, const solution& s)
-{
-    stream << s.size << std::endl;
-    stream << s.cost << std::endl;
-    for (int i = 0; i < s.size; i++) {
-        stream << s.perm[i] << " ";
-    }
-    stream << std::endl;
-
-    return stream;
-}
-
-// read solution from stream
-std::istream&
-operator >> (std::istream& stream, solution& s)
-{
-    stream >> s.size;
-
-    int tmp;
-    stream >> tmp;
-    s.cost.store(tmp);
-    for (int i = 0; i < s.size; i++) {
-        stream >> s.perm[i];
-    }
-    return stream;
-}
+template class Incumbent<int>;

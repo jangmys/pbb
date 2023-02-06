@@ -15,25 +15,32 @@
 class arguments
 {
 public:
-    //heuristic
-    static int heuristic_threads;
-    static int heuristic_iters;
-    static int initial_heuristic_iters;
-    static char heuristic_type;
+    // B&B components
+    static int branchingMode;    // --branch
+    static int boundMode;// --bound
 
-    static char worker_type;
-
-    // --branch
-    static int branchingMode;
-    // --bound
-    static int boundMode;
-    //
-    static int primary_bound;
+    static int primary_bound; // simple / johnson
     static int secondary_bound;
 
-    // static char type;       //'g'PU or 'c'PU
+    // incumbent
+    static int init_mode;
+    static int initial_ub;
+
+
+    // distributed
+    static char worker_type; //cpu or gpu (distributed mode)
     static bool singleNode; //no MPI = 1 ; distributed = 0
 
+    //heuristic
+    static char heuristic_type;
+    static int heuristic_threads; //number of heuristic threads
+    static int heuristic_iters;
+    static int initial_heuristic_iters;
+
+    //data struct
+    static char ds;
+
+    //time
     static int checkpointv;
     static int balancingv;
 
@@ -41,9 +48,6 @@ public:
     static int timeout;
 
 
-    //UB initialization
-    static int init_mode;
-    static int initial_ub;
 
     static int initial_work;
     static int sortNodes;
@@ -60,7 +64,7 @@ public:
     static char logfile[50];
     static int logLevel;
 
-    //FSP - johnson bound
+    // problem specific (FSP) =================
     static bool earlyStopJohnson;
     static int johnsonPairs;
 
@@ -70,12 +74,6 @@ public:
 
     //verbosity
     static bool printSolutions;
-
-    //truncate...
-    static bool truncateSearch;
-    static int truncateDepth;
-    static int cut_bottom;
-    static int cut_top;
 
     //work stealing
     static char mc_ws_select;

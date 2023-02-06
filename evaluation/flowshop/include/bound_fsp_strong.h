@@ -37,7 +37,7 @@ public:
     std::vector<int> rewards;
 
     void
-    init(instance_abstract * _instance);
+    init(instance_abstract& _instance);
     void
     configureBound(const int, const int, const int);
 

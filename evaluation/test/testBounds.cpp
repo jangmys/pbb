@@ -42,11 +42,11 @@ int main(int argc,char **argv){
 
             //set bound1
             bound_fsp_weak* bd=new bound_fsp_weak();
-            bd->init(inst);
+            bd->init(*inst);
             bound=bd;
 
             bound_fsp_weak lowerbound;
-            lowerbound.init(inst);
+            lowerbound.init(*inst);
 
             Foo<int> foo{};
             foo.bd[0] = &lowerbound;
@@ -54,13 +54,13 @@ int main(int argc,char **argv){
 
             //set bound2
             bound_fsp_strong* bd2=new bound_fsp_strong();
-            bd2->init(inst);
+            bd2->init(*inst);
             bd2->earlyExit = atoi(argv[3]);
             bd2->machinePairs = atoi(argv[4]);
             bound2=bd2;
 
             bound_fsp_weak_idle* bd3=new bound_fsp_weak_idle();
-            bd3->init(inst);
+            bd3->init(*inst);
             bound3=bd3;
 
             break;

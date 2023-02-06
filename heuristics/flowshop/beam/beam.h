@@ -21,7 +21,7 @@ struct prio_compare {
 
 class Beam{
 public:
-    Beam(pbab* _pbb,instance_abstract* inst);
+    Beam(pbab* _pbb,instance_abstract& inst);
 
     pbab* pbb;
 

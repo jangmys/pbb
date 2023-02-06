@@ -6,7 +6,7 @@
 
 class LocalSearch{
 public:
-    LocalSearch(instance_abstract* inst);
+    LocalSearch(instance_abstract& inst);
 
     int operator()(std::vector<int>& perm, int l1, int l2);
 

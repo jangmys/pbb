@@ -26,22 +26,22 @@ the permutation flowshop. 2020. ffhal-02937115f
 // INITIALIZATIONS
 // ==============================================================
 void
-bound_fsp_weak_idle::init(instance_abstract * _instance)
+bound_fsp_weak_idle::init(instance_abstract& _instance)
 {
-    pthread_mutex_lock(&_instance->mutex_instance_data);
+    pthread_mutex_lock(&_instance.mutex_instance_data);
     // get instance parameters (N/M)
-    (_instance->data)->seekg(0);
-    (_instance->data)->clear();
-    *(_instance->data) >> nbJob;
-    *(_instance->data) >> nbMachines;
+    (_instance.data)->seekg(0);
+    (_instance.data)->clear();
+    *(_instance.data) >> nbJob;
+    *(_instance.data) >> nbMachines;
 
     // read matrix of processing times from instance-data (stringstream)
     PTM = std::vector<std::vector<int> >(nbMachines, std::vector<int>(nbJob));
 
     for (int j = 0; j < nbMachines; j++)
         for (int i = 0; i < nbJob; i++)
-            *(_instance->data) >> PTM[j][i];
-    pthread_mutex_unlock(&_instance->mutex_instance_data);
+            *(_instance.data) >> PTM[j][i];
+    pthread_mutex_unlock(&_instance.mutex_instance_data);
 
     // fill auxiliary data for LB computation
     fillMinHeadsTails();

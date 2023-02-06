@@ -22,18 +22,18 @@ fastInsertRemove::fastInsertRemove(const std::vector<std::vector<int>> p_times,c
     tabupos=std::make_unique<forbidden_list>(nbJob);
 };
 
-fastInsertRemove::fastInsertRemove(instance_abstract * _instance)
+fastInsertRemove::fastInsertRemove(instance_abstract& _instance)
 {
-    (_instance->data)->seekg(0);
-    (_instance->data)->clear();
-    *(_instance->data) >> nbJob;
-    *(_instance->data) >> nbMachines;
+    (_instance.data)->seekg(0);
+    (_instance.data)->clear();
+    *(_instance.data) >> nbJob;
+    *(_instance.data) >> nbMachines;
 
     PTM = std::vector<std::vector<int> >(nbMachines, std::vector<int>(nbJob));
 
     for (int j = 0; j < nbMachines; j++)
         for (int i = 0; i < nbJob; i++)
-            *(_instance->data) >> PTM[j][i];
+            *(_instance.data) >> PTM[j][i];
 
     //transpose might make sense in terms of memory access, but nbJob > nbMachines ...
     //no clear performance difference observed

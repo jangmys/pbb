@@ -1,5 +1,4 @@
 #include "macros.h"
-#include "solution.h"
 #include "pbab.h"
 #include "ttime.h"
 
@@ -118,25 +117,25 @@ void communicator::recv_work(std::shared_ptr<work> dst_wrk, int src, int tag, MP
     free(rbuffer);
 }
 //===============================================
-void communicator::send_sol(solution* sol, int dest, int tag)
+void communicator::send_sol(const int* const arr, int cost, int dest, int tag)
 {
-    int *buf = new int[sol->size+1];
+    int *buf = new int[size+1];
 
-    buf[0]=sol->cost;
-    memcpy(&buf[1], sol->perm, sol->size*sizeof(int));
+    buf[0]=cost;
+    memcpy(&buf[1], arr, size*sizeof(int));
 
-    MPI_Send(buf, sol->size+1, MPI_INT, dest, tag, MPI_COMM_WORLD);
+    MPI_Send(buf, size+1, MPI_INT, dest, tag, MPI_COMM_WORLD);
 
     delete[]buf;
 }
 //===============================================
-void communicator::recv_sol(solution* sol, int src, int tag, MPI_Status* status){
-    int *buf = new int[sol->size+1];
+void communicator::recv_sol(int* arr, int& cost, int src, int tag, MPI_Status* status){
+    int *buf = new int[size+1];
 
-    MPI_Recv(buf, sol->size+1, MPI_INT, src, tag, MPI_COMM_WORLD, status);
+    MPI_Recv(buf, size+1, MPI_INT, src, tag, MPI_COMM_WORLD, status);
 
-    sol->cost=buf[0];
-    memcpy(sol->perm, &buf[1], sol->size*sizeof(int));
+    cost=buf[0];
+    memcpy(arr, &buf[1], size*sizeof(int));
 
     delete[]buf;
 }

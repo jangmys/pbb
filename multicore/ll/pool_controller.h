@@ -1,28 +1,28 @@
 #ifndef POOL_CONTROLLER_H_
 #define POOL_CONTROLLER_H_
 
+#include <assert.h>
 #include <string.h>
 #include <thread_controller.h>
 
-#include "pool_thread.h"
 #include "poolbb.h"
 
-class bbthread;
 
-class PoolController : public thread_controller{
+class PoolController : public ThreadController{
 public:
     PoolController(pbab* pbb,int _nthreads);
 
     void explore_multicore();
 
-    std::shared_ptr<bbthread> make_bbexplorer();
 
-    int work_share(unsigned id, unsigned dest){
-        return 0;
-    };
+    int work_share(unsigned id, unsigned thief);
+
+    void set_root(const int id, subproblem& node);
 
     bool next();
 
+private:
+    std::vector<std::shared_ptr<Poolbb>>llbb;
 };
 
 

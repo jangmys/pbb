@@ -26,7 +26,7 @@ public:
     std::vector<int> min_tails;
 
     void
-    init(instance_abstract * _instance);
+    init(instance_abstract& _instance);
     void
     fillMinHeadsTails();
 

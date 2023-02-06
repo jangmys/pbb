@@ -20,7 +20,7 @@ public:
     };
 
     void
-    init(instance_abstract * _instance);
+    init(instance_abstract& _instance);
 
     void
     boundChildren(int * permut, int limit1, int limit2, int * costsBegin, int * costsEnd, int * prioBegin, int * prioEnd, int best);

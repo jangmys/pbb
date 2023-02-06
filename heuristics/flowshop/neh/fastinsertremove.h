@@ -46,7 +46,7 @@ struct forbidden_list
 class fastInsertRemove{
 public:
     fastInsertRemove(const std::vector<std::vector<int>> p_times,const int N, const int M);
-    fastInsertRemove(instance_abstract* inst);
+    fastInsertRemove(instance_abstract& inst);
 
     int nbJob;
     int nbMachines;

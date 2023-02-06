@@ -3,16 +3,19 @@
 
 #include "subproblem.h"
 #include <memory>
+#include <limits.h>
 
 class subproblem;
 
 class Pruning{
 public:
     //minimization is default
-    Pruning() : local_best(INT_MAX)
+    Pruning(int _ub = INT_MAX) : local_best(_ub)
     {};
 
-    virtual bool operator()(const int lb) = 0;
+    virtual bool operator()(const int lb){
+        return lb >= local_best;
+    };
 
     //returns true if subproblem can be eliminatedfor further exploration
     bool operator()(const subproblem * pr)
@@ -28,9 +31,9 @@ public:
 class keepSmaller : public Pruning
 {
 public:
-    keepSmaller() : Pruning(){};
+    keepSmaller(int _ub = INT_MAX) : Pruning(_ub){};
 
-    bool operator()(const int lb)
+    bool operator()(const int lb) override
     {
         return lb >= local_best;
     }
@@ -41,13 +44,15 @@ public:
 class keepEqualOrSmaller : public Pruning
 {
 public:
-    keepEqualOrSmaller() : Pruning(){};
+    keepEqualOrSmaller(int _ub = INT_MAX) : Pruning(_ub){};
 
     bool operator()(const int cost)
     {
         return cost > local_best;
     }
 };
+
+// Pruning make_prune();
 
 
 #endif

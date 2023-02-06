@@ -8,62 +8,34 @@
 #include "libbounds.h"
 #include "libheuristic.h"
 
-// #include "solution.h"
 #include "pbab.h"
-// #include "ttime.h"
 #include "log.h"
 
 
-pbab::pbab() : stats()
+pbab::pbab() : inst(instance_dummy("8")),size(inst.size),best_found(size),stats()
 {
-    //set instance and problem size
-    // set_instance(arguments::problem, arguments::inst_name);
-    //
-    // size     = instance->size;
-
     this->ttm = new ttime();
-
-    // sltn = new solution(size);
-    // root_sltn = new solution(size);
-    //
-    // best_solution = std::make_unique<subproblem>(size);
 }
 
-// void pbab::set_instance(char problem[],char inst_name[])
-// {
-//     InstanceFactory inst_factory;
-//
-//     set_instance(inst_factory.make_instance(problem, inst_name));
-// }
-
-void
-pbab::set_instance(std::unique_ptr<instance_abstract> _inst){
-    instance = std::move(_inst);
-
-    size     = instance->size;
-
-    sltn = new solution(size);
-    root_sltn = new solution(size);
-
-    // best_solution = std::make_unique<subproblem>(size);
+pbab::pbab(instance_abstract _inst) : inst(_inst),size(inst.size),best_found(size),stats()
+{
+    this->ttm = new ttime();
 }
-
 
 void pbab::set_initial_solution(const int* perm, const int cost)
 {
     for(int i=0; i<size; i++){
-        sltn->perm[i] = perm[i];
+        best_found.initial_perm[i] = perm[i];
+        best_found.perm[i] = perm[i];
     }
-    sltn->cost = cost;
-    initialUB = cost;
-
-    *(root_sltn) = *(sltn);
+    best_found.initial_cost.store(cost);
+    best_found.cost.store(cost);
 }
 
 void pbab::set_initial_solution()
 {
     //by default initial upper bound is INFTY
-    sltn->cost = INT_MAX;
+    best_found.cost.store(INT_MAX);
 
     switch (arguments::problem[0]) {
         case 'f':
@@ -84,12 +56,16 @@ void pbab::set_initial_solution()
                     switch (arguments::inst_name[0]) {
                         case 't':
                         {
-                            cost = (static_cast<instance_taillard*>(instance.get()))->read_initial_ub_from_file(arguments::inst_name);
+                            cost = static_cast<instance_taillard&>(inst).read_initial_ub_from_file(arguments::inst_name);
+
+                            // cost = dynamic_cast<instance_taillard&>(inst).read_initial_ub_from_file(arguments::inst_name);
+                            // cost = (static_cast<instance_taillard*>(instance.get()))->read_initial_ub_from_file(arguments::inst_name);
                             break;
                         }
                         case 'V':
                         {
-                            cost = (static_cast<instance_vrf*>(instance.get()))->get_initial_ub_from_file(arguments::inst_name);
+                            cost = static_cast<instance_vrf&>(inst).get_initial_ub_from_file(arguments::inst_name);
+                            // cost = (static_cast<instance_vrf*>(instance.get()))->get_initial_ub_from_file(arguments::inst_name);
                             break;
                         }
                     }
@@ -101,9 +77,11 @@ void pbab::set_initial_solution()
                 {
                     std::cout<<"\t#Get initial upper bound : NEH\n";
 
-                    fastNEH neh(instance.get());
+                    fastNEH neh(inst);
+                    // fastNEH neh(instance.get());
 
-                    std::shared_ptr<subproblem> p = std::make_shared<subproblem>(instance->size);
+                    std::shared_ptr<subproblem> p = std::make_shared<subproblem>(size);
+                    // std::shared_ptr<subproblem> p = std::make_shared<subproblem>(size);
 
                     int fitness;
 
@@ -112,20 +90,16 @@ void pbab::set_initial_solution()
 
                     p->set_fitness(fitness);
 
-                    // for(int i=0; i<instance->size; i++){
-                    //     sltn->perm[i] = p->schedule[i];
-                    // }
-                    // sltn->cost = p->fitness();
-
                     set_initial_solution(p->schedule.data(),p->fitness());
 
                     break;
                 }
                 case 2:
                 {
-                    Beam bs(this,instance.get());
+                    Beam bs(this,inst);
+                    // Beam bs(this,instance.get());
 
-                    std::shared_ptr<subproblem> p = std::make_shared<subproblem>(instance->size);
+                    std::shared_ptr<subproblem> p = std::make_shared<subproblem>(size);
 
                     bs.run_loop(1<<14,p.get());
 
@@ -140,14 +114,13 @@ void pbab::set_initial_solution()
                 }
                 default:
                 {
-                    sltn->cost = INT_MAX;
+                    best_found.cost.store(INT_MAX);
                 }
             }
             break;
         }
         case 'd':
         {
-            set_initial_solution(sltn->perm,INT_MAX);
             break;
         }
     }
@@ -167,15 +140,15 @@ pbab::printStats()
         stats.print();
     }
 
-    if(foundAtLeastOneSolution)
+    if(best_found.foundAtLeastOneSolution)
     {
         std::cout<<"Found optimal solution:\n"<<std::endl;
-        std::cout<<"Min Cmax:\t"<<sltn->cost<<std::endl;
-        std::cout<<"Argmin Cmax:\t"; sltn->print();
+        std::cout<<"Min Cmax:\t"<<best_found.cost<<std::endl;
+        std::cout<<"Argmin Cmax:\t"; best_found.print();
     }else{
         std::cout<<"Not improved..."<<std::endl;
-        std::cout<<"Cmax\t"<<sltn->cost<<std::endl;
-        std::cout<<"Optimal makespan is >= "<<sltn->cost<<" (initial solution) "<<std::endl;
+        std::cout<<"Cmax\t"<<best_found.cost<<std::endl;
+        std::cout<<"Optimal makespan is >= "<<best_found.cost<<" (initial solution) "<<std::endl;
     }
 
 }

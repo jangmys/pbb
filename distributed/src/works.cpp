@@ -17,7 +17,7 @@
 #include "ttime.h"
 #include "pbab.h"
 #include "arguments.h"
-#include "solution.h"
+#include "incumbent.h"
 
 #include "log.h"
 
@@ -59,15 +59,15 @@ works::init_infile(pbab * _pbb)
     stream.seekg(0);
 
     if (stream) {
-        stream >> *(pbb->root_sltn);
+        stream >> pbb->best_found;
 
-        std::cout<<"Root: "<<*(pbb->root_sltn)<<"\n";
+        std::cout<<"Root: "<<pbb->best_found<<"\n";
 
         uint64_t nbdecomposed;
         stream >> nbdecomposed;
         pbb->stats.simpleBounds = nbdecomposed;
 
-        stream >> *(pbb->sltn);
+        stream >> pbb->best_found;
         stream >> *this;
         stream.close();
     }else{
@@ -158,9 +158,9 @@ void works::save()
     FILE_LOG(logINFO) << "SAVED TO DISK";
 
     if(stream){
-        stream << *(pbb->root_sltn);
+        stream << pbb->best_found;
         stream << pbb->stats.simpleBounds << " ";
-        stream << *(pbb->sltn);
+        stream << pbb->best_found;
         stream << *this;
         stream.close();
     }

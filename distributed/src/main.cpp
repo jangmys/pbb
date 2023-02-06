@@ -3,7 +3,6 @@
 #include "arguments.h"
 #include "pbab.h"
 #include "ttime.h"
-#include "solution.h"
 
 #include <sys/sysinfo.h>
 
@@ -67,12 +66,12 @@ main(int argc, char ** argv)
     }
 
 //---------------------Configure B&B---------------------
-    pbab* pbb = new pbab();
+    pbab* pbb = new pbab(        pbb_instance::make_inst(arguments::problem, arguments::inst_name));
 
     //SET INSTANCE
-    pbb->set_instance(
-        pbb_instance::make_instance(arguments::problem, arguments::inst_name)
-    );
+    // pbb->set_instance(
+    //     pbb_instance::make_instance(arguments::problem, arguments::inst_name)
+    // );
     if(myrank==0){
         std::cout<<"\t#Problem:\t\t"<<arguments::problem<<" / Instance"<<arguments::inst_name<<"\n";
         std::cout<<"\t#ProblemSize:\t\t"<<pbb->size<<std::endl;
@@ -86,51 +85,51 @@ main(int argc, char ** argv)
 
         pbb->set_initial_solution();
 
-        pbb->sltn->save();
-        FILE_LOG(logINFO) << "Initial solution:\t" <<*(pbb->sltn);
+        pbb->best_found.save();
+        FILE_LOG(logINFO) << "Initial solution:\t" <<pbb->best_found;
 
         clock_gettime(CLOCK_MONOTONIC,&t2);
         FILE_LOG(logINFO) <<"Time(InitialSolution):\t"<<(t2.tv_sec-t1.tv_sec)+(t2.tv_nsec-t1.tv_nsec)/1e9;
 
         MPI_Barrier(MPI_COMM_WORLD);
-        MPI_Bcast(pbb->root_sltn->perm, pbb->size, MPI_INT, 0, MPI_COMM_WORLD);
-        MPI_Bcast(&pbb->root_sltn->cost, 1, MPI_INT, 0, MPI_COMM_WORLD);
+        MPI_Bcast(pbb->best_found.initial_perm.data(), pbb->size, MPI_INT, 0, MPI_COMM_WORLD);
+        MPI_Bcast(&pbb->best_found.initial_cost, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
-        MPI_Bcast(pbb->sltn->perm, pbb->size, MPI_INT, 0, MPI_COMM_WORLD);
-        MPI_Bcast(&pbb->sltn->cost, 1, MPI_INT, 0, MPI_COMM_WORLD);
+        MPI_Bcast(pbb->best_found.perm.data(), pbb->size, MPI_INT, 0, MPI_COMM_WORLD);
+        MPI_Bcast(&pbb->best_found.cost, 1, MPI_INT, 0, MPI_COMM_WORLD);
     }else{
         MPI_Barrier(MPI_COMM_WORLD);
 
-        MPI_Bcast(pbb->root_sltn->perm, pbb->size, MPI_INT, 0, MPI_COMM_WORLD);
-        MPI_Bcast(&pbb->root_sltn->cost, 1, MPI_INT, 0, MPI_COMM_WORLD);
+        MPI_Bcast(pbb->best_found.initial_perm.data(), pbb->size, MPI_INT, 0, MPI_COMM_WORLD);
+        MPI_Bcast(&pbb->best_found.initial_cost, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
-        MPI_Bcast(pbb->sltn->perm, pbb->size, MPI_INT, 0, MPI_COMM_WORLD);
-        MPI_Bcast(&pbb->sltn->cost, 1, MPI_INT, 0, MPI_COMM_WORLD);
+        MPI_Bcast(pbb->best_found.perm.data(), pbb->size, MPI_INT, 0, MPI_COMM_WORLD);
+        MPI_Bcast(&pbb->best_found.cost, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
-        pbb->initialUB = pbb->sltn->cost;
+        // pbb->best_found.initial_cost = pbb->sltn->cost;
     }
 
     //LOWER BOUND
-    if(arguments::problem[0]=='f'){
-        pbb->set_bound_factory(std::make_unique<BoundFactory>(arguments::earlyStopJohnson,arguments::johnsonPairs));
-    }else if(arguments::problem[0]=='d'){
-        pbb->set_bound_factory(std::make_unique<DummyBoundFactory>());
-    }
-
-    //PRUNING
-    if(arguments::findAll){
-        pbb->choose_pruning(pbab::prune_greater);
-    }else{
-        pbb->choose_pruning(pbab::prune_greater_equal);
-    }
-
-    //BRANCHING
-    std::cout<<"Rank "<<myrank<<" Branching:\t"<<arguments::branchingMode<<" "<<pbb->initialUB<<std::endl;
-    pbb->set_branching_factory(std::make_unique<PFSPBranchingFactory>(
-        arguments::branchingMode,
-        pbb->size,
-        pbb->initialUB
-    ));
+    // if(arguments::problem[0]=='f'){
+    //     pbb->set_bound_factory(std::make_unique<BoundFactory>(arguments::earlyStopJohnson,arguments::johnsonPairs));
+    // }else if(arguments::problem[0]=='d'){
+    //     pbb->set_bound_factory(std::make_unique<DummyBoundFactory>());
+    // }
+    //
+    // //PRUNING
+    // if(arguments::findAll){
+    //     pbb->choose_pruning(pbab::prune_greater);
+    // }else{
+    //     pbb->choose_pruning(pbab::prune_greater_equal);
+    // }
+    //
+    // //BRANCHING
+    // std::cout<<"Rank "<<myrank<<" Branching:\t"<<arguments::branchingMode<<" "<<pbb->best_found.initial_cost<<std::endl;
+    // pbb->set_branching_factory(std::make_unique<PFSPBranchingFactory>(
+    //     arguments::branchingMode,
+    //     pbb->size,
+    //     pbb->best_found.initial_cost
+    // ));
 
     enum bb_mode{
         STANDARD,
@@ -209,14 +208,14 @@ main(int argc, char ** argv)
                     mstr->initWorks(3);
                     mstr->reset();
 
-                    pbb->sltn->cost++;
+                    pbb->best_found.cost++;
                     MPI_Barrier(MPI_COMM_WORLD);
-                    MPI_Bcast(pbb->sltn->perm, pbb->size, MPI_INT, 0, MPI_COMM_WORLD);
-                    MPI_Bcast(&pbb->sltn->cost, 1, MPI_INT, 0, MPI_COMM_WORLD);
+                    MPI_Bcast(pbb->best_found.perm.data(), pbb->size, MPI_INT, 0, MPI_COMM_WORLD);
+                    MPI_Bcast(&pbb->best_found.cost, 1, MPI_INT, 0, MPI_COMM_WORLD);
                     mstr->run();
 
                     MPI_Barrier(MPI_COMM_WORLD);
-                    continueBB=!pbb->foundAtLeastOneSolution;
+                    continueBB=!pbb->best_found.foundAtLeastOneSolution;
                     MPI_Bcast(&continueBB, 1, MPI_INT, 0, MPI_COMM_WORLD);
                 }
 
@@ -237,8 +236,8 @@ main(int argc, char ** argv)
                 while(continueBB){
                     wrkr->reset();
                     MPI_Barrier(MPI_COMM_WORLD);
-                    MPI_Bcast(pbb->sltn->perm, pbb->size, MPI_INT, 0, MPI_COMM_WORLD);
-                    MPI_Bcast(&pbb->sltn->cost, 1, MPI_INT, 0, MPI_COMM_WORLD);
+                    MPI_Bcast(pbb->best_found.perm.data(), pbb->size, MPI_INT, 0, MPI_COMM_WORLD);
+                    MPI_Bcast(&pbb->best_found.cost, 1, MPI_INT, 0, MPI_COMM_WORLD);
                     wrkr->run();
 
                     MPI_Barrier(MPI_COMM_WORLD);

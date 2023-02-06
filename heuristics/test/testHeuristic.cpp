@@ -26,7 +26,7 @@ int main(int argc, char* argv[])
     arguments::parse_arguments(argc, argv);
     std::cout<<" === solving "<<arguments::problem<<" - instance "<<arguments::inst_name<<std::endl;
 
-    std::shared_ptr<instance_abstract>instance = pbb_instance::make_instance(arguments::problem, arguments::inst_name);
+    instance_abstract instance = pbb_instance::make_inst(arguments::problem, arguments::inst_name);
 
     std::cout<<" === solving "<<arguments::problem<<" - instance "<<atoi(arguments::inst_name+2)<<std::endl;
 
@@ -53,17 +53,12 @@ int main(int argc, char* argv[])
     // int cost;
     // std::vector<int>perm(instance->size);
     // std::generate(perm.begin(), perm.end(), [n = 0] () mutable { return n++; });
-    std::shared_ptr<subproblem> p = std::make_shared<subproblem>(instance->size);
+    std::shared_ptr<subproblem> p = std::make_shared<subproblem>(instance.size);
 
     std::cout<<argv[3]<<std::endl;
 
     pbab * pbb = new pbab();
 
-    if(arguments::findAll){
-        pbb->choose_pruning(pbab::prune_greater);
-    }else{
-        pbb->choose_pruning(pbab::prune_greater_equal);
-    }
 
     struct timespec t1,t2;
     clock_gettime(CLOCK_MONOTONIC,&t1);
@@ -88,7 +83,7 @@ int main(int argc, char* argv[])
         }
         case 1:
         {
-            IG ils(instance.get());
+            IG ils(instance);
 
             p->set_fitness(ils.runIG(p.get()));
 
@@ -97,7 +92,7 @@ int main(int argc, char* argv[])
         }
         case 2:
         {
-            LocalSearch ls(instance.get());
+            LocalSearch ls(instance);
 
             p->set_fitness(ls(p->schedule,-1,p->size));
 
@@ -108,11 +103,11 @@ int main(int argc, char* argv[])
         {
             // pbab* pbb = new pbab();
 
-            Beam bs(pbb,instance.get());
+            Beam bs(pbb,instance);
 
             // // subproblem *q = new subproblem(instance->size);
-            // bs.run(1<<14,p.get());
-            // *p = *(bs.bestSolution);
+            bs.run(1<<14,p.get());
+            *p = *(bs.bestSolution);
             //
             // std::cout<<" = BEAM :\t";
             break;
@@ -120,7 +115,7 @@ int main(int argc, char* argv[])
         case 4:
         {
             // pbab* pbb = new pbab();
-            Beam bs(pbb,instance.get());
+            Beam bs(pbb,instance);
 
             // subproblem *q = new subproblem(instance->size);
             bs.run_loop(1<<14,p.get());
@@ -132,7 +127,7 @@ int main(int argc, char* argv[])
         case 5:
         {
             // pbab* pbb = new pbab();
-            Treeheuristic th(pbb,instance.get());
+            Treeheuristic th(pbb,instance);
 
             th.run(p,0);
 
@@ -151,5 +146,5 @@ int main(int argc, char* argv[])
     {
         std::cout<<e<<" ";
     }
-    std::cout<<" === "<<p->fitness()<<std::endl;
+    std::cout<<" === CMAX: "<<p->fitness()<<std::endl;
 }

@@ -31,7 +31,7 @@ public:
     float acceptanceParameter;
     float avgPT;
 
-    IG(instance_abstract * inst);
+    IG(instance_abstract& inst);
 
     int makespan(subproblem* s);
     void runIG();

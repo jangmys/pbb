@@ -29,6 +29,9 @@ int arguments::nodePriority = 1;
 //Pruning options
 bool arguments::findAll        = false;
 
+//Data struct
+char arguments::ds = 'i';
+
 //initial upper bound and solutions
 int arguments::init_mode = 1;
 int arguments::initial_ub;
@@ -52,12 +55,6 @@ char arguments::heuristic_type         = 'n';
 //timeout
 bool arguments::mc_timeout = false;
 int arguments::timeout  = 99999;
-
-//truncation
-int arguments::truncateDepth   = 0;
-bool arguments::truncateSearch = false;
-int arguments::cut_top         = 99999;
-int arguments::cut_bottom      = -1;
 
 //verbosity / logging
 bool arguments::printSolutions = false;
@@ -131,10 +128,6 @@ arguments::readIniFile()
     mc_ws_select = *(reader.Get("multicore", "worksteal", "a").c_str());
     // type         = reader.Get("bb", "type", "c")[0];
 
-    truncateDepth  = reader.GetInteger("truncate", "truncDepth", 0);
-    truncateSearch = reader.GetBoolean("truncate", "truncSearch", false);
-    cut_bottom     = reader.GetInteger("truncate", "cutoff_bottom", -1);
-    cut_top        = reader.GetInteger("truncate", "cutoff_top", INT_MAX);
 
     heuristic_threads       = reader.GetInteger("heuristic", "heuristic_threads", 1);
     initial_heuristic_iters = reader.GetInteger("heuristic", "initial_heuristic_iters", 100);
@@ -177,6 +170,7 @@ arguments::parse_arguments(int argc, char ** argv)
                 {"singlenode",  no_argument, NULL,  0 },
                 {"primary-bound",  required_argument, NULL,  0 },
                 {"gpu", no_argument, NULL, 0},
+                {"ll", no_argument, NULL, 0},
                 {0,         0,                 0,  0 }
             };
 
@@ -189,6 +183,10 @@ arguments::parse_arguments(int argc, char ** argv)
                 if(strcmp(long_options[option_index].name,"gpu") == 0)
                 {
                     worker_type='g';
+                }
+                if(strcmp(long_options[option_index].name,"ll") == 0)
+                {
+                    ds='p';
                 }
                 if(strcmp(long_options[option_index].name,"bound") == 0)
                 {

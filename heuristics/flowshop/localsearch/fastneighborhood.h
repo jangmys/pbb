@@ -10,7 +10,7 @@
 template<typename T>
 class fspnhood{
 public:
-    explicit fspnhood(instance_abstract* inst) :
+    explicit fspnhood(instance_abstract& inst) :
         m(std::make_unique<fastInsertRemove>(inst)),
         N(m->nbJob)
     {    };

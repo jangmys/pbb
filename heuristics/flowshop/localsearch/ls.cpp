@@ -1,6 +1,6 @@
 #include "ls.h"
 
-LocalSearch::LocalSearch(instance_abstract* _inst)
+LocalSearch::LocalSearch(instance_abstract& _inst)
 {
     nhood = std::make_unique<fspnhood<int>>(_inst);
 }

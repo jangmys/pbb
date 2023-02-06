@@ -8,7 +8,7 @@
 
 class fastNEH{
 public:
-    explicit fastNEH(instance_abstract*_inst) :
+    explicit fastNEH(instance_abstract&_inst) :
         m(std::make_unique<fastInsertRemove>(_inst)),
         nbJob(m->nbJob)
     {};
