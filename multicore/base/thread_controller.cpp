@@ -67,9 +67,7 @@ ThreadController::explorer_get_new_id()
 void
 ThreadController::push_request(unsigned victim, unsigned id)
 {
-    pthread_mutex_lock_check(&requests[victim].mutex_workRequested);
     requests[victim].enqueue_request(id);
-    pthread_mutex_unlock(&requests[victim].mutex_workRequested);
 }
 
 unsigned
