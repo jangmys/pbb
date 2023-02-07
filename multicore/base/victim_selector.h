@@ -1,3 +1,10 @@
+/*
+victim selection strategies
+
+- ring (round-robin)
+- random
+- honest
+*/
 #ifndef VICTIM_SELECTOR_H
 #define VICTIM_SELECTOR_H
 
@@ -7,9 +14,7 @@
 #include <list>
 #include <iostream>
 
-// namespace victim_selector
-// {
-// }
+
 class VictimSelector
 {
 public:
