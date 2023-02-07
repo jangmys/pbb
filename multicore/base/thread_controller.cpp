@@ -75,12 +75,7 @@ ThreadController::push_request(unsigned victim, unsigned id)
 unsigned
 ThreadController::pull_request(unsigned id)
 {
-    unsigned thief;
-
-    pthread_mutex_lock_check(&requests[id].mutex_workRequested);
-    assert(requests[id].num_requests()<M);
-    thief = requests[id].pop_front();
-    pthread_mutex_unlock(&requests[id].mutex_workRequested);
+    unsigned thief = requests[id].pop_front();
 
     return thief;
 }
@@ -129,7 +124,7 @@ ThreadController::request_work(unsigned id)
         vec_received_work[id].store(false);
         pthread_mutex_unlock(&requests[id].mutex_shared);
 
-        push_request(victim, id);
+        push_request(victim,id);
 
         pthread_mutex_lock_check(&requests[id].mutex_shared);
         while (!vec_received_work[id].load() && !allEnd.load()) {
@@ -148,6 +143,7 @@ ThreadController::try_answer_request(unsigned id)
 {
     bool ret = false;
     //check if request queue empty ... called very often! some performance gain is possible by maintaining a separate boolean variable, but complicates code
+    // if(!requests[id].has_request())return false;
     if(!requests[id].has_request())return false;
 
     unsigned thief = pull_request(id);

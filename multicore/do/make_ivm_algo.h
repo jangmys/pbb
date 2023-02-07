@@ -1,3 +1,6 @@
+/*
+named constructor for IVM-based BB 
+*/
 #ifndef MAKE_IVM_BB_H
 #define MAKE_IVM_BB_H
 

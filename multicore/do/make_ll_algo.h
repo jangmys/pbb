@@ -1,3 +1,6 @@
+/*
+named constructor for IVM-based BB
+*/
 #ifndef MAKE_POOL_BB_H
 #define MAKE_POOL_BB_H
 
