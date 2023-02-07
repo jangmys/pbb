@@ -1,3 +1,5 @@
+/*base class for BB
+*/
 #ifndef MCBB_H_
 #define MCBB_H_
 

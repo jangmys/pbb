@@ -1,3 +1,6 @@
+/*
+Interval (IVM)-based BB
+*/
 #ifndef INTERVALBB_H_
 #define INTERVALBB_H_
 

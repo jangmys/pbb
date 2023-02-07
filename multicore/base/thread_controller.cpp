@@ -5,16 +5,9 @@
 #include "pbab.h"
 #include "thread_controller.h"
 
-ThreadController::ThreadController(pbab * _pbb, int _nthreads) : pbb(_pbb),M(_nthreads) //, size(pbb->size)
+ThreadController::ThreadController(pbab * _pbb, int _nthreads) : pbb(_pbb),M(_nthreads)
 {
-    requests = std::vector<RequestQueue>(M);
-
-    vec_received_work = std::vector<std::atomic<bool>>(M);
-    for (auto& b : vec_received_work) { std::atomic_init(&b, false); }
-
-    vec_has_work = std::vector<std::atomic<bool>>(M);
-    for (auto& b : vec_has_work) { std::atomic_init(&b, false); }
-
+    thd_data = std::vector< std::shared_ptr<RequestQueue> >(get_num_threads(),nullptr);
     threads = (pthread_t*)malloc(M*sizeof(threads));
 
     //barrier for syncing all explorer threads
@@ -67,13 +60,13 @@ ThreadController::explorer_get_new_id()
 void
 ThreadController::push_request(unsigned victim, unsigned id)
 {
-    requests[victim].enqueue_request(id);
+    thd_data[victim]->enqueue_request(id);
 }
 
 unsigned
 ThreadController::pull_request(unsigned id)
 {
-    unsigned thief = requests[id].pop_front();
+    unsigned thief = thd_data[id]->pop_front();
 
     return thief;
 }
@@ -85,10 +78,10 @@ ThreadController::unlock_waiting_thread(unsigned id)
 
     //Note: For dependable use of condition variables, and to ensure that you do not lose wake-up operations on condition variables, your application should always use a Boolean predicate and a mutex with the condition variable.
     //https://www.ibm.com/support/knowledgecenter/en/ssw_ibm_i_74/apis/users_76.htm
-    pthread_mutex_lock_check(&requests[id].mutex_shared);
-    vec_received_work[id].store(true);
-    pthread_cond_signal(&requests[id].cond_shared);
-    pthread_mutex_unlock(&requests[id].mutex_shared);
+    pthread_mutex_lock_check(&thd_data[id]->mutex_shared);
+    thd_data[id]->received_work.store(true);
+    pthread_cond_signal(&thd_data[id]->cond_shared);
+    pthread_mutex_unlock(&thd_data[id]->mutex_shared);
 
     FILE_LOG(logDEBUG) << "=== Unlocked ("<<id<<")";
 }
@@ -96,11 +89,11 @@ ThreadController::unlock_waiting_thread(unsigned id)
 void
 ThreadController::request_work(unsigned id)
 {
-    vec_has_work[id].store(false);
+    thd_data[id]->has_work.store(false);
     if (counter_increment(id)) return;
 
     // if any pending requests, release waiting threads
-    while (requests[id].has_request()) {
+    while (thd_data[id]->has_request()) {
         unsigned thief = pull_request(id);
         assert(thief != id);
 
@@ -112,24 +105,25 @@ ThreadController::request_work(unsigned id)
 
     unsigned victim = 0;
 
-    while(!vec_has_work[victim].load() && !allEnd.load())
+    while(!thd_data[victim]->has_work.load() && !allEnd.load()){
         victim = (*victim_select)(id);
+    }
 
     FILE_LOG(logDEBUG4) << id << " select " << victim << "\tcounter: "<<end_counter.load() << std::flush;
 
-    if (victim != id && vec_has_work[victim].load()) {
-        pthread_mutex_lock_check(&requests[id].mutex_shared);
-        vec_received_work[id].store(false);
-        pthread_mutex_unlock(&requests[id].mutex_shared);
+    if (victim != id && thd_data[victim]->has_work.load()) {
+        pthread_mutex_lock_check(&thd_data[id]->mutex_shared);
+        thd_data[id]->received_work.store(false);
+        pthread_mutex_unlock(&thd_data[id]->mutex_shared);
 
         push_request(victim,id);
 
-        pthread_mutex_lock_check(&requests[id].mutex_shared);
-        while (!vec_received_work[id].load() && !allEnd.load()) {
-            pthread_cond_wait(&requests[id].cond_shared, &requests[id].mutex_shared);
+        pthread_mutex_lock_check(&thd_data[id]->mutex_shared);
+        while (!thd_data[id]->received_work.load() && !allEnd.load()) {
+            pthread_cond_wait(&thd_data[id]->cond_shared, &thd_data[id]->mutex_shared);
         }
-        vec_received_work[id].store(false);
-        pthread_mutex_unlock(&requests[id].mutex_shared);
+        thd_data[id]->received_work.store(false);
+        pthread_mutex_unlock(&thd_data[id]->mutex_shared);
     } else {
         // cancel...
         counter_decrement();
@@ -141,12 +135,11 @@ ThreadController::try_answer_request(unsigned id)
 {
     bool ret = false;
     //check if request queue empty ... called very often! some performance gain is possible by maintaining a separate boolean variable, but complicates code
-    // if(!requests[id].has_request())return false;
-    if(!requests[id].has_request())return false;
+    if(!thd_data[id]->has_request())return false;
 
     unsigned thief = pull_request(id);
 
-    assert(!vec_has_work[thief].load());
+    assert(!thd_data[thief]->has_work.load());
 
     atom_nb_steals += work_share(id, thief);
 

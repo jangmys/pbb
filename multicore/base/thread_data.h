@@ -1,8 +1,9 @@
 /*
-request queue for multi-core BB
+shared thread-local data
 
-shared deque for handling inter-thread work requests.
+- shared deque for handling inter-thread work requests.
 using posix mutex to protect insert/retrieve operations
+- mutex/condition variable to sync sharing threads
 
 used in thread_controller.h
 */
@@ -11,6 +12,7 @@ used in thread_controller.h
 
 #include <pthread.h>
 #include <deque>
+#include <atomic>
 
 #include "macros.h"
 
@@ -39,6 +41,9 @@ public:
 
     pthread_mutex_t mutex_shared;
     pthread_cond_t cond_shared;
+
+    std::atomic<bool> received_work{false};
+    std::atomic<bool> has_work{false};
 
     void reset_request_queue(){
         queue.clear();

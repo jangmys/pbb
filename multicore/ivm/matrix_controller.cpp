@@ -140,6 +140,8 @@ matrix_controller::explore_multicore()
         //make sequential bb-explorer
         ivmbb[id] = make_ivmbb<int>(pbb);
 
+        thd_data[id] = std::make_shared<RequestQueue>();
+
         //set level 0 subproblems
         ivmbb[id]->setRoot(pbb->best_found.initial_perm.data());
         updatedIntervals = 1;
@@ -163,11 +165,12 @@ matrix_controller::explore_multicore()
         bool _active = ivmbb[id]->initAtInterval(pos[id], end[id]);
         pthread_mutex_unlock(&mutex_buffer);
 
-        vec_has_work[id].store(_active);
+        thd_data[id]->has_work.store(_active);
     }
 
     //reset counters and request queue
-    requests[id].reset_request_queue();
+    thd_data[id]->reset_request_queue();
+
     ivmbb[id]->reset_node_counter();
 
     //make sure all are initialized
@@ -188,7 +191,7 @@ matrix_controller::explore_multicore()
             break;
         }else if (!ivmbb[id]->next()){
             request_work(id);
-            vec_has_work[id].store(ivmbb[id]->get_ivm()->beforeEnd());
+            thd_data[id]->has_work.store(ivmbb[id]->get_ivm()->beforeEnd());
         }else{
             try_answer_request(id);
         }

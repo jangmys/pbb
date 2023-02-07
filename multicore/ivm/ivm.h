@@ -1,3 +1,6 @@
+/*
+Integer-Vector-MAtrix Data Structure
+*/
 #ifndef IVM_H
 #define IVM_H
 

@@ -1,3 +1,6 @@
+/*
+base class for multi-core exploration, independent from data structure used for exploration (see ivm/matrix_controller, ll/pool_controller)
+*/
 #ifndef THREAD_CONTROLLER_H
 #define THREAD_CONTROLLER_H
 
@@ -8,7 +11,7 @@
 #include <iostream>
 
 #include <victim_selector.h>
-#include <request_queue.h>
+#include <thread_data.h>
 
 
 class ThreadController{
@@ -29,7 +32,7 @@ protected:
 
     virtual int work_share(unsigned id, unsigned dest) = 0;
 
-    std::vector<RequestQueue> requests;
+    std::vector<std::shared_ptr<RequestQueue>>thd_data;
 
     std::atomic<unsigned int> atom_nb_explorers{0};
     std::atomic<unsigned int> atom_nb_steals{0};
@@ -53,8 +56,6 @@ protected:
     void resetExplorationState();
 
     std::unique_ptr<VictimSelector> victim_select;
-    std::vector<std::atomic<bool>> vec_received_work;
-    std::vector<std::atomic<bool>> vec_has_work;
 private:
     unsigned M;
 

@@ -50,13 +50,15 @@ PoolController::explore_multicore()
     // make explorer (if not already done)
     if(!llbb[id]){
         llbb[id] = make_poolbb(pbb);
+        thd_data[id] = std::make_shared<RequestQueue>();
     }
 
     if( id == 0){
         subproblem tmp(pbb->size,pbb->best_found.initial_perm);
 
         set_root(0,tmp);
-        vec_has_work[id].store(true);
+        thd_data[id]->has_work.store(true);
+        // vec_has_work[id].store(true);
     }
 
     int ret = pthread_barrier_wait(&barrier);
@@ -77,7 +79,8 @@ PoolController::explore_multicore()
         }
         else if (!llbb[id]->next()){
             request_work(id);
-            vec_has_work[id].store(!llbb[id]->isEmpty());
+            thd_data[id]->has_work.store(!llbb[id]->isEmpty());
+            // vec_has_work[id].store(!llbb[id]->isEmpty());
         }else{
             try_answer_request(id);
         }
