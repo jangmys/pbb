@@ -190,7 +190,7 @@ ivm::beforeEnd() const
         if (posVect[i] < endVect[i]) return true;
         if (posVect[i] > endVect[i]) return false;
     }
-    return true;
+    return false;//true;
 }
 
 int
@@ -206,7 +206,7 @@ ivm::vectorCompare(const int* a,const int* b)
 
 
 
-void ivm::selectNext()
+bool ivm::selectNext()
 {
     while (beforeEnd()) {
         if (lineEndState()) {
@@ -218,12 +218,13 @@ void ivm::selectNext()
             continue;
         } else { //if (!IVM->pruningCellState()) {
             goDown();// branch
-            break;
+            return true;
         }
     }
+    return false;
 }
 
-void ivm::selectNextIt()
+bool ivm::selectNextIt()
 {
     auto v = posVect.begin()+line;
     auto m = jobMat.begin()+line*size+(*v);
@@ -254,9 +255,10 @@ void ivm::selectNextIt()
             }
             line++;
             *(++v) = 0;
-            break;
+            return true;
         }
     }
+    return false;
 }
 
 //reads IVM and sets current subproblem

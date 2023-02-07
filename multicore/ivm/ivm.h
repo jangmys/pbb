@@ -82,8 +82,8 @@ public:
     int countExplorableSubtrees(const int line);
     int cuttingPosition(const int line, const int division);
 
-    void selectNext();
-    void selectNextIt();
+    bool selectNext();
+    bool selectNextIt();
 
     void decodeIVM();
 

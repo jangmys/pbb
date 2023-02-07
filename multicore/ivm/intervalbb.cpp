@@ -168,19 +168,20 @@ void Intervalbb<T>::boundAndKeepSurvivors(subproblem& _subpb)
 template<typename T>
 bool Intervalbb<T>::next()
 {
-    // IVM->selectNext();
-    IVM->selectNextIt(); //modify IVM : set to next subproblem
-    IVM->decodeIVM(); // decode IVM -> subproblem
+    if(IVM->selectNextIt()){ //modify IVM : set to next subproblem
+        IVM->decodeIVM(); // decode IVM -> subproblem
 
-    if (IVM->isLastLine()) {
-        this->count_leaves++;
-        boundLeaf(IVM->getNode());
+        if (IVM->isLastLine()) {
+            this->count_leaves++;
+            boundLeaf(IVM->getNode());
+        }else{
+            this->count_decomposed++;
+            boundAndKeepSurvivors(IVM->getNode());
+        }
+        return true;
     }else{
-        this->count_decomposed++;
-        boundAndKeepSurvivors(IVM->getNode());
+        return false;
     }
-
-    return IVM->beforeEnd();
 }
 
 template<typename T>
