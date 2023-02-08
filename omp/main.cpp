@@ -164,6 +164,7 @@ main(int argc, char ** argv)
                 continue;
             }else{
                 if(local_stop){
+                    local_stop = 0;
                     #pragma omp atomic write
                     stop_flags[tid]=0;
                     #pragma omp flush
