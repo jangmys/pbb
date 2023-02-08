@@ -11,7 +11,6 @@
 
 #include "macros.h"
 #include "pbab.h"
-#include "solution.h"
 #include "ttime.h"
 #include "log.h"
 
@@ -36,13 +35,14 @@ worker_mc::doWork()
     FILE_LOG(logDEBUG1) << " === worker_mc::doWork (rank " << comm->rank<<")";
 
     pbb->ttm->on(pbb->ttm->workerExploretime);
-    pbb->foundNewSolution.store(false,std::memory_order_relaxed);
+    pbb->best_found.foundNewSolution.store(false);
     mc->next();
     pbb->ttm->off(pbb->ttm->workerExploretime);
 
     FILE_LOG(logDEBUG1) << " === worker_mc::doWork return from next (rank " << comm->rank<<")";
 
-    setNewBest(pbb->foundNewSolution.load());
+    //redundant?
+    setNewBest(pbb->best_found.foundNewSolution.load());
 
     return true; //triggerComm;// comm condition met
 }
@@ -116,9 +116,9 @@ worker_mc::getIntervals()
     // std::cout<<"GET INTERVAL===============\n";
     int nbActive = 0;
     for (unsigned int k = 0; k < mc->get_num_threads(); k++) {
-        if (!mc->get_bbthread(k)->isEmpty()) {
+        if (mc->get_ivmbb(k)->get_ivm()->beforeEnd()) {
             work_buf->ids[nbActive] = k;
-            std::static_pointer_cast<ivmthread>(mc->get_bbthread(k))->getInterval(&work_buf->pos[nbActive * size],&work_buf->end[nbActive * size]);
+            mc->get_ivmbb(k)->get_ivm()->getInterval(&work_buf->pos[nbActive * size],&work_buf->end[nbActive * size]);
             nbActive++;
         }
     }
@@ -150,9 +150,9 @@ worker_mc::get_intervals()
     // std::cout<<"GET INTERVAL===============\n";
     int nbActive = 0;
     for (unsigned int k = 0; k < mc->get_num_threads(); k++) {
-        if (!mc->get_bbthread(k)->isEmpty()) {
+        if (mc->get_ivmbb(k)->get_ivm()->beforeEnd()) {
             tmp.ids[nbActive] = k;
-            std::static_pointer_cast<ivmthread>(mc->get_bbthread(k))->getInterval(&tmp.pos[nbActive * size],&tmp.end[nbActive * size]);
+            mc->get_ivmbb(k)->get_ivm()->getInterval(&work_buf->pos[nbActive * size],&work_buf->end[nbActive * size]);
             nbActive++;
         }
     }

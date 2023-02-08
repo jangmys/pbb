@@ -31,23 +31,19 @@ public:
     std::stack<std::unique_ptr<subproblem>> pile;
     // std::priority_queue<std::shared_ptr<subproblem>, std::vector<std::shared_ptr<subproblem>>, ub_compare> pque;
 
-    void
-    set_root(const int* root, int l1, int l2);
+    void insert(const int* root, int l1, int l2, unsigned int psize);
+    void insert(std::unique_ptr<subproblem> p);
 
-    void push(std::unique_ptr<subproblem> p);
     std::unique_ptr<subproblem> top();
-    std::unique_ptr<subproblem> take();
+    std::unique_ptr<subproblem> back();
+    std::unique_ptr<subproblem> take_top(); //top + pop
+    std::unique_ptr<subproblem> take_back(); //back + pop_back
+
     void pop();
     bool empty();
+    void pop_back();
 
     int size();
-
-
-    // void push_back(std::shared_ptr<subproblem> p);
-    // // std::shared_ptr<subproblem> take();
-    // void clearPool();
-    //
-    // void insert(std::vector<std::shared_ptr<subproblem>>& ns);
 };
 
 

@@ -12,33 +12,25 @@ void fastNEH::initialSort(std::vector<int>& perm){
     util::sort_by_key<int>(perm,m->sumPT);
 }
 
+//run NEH without sorting initial job-list
 void fastNEH::runNEH(std::vector<int>& perm, int &cost){
     m->reset();
 
-    int c1=m->computeHeads(perm, 2);
-    std::swap(perm[0],perm[1]);
-    int c2=m->computeHeads(perm, 2);
-    if(c1<c2)std::swap(perm[0],perm[1]);
+    //==================================================
+    std::vector<int> p1(1,perm[0]);
 
-    std::vector<int> permOut(nbJob);
-    for(int k=0;k<nbJob-2;k++){
-        permOut[k]=perm[2+k];
+    std::vector<int> joblist;
+    std::copy(perm.begin()+1, perm.end(), std::back_inserter(joblist));
+
+    for(auto& j : joblist){
+        m->bestInsert(p1, j, cost);
     }
-    perm.erase(perm.begin()+2,perm.end());
+    //==================================================
 
-    int len=2;
-    for(int k=0;k<nbJob-2;k++){
-		m->bestInsert(perm, len, permOut[k], cost);
-
-        // std::cout<<std::setw(2)<<"k="<<k+2<<"\t";
-        // for(auto &e : perm)
-        // {
-        //     std::cout<<std::setw(2)<<e<<" ";
-        // }
-        // std::cout<<"\n";
-    }
+    std::copy(p1.begin(),p1.end(),perm.begin());
 }
 
+//fill [0...N-1] permutation, sort and run NEH
 void fastNEH::run(std::vector<int>& perm, int &cost)
 {
     m->reset();
@@ -48,20 +40,17 @@ void fastNEH::run(std::vector<int>& perm, int &cost)
 
     util::sort_by_key<int>(perm,m->sumPT);
 
-    std::cout<<"sorted :";
-    for(auto &e : perm)
-    {
-        std::cout<<e<<" ";
-    }
-    std::cout<<"\n";
-
     runNEH(perm,cost);
+}
 
-    std::cout<<"NEH out :";
-    for(auto &e : perm)
-    {
-        std::cout<<e<<" ";
-    }
-    std::cout<<"\n";
+subproblem fastNEH::operator()()
+{
+    subproblem perm(nbJob);
 
+    int makespan;
+
+    run(perm.schedule,makespan);
+    perm.set_fitness(makespan);
+
+    return perm;
 }

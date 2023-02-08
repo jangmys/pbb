@@ -19,25 +19,25 @@
 // INITIALIZATIONS
 // ==============================================================
 void
-bound_fsp_weak::init(instance_abstract * _instance)
+bound_fsp_weak::init(instance_abstract& _instance)
 {
-    pthread_mutex_lock(&_instance->mutex_instance_data);
+    pthread_mutex_lock(&_instance.mutex_instance_data);
     // get instance parameters (N/M)
     int n,m;
-    (_instance->data)->seekg(0);
-    (_instance->data)->clear();
-    *(_instance->data) >> n;
-    *(_instance->data) >> m;
+    (_instance.data)->seekg(0);
+    (_instance.data)->clear();
+    *(_instance.data) >> n;
+    *(_instance.data) >> m;
 
     data = new_bound_data(n,m);
 
     // read matrix of processing times from instance-data (stringstream)
     for (int j = 0; j < m; j++){
         for (int i = 0; i < n; i++){
-            *(_instance->data) >> data->p_times[j*n + i];
+            *(_instance.data) >> data->p_times[j*n + i];
         }
     }
-    pthread_mutex_unlock(&_instance->mutex_instance_data);
+    pthread_mutex_unlock(&_instance.mutex_instance_data);
 
     // fill auxiliary data for LB computation
     fill_min_heads_tails(data);

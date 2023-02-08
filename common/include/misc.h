@@ -19,6 +19,9 @@ void gnomeSortByKeyInc(int * arr, const int * key, const int from, const int to)
 
 void gnomeSortByKeysInc(int * arr, const int * key1, const int * key2, const int from, const int to);
 
+void remove_insert_left(int *arr, const int a, const int b);
+void remove_insert_right(int *arr, const int a, const int b);
+
 #ifdef __cplusplus
 }
 #endif

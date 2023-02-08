@@ -67,7 +67,7 @@ private:
     int psize;
 
 public:
-    Tree(instance_abstract* inst, int _size);
+    Tree(instance_abstract& inst, int _size);
 
     int strategy;
 

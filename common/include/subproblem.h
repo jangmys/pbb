@@ -10,6 +10,8 @@ class subproblem {
 
 public:
     subproblem(int _size);
+    subproblem(const int _size,const std::vector<int> _arr) : size(_size),limit1(-1),limit2(size),schedule(_arr){};
+
     subproblem(const subproblem& s);
     subproblem(const subproblem& father, int indice, int begin_end);
 
@@ -25,11 +27,7 @@ public:
     std::vector<int> schedule;
     std::vector<bool> mask;
 
-    // int cost;
-    // int ub;
-
     float prio;
-
     int depth;
 
     int
@@ -46,15 +44,6 @@ public:
     shuffle();
 
     void swap(int a, int b);
-    void removeInsertLeft(int a, int b);
-    void removeInsertRight(int a, int b);
-
-    void
-    permutation_set(const subproblem& father, int indice, int begin_end);
-    void
-    limites_set(const subproblem& father, int begin_end);
-    void
-    copy(subproblem * p);
 
     int fitness() const
     {

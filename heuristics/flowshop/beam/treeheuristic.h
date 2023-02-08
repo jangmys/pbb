@@ -16,7 +16,7 @@ class Beam;
 
 class Treeheuristic{
 public:
-    Treeheuristic(pbab* pbb, instance_abstract* inst);
+    Treeheuristic(pbab* pbb, instance_abstract& inst);
 
     pbab *pbb;
 

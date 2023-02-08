@@ -4,29 +4,13 @@
 
 #include "log.h"
 #include "pbab.h"
-#include "solution.h"
 #include "intervalbb.h"
-#include "operator_factory.h"
 
-std::unique_ptr<Intervalbb<int>> make_interval_bb(pbab* pbb, unsigned bound_mode)
-{
-    if(bound_mode == 0){
-        return std::make_unique<Intervalbb<int>>(pbb);
-    }else if(bound_mode == 1){
-        return std::make_unique<IntervalbbEasy<int>>(pbb);
-    }else{
-        return std::make_unique<IntervalbbIncr<int>>(pbb);
-    }
-}
+
 
 template<typename T>
-Intervalbb<T>::Intervalbb(pbab *_pbb) : first(true), pbb(_pbb), size(_pbb->size),IVM(std::make_shared<ivm>(size)),count_leaves(0),count_decomposed(0)
+Intervalbb<T>::Intervalbb(pbab *_pbb) : MCbb<T>(_pbb),first(true), pbb(_pbb), size(_pbb->size),IVM(std::make_shared<ivm>(size)) //,count_leaves(0),count_decomposed(0)
 {
-    //why not pass operators to the ctor?
-    prune = pbb->pruning_factory->make_pruning();
-    branch = pbb->branching_factory->make_branching();
-    primary_bound = pbb->bound_factory->make_bound(pbb->instance,arguments::primary_bound);
-
     rootRow = std::vector<T>(size,0);
 }
 
@@ -39,7 +23,7 @@ Intervalbb<T>::clear()
 
 template<typename T>
 void
-Intervalbb<T>::setRoot(const int *varOrder,int l1,int l2)
+Intervalbb<T>::setRoot(const int *varOrder)
 {
     // IVM->clearInterval();
     IVM->setDepth(0);
@@ -54,7 +38,7 @@ Intervalbb<T>::setRoot(const int *varOrder,int l1,int l2)
         IVM->decodeIVM();
 
         //compute children bounds (of IVM->node), choose Branching and modify IVM accordingly
-        pbb->sltn->getBest(prune->local_best);
+        pbb->best_found.getBest(this->prune->local_best);
         boundAndKeepSurvivors(IVM->getNode());
 
         //save first line of matrix (bounded root decomposition)
@@ -106,7 +90,7 @@ Intervalbb<T>::initAtInterval(std::vector<int> &pos, std::vector<int> &end)
 template<typename T>
 void Intervalbb<T>::setBest(const int bestCost)
 {
-    prune->local_best = bestCost;
+    this->prune->local_best = bestCost;
 }
 
 template<typename T>
@@ -114,8 +98,8 @@ void Intervalbb<T>::run()
 {
     while(next());
 
-    pbb->stats.totDecomposed += count_decomposed;
-    pbb->stats.leaves += count_leaves;
+    pbb->stats.totDecomposed += this->count_decomposed;
+    pbb->stats.leaves += this->count_leaves;
 }
 
 //using boundChildren
@@ -123,52 +107,59 @@ void Intervalbb<T>::run()
 template<typename T>
 void Intervalbb<T>::boundAndKeepSurvivors(subproblem& _subpb)
 {
-    std::vector<std::vector<T>> lb(2,std::vector<T>(size,0));
-    std::vector<std::vector<T>> prio(2,std::vector<T>(size,0));
+    std::vector<T> costFwd(size,0);
+    std::vector<T> costBwd(size,0);
+
+    std::vector<T> prioFwd(size,0);
+    std::vector<T> prioBwd(size,0);
 
     //a priori choice of branching direction
-    auto dir = branch->pre_bound_choice(IVM->getDepth());
-    IVM->setDirection(dir);
+    auto dir = this->branch->pre_bound_choice(IVM->getDepth());
 
     if(dir<0){    //if undecided
         // get lower bounds : both directions
-        primary_bound->boundChildren(
+        this->primary_bound->boundChildren(
                 _subpb.schedule.data(),_subpb.limit1,_subpb.limit2,
-                lb[Branching::Front].data(),lb[Branching::Back].data(),
-                prio[Branching::Front].data(),prio[Branching::Back].data(),this->prune->local_best
+                costFwd.data(),costBwd.data(),
+                prioFwd.data(),prioBwd.data(),this->prune->local_best
             );
 
         //choose branching direction
-        dir = (*branch)(
-            lb[Branching::Front].data(),
-            lb[Branching::Back].data(),
+        dir = (*this->branch)(
+            costFwd.data(),
+            costBwd.data(),
             IVM->getDepth()
         );
     }else if(dir == Branching::Front){
         // get lower bounds : forward only
-        primary_bound->boundChildren(
+        this->primary_bound->boundChildren(
                 _subpb.schedule.data(),_subpb.limit1,_subpb.limit2,
-                lb[Branching::Front].data(),nullptr,
-                prio[Branching::Front].data(),nullptr,this->prune->local_best
+                costFwd.data(),nullptr,
+                prioFwd.data(),nullptr,this->prune->local_best
             );
     }else{
         // get lower bounds : backward only
-        primary_bound->boundChildren(
+        this->primary_bound->boundChildren(
                 _subpb.schedule.data(),_subpb.limit1,_subpb.limit2,
-                nullptr,lb[Branching::Back].data(),
-                nullptr,prio[Branching::Back].data(),this->prune->local_best
+                nullptr,costBwd.data(),
+                nullptr,prioBwd.data(),this->prune->local_best
             );
     }
 
     IVM->setDirection(dir);
 
     //all
-    dir = IVM->getDirection();
-    IVM->sortSiblingNodes(
-        lb[dir],
-        prio[dir]
-    );
-    eliminateJobs(lb[dir]);
+    // dir = IVM->getDirection();
+    // IVM->sortSiblingNodes(
+    //     lb[dir],
+    //     prio[dir]
+    // );
+
+    if(dir==Branching::Front)
+        eliminateJobs(costFwd);
+    else
+        eliminateJobs(costBwd);
+
 }
 
 
@@ -176,41 +167,20 @@ void Intervalbb<T>::boundAndKeepSurvivors(subproblem& _subpb)
 template<typename T>
 bool Intervalbb<T>::next()
 {
-    int state = 0;
+    if(IVM->selectNextIt()){ //modify IVM : set to next subproblem
+        IVM->decodeIVM(); // decode IVM -> subproblem
 
-    /*this loop decomposes one node, if possible*/
-    while (IVM->beforeEnd()) {
-        if (IVM->lineEndState()) {
-            //backtrack...
-            IVM->goUp();
-            continue;
-        } else if (IVM->pruningCellState()) {
-            IVM->goRight();
-            continue;
-        } else { //if (!IVM->pruningCellState()) {
-            state = 1;// exploring
-            count_decomposed++;
-
-            IVM->goDown();// branch
-            IVM->decodeIVM(); // decode IVM -> subproblems
-
-            if (IVM->isLastLine()) {
-                count_leaves++;
-                boundLeaf(IVM->getNode());
-                state = 0;
-                continue;
-            }
-            break;
+        if (IVM->isLastLine()) {
+            this->count_leaves++;
+            boundLeaf(IVM->getNode());
+        }else{
+            this->count_decomposed++;
+            boundAndKeepSurvivors(IVM->getNode());
         }
+        return true;
+    }else{
+        return false;
     }
-
-    //bound, set Branching direction, prune
-    if(state == 1)
-    {
-        boundAndKeepSurvivors(IVM->getNode());
-    }
-
-    return (state == 1);
 }
 
 //initializes IVM at a given interval
@@ -221,7 +191,7 @@ Intervalbb<T>::unfold()
     assert(IVM->intervalValid());
     assert(IVM->getDepth() == 0);
 
-    pbb->sltn->getBest(prune->local_best);
+    pbb->best_found.getBest(this->prune->local_best);
 
     while (IVM->getDepth() < size - 2) {
         if (IVM->pruningCellState()) {
@@ -246,25 +216,25 @@ Intervalbb<T>::boundLeaf(subproblem& node)
     FILE_LOG(logDEBUG) << " === bound Leaf"<<std::flush;
 
     bool better=false;
-    int cost=primary_bound->evalSolution(node.schedule.data());
+    int cost=this->primary_bound->evalSolution(node.schedule.data());
 
     // std::cout<<cost<<"\t"<<prune->local_best<<"\n";
 
-    if(!(*prune)(cost)){
+    if(!(*this->prune)(cost)){
         better=true;
 
         //update local best...
-        prune->local_best=cost;
+        this->prune->local_best=cost;
         //...and global best (mutex)
-        pbb->sltn->update(node.schedule.data(),cost);
-        pbb->foundAtLeastOneSolution.store(true);
-        pbb->foundNewSolution.store(true);
-
+        pbb->best_found.update(node.schedule.data(),cost);
+        pbb->best_found.foundAtLeastOneSolution.store(true);
+        pbb->best_found.foundNewSolution.store(true);
 
         //print new best solution
         if(arguments::printSolutions){
-            solution tmp(size);
-            tmp.update(node.schedule.data(),cost);
+            subproblem tmp(node);
+            tmp.set_fitness(cost);
+            tmp.set_lower_bound(cost);
             FILE_LOG(logINFO) << tmp;
             std::cout<<"New Best:\t";
             tmp.print();
@@ -286,10 +256,11 @@ Intervalbb<T>::eliminateJobs(std::vector<T> lb)
     // eliminate
     for (int i = 0; i < size-_line; i++) {
         int job = jm[i];
-        if( (*prune)(lb[job]) ){
+        if( (*this->prune)(lb[job]) ){
             jm[i] = negative(job);
         }
     }
 }
 
+template class MCbb<int>;
 template class Intervalbb<int>;

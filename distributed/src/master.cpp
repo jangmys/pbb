@@ -7,7 +7,6 @@
 #include "communicator.h"
 
 #include "macros.h"
-#include "solution.h"
 #include "pbab.h"
 #include "ttime.h"
 
@@ -44,7 +43,7 @@ master::reset()
     globalEnd=false;
     first=true;
 
-    pbb->foundAtLeastOneSolution.store(false);
+    pbb->best_found.foundAtLeastOneSolution.store(false);
     pbb->stats.totDecomposed = 0;
     pbb->stats.leaves = 0;
 
@@ -74,7 +73,7 @@ master::initWorks(int initMode)
             break;
     }
 
-    FILE_LOG(logINFO) << "Start with "<< *(pbb->root_sltn);
+    // FILE_LOG(logINFO) << "Start with "<< *(pbb->best_found);
 
     globalEnd = false;
 }
@@ -235,7 +234,7 @@ master::run()
 
     int work_in=0, work_out=0;
 
-	solution* sol_buf=new solution(pbb->size);
+	// solution* sol_buf=new solution(pbb->size);
 
     do{
         //waiting for any message
@@ -279,12 +278,7 @@ master::run()
                     }
                     case NIL: //SEND BESTCOST (confirm reception)
                     {
-                        //request processed...
-                        int tmp;
-                        pbb->sltn->getBestSolution(sol_buf->perm,tmp);
-                        sol_buf->cost.store(tmp);
-
-                        MPI_Send(&pbb->sltn->cost,1,MPI_INT,status.MPI_SOURCE,NIL,MPI_COMM_WORLD);
+                        MPI_Send(&pbb->best_found.cost,1,MPI_INT,status.MPI_SOURCE,NIL,MPI_COMM_WORLD);
                         break;
                     }
                     case SLEEP:
@@ -302,22 +296,24 @@ master::run()
             case BEST:
             {
                 //receive candidate solution + update Best
-                solution* candidate=new solution(pbb->size);
-                comm->recv_sol(candidate, status.MPI_SOURCE, BEST, &status);
+                int tmp_cost;
+                int *tmp_perm = new int[pbb->size];
 
-                if(pbb->sltn->update(candidate->perm,candidate->cost))
+                comm->recv_sol(tmp_perm, tmp_cost, status.MPI_SOURCE, BEST, &status);
+
+                if(pbb->best_found.update(tmp_perm,tmp_cost))
                 {
-                    pbb->foundAtLeastOneSolution.store(true);
-                    pbb->sltn->save();
+                    pbb->best_found.foundAtLeastOneSolution.store(true);
+                    pbb->best_found.save();
                     // printf("\t\tmaster_sol: %d\n",pbb->sltn->cost);
                 // }
                 // if(globalEnd){
                 //     FILE_LOG(logDEBUG1) << "send termination signal to " << status.MPI_SOURCE;
                 //     MPI_Send(&aaa,1,MPI_INT,status.MPI_SOURCE,END,MPI_COMM_WORLD);
-                    MPI_Send(&pbb->sltn->cost,1,MPI_INT,status.MPI_SOURCE,BEST,MPI_COMM_WORLD);
+                    MPI_Send(&pbb->best_found.cost,1,MPI_INT,status.MPI_SOURCE,BEST,MPI_COMM_WORLD);
                 }else{
                     //if updatedBest
-                    MPI_Send(&pbb->sltn->cost,1,MPI_INT,status.MPI_SOURCE,BEST,MPI_COMM_WORLD);
+                    MPI_Send(&pbb->best_found.cost,1,MPI_INT,status.MPI_SOURCE,BEST,MPI_COMM_WORLD);
                 }
                 break;
             }
@@ -342,8 +338,6 @@ master::run()
 
 	FILE_LOG(logINFO) << "master iterations: "<<iter<< " master terminates...";
     FILE_LOG(logINFO) << "processed work in: "<<work_in<<"\t work out:"<<work_out;fflush(stdout);
-
-	delete sol_buf;
 
     std::cout << " = master:\t #processed work-in messages: "<<work_in<<"\n";
     std::cout << " = master:\t #processed work-out messages: "<<work_out<<std::endl;

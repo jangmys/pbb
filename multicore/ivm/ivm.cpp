@@ -50,8 +50,6 @@ int ivm::getPosition(const int _d) const{
     return posVect[_d];
 }
 
-
-
 void ivm::setEnd(int* end){
     for(int i=0;i<size;i++){
         endVect[i] = end[i];
@@ -66,8 +64,6 @@ int ivm::getEnd(const int _d) const{
     return endVect[_d];
 }
 
-
-
 void ivm::setDirection(int depth, int dir){
     dirVect[depth] = dir;
 };
@@ -75,8 +71,6 @@ void ivm::setDirection(int depth, int dir){
 void ivm::setDirection(int dir){
     dirVect[getDepth()] = dir;
 };
-
-
 
 int ivm::getDirection(const int _d) const{
     return dirVect[_d];
@@ -103,21 +97,16 @@ ivm::getCell(int i, int j) const{
     return jobMat[i*size+j];
 }
 
-
-
 /**
-* \brief TODO
 */
 void ivm::clearInterval()
 {
-    // std::fill(std::begin(jobMat),std::end(jobMat),0);
     std::fill(std::begin(posVect),std::end(posVect),0);
     std::fill(std::begin(endVect),std::end(endVect),0);
     posVect[0]=size;
 }
 
-/**
-* \brief getter for an interval in factoradic form
+/** getter for an interval in factoradic form
 */
 void ivm::getInterval(int* pos, int* end)
 {
@@ -197,10 +186,11 @@ bool
 ivm::beforeEnd() const
 {
     for (int i = 0; i < size; i++) {
+        if (posVect[i] == endVect[i]) continue;
         if (posVect[i] < endVect[i]) return true;
         if (posVect[i] > endVect[i]) return false;
     }
-    return true;
+    return false;//true;
 }
 
 int
@@ -216,36 +206,90 @@ ivm::vectorCompare(const int* a,const int* b)
 
 
 
+bool ivm::selectNext()
+{
+    while (beforeEnd()) {
+        if (lineEndState()) {
+            //backtrack...
+            goUp();
+            continue;
+        } else if (pruningCellState()) {
+            goRight();
+            continue;
+        } else { //if (!IVM->pruningCellState()) {
+            goDown();// branch
+            return true;
+        }
+    }
+    return false;
+}
 
+bool ivm::selectNextIt()
+{
+    auto v = posVect.begin()+line;
+    auto m = jobMat.begin()+line*size+(*v);
+
+    while (beforeEnd()) {
+        if (*v >= (size-line)){
+            //backtrack...
+            if(line>0){
+                *v=0;
+                v--; line--;
+                m=jobMat.begin()+line*size+(*v);
+                *m = negative(*m);
+            }else{
+                (*v)++;
+                m++;
+            }
+            continue;
+        } else if (*m < 0) {
+            (*v)++; m++;
+            continue;
+        } else { //if (!IVM->pruningCellState()) {
+            auto j1 = jobMat.begin()+line*size;
+            auto j2 = j1 + size;
+
+            for(auto i = j1; i != j1 + size - line; i++){
+                if(i == m)continue;
+                *(j2++) = absolute(*i);
+            }
+            line++;
+            *(++v) = 0;
+            return true;
+        }
+    }
+    return false;
+}
 
 //reads IVM and sets current subproblem
 void
 ivm::decodeIVM()
 {
-    const int* const jM  = getRowPtr(0);
-    const int* const pV  = posVect.data();
-    // int _line = getDepth();
+    const int d = getDepth();
 
-    node.limit1 = -1;
-    node.limit2 = size;
+    int l1=-1;
+    int l2=size;
+
+    auto v = posVect.begin();
+    auto dir = dirVect.begin();
 
     //-----go down until row before current (already scheduled)-----
-    for (int l = 0; l < getDepth(); l++) {
-        int pointed = pV[l];
-        int job     = absolute(jM[l * size + pointed]);
-        //adjust subproblem limits
-        if (dirVect[l] == 0) {
-            node.schedule[++node.limit1] = job;
+    for (int l = 0; l < d; l++) {
+        int job     = getCell(l,*(v++)); //negative here woud be a bug
+        if (*(dir++) == 0) {
+            node.schedule[++l1] = job;
         } else {
-            node.schedule[--node.limit2] = job;
+            node.schedule[--l2] = job;
         }
     }
     //-----fill remaining with jobs in current row-----
-    for (int l = 0; l < size - getDepth(); l++){
-        node.schedule[node.limit1 + 1 + l] = absolute(jM[getDepth() * size + l]);
+    auto m = jobMat.begin() + d*size;
+    for (int l = 0; l < size - d; l++){
+        node.schedule[l1 + 1 + l] = absolute(*(m++));
     }
 
-    FILE_LOG(logDEBUG) << "D\t" << node;
+    node.limit1 = l1;
+    node.limit2 = l2;
 } // prepareSchedule
 
 template<typename T>

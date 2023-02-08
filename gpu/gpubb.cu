@@ -5,12 +5,10 @@
 #include <memory>
 
 #include "pbab.h"
-//solution,stats,instance
 #include "arguments.h"
 //nbivms_gpu, problem, boundMode, branchingMode, findAll, printSolutions,ws_strategy
 
 #include "subproblem.h"
-#include "solution.h"
 #include "ttime.h"
 #include "log.h"
 
@@ -88,11 +86,11 @@ gpubb::initFullInterval()
         pbb->sltn->getBest(best);
 		FILE_LOG(logINFO) << "Init Full : Bound Root with UB:\t" << best;
 		FILE_LOG(logINFO) << "Init Full : size:\t" << size << " " << nbMachines_h ;
-		FILE_LOG(logINFO) << "Init Full : Root :\t" << *(pbb->root_sltn);
+		FILE_LOG(logINFO) << "Init Full : Root :\t" << pbb->best_found;
 
 		int *bestsol_d;
 		gpuErrchk( cudaMalloc(&bestsol_d,size*sizeof(int)) );
-		gpuErrchk( cudaMemcpy(bestsol_d,pbb->root_sltn->perm,size*sizeof(int),cudaMemcpyHostToDevice) );
+		gpuErrchk( cudaMemcpy(bestsol_d,pbb->best_found.initial_perm.data(),size*sizeof(int),cudaMemcpyHostToDevice) );
 
         // bound root node
         #ifdef FSP
@@ -543,7 +541,7 @@ gpubb::boundLeaves(bool reached, int& best)
                 pbb->sltn->update(schedule_h+k*size,cost);
 
 				localFoundNew = true;
-                pbb->foundAtLeastOneSolution=true;
+                pbb->best_found.foundAtLeastOneSolution.store(true);
 
                 FILE_LOG(logINFO) << "GPUBB found " << *(pbb->sltn);
 
@@ -1218,11 +1216,11 @@ gpubb::initFromFac(const int nbint, const int* ids, int*pos, int* end)
         pbb->sltn->getBest(best);
 
 		FILE_LOG(logINFO) << "Init intervals: Bound Root with UB:\t" << best;
-		FILE_LOG(logINFO) << "Init intervals: Root:\t" << *(pbb->root_sltn);
+		FILE_LOG(logINFO) << "Init intervals: Root:\t" << pbb->best_found;
 
 		int *bestsol_d;
 		gpuErrchk( cudaMalloc(&bestsol_d,size*sizeof(int)) );
-		gpuErrchk( cudaMemcpy(bestsol_d,pbb->root_sltn->perm,size*sizeof(int),cudaMemcpyHostToDevice) );
+		gpuErrchk( cudaMemcpy(bestsol_d,pbb->best_found.initial_perm.data(),size*sizeof(int),cudaMemcpyHostToDevice) );
 
         // bound root node
         #ifdef FSP

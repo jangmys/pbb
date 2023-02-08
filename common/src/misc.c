@@ -1,15 +1,17 @@
+#include <assert.h>
+
 #include "misc.h"
 
 inline int
 negative(const int i)
 {
-    return ((i < 0) ? i : ((-i) - 1));
+    return ((i >= 0) ? (-1-i) : i);
 }
 
 inline int
 absolute(const int i)
 {
-    return ((i >= 0) ? i : ((-1) * i - 1));
+    return (i >= 0) ? i : (-1-i);
 }
 
 inline void int_swap(int* a, int* b){
@@ -49,4 +51,32 @@ gnomeSortByKeysInc(int * arr, const int * key1, const int * key2, const int from
         }
         i = j++;
     }
+}
+
+void remove_insert_left(int *arr, const int a, const int b)
+{
+    if(a==b)return;
+    assert(b>a);
+
+    int tmp = arr[b];
+
+    for(int i=b;i>a;i--)
+        arr[i] = arr[i-1];
+
+    arr[a] = tmp;
+}
+
+void remove_insert_right(int *arr, const int a, const int b)
+{
+    if(a==b)return;
+    assert(a<b);
+
+    int tmp = arr[a];
+
+    for(int i=a;i<b;i++)
+    {
+        arr[i] = arr[i+1];
+    }
+
+    arr[b] = tmp;
 }

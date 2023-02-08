@@ -6,10 +6,9 @@
 
 #include "libbounds.h"
 
-#include "operator_factory.h"
 
 
-Tree::Tree(instance_abstract* inst, int _size) : psize(_size)
+Tree::Tree(instance_abstract& inst, int _size) : psize(_size)
 {
     //data structure used for pool of subproblems (default)
     strategy = DEQUE;

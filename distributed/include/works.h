@@ -14,11 +14,10 @@
 #include <sys/time.h>
 #include <time.h>
 
-#include "solution.h"
-
 #include "gmp.h"
 #include "gmpxx.h"
 
+#include "pbab.h"
 #include "work.h"
 
 typedef std::shared_ptr<work> work_ptr;
@@ -149,8 +148,6 @@ public:
     _adopt(int max);
 
     // work&
-    bool
-    updateBest(int& _cout, solution * _sol);
     void
     request(std::shared_ptr<work> w, bool& chgd);
     bool

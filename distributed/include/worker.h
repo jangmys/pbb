@@ -19,12 +19,11 @@ public:
     int M;
     unsigned nb_heuristic_threads;
 
-
     std::unique_ptr<communicator> comm;
     std::shared_ptr<fact_work> work_buf;
     std::shared_ptr<work> dwrk;
 
-    solution * local_sol;
+    // solution * local_sol;
 
     unsigned int sol_ind_begin;
     unsigned int sol_ind_end;

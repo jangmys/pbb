@@ -19,13 +19,17 @@ public:
         Bidirectional = 2
     };
 
-    explicit Branching(int _size,Branching::branchingType _type) : size(_size),m_branchType(_type)
+    explicit Branching(Branching::branchingType _type) : m_branchType(_type)
     {};
 
     virtual ~Branching(){};
-    virtual int operator()(const int*cb, const int* ce, const int line) = 0;
+    virtual int operator()(const int*cb, const int* ce, const int line){
+        return Front;
+    };
 
-    virtual int pre_bound_choice(const int line) = 0;
+    virtual int pre_bound_choice(const int line){
+        return Front;
+    };
 
     virtual Branching::branchingType get_type()
     {
@@ -33,7 +37,6 @@ public:
     }
 
 protected:
-    int size;
     Branching::branchingType m_branchType = Forward;
 };
 
@@ -41,8 +44,8 @@ protected:
 class forwardBranching : public Branching
 {
 public:
-    explicit forwardBranching(int _size) :
-        Branching(_size,Branching::Forward){};
+    explicit forwardBranching() :
+        Branching(Branching::Forward){};
 
     //needs no argument...
     int operator()(const int*cb, const int* ce, const int line)
@@ -60,7 +63,7 @@ public:
 class backwardBranching : public Branching
 {
 public:
-    explicit backwardBranching(int _size) : Branching(_size,Branching::Backward){};
+    explicit backwardBranching() : Branching(Branching::Backward){};
 
     //needs no argument...
     int operator()(const int*cb, const int* ce, const int line)
@@ -78,7 +81,7 @@ public:
 class alternateBranching final : public Branching
 {
 public:
-    explicit alternateBranching(int _size) : Branching(_size,Branching::Bidirectional){};
+    alternateBranching() : Branching(Branching::Bidirectional){};
 
     int operator()(const int*cb, const int* ce, const int line)
     {
@@ -94,7 +97,7 @@ public:
 class maxSumBranching : public Branching
 {
 public:
-    explicit maxSumBranching(int _size) : Branching(_size,Branching::Bidirectional){};
+    explicit maxSumBranching(int _size) : Branching(Branching::Bidirectional),size(_size){};
 
     int operator()(const int*cb, const int* ce, const int line)
     {
@@ -111,12 +114,14 @@ public:
     {
         return -1;
     }
+private:
+    int size;
 };
 
 class minBranchBranching : public Branching
 {
 public:
-    explicit minBranchBranching(int _size,int UB) : Branching(_size,Branching::Bidirectional),initialUB(UB)
+    minBranchBranching(int _size,int UB) : Branching(Branching::Bidirectional),size(_size),initialUB(UB)
     {};
 
 
@@ -141,6 +146,7 @@ public:
     }
 
 private:
+    int size;
     int initialUB;
 };
 
@@ -148,12 +154,10 @@ private:
 class minMinBranching : public Branching
 {
 public:
-    explicit minMinBranching(int _size,int UB) : Branching(_size,Branching::Bidirectional),initialUB(UB)
+    explicit minMinBranching(int _size, int _ub) : Branching(Branching::Bidirectional),size(_size),referenceUB(_ub)
     {};
 
     int operator()(const int*cb, const int* ce, const int line){
-        int ub=initialUB;
-
         int min=INT_MAX;
         int minCount=0;
         int elimCount=0;
@@ -167,8 +171,8 @@ public:
         for (int i = 0; i < size; ++i) {
             if(cb[i]==min)minCount++;
             if(ce[i]==min)minCount--;
-            if (cb[i]>=ub)elimCount++;
-            if (ce[i]>=ub)elimCount--;
+            if (cb[i]>=referenceUB)elimCount++;
+            if (ce[i]>=referenceUB)elimCount--;
         }
         //take set where min LB is realized LESS often
         if(minCount > 0)return Back;
@@ -180,9 +184,9 @@ public:
     {
         return -1;
     }
-
 private:
-    int initialUB;
+    int size;
+    int referenceUB;
 };
 
 #endif

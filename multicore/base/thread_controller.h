@@ -1,3 +1,6 @@
+/*
+base class for multi-core exploration, independent from data structure used for exploration (see ivm/matrix_controller, ll/pool_controller)
+*/
 #ifndef THREAD_CONTROLLER_H
 #define THREAD_CONTROLLER_H
 
@@ -8,12 +11,13 @@
 #include <iostream>
 
 #include <victim_selector.h>
-#include "bbthread.h"
+#include <thread_data.h>
 
-class thread_controller{
+
+class ThreadController{
 public:
-    thread_controller(pbab * _pbb,int _nthreads);
-    virtual ~thread_controller();
+    ThreadController(pbab * _pbb,int _nthreads);
+    virtual ~ThreadController();
 
     void set_victim_select(std::unique_ptr<VictimSelector> _select)
     {
@@ -21,17 +25,14 @@ public:
     }
 protected:
     pbab* pbb;
-
     pthread_t *threads;
 
     unsigned int get_num_threads();
     void interruptExploration();
-    std::shared_ptr<bbthread>get_bbthread(int k);
 
-    virtual std::shared_ptr<bbthread> make_bbexplorer() = 0;
     virtual int work_share(unsigned id, unsigned dest) = 0;
 
-    std::vector<std::shared_ptr<bbthread>>bbb;
+    std::vector<std::shared_ptr<RequestQueue>>thd_data;
 
     std::atomic<unsigned int> atom_nb_explorers{0};
     std::atomic<unsigned int> atom_nb_steals{0};

@@ -10,15 +10,14 @@
 #include <deque>
 
 #include "macros.h"
-#include "ivmthread.h"
+#include "intervalbb.h"
 #include "thread_controller.h"
 
-class matrix_controller : public thread_controller{
+class matrix_controller : public ThreadController{
     friend class worker_mc;
 public:
     matrix_controller(pbab* _pbb,int _nthreads);
 
-    std::shared_ptr<bbthread> make_bbexplorer();
     int work_share(unsigned id, unsigned thief);
 
     void initFromFac(const unsigned int nbint, const int* ids, int*pos, int* end);
@@ -27,15 +26,21 @@ public:
     bool next();
     void explore_multicore();
 
+    //----------------for distributed mode----------------
     void set_distributed(){
         _distributed = true;
     }
+
     bool is_distributed(){
         return _distributed;
     }
 
-    pthread_mutex_t mutex_buffer;
+    std::shared_ptr<Intervalbb<int>>get_ivmbb(int k)
+    {
+        return ivmbb[k];
+    };
 
+    pthread_mutex_t mutex_buffer;
 private:
     int updatedIntervals = 1;
 
@@ -44,8 +49,9 @@ private:
     std::vector<std::vector<int>> pos;
     std::vector<std::vector<int>> end;
 
+    std::vector<std::shared_ptr<Intervalbb<int>>>ivmbb;
+
     bool _distributed = false;
-    int bound_mode = 0;
 };
 
 #endif

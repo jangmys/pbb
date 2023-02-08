@@ -10,7 +10,6 @@
 
 #include "macros.h"
 #include "pbab.h"
-#include "solution.h"
 #include "ttime.h"
 #include "log.h"
 #include "rand.hpp"
@@ -51,8 +50,8 @@ worker::worker(pbab * _pbb, unsigned int nbIVM) : pbb(_pbb),size(pbb->size),M(nb
     pthread_cond_init(&cond_updateApplied, NULL);
     pthread_cond_init(&cond_trigger, NULL);
 
-    local_sol=new solution(pbb->size);
-    for(int i=0;i<size;i++)local_sol->perm[i]=pbb->sltn->perm[i];
+    // local_sol=new solution(pbb->size);
+    // for(int i=0;i<size;i++)local_sol->perm[i]=pbb->best_found.perm[i];
 
     reset();
 }
@@ -164,14 +163,14 @@ comm_thread(void * arg)
             //reset best-trigger
             w->setNewBest(false);
             //get worker-best-solution and cost
-            solution tmp(w->pbb->size);
-            int tmpcost;
-
-            w->pbb->sltn->getBestSolution(tmp.perm,tmpcost);
-            tmp.cost.store(tmpcost);
+            // solution tmp(w->pbb->size);
+            // int tmpcost;
+            //
+            // w->pbb->best_found.getBestSolution(tmp.perm.data(),tmpcost);
+            // tmp.cost.store(tmpcost);
 
             //send to master
-            w->comm->send_sol(&tmp, 0, BEST);
+            w->comm->send_sol(w->pbb->best_found.perm.data(), w->pbb->best_found.cost, 0, BEST);
         }
 
         nbiter++;
@@ -205,7 +204,7 @@ comm_thread(void * arg)
             {
                 // printf("worker receive best\n");fflush(stdout);
                 MPI_Recv(&masterbest, 1, MPI_INT, status.MPI_SOURCE, BEST, MPI_COMM_WORLD, &status);
-                w->pbb->sltn->updateCost(masterbest);
+                w->pbb->best_found.updateCost(masterbest);
                 break;
             }
             case END: /* global termination*/
@@ -218,7 +217,7 @@ comm_thread(void * arg)
             case NIL: /*nothing : still receive master-best*/
             {
                 MPI_Recv(&masterbest, 1, MPI_INT, 0, NIL, MPI_COMM_WORLD, &status);
-                w->pbb->sltn->updateCost(masterbest);
+                w->pbb->best_found.updateCost(masterbest);
 
                 break;
             }
@@ -281,7 +280,6 @@ worker::tryLaunchCommBest()
         newBest = true;
         pthread_cond_signal(&cond_trigger);
         pthread_mutex_unlock(&mutex_trigger);
-        // pbb->sltn->newBest = false;
     }
 }
 
@@ -348,16 +346,16 @@ heu_thread2(void * arg)
     worker * w = (worker *) arg;
 
     // pthread_mutex_lock_check(&w->pbb->mutex_instance);
-    std::unique_ptr<IG> ils = std::make_unique<IG>(w->pbb->instance.get());
+    std::unique_ptr<IG> ils = std::make_unique<IG>(w->pbb->inst);
     // pthread_mutex_unlock(&w->pbb->mutex_instance);
 
     int N=w->pbb->size;
-    subproblem *s=new subproblem(N);
+    std::shared_ptr<subproblem> s = std::make_shared<subproblem>(N);
 
     int gbest;
 
     while(!w->checkEnd()){
-        w->pbb->sltn->getBestSolution(s->schedule.data(),gbest);// lock on pbb->sltn
+        w->pbb->best_found.getBestSolution(s->schedule.data(),gbest);// lock on pbb->best_found
         int r=intRand(0,100);
 
         pthread_mutex_lock_check(&w->mutex_solutions);
@@ -378,13 +376,13 @@ heu_thread2(void * arg)
 
         int cost=ils->runIG(s);
 //
-        if (cost<w->pbb->sltn->getBest()){
-            w->pbb->sltn->update(s->schedule.data(),cost);
+        if (cost<w->pbb->best_found.getBest()){
+            w->pbb->best_found.update(s->schedule.data(),cost);
             w->tryLaunchCommBest();
         }
-        if(cost<w->local_sol->cost){
-            w->local_sol->update(s->schedule.data(),cost);
-            FILE_LOG(logINFO)<<"LocalBest "<<cost<<"\t"<<*(w->local_sol);
+        if(cost<w->pbb->best_found.cost){
+            w->pbb->best_found.update(s->schedule.data(),cost);
+            FILE_LOG(logINFO)<<"LocalBest "<<cost<<"\t"<<w->pbb->best_found;
         }
     }
     pthread_exit(0);

@@ -1,17 +1,15 @@
 #include "pool.h"
 
 
-Pool::Pool(int _size) : psize(_size)
+Pool::Pool(int _size)
 {
     //data structure used for pool of subproblems (default)
     strategy = DEQUE;
-
-    std::cout<<"Pool ctor "<<psize<<"\n";
 }
 
 //========> cf IVM
 void
-Pool::set_root(const int* perm, int l1, int l2)
+Pool::insert(const int* perm, int l1, int l2, unsigned int psize)
 {
     std::unique_ptr<subproblem> root = std::make_unique<subproblem>(psize);
 
@@ -22,16 +20,12 @@ Pool::set_root(const int* perm, int l1, int l2)
     root->limit1=l1;
     root->limit2=l2;
 
-    std::cout<<"push root : "<<*root<<"\n";
-    push(std::move(root));
-    std::cout<<"pushed root "<<size()<<"\n";
+    insert(std::move(root));
 }
 
 void
-Pool::push(std::unique_ptr<subproblem> p)
+Pool::insert(std::unique_ptr<subproblem> p)
 {
-    // std::cout<<"push\n";
-
     switch (strategy) {
         case DEQUE:
             deq.push_front(std::move(p));
@@ -49,10 +43,19 @@ Pool::push(std::unique_ptr<subproblem> p)
 }
 
 std::unique_ptr<subproblem>
-Pool::take()
+Pool::take_top()
 {
     std::unique_ptr<subproblem> n=(empty()) ? NULL : std::move(top());
     if(n) pop();
+
+    return std::move(n);
+}
+
+std::unique_ptr<subproblem>
+Pool::take_back()
+{
+    std::unique_ptr<subproblem> n=(empty()) ? NULL : std::move(back());
+    if(n) pop_back();
 
     return std::move(n);
 }
@@ -67,6 +70,23 @@ Pool::top()
             return std::move(pile.top());
         // case PRIOQ:
         //     return pque.top();
+        default:
+            std::cout << "Undefined strategy";
+            exit(1);
+    }
+}
+
+std::unique_ptr<subproblem>
+Pool::back()
+{
+    switch (strategy) {
+        case DEQUE:
+            return std::move(deq.back());
+        case STACK:
+            return std::move(pile.top());
+        // case PRIOQ:
+        //     pque.pop();
+        //     break;
         default:
             std::cout << "Undefined strategy";
             exit(1);
@@ -91,6 +111,26 @@ Pool::pop()
             exit(1);
     }
 }
+
+void
+Pool::pop_back()
+{
+    switch (strategy) {
+        case DEQUE:
+            deq.pop_back();
+            break;
+        case STACK:
+            pile.pop();
+            break;
+        // case PRIOQ:
+        //     pque.pop();
+        //     break;
+        default:
+            std::cout << "Undefined strategy";
+            exit(1);
+    }
+}
+
 
 bool
 Pool::empty()

@@ -7,7 +7,7 @@
 
 class bound_dummy : public bound_abstract<int> {
 public:
-    void init(instance_abstract* _instance);
+    void init(instance_abstract& _instance);
 
     void bornes_calculer(int permutation[], int limite1, int limite2, int* couts, int best)
     {

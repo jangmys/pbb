@@ -8,7 +8,7 @@ class bound_abstract {
 public:
     virtual ~bound_abstract(){};
 
-    virtual void init(instance_abstract * _instance) = 0;
+    virtual void init(instance_abstract& _instance) = 0;
 
     // boundSubproblem
     virtual void
