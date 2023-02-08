@@ -1,5 +1,5 @@
 /*
-named constructor for IVM-based BB 
+named constructor for IVM-based BB
 */
 #ifndef MAKE_IVM_BB_H
 #define MAKE_IVM_BB_H
@@ -10,6 +10,7 @@ named constructor for IVM-based BB
 
 #include "../base/mcbb.h"
 #include "../ivm/intervalbb.h"
+#include "set_operators.h"
 
 template<typename T>
 std::shared_ptr<Intervalbb<T>> make_ivmbb(pbab* pbb);

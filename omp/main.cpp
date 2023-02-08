@@ -10,6 +10,8 @@
 #include "arguments.h"
 #include "libbounds.h"
 
+#include "make_bound.h"
+
 
 template<typename T>
 T atomic_read(const T val)
@@ -34,8 +36,6 @@ bool all_true(int* flags, unsigned len)
 
 bool all_true(const std::vector<bool>& v)
 {
-
-
     for(const auto& c : v){
         if(!c)return false;
     }
@@ -77,8 +77,8 @@ main(int argc, char ** argv)
     int *stop_flags = new int[nthreads];
 
     //node counters
-    int count_decomposed = 0;
-    int count_leaves = 0;
+    long long int count_decomposed = 0;
+    long long int count_leaves = 0;
 
     //instance data
     instance_taillard inst(arguments::inst_name);
@@ -95,23 +95,19 @@ main(int argc, char ** argv)
     std::unique_ptr<PermutationSubproblem> root = std::make_unique<PermutationSubproblem>(inst.size);
     p.insert(std::move(root),0);
 
-    //configure bound factory
-    bool early_stop = false;
-    int machine_pairs = 0;
-    BoundFactory bound_factory(
-        std::make_unique<instance_taillard>(inst),
-        early_stop,
-        machine_pairs
-    );
+    //bound
+    arguments::earlyStopJohnson = false;
+    arguments::johnsonPairs = 0;
 
     //start parallel exploration
     //==========================
     #pragma omp parallel num_threads(nthreads) reduction(+:count_decomposed,count_leaves)
     {
-        int tid = omp_get_thread_num();
-
         //INITIALIZATIONS (thread private data)
         //=====================================
+        int tid = omp_get_thread_num();
+
+        int local_stop = 0;
         int local_best = global_best_ub;
 
         #pragma omp atomic write
@@ -123,12 +119,12 @@ main(int argc, char ** argv)
         switch(argv[3][0]){
             case 's': // SIMPLE BOUND
             {
-                bound = bound_factory.make_bound(0);
+                bound = make_bound_ptr<int>(inst,0);
                 break;
             }
             case 'j': //JOHNSON
             {
-                bound = bound_factory.make_bound(1);
+                bound = make_bound_ptr<int>(inst,1);
                 break;
             }
         }
@@ -156,8 +152,10 @@ main(int argc, char ** argv)
             std::unique_ptr<PermutationSubproblem> n(p.take(tid));
 
             if(!n){ //if locally empty and steal failed
+                local_stop = 1;
+
                 #pragma omp atomic write
-                stop_flags[tid]=1;
+                stop_flags[tid]=local_stop;
                 #pragma omp flush
 
                 if(all_true(stop_flags,omp_get_num_threads())){
@@ -165,10 +163,11 @@ main(int argc, char ** argv)
                 }
                 continue;
             }else{
-                #pragma omp atomic write
-                stop_flags[tid]=0;
-                #pragma omp flush
-
+                if(local_stop){
+                    #pragma omp atomic write
+                    stop_flags[tid]=0;
+                    #pragma omp flush
+                }
                 count_decomposed++;
 
                 if(n->is_leaf()){

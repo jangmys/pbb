@@ -62,7 +62,7 @@ public:
         std::vector<int> prioBwd(n.size);
 
         //evaluate lower bounds and priority
-        eval->boundChildren(n.schedule.data(),n.limit1,n.limit2, costFwd.data(),costBwd.data(), prioFwd.data(),prioBwd.data());
+        eval->boundChildren(n.schedule.data(),n.limit1,n.limit2, costFwd.data(),costBwd.data(), prioFwd.data(),prioBwd.data(), 99999);
 
         for (int j = n.limit2 - 1; j > n.limit1; j--) {
             int job = n.schedule[j];

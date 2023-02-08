@@ -1,7 +1,8 @@
 #ifndef SET_OPERATORS_H_
 #define SET_OPERATORS_H_
 
-#include <mcbb.h>
+#include "operators/pruning.h"
+// #include <mcbb.h>
 
 //choose pruning operator of a MCbb (IVM or Pool) from pbab and arguments
 template<typename T>
@@ -44,40 +45,6 @@ std::unique_ptr<Branching> make_branch_ptr(pbab* pbb)
         }
     }
 }
-
-
-// template<typename T>
-// void _set_bound(pbab* pbb, std::shared_ptr<MCbb<T>> bb,const int _bound_choice = 0)
-// {
-//     int select_bound = arguments::primary_bound;
-//     if(_bound_choice == 1)
-//         select_bound = arguments::secondary_bound;
-//
-//     if(arguments::problem[0]=='f'){
-//         switch (select_bound) {
-//             case 0:
-//             {
-//                 auto bd = std::make_unique<bound_fsp_weak>();
-//                 bd->init(pbb->inst);
-//                 bb->set_bound(std::move(bd),_bound_choice);
-//                 break;
-//             }
-//             case 1:
-//             {
-//                 auto bd = std::make_unique<bound_fsp_strong>();
-//                 bd->init(pbb->inst);
-//                 bd->earlyExit=arguments::earlyStopJohnson;
-//                 bd->machinePairs=arguments::johnsonPairs;
-//                 bb->set_bound(std::move(bd),_bound_choice);
-//                 break;
-//             }
-//         }
-//     }else if(arguments::problem[0]=='d'){
-//         auto bd = std::make_unique<bound_dummy>();
-//         bd->init(pbb->inst);
-//         bb->set_bound(std::move(bd),_bound_choice);
-//     }
-// }
 
 template<typename T>
 std::unique_ptr<bound_abstract<int>> make_bound_ptr(pbab* pbb, const int _bound_choice = 0)

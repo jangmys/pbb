@@ -2,7 +2,6 @@
 #include <pbab.h>
 
 #include "make_ivm_algo.h"
-#include "set_operators.h"
 
 template<typename T>
 std::shared_ptr<Intervalbb<T>> make_ivmbb(pbab* pbb)
