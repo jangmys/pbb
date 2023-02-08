@@ -24,17 +24,11 @@ matrix_controller::matrix_controller(pbab* _pbb,int _nthreads) : ThreadControlle
     ivmbb = std::vector< std::shared_ptr<Intervalbb<int>> >(get_num_threads(),nullptr);
 
     state = std::vector<int>(get_num_threads(),0);
-
     for(unsigned i=0;i<get_num_threads();i++){
         pos.emplace_back(std::vector<int>(_pbb->size,0));
         end.emplace_back(std::vector<int>(_pbb->size,0));
     }
-
     pthread_mutex_init(&mutex_buffer,NULL);
-
-    bound_mode = arguments::boundMode;
-
-    set_victim_select(make_victim_selector(_nthreads,arguments::mc_ws_select));
 };
 
 //nbint := number received intervals
@@ -133,13 +127,13 @@ matrix_controller::explore_multicore()
     int id = explorer_get_new_id();
     FILE_LOG(logDEBUG) << "=== got ID " << id;
 
-    // stick_this_thread_to_core(id);
+    stick_this_thread_to_core(id);
 
     //------check if explorer already exists------
     if(!ivmbb[id]){
         //make sequential bb-explorer
         ivmbb[id] = make_ivmbb<int>(pbb);
-
+        //thread-local data for MC exploration
         thd_data[id] = std::make_shared<RequestQueue>();
 
         //set level 0 subproblems
@@ -160,8 +154,8 @@ matrix_controller::explore_multicore()
     ivmbb[id]->setBest(bestCost);
 
     if(updatedIntervals){
-        pthread_mutex_lock(&mutex_buffer);
         // std::cout<<"ID "<<id<<" init at interval\n";
+        pthread_mutex_lock_check(&mutex_buffer);
         bool _active = ivmbb[id]->initAtInterval(pos[id], end[id]);
         pthread_mutex_unlock(&mutex_buffer);
 

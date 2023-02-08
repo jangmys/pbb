@@ -1,3 +1,12 @@
+/*
+Permutation Flow-Shop
+
+Fast insertion and fast removal (allows to know the best position for inserting a given job (indexed k ) in a partial permutation of k −1 jobs. More precisely, it allows to compute the k makespans obtained by inserting job k at the i^th position (1≤i≤k) in O(km) (as for the makespan calculation). Same for removal
+
+Taillard, E. (1990). Some efficient heuristic methods for the flow shop sequencing problem. European Journal of Operational Research, 47, 67-74.
+
+Laurent Deroussi, Michel Gourgand, Sylvie Norre, New effective neighborhoods for the permutation flow shop problem, Research Report LIMOS/RR-06-09
+*/
 #ifndef FASTINSERTREMOVE_H_
 #define FASTINSERTREMOVE_H_
 
@@ -36,27 +45,17 @@ struct forbidden_list
     }
 };
 
-///
-// \brief Fast insertion and fast removal (allows to know the best position for inserting a given job (indexed k ) in a partial permutation of k −1 jobs. More precisely, it allows to compute the k makespans obtained by inserting job k at the i^th position (1≤i≤k) in O(km) (as for the makespan calculation). Same for removal
-//
-// Taillard, E. (1990). Some efficient heuristic methods for the flow shop sequencing problem.
-// European Journal of Operational Research, 47, 67-74.
-//
-// Laurent Deroussi, Michel Gourgand, Sylvie Norre, New effective neighborhoods for the permutation flow shop problem, Research Report LIMOS/RR-06-09
+
 class fastInsertRemove{
 public:
     fastInsertRemove(const std::vector<std::vector<int>> p_times,const int N, const int M);
     fastInsertRemove(instance_abstract& inst);
 
-    int nbJob;
+    unsigned int nbJob;
     int nbMachines;
 
     std::vector<std::vector<int>> PTM;
     std::vector<int> sumPT;
-
-    std::vector<std::vector<int>> head;
-    std::vector<std::vector<int>> tail;
-    std::vector<std::vector<int>> inser;
 
     std::unique_ptr<forbidden_list> tabujobs;
     std::unique_ptr<forbidden_list> tabupos;
@@ -70,16 +69,18 @@ public:
     void computeTails(const std::vector<int>& perm, int len);
     void computeInser(const std::vector<int>& perm, int len, int job);
 
-    void insert(std::vector<int>& perm, int &len, int pos, int job);
-    int remove(std::vector<int>& perm, int &len, const int pos);
+    void insert(std::vector<int>& perm, int pos, int job);
+    int remove(std::vector<int>& perm, const int pos);
 
-    int bestInsert(std::vector<int>& perm, int &len, int job, int &cmax);
-    int bestRemove(std::vector<int>& perm, int &len, int &remjob, int &cmax);
+    int bestInsert(std::vector<int>& perm, int job, int &cmax);
+    int bestRemove(std::vector<int>& perm, int &remjob, int &cmax);
+    int bestRemove2(std::vector<int>& perm, int &remjob, int &cmax);
 
-    int bestInsert2(std::vector<int>& perm, int &len, int job, int &cmax);
-    int bestRemove2(std::vector<int>& perm, int &len, int &remjob, int &cmax);
-
-
+    // int bestInsert2(std::vector<int>& perm, int &len, int job, int &cmax);
+private:
+    std::vector<std::vector<int>> head;
+    std::vector<std::vector<int>> tail;
+    std::vector<std::vector<int>> inser;
 };
 
 #endif

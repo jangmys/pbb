@@ -4,13 +4,16 @@
 #include "ils.h"
 #include "ls.h"
 
+IG::IG(const std::vector<std::vector<int>> p_times, const int N, const int M) :
+    nhood(std::make_unique<fspnhood<int>>(p_times,N,M)),
+    ls(std::make_unique<LocalSearch>(p_times,N,M))
+{};
+
+
 IG::IG(instance_abstract& inst) :
-    neh(std::make_unique<fastNEH>(inst)),
     nhood(std::make_unique<fspnhood<int>>(inst)),
     ls(std::make_unique<LocalSearch>(inst))
 {
-    // std::cout<<"here\n"<<std::endl;
-
     nbJob=nhood->m->nbJob;
     nbMachines=nhood->m->nbMachines;
 
@@ -43,38 +46,37 @@ IG::IG(instance_abstract& inst) :
 	}
 }
 
-int IG::makespan(subproblem* s)
-{
-    return nhood->m->computeHeads(s->schedule, s->size);
-}
-
-void IG::destruction(std::vector<int>& perm, std::vector<int>& permOut, int k, int a, int b)
+std::vector<int> IG::destruction(std::vector<int>& perm, int k, int a, int b)
 {
 	if(b-a < k){
 		std::cout<<a<<" "<<b<<" "<<k<<"destruction not possible\n"; exit(-1);
 	}
 
+    //indices [a+1 ... b-1]
 	std::vector<int>v;
-
 	for(int i=a+1; i<b; i++)
         v.push_back(i);
 
+    //shuffle indices
   	std::random_device rd;
     std::mt19937 g(rd());
-
     std::shuffle(v.begin(), v.end(), g);
 
-    //the postions to remove
+    //first k indices = the postions to remove
     std::vector<int> removePos(v.begin(),v.begin()+k);
     std::sort(removePos.begin(),removePos.end(),std::greater<int>());
 
+    std::vector<int>removedJobs;
+
     for(int i=0;i<k;i++){
-        permOut[i]=perm[removePos[i]];
+        removedJobs.push_back(perm[removePos[i]]);
     }
+    //remove from permutation
     for(int i=0;i<k;i++){
         perm.erase(perm.begin()+removePos[i]);
     }
 
+    return removedJobs;
 }
 
 void IG::perturbation(int *perm, int k, int a, int b)
@@ -107,20 +109,9 @@ void IG::perturbation(int *perm, int k, int a, int b)
 }
 
 
-// void IG::construction(std::vector<int>& perm, std::vector<int>& permOut, int k)
-// {
-//     int cmax;
-//     int len=nbJob-k;
-//
-//     for(int j=0;j<k;j++){
-//         nhood->m->bestInsert(perm, len, permOut[j], cmax);
-//     }
-// }
-
 void IG::construction(std::vector<int>& perm, std::vector<int>& permOut, int k,int a, int b)
 {
     int cost;
-	int len=nbJob-k;
 
     nhood->m->tabupos->clear();
     for(int i=0;i<=a;i++){
@@ -131,7 +122,7 @@ void IG::construction(std::vector<int>& perm, std::vector<int>& permOut, int k,i
     }
 
     for(int j=0;j<k;j++){
-		nhood->m->bestInsert(perm, len, permOut[j], cost);
+		nhood->m->bestInsert(perm, permOut[j], cost);
     }
 }
 
@@ -153,32 +144,20 @@ bool IG::acceptance(int tempcost, int cost,float param)
     else return false;
 }
 
-int IG::runIG(subproblem* current)
+//iterated local search from starting point "current"
+int IG::runIG(std::shared_ptr<subproblem> current)
 {
     std::unique_ptr<subproblem> temp = std::make_unique<subproblem>(nbJob);
     std::unique_ptr<subproblem> best = std::make_unique<subproblem>(nbJob);
 
-    // subproblem* temp=new subproblem(nbJob);
-    // subproblem* best=new subproblem(nbJob);
-    // subproblem* reduced=new subproblem(nbJob);
-
-    int currentcost=0;
-    int bestcost=0;
-
     *best=*current;
 
-	bestcost=nhood->m->computeHeads(best->schedule, nbJob);
-
-    // bestcost=neh->evalMakespan(best->schedule, nbJob);
-	currentcost=bestcost;
+    int bestcost=nhood->m->computeHeads(best->schedule, nbJob);
+    int currentcost=bestcost;
 	current->set_fitness(bestcost);
 
     int l1=0;//current->limit1+1;
     int l2=nbJob;//current->limit2;
-
-	// neh->runNEH(current->schedule,currentcost);
-	// std::cout<<"cccc "<<currentcost<<std::endl;
-	// currentcost=localSearchBRE(current->schedule);
 
     int perturb=destructStrength;
     std::vector<int> removedJobs(perturb);
@@ -189,7 +168,7 @@ int IG::runIG(subproblem* current)
     for(int iter=0;iter<igiter;iter++){
 		*temp=*current;
 
-		destruction(temp->schedule, removedJobs, perturb, l1, l2);
+		removedJobs = destruction(temp->schedule, perturb, l1, l2);
 		construction(temp->schedule, removedJobs, perturb,l1,l2);
 
 		int tempcost=ls->localSearchKI(temp->schedule,kmax);
@@ -239,7 +218,7 @@ int IG::runIG(subproblem* current, int l1, int l2)
     for(int iter=0;iter<igiter;iter++){
 		*temp=*current;
 
-		destruction(temp->schedule, removedJobs, perturb, l1, l2);
+		removedJobs = destruction(temp->schedule, perturb, l1, l2);
 		construction(temp->schedule, removedJobs, perturb,l1,l2);
     //
         int tempcost=(*ls)(temp->schedule,l1,l2);

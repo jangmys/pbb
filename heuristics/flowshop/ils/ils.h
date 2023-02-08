@@ -16,7 +16,10 @@
 
 class IG{
 public:
-    std::unique_ptr<fastNEH> neh;
+    IG(const std::vector<std::vector<int>> p_times, const int N, const int M);
+
+    IG(instance_abstract& inst);
+
     std::unique_ptr<fspnhood<int>> nhood;
     std::unique_ptr<LocalSearch> ls;
 
@@ -31,15 +34,11 @@ public:
     float acceptanceParameter;
     float avgPT;
 
-    IG(instance_abstract& inst);
-
-    int makespan(subproblem* s);
-    void runIG();
-    int runIG(subproblem* s);
+    int runIG(std::shared_ptr<subproblem> s);
     int runIG(subproblem* s, int l1, int l2);
 
     // void destruction(std::vector<int>& perm, std::vector<int>& permOut, int k);
-    void destruction(std::vector<int>& perm, std::vector<int>& permOut, int k, int a, int b);
+    std::vector<int> destruction(std::vector<int>& perm, int k, int a, int b);
     // void construction(std::vector<int>& perm, std::vector<int>& permOut, int k);
     void construction(std::vector<int>& perm, std::vector<int>& permOut, int k,int a, int b);
 

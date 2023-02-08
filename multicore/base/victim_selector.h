@@ -37,6 +37,7 @@ public:
     }
 };
 
+//select victim randomly (may select idle victim)
 class RandomVictimSelector : public VictimSelector
 {
 public:

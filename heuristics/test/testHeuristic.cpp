@@ -59,7 +59,6 @@ int main(int argc, char* argv[])
 
     pbab * pbb = new pbab();
 
-
     struct timespec t1,t2;
     clock_gettime(CLOCK_MONOTONIC,&t1);
 
@@ -68,24 +67,15 @@ int main(int argc, char* argv[])
         case 0:
         {
             fastNEH neh(p_times,N,M);
-            // fastNEH neh(instance.get());
 
-            int fitness;
-            std::vector<int>prmu;
-
-            neh.run(prmu,fitness);
-
-            p->schedule = prmu;
-            p->set_fitness(fitness);
-
-            std::cout<<" = NEH :\t";
+            p = std::make_shared<subproblem>(neh());
             break;
         }
         case 1:
         {
             IG ils(instance);
 
-            p->set_fitness(ils.runIG(p.get()));
+            p->set_fitness(ils.runIG(p));
 
             std::cout<<" = ILS :\t";
             break;
@@ -93,6 +83,14 @@ int main(int argc, char* argv[])
         case 2:
         {
             LocalSearch ls(instance);
+
+            auto cost = ls.localSearchBRE(p->schedule);
+            std::cout<<"COST-LS-BRE : "<<cost<<"\n";
+
+            std::generate(p->schedule.begin(), p->schedule.end(), [n = 0] () mutable { return n++; });
+
+            cost = ls.localSearchKI(p->schedule,10);
+            std::cout<<"COST-LS-KI : "<<cost<<"\n";
 
             p->set_fitness(ls(p->schedule,-1,p->size));
 
@@ -139,8 +137,8 @@ int main(int argc, char* argv[])
 
     clock_gettime(CLOCK_MONOTONIC,&t2);
     std::cout<<
-        (t2.tv_sec - t1.tv_sec) +
-        (t2.tv_nsec - t1.tv_nsec)/1e9 << std::endl ;
+        1000*(t2.tv_sec - t1.tv_sec) +
+        (t2.tv_nsec - t1.tv_nsec)/1e6 << " ms"<<std::endl ;
 
     for(auto &e : p->schedule)
     {

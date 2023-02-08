@@ -13,26 +13,25 @@
 template<typename T>
 int fspnhood<T>::fastBREmove(std::vector<int>& perm, int pos)
 {
-    int len=N;
-
-    int cmax0=m->computeHeads(perm, len);
-    //remove job from position pos...
-    int rjob=m->remove(perm,len,pos);
-
+    int cmax0=m->computeHeads(perm, perm.size());
     int cmax1;
-    m->tabupos->add(pos);//position
-    m->bestInsert(perm, len, rjob, cmax1); //insert at best other position
+
+    //remove job from position pos...
+    int rjob=m->remove(perm,pos);
+
+    m->tabupos->add(pos);//position forbidden
+    m->bestInsert(perm, rjob, cmax1); //insert at best other position
     m->tabupos->clear();
 
-    // int cmax2=cmax1;
     if(cmax0<cmax1){ //if no improvement
         int rjob2;
-        m->tabujobs->add(rjob);//job
-        int pos2=m->bestRemove(perm, len, rjob2, cmax1);
+        //best best other job
+        m->tabujobs->add(rjob);
+        int pos2=m->bestRemove(perm, rjob2, cmax1);
         m->tabujobs->clear();
-
-        m->tabupos->add(pos2);//position
-        m->bestInsert(perm, len, rjob2, cmax1);
+        //add at best other position
+        m->tabupos->add(pos2);
+        m->bestInsert(perm, rjob2, cmax1);
         m->tabupos->clear();
     }
 
@@ -43,11 +42,9 @@ int fspnhood<T>::fastBREmove(std::vector<int>& perm, int pos)
 template<typename T>
 int fspnhood<T>::fastBREmove(std::vector<int>& perm, int pos, int l1, int l2)
 {
-    int len=N;
-
-    int cmax0=m->computeHeads(perm, len);
+    int cmax0=m->computeHeads(perm, perm.size());
     //remove job from position pos...
-    int rjob=m->remove(perm,len,pos);
+    int rjob=m->remove(perm,pos);
 
     m->tabupos->clear();
     m->tabujobs->clear();
@@ -59,58 +56,54 @@ int fspnhood<T>::fastBREmove(std::vector<int>& perm, int pos, int l1, int l2)
         m->tabujobs->add(perm[i]);
         m->tabupos->add(i);
     }
-    for(int i=l2;i<len;i++)
+    for(unsigned i=l2;i<perm.size();i++)
     {
         m->tabujobs->add(perm[i]);
         m->tabupos->add(i);
     }
-    m->bestInsert(perm, len, rjob, cmax1); //insert at best other position
+    m->bestInsert(perm, rjob, cmax1); //insert at best other position
     m->tabupos->clear();
 
     // int cmax2=cmax1;
     if(cmax0<cmax1){ //if no improvement
         int rjob2;
-        m->tabujobs->add(rjob);//job
-        int pos2=m->bestRemove(perm, len, rjob2, cmax1);
-        // m->tabujobs->clear();
+        //best best other job
+        m->tabujobs->add(rjob);
+        int pos2=m->bestRemove(perm, rjob2, cmax1);
+        m->tabujobs->clear();
 
         m->tabupos->add(pos2);//position
-        m->bestInsert(perm, len, rjob2, cmax1);
-        // m->tabupos->clear();
+        m->bestInsert(perm, rjob2, cmax1);
+        m->tabupos->clear();
     }
 
     return cmax1;
 }
 
+//kI-move parametrized by pos
 template<typename T>
 int fspnhood<T>::kImove(std::vector<int>& perm,int pos, int kmax)
 {
-    bool found=false;
-    int k=0;
+    int cmax0=m->computeHeads(perm, perm.size());
+    int cmax1;
 
-    int len=N;
-    int cmax0,cmax1;
     int rjob;
-
-    cmax0=m->computeHeads(perm, len);
-
-    // std::cout<<"... "<<cmax0<<"\n";
 
     m->tabupos->clear();
     m->tabujobs->clear();
     //remove job at position pos (and get removed)
-    rjob=m->remove(perm, len, pos);
-
+    rjob=m->remove(perm, pos);
     //make job and position tabu
     m->tabujobs->add(rjob);
     m->tabupos->add(pos);
 
+    int k=0;
+    bool found=false;
     while(!found && k<kmax)
     {
         //find best position to insert removed job (and get resulting makespan)
-        m->bestInsert(perm, len, rjob, cmax1);
-        // std::cout<<"... "<<cmax1<<" "<<cmax0<<"\n";
-
+        m->bestInsert(perm, rjob, cmax1);
+        //accept?
         if(cmax1<=cmax0)
         {
             found=true;
@@ -122,19 +115,11 @@ int fspnhood<T>::kImove(std::vector<int>& perm,int pos, int kmax)
             if(k==kmax)break;
 
             m->tabupos->clear();
-            pos=m->bestRemove2(perm, len, rjob, cmax1);
-
+            pos=m->bestRemove2(perm, rjob, cmax1);
             m->tabujobs->add(rjob);
             m->tabupos->add(pos);
         }
     }
-    // printf("===\n");
-    // if(found){
-    //     for(int i=0;i<N;i++){
-    //         printf("%d ",perm[i]);
-    //     }
-    //     printf("\n");
-    // }
 
     return cmax1;
 }
@@ -142,25 +127,24 @@ int fspnhood<T>::kImove(std::vector<int>& perm,int pos, int kmax)
 template<typename T>
 int fspnhood<T>::fastkImove(std::vector<int>& perm,int kmax)
 {
-    bool found=false;
     int k=0;
 
-    int len=N;
     int cmax0,cmax1;
     int rjob;
 
-    cmax0=m->computeHeads(perm, len);
+    cmax0=m->computeHeads(perm, perm.size());
 
     m->tabupos->clear();
     m->tabujobs->clear();
 
-    int pos=m->bestRemove2(perm, len, rjob, cmax1);
+    int pos=m->bestRemove2(perm, rjob, cmax1);
     m->tabujobs->add(rjob);
     m->tabupos->add(pos);
 
+    bool found=false;
     while(!found && k<kmax)
     {
-        m->bestInsert(perm, len, rjob, cmax1);
+        m->bestInsert(perm, rjob, cmax1);
 
         if(cmax1<cmax0)
         {
@@ -174,7 +158,7 @@ int fspnhood<T>::fastkImove(std::vector<int>& perm,int kmax)
             if(k==kmax)break;
             m->tabupos->clear();
 
-            pos=m->bestRemove(perm, len, rjob, cmax1);
+            pos=m->bestRemove(perm, rjob, cmax1);
             m->tabujobs->add(rjob);
             m->tabupos->add(pos);
         }
@@ -189,11 +173,10 @@ int fspnhood<T>::fastkImove(std::vector<int>& perm,int kmax,int l1,int l2)
     bool found=false;
     int k=0;
 
-    int len=N;
     int cmax0,cmax1;
     int rjob;
 
-    cmax0=m->computeHeads(perm, len);
+    cmax0=m->computeHeads(perm, perm.size());
     // printf("start with %d\n",cmax0);
 
     m->tabupos->clear();
@@ -203,19 +186,19 @@ int fspnhood<T>::fastkImove(std::vector<int>& perm,int kmax,int l1,int l2)
         m->tabujobs->add(perm[i]);
         m->tabupos->add(i);
     }
-    for(int i=l2;i<len;i++)
+    for(unsigned i=l2;i<perm.size();i++)
     {
         m->tabujobs->add(perm[i]);
         m->tabupos->add(i);
     }
 
-    int pos=m->bestRemove(perm, len, rjob, cmax1);
+    int pos=m->bestRemove(perm, rjob, cmax1);
     m->tabujobs->add(rjob);
     m->tabupos->add(pos);
 
     while(!found && k<kmax)
     {
-        m->bestInsert(perm, len, rjob, cmax1);
+        m->bestInsert(perm, rjob, cmax1);
         // printf("get %d\n",cmax1);
 
         if(cmax1<cmax0)
@@ -230,7 +213,7 @@ int fspnhood<T>::fastkImove(std::vector<int>& perm,int kmax,int l1,int l2)
             // m->tabupos->clear();
             m->tabupos->rem(pos);
 
-            pos=m->bestRemove(perm, len, rjob, cmax1);
+            pos=m->bestRemove(perm, rjob, cmax1);
             m->tabujobs->add(rjob);
             m->tabupos->add(pos);
         }

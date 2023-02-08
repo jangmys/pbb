@@ -350,7 +350,7 @@ heu_thread2(void * arg)
     // pthread_mutex_unlock(&w->pbb->mutex_instance);
 
     int N=w->pbb->size;
-    subproblem *s=new subproblem(N);
+    std::shared_ptr<subproblem> s = std::make_shared<subproblem>(N);
 
     int gbest;
 

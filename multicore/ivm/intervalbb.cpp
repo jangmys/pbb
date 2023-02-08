@@ -229,7 +229,6 @@ Intervalbb<T>::boundLeaf(subproblem& node)
         pbb->best_found.foundAtLeastOneSolution.store(true);
         pbb->best_found.foundNewSolution.store(true);
 
-
         //print new best solution
         if(arguments::printSolutions){
             subproblem tmp(node);

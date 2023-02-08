@@ -52,7 +52,6 @@ private:
     std::vector<std::shared_ptr<Intervalbb<int>>>ivmbb;
 
     bool _distributed = false;
-    int bound_mode = 0;
 };
 
 #endif

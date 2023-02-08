@@ -17,6 +17,16 @@ private:
     std::vector<int> jobMat;
 
     subproblem node;
+
+    inline int getCurrentCell() const
+    {
+        return jobMat[line*size+posVect[line]];
+    };
+
+    //Tree operations
+    void goDown(); //branch node
+    void goRight(); //next sibling
+    void goUp(); //backtrack
 public:
     explicit ivm(int _size);
 
@@ -48,20 +58,11 @@ public:
     int *getRowPtr(int i);
     int getCell(int i,int j) const;
 
-    inline int getCurrentCell() const
-    {
-        return jobMat[line*size+posVect[line]];
-    };
-
     void eliminateCurrent();
 
     void clearInterval();
     void getInterval(int*,int*);
 
-    //Tree operations
-    void goDown(); //branch node
-    void goRight(); //next sibling
-    void goUp(); //backtrack
 
     //Exploration state
     bool isLastLine() const; //reached leaf node
