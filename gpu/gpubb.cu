@@ -8,6 +8,7 @@
 #include "arguments.h"
 //nbivms_gpu, problem, boundMode, branchingMode, findAll, printSolutions,ws_strategy
 
+#include "set_operators.h"
 #include "subproblem.h"
 #include "ttime.h"
 #include "log.h"
@@ -18,6 +19,7 @@
 
 // all CUDA from this file
 #include "./bb_kernels.cu"
+
 
 gpubb::gpubb(pbab * _pbb)
 {
