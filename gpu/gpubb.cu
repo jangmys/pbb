@@ -982,11 +982,11 @@ void
 gpubb::initializeBoundFSP()
 {
     // get instance data
-    (pbb->instance->data)->seekg(0);
-    (pbb->instance->data)->clear();
+    (pbb->inst.data)->seekg(0);
+    (pbb->inst.data)->clear();
 
-    *(pbb->instance->data) >> nbJob_h;
-    *(pbb->instance->data) >> nbMachines_h;
+    *(pbb->inst.data) >> nbJob_h;
+    *(pbb->inst.data) >> nbMachines_h;
 
     somme_h = 0;
     for (int i = 1; i < nbMachines_h; i++) somme_h += i;
@@ -1001,7 +1001,7 @@ gpubb::initializeBoundFSP()
         fillMachine();
 
         for (int j = 0; j < nbJob_h; j++)
-            *(pbb->instance->data) >> tempsJob_h[i * nbJob_h + j];
+            *(pbb->inst.data) >> tempsJob_h[i * nbJob_h + j];
         fillLag();
         fillTabJohnson();
         fillMinTempsArrDep();
