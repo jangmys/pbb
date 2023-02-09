@@ -27,9 +27,10 @@ gpubb::gpubb(pbab * _pbb)
     ringsize = nbIVM;
 
     if (arguments::problem[0] == 'f') {
-        bound_fsp_weak *bd=new bound_fsp_weak();
-        bd->init(pbb->instance.get());
-        bound=bd;
+        bound = make_bound_ptr<int>(pbb,arguments::primary_bound);
+        // bound_fsp_weak *bd=new bound_fsp_weak();
+        // bd->init(pbb->instance.get());
+        // bound=bd;
     }
 
     initialUB = INT_MAX;
