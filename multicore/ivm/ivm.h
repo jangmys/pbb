@@ -23,12 +23,13 @@ private:
         return jobMat[line*size+posVect[line]];
     };
 
+public:
+    explicit ivm(int _size);
+
     //Tree operations
     void goDown(); //branch node
     void goRight(); //next sibling
     void goUp(); //backtrack
-public:
-    explicit ivm(int _size);
 
     subproblem& getNode();
     //operate on line

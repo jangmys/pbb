@@ -8,6 +8,7 @@ victim selection strategies
 #ifndef VICTIM_SELECTOR_H
 #define VICTIM_SELECTOR_H
 
+#include <ctime>
 #include <random>
 #include <vector>
 #include <memory>
@@ -43,7 +44,6 @@ class RandomVictimSelector : public VictimSelector
 public:
     explicit RandomVictimSelector(unsigned _nthreads) : VictimSelector(_nthreads)
     {
-
         auto seed = static_cast<long int>(std::time(nullptr));
         random_engine = std::mt19937(size_t(seed));
         // generator = std::random_device{ } ();

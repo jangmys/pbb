@@ -1,7 +1,7 @@
 #ifndef SET_OPERATORS_H_
 #define SET_OPERATORS_H_
 
-#include "operators/pruning.h"
+#include "pruning.h"
 // #include <mcbb.h>
 
 //choose pruning operator of a MCbb (IVM or Pool) from pbab and arguments
