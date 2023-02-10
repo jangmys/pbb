@@ -7,13 +7,12 @@
 using namespace cooperative_groups;
 
 
-
 template <unsigned size>
 __device__ int tile_sum(thread_block_tile<size> g, int val)
 {
     // Each iteration halves the number of active threads
     // Each thread adds its partial sum[i] to sum[lane+i]
-    for (int i = g.size() / 2; i > 0; i /= 2) {
+    for (int i = size / 2; i > 0; i /= 2) {
         val += g.shfl_down(val, i);
     }
     g.sync();
