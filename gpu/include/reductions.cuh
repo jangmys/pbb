@@ -1,8 +1,12 @@
+#include "gpu_helper.cuh"
+
 #include <cooperative_groups.h>
 
 #define FULL_MASK 0xffffffff
 
 using namespace cooperative_groups;
+
+
 
 template <unsigned size>
 __device__ int tile_sum(thread_block_tile<size> g, int val)
