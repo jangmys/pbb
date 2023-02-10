@@ -83,7 +83,7 @@ __global__ void reduce(const int *todo_d, int *tempArr, int *auxArr, int n) {
 
     extern __shared__ int shArr[];
 
-    if(bid*n+tid >= nbIVM_d)return;
+    // if(bid*n+tid >= nbIVM_d)return;
 
     shArr[pout * n + tid] = (bid * n + tid > 0) ? todo_d[bid * n + tid - 1] : 0; //compute prefix sum
     __syncthreads();
