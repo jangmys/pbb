@@ -108,6 +108,28 @@ int main(int argc,char **argv){
     int l1=-1;
     int l2=inst->size;
 
+
+
+    std::vector<int>lb_begin(inst->size,0);
+    std::vector<int>lb_end(inst->size,0);
+    std::vector<float>prio_begin(inst->size,0);
+    std::vector<float>prio_end(inst->size,0);
+    std::vector<int>prio_beginI(inst->size,0);
+    std::vector<int>prio_endI(inst->size,0);
+
+    bound->boundChildren(solutions[0].data(), l1, l2, lb_begin.data(), lb_end.data(), prio_beginI.data(), prio_endI.data(),999999);
+
+    for(auto &lbb : lb_begin){
+        std::cout<<lbb<<" ";
+    }
+    std::cout<<"\n";
+    for(auto &lbe : lb_end){
+        std::cout<<lbe<<" ";
+    }
+    std::cout<<"\n";
+
+
+
     clock_gettime(CLOCK_MONOTONIC,&t1);
     for(auto &p : solutions){
         bound->bornes_calculer(p.data(), l1+5, l2-5, costs, 99999);
@@ -132,16 +154,6 @@ int main(int argc,char **argv){
     std::cout<<(t2.tv_sec-t1.tv_sec)+(t2.tv_nsec-t1.tv_nsec)/1e9<<"\n";
 
     std::cout<<"=======================\n";
-
-
-    std::vector<int>lb_begin(inst->size,0);
-    std::vector<int>lb_end(inst->size,0);
-    std::vector<float>prio_begin(inst->size,0);
-    std::vector<float>prio_end(inst->size,0);
-    std::vector<int>prio_beginI(inst->size,0);
-    std::vector<int>prio_endI(inst->size,0);
-
-
 
     clock_gettime(CLOCK_MONOTONIC,&t1);
     for(auto &p : solutions){

@@ -64,8 +64,6 @@ main(int argc, char ** argv)
 #endif
     gbb->copyH2D();
     gbb->initFullInterval();
-    exit(-1);
-
     gbb->next();
 
     gbb->getStats();
