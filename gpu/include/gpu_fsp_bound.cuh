@@ -803,7 +803,6 @@ boundWeak_BeginEnd(const int *limit1s_d,const int *limit2s_d, const int *line_d,
         costsBE_d[2 * ivm * size_d + i] = 0;
         costsBE_d[(2 * ivm + 1)* size_d + i] = 0;
     }
-    return;
     //initialize remain
     for (int i = g.thread_rank(); i < _nbMachines; i+=g.size()) {
         remain[i] = _sumPT[i];
@@ -813,6 +812,7 @@ boundWeak_BeginEnd(const int *limit1s_d,const int *limit2s_d, const int *line_d,
     tile_scheduleFront(g, prmu, l1, _tempsJob, front, remain);
     tile_scheduleBack(g, prmu, l2, _tempsJob, back, remain);
     g.sync();
+    return;
 
     tile_addFrontAndBound(g,back,front,remain,&prmu[l1+1],size_d-line,&costsBE_d[2 * ivm * size_d]);
     tile_addBackAndBound(g,back,front,remain,&prmu[l1+1],size_d-line,&costsBE_d[(2 * ivm + 1) * size_d]);
