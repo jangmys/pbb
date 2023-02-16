@@ -499,16 +499,16 @@ gpubb::weakBound(const int NN, const int best)
     gpuErrchk(cudaDeviceSynchronize());
 #endif
 
-    // cudaMemcpy(costsBE_h, costsBE_d, 2 * size * nbIVM * sizeof(int), cudaMemcpyDeviceToHost);
-    // for(int i=0;i<nbIVM;i++){
-    //     for(int j=0;j<size;j++)
-    //         printf("%4d ",costsBE_h[2*i*size+j]);
-    //     printf("\n");
-    //     for(int j=0;j<size;j++)
-    //         printf("%4d ",costsBE_h[(2*i+1)*size+j]);
-    //     printf("\n");
-    // }
-    // printf("====== \n");
+    cudaMemcpy(costsBE_h, costsBE_d, 2 * size * nbIVM * sizeof(int), cudaMemcpyDeviceToHost);
+    for(int i=0;i<nbIVM;i++){
+        for(int j=0;j<size;j++)
+            printf("%4d ",costsBE_h[2*i*size+j]);
+        printf("\n");
+        for(int j=0;j<size;j++)
+            printf("%4d ",costsBE_h[(2*i+1)*size+j]);
+        printf("\n");
+    }
+    printf("====== \n");
 
 
 
