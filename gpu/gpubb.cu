@@ -142,7 +142,7 @@ gpubb::initFullInterval()
 	for(int i=0;i<size;i++){
 		end_h[i]=size-i-1;
 	}
-	state_h[0] = 1;//initialize first
+	state_h[0] = -1;//initialize first
 
     copyH2D_update();
     affiche(1);
