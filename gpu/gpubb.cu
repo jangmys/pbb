@@ -1256,9 +1256,13 @@ gpubb::initFromFac(const int nbint, const int* ids, int*pos, int* end)
         #ifdef FSP
 		gpuErrchk( cudaMemcpy(mat_d,pbb->best_found.initial_perm.data(),size*sizeof(int),cudaMemcpyHostToDevice) );
 
+        weakBound(4, best);
+
+        gpuErrchk( cudaMemcpy(root_d,mat_d,size*sizeof(int),cudaMemcpyDeviceToDevice) );
+        gpuErrchk( cudaMemcpy(&root_dir_d,dir_d,sizeof(int),cudaMemcpyDeviceToDevice) );
 
 
-        boundRoot <<< 1, 1024, (nbMachines_h + sizeof(int)) * size >>> (mat_d, dir_d, line_d, costsBE_d, sums_d, best, arguments::branchingMode);
+        // boundRoot <<< 1, 1024, (nbMachines_h + sizeof(int)) * size >>> (mat_d, dir_d, line_d, costsBE_d, sums_d, best, arguments::branchingMode);
         #endif
         #ifdef TEST
         boundRoot << < 1, 128, sizeof(int) * size >>> (mat_d, dir_d, line_d);
