@@ -767,9 +767,6 @@ boundWeak_BeginEnd(const int *limit1s_d,const int *limit2s_d, const int *line_d,
     int ivm = (blockIdx.x * blockDim.x + threadIdx.x) / tile_size; // global ivm id
     int warpID = threadIdx.x / tile_size;
 
-    costsBE_d[2 * ivm * size_d] = 0;
-    costsBE_d[(2 * ivm + 1)* size_d] = 0;
-    return;
 
     // nothing to do
     if (state_d[ivm] == 0) return;
@@ -787,6 +784,11 @@ boundWeak_BeginEnd(const int *limit1s_d,const int *limit2s_d, const int *line_d,
     int *back    = (int *)&front[4 * _nbMachines];  // partial schedule end[M]
     int *remain  = (int *)&back[4 * _nbMachines];   // remaining work[M]
     int *prmu = (int *)&remain[4 * _nbMachines];   // schedule[N]
+
+    costsBE_d[2 * ivm * size_d] = 0;
+    costsBE_d[(2 * ivm + 1)* size_d] = 0;
+    return;
+
 
     front += warpID*_nbMachines;
     back += warpID*_nbMachines;
