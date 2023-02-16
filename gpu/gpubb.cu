@@ -92,14 +92,10 @@ gpubb::initFullInterval()
 		FILE_LOG(logINFO) << "Init Full : Root :\t" << pbb->best_found;
 
         int* tmp_state = new int[nbIVM];
-        tmp_state[0] = 0;
+        tmp_state[0] = 1;
         gpuErrchk( cudaMemcpy(state_d, tmp_state, nbIVM*sizeof(int),cudaMemcpyHostToDevice) );
 
         delete[] tmp_state;
-
-		// int *bestsol_d;
-		// gpuErrchk( cudaMalloc(&bestsol_d,size*sizeof(int)) );
-		// gpuErrchk( cudaMemcpy(bestsol_d,pbb->best_found.initial_perm.data(),size*sizeof(int),cudaMemcpyHostToDevice) );
 
         // bound root node
         #ifdef FSP
@@ -117,8 +113,6 @@ gpubb::initFullInterval()
         gpuErrchk( cudaMemcpy(d_root_tmp, mat_d, size*sizeof(int),cudaMemcpyDeviceToDevice) );
         gpuErrchk( cudaMemcpy(d_root_dir_tmp, dir_d, sizeof(int),cudaMemcpyDeviceToDevice) );
 
-
-
         cudaMemcpy(costsBE_h, costsBE_d, 2 * size * nbIVM * sizeof(int), cudaMemcpyDeviceToHost);
         for(int i=0;i<nbIVM;i++){
             for(int j=0;j<size;j++)
@@ -129,9 +123,6 @@ gpubb::initFullInterval()
             printf("\n");
         }
         printf("====== \n");
-
-
-
         //3. (if BE) compute LB (end) for all subpb
         //4. choose branch dir
         //(if reverse, reverse job order)
