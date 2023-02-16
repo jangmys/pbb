@@ -1081,7 +1081,7 @@ boundRoot(int *mat, int *dir, int *line, int *costsBE_d, int *sums_d, int *bestp
     for(int l=bl.thread_rank(); l<size_d; l+=bl.size())
     {
         permut[l] = l;
-        mat[l] = bestpermut[l];
+        // mat[l] = bestpermut[l];
     }
     bl.sync();
 
@@ -1122,9 +1122,6 @@ boundRoot(int *mat, int *dir, int *line, int *costsBE_d, int *sums_d, int *bestp
 
     d=tile32.shfl(d,0);
     tile32.sync();//!!!! every thread has dir
-
-
-
 
 
     if(bl.thread_rank()==0){

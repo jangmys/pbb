@@ -410,8 +410,8 @@ tile_branchMaxSum(thread_block_tile<tile_size> g, const int * jm_row, const int 
         if (lane == 0)
             val += delta;
     }
-    //val = sum(delta) < 0  <==>  cost(begin) < cost(end)
 
+    //val = sum(delta) < 0  <==>  cost(begin) < cost(end)
     if (lane == 0)
         dir[line] = (val < 0) ? 1 : 0;
 
