@@ -92,7 +92,7 @@ gpubb::initFullInterval()
 		FILE_LOG(logINFO) << "Init Full : Root :\t" << pbb->best_found;
 
         int* tmp_state = new int[nbIVM];
-        tmp_state[0] = 1;
+        tmp_state[0] = 0;
         gpuErrchk( cudaMemcpy(state_d, tmp_state, nbIVM*sizeof(int),cudaMemcpyHostToDevice) );
 
         delete[] tmp_state;
