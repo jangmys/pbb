@@ -800,8 +800,8 @@ boundWeak_BeginEnd(const int *limit1s_d,const int *limit2s_d, const int *line_d,
 
     for (int i = g.thread_rank(); i < size_d; i+=g.size()) {
         prmu[i]=schedules_d[ivm*size_d+i];
-        // costsBE_d[2 * ivm * size_d + i] = state_d[ivm];
-        // costsBE_d[(2 * ivm + 1)* size_d + i] = 0;
+        costsBE_d[2 * ivm * size_d + i] = 0;
+        costsBE_d[(2 * ivm + 1)* size_d + i] = 0;
     }
     //initialize remain
     for (int i = g.thread_rank(); i < _nbMachines; i+=g.size()) {

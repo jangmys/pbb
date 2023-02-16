@@ -114,26 +114,6 @@ gpubb::initFullInterval()
 
         gpuErrchk( cudaMemcpy(d_root_tmp, mat_d, size*sizeof(int),cudaMemcpyDeviceToDevice) );
         gpuErrchk( cudaMemcpy(d_root_dir_tmp, dir_d, sizeof(int),cudaMemcpyDeviceToDevice) );
-
-
-        // printf("\n nbIVM\t %d\n",nbIVM);
-        // cudaMemcpy(costsBE_h, costsBE_d, 2 * size * nbIVM * sizeof(int), cudaMemcpyDeviceToHost);
-        // for(int i=0;i<nbIVM;i++){
-        //     for(int j=0;j<size;j++)
-        //         printf("%4d ",costsBE_h[2*i*size+j]);
-        //     printf("\n");
-        //     for(int j=0;j<size;j++)
-        //         printf("%4d ",costsBE_h[(2*i+1)*size+j]);
-        //     printf("\n");
-        // }
-        // printf("====== \n");
-        //3. (if BE) compute LB (end) for all subpb
-        //4. choose branch dir
-        //(if reverse, reverse job order)
-        //5. prune
-        //6. save root_d and root_dir_d
-
-        // boundRoot << < 1, 1024, (nbMachines_h + sizeof(int)) * size >>> (mat_d, dir_d, line_d, costsBE_d, sums_d, best, arguments::branchingMode);
         #endif
         #ifdef TEST
         boundRoot << < 1, 128, sizeof(int) * size >>> (mat_d, dir_d, line_d);
@@ -162,10 +142,10 @@ gpubb::initFullInterval()
 	for(int i=0;i<size;i++){
 		end_h[i]=size-i-1;
 	}
-	state_h[0] = -1;//initialize first
+	state_h[0] = 1;//initialize first
 
     copyH2D_update();
-    // affiche(1);
+    affiche(1);
 }
 
 void
