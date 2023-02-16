@@ -103,8 +103,13 @@ gpubb::initFullInterval()
         //2. compute LB (begin) for all subpb
         weakBound(4, best);
 
-        gpuErrchk( cudaMemcpy(root_d,mat_d,size*sizeof(int),cudaMemcpyDeviceToDevice) );
-        gpuErrchk( cudaMemcpy(&root_dir_d,dir_d,sizeof(int),cudaMemcpyDeviceToDevice) );
+        int *d_root_tmp;
+        int *d_root_dir_tmp;
+        cudaGetSymbolAddress((void **)&d_root_tmp, root_d);
+        cudaGetSymbolAddress((void **)&d_root_dir_tmp, root_dir_d);
+
+        gpuErrchk( cudaMemcpy(d_root_tmp, mat_d, size*sizeof(int),cudaMemcpyDeviceToDevice) );
+        gpuErrchk( cudaMemcpy(d_root_dir_d, dir_d, sizeof(int),cudaMemcpyDeviceToDevice) );
 
         //3. (if BE) compute LB (end) for all subpb
         //4. choose branch dir
