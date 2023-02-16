@@ -103,13 +103,16 @@ gpubb::initFullInterval()
         //2. compute LB (begin) for all subpb
         weakBound(4, best);
 
+        gpuErrchk( cudaMemcpy(root_d,mat_d,size*sizeof(int),cudaMemcpyDeviceToDevice) );
+        gpuErrchk( cudaMemcpy(&root_dir_d,dir_d,sizeof(int),cudaMemcpyDeviceToDevice) );
+
         //3. (if BE) compute LB (end) for all subpb
         //4. choose branch dir
         //(if reverse, reverse job order)
         //5. prune
         //6. save root_d and root_dir_d
 
-        boundRoot << < 1, 1024, (nbMachines_h + sizeof(int)) * size >>> (mat_d, dir_d, line_d, costsBE_d, sums_d, best, arguments::branchingMode);
+        // boundRoot << < 1, 1024, (nbMachines_h + sizeof(int)) * size >>> (mat_d, dir_d, line_d, costsBE_d, sums_d, best, arguments::branchingMode);
         #endif
         #ifdef TEST
         boundRoot << < 1, 128, sizeof(int) * size >>> (mat_d, dir_d, line_d);
