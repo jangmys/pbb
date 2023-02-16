@@ -109,7 +109,7 @@ gpubb::initFullInterval()
         cudaGetSymbolAddress((void **)&d_root_dir_tmp, root_dir_d);
 
         gpuErrchk( cudaMemcpy(d_root_tmp, mat_d, size*sizeof(int),cudaMemcpyDeviceToDevice) );
-        gpuErrchk( cudaMemcpy(d_root_dir_d, dir_d, sizeof(int),cudaMemcpyDeviceToDevice) );
+        gpuErrchk( cudaMemcpy(d_root_dir_tmp, dir_d, sizeof(int),cudaMemcpyDeviceToDevice) );
 
         //3. (if BE) compute LB (end) for all subpb
         //4. choose branch dir
