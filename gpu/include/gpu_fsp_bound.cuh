@@ -767,6 +767,8 @@ boundWeak_BeginEnd(const int *limit1s_d,const int *limit2s_d, const int *line_d,
     int ivm = (blockIdx.x * blockDim.x + threadIdx.x) / tile_size; // global ivm id
     int warpID = threadIdx.x / tile_size;
 
+    costsBE_d[2 * ivm * size_d] = 0;
+    costsBE_d[(2 * ivm + 1)* size_d] = 0;
     return;
 
     // nothing to do
