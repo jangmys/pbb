@@ -116,17 +116,17 @@ gpubb::initFullInterval()
         gpuErrchk( cudaMemcpy(d_root_dir_tmp, dir_d, sizeof(int),cudaMemcpyDeviceToDevice) );
 
 
-        printf("\n nbIVM\t %d\n",nbIVM);
-        cudaMemcpy(costsBE_h, costsBE_d, 2 * size * nbIVM * sizeof(int), cudaMemcpyDeviceToHost);
-        for(int i=0;i<nbIVM;i++){
-            for(int j=0;j<size;j++)
-                printf("%4d ",costsBE_h[2*i*size+j]);
-            printf("\n");
-            for(int j=0;j<size;j++)
-                printf("%4d ",costsBE_h[(2*i+1)*size+j]);
-            printf("\n");
-        }
-        printf("====== \n");
+        // printf("\n nbIVM\t %d\n",nbIVM);
+        // cudaMemcpy(costsBE_h, costsBE_d, 2 * size * nbIVM * sizeof(int), cudaMemcpyDeviceToHost);
+        // for(int i=0;i<nbIVM;i++){
+        //     for(int j=0;j<size;j++)
+        //         printf("%4d ",costsBE_h[2*i*size+j]);
+        //     printf("\n");
+        //     for(int j=0;j<size;j++)
+        //         printf("%4d ",costsBE_h[(2*i+1)*size+j]);
+        //     printf("\n");
+        // }
+        // printf("====== \n");
         //3. (if BE) compute LB (end) for all subpb
         //4. choose branch dir
         //(if reverse, reverse job order)
@@ -490,7 +490,7 @@ gpubb::weakBound(const int NN, const int best)
     //         printf("%4d ",costsBE_h[(2*i+1)*size+j]);
     //     printf("\n");
     // }
-    printf("=== %d %d\n",nbIVM,size);
+    // printf("=== %d %d\n",nbIVM,size);
     gpuErrchk(cudaMemset(costsBE_d, 1, 2 * size * nbIVM * sizeof(int))); //memset sets bytes!
 	size_t smem;
 
