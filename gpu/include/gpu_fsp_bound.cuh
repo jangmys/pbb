@@ -785,15 +785,11 @@ boundWeak_BeginEnd(const int *limit1s_d,const int *limit2s_d, const int *line_d,
     int *remain  = (int *)&back[4 * _nbMachines];   // remaining work[M]
     int *prmu = (int *)&remain[4 * _nbMachines];   // schedule[N]
 
-    costsBE_d[2 * ivm * size_d] = 0;
-    costsBE_d[(2 * ivm + 1)* size_d] = 0;
-    return;
-
-
     front += warpID*_nbMachines;
     back += warpID*_nbMachines;
     remain += warpID*_nbMachines;
     prmu += warpID * size_d;
+
 
     // load PTM to smem
     //load schedule limits and line to smem
@@ -801,9 +797,13 @@ boundWeak_BeginEnd(const int *limit1s_d,const int *limit2s_d, const int *line_d,
     int l1=limit1s_d[ivm];
     int l2=limit2s_d[ivm];
 
+
     for (int i = g.thread_rank(); i < size_d; i+=g.size()) {
         prmu[i]=schedules_d[ivm*size_d+i];
+        costsBE_d[2 * ivm * size_d + i] = 0;
+        costsBE_d[(2 * ivm + 1)* size_d + i] = 0;
     }
+    return;
     //initialize remain
     for (int i = g.thread_rank(); i < _nbMachines; i+=g.size()) {
         remain[i] = _sumPT[i];
