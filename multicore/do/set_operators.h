@@ -8,9 +8,11 @@
 template<typename T>
 std::unique_ptr<Pruning> make_prune_ptr(pbab* pbb)
 {
-    if(arguments::findAll){
+    if(!arguments::findAll){
+        //keepSmaller <==> prune if LB equal to best
         return std::make_unique<keepSmaller>(pbb->best_found.initial_cost);
     }else{
+        //keepEqualOrSmaller <==> prune if LB worse than best
         return std::make_unique<keepEqualOrSmaller>(pbb->best_found.initial_cost);
     }
     return nullptr;
