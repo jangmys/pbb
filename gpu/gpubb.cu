@@ -491,7 +491,7 @@ gpubb::weakBound(const int NN, const int best)
     //     printf("\n");
     // }
     // printf("=== %d %d\n",nbIVM,size);
-    gpuErrchk(cudaMemset(costsBE_d, 1, 2 * size * nbIVM * sizeof(int))); //memset sets bytes!
+    gpuErrchk(cudaMemset(costsBE_d, 0, 2 * size * nbIVM * sizeof(int))); //memset sets bytes!
 	size_t smem;
 
 #ifdef FSP
