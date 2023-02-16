@@ -353,6 +353,10 @@ multistep_triggered(int * jobMats_d, int * posVecs_d, int * endVecs_d, int * dir
     line_d[ivm]  = line[warpID];
 }
 
+
+
+
+
 template < typename T >
 __global__ void
 decodeIVMandFlagLeaf(const T *jobMats_d, const T *dirVecs_d, const T *posVecs_d, T *limit1s_d, T *limit2s_d, const T *line_d, T *schedules_d, T *state_d, int *todo_d, int *flagleaf)
@@ -516,8 +520,7 @@ chooseBranchingSortAndPrune(int *jobMats_d,int *dirVecs_d,const int *posVecs_d,i
     dir=tile32.shfl(dir,0);
     tile32.sync();//!!!! every thread has dir
 
-    tile32.sync();
-
+    //order jobs in next row
     if(thPos==0){
         if(line[warpID]==size_d-1){
             jmrow[0] = negative_d(jmrow[0]);
@@ -545,8 +548,11 @@ chooseBranchingSortAndPrune(int *jobMats_d,int *dirVecs_d,const int *posVecs_d,i
     }
 
     tile32.sync();
+
+    //prune
     tile_prune<32>(tile32, jmrow, costsBE_d+2*ivm*size_d, dir, line[warpID], best);
 
+    //prapare strong bound
     if(_boundMode>=1){
         if (thPos == 0) {
             //popc ballot ... !
@@ -555,6 +561,7 @@ chooseBranchingSortAndPrune(int *jobMats_d,int *dirVecs_d,const int *posVecs_d,i
         }
     }
 
+    //back to main mem
     __syncthreads();
     for (int i = thPos; i < size_d; i+=warpSize) {
         jobMats_d[index3D(line[warpID],i,ivm)]=jmrow[i];

@@ -49,6 +49,9 @@ main(int argc, char ** argv)
     cudaGetDevice(&device);
     printf(" === Device %d/%d ==\n", device+1, count);
 
+    printf("bound mode:\t", arguments::boundMode);
+    printf("branch mode:\t", arguments::branchingMode);
+
     cudaDeviceSetCacheConfig(cudaFuncCachePreferShared);
 
     gpubb* gbb = new gpubb(pbb);//%numDevices);

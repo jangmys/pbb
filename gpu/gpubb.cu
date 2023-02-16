@@ -296,14 +296,17 @@ gpubb::next(int& best, int& iter)
     }
     bool end = false;
 
+    //modify IVM structures to make them point to next subproblem
     selectAndBranch(4);
+    //at each iteration get some exploration statistics
     getExplorationStats(iter,best);
 
+    //check termination
     if (allDone()){
-        // printf("all done\n");
         return true;
     }
 
+    //get subproblems from IVM
     bool reachedLeaf=decode(4);
 
     //if not 'strong-bound-only' ...
@@ -317,7 +320,7 @@ gpubb::next(int& best, int& iter)
 
     boundLeaves(reachedLeaf,best);
 
-
+    //evaluate one-by-one
     if(arguments::boundMode != 0){
         buildMapping();
 
@@ -407,8 +410,8 @@ bool gpubb::decode(const int NN)
             gpuErrchk(cudaMemcpyFromSymbol(&target_h, targetNode, sizeof(unsigned int)));
      	    break;
         }
-        case 0: //weak bound
-        case 2: //mixed
+        case 0: //weak bound (evaluate children)
+        case 2: //mixed (evaluate children)
         {
             /*
             just decode IVM
@@ -460,7 +463,7 @@ gpubb::weakBound(const int NN, const int best)
     smem = (NN * (size + 3 * nbMachines_h)) * sizeof(int);
     if(arguments::branchingMode>0){
         boundWeak_BeginEnd<32><<<(nbIVM+NN-1) / NN, NN * 32, smem, stream >>>(lim1_d, lim2_d, line_d, schedule_d, costsBE_d, state_d, front_d, back_d, best, flagLeaf);
-    }else if(arguments::branchingMode==-1){
+    }else if(arguments::branchingMode==-2){
         boundWeak_Begin<32> << < (nbIVM+NN-1) / NN, NN * 32, smem, stream >> >
         (lim1_d, lim2_d, line_d, schedule_d, costsBE_d, state_d, front_d, back_d, best, flagLeaf);
     }
@@ -495,12 +498,18 @@ gpubb::weakBound(const int NN, const int best)
         chooseBranchingSortAndPrune<<< (nbIVM+NN-1) / NN, NN * 32, smem, stream >> >
         (mat_d, dir_d, pos_d, lim1_d, lim2_d, line_d, schedule_d, costsBE_d, prio_d, state_d, todo_d, best, initialUB,arguments::branchingMode);
     }
-    else if(arguments::branchingMode==-1){
+    else if(arguments::branchingMode==-3){    }
+    else if(arguments::branchingMode==-2){
+        //alternate
         smem = (NN * (2*size + 2) * sizeof(int));
         ForwardBranchSortAndPrune<<< (nbIVM+NN-1) / NN, NN * 32, smem, stream >> >
         (mat_d, dir_d, pos_d, lim1_d, lim2_d, line_d, schedule_d, costsBE_d, prio_d, state_d,
             todo_d, best, flagLeaf);
     }
+    else if(arguments::branchingMode==-1){
+        //backward
+    }
+
 #ifndef NDEBUG
     gpuErrchk(cudaPeekAtLastError());
     gpuErrchk(cudaDeviceSynchronize());
