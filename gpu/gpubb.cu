@@ -113,6 +113,8 @@ gpubb::initFullInterval()
         gpuErrchk( cudaMemcpy(d_root_tmp, mat_d, size*sizeof(int),cudaMemcpyDeviceToDevice) );
         gpuErrchk( cudaMemcpy(d_root_dir_tmp, dir_d, sizeof(int),cudaMemcpyDeviceToDevice) );
 
+
+        printf("\n nbIVM\t %d\n",nbIVM);
         cudaMemcpy(costsBE_h, costsBE_d, 2 * size * nbIVM * sizeof(int), cudaMemcpyDeviceToHost);
         for(int i=0;i<nbIVM;i++){
             for(int j=0;j<size;j++)
