@@ -146,7 +146,7 @@ gpubb::initFullInterval()
 	for(int i=0;i<size;i++){
 		end_h[i]=size-i-1;
 	}
-	state_h[0] = -1;
+	state_h[0] = -1;//initialize first
 
     copyH2D_update();
     // affiche(1);
@@ -1256,9 +1256,9 @@ gpubb::initFromFac(const int nbint, const int* ids, int*pos, int* end)
 		FILE_LOG(logINFO) << "Init intervals: Bound Root with UB:\t" << best;
 		FILE_LOG(logINFO) << "Init intervals: Root:\t" << pbb->best_found;
 
-		int *bestsol_d;
-		gpuErrchk( cudaMalloc(&bestsol_d,size*sizeof(int)) );
-		gpuErrchk( cudaMemcpy(bestsol_d,pbb->best_found.initial_perm.data(),size*sizeof(int),cudaMemcpyHostToDevice) );
+		// int *bestsol_d;
+		// gpuErrchk( cudaMalloc(&bestsol_d,size*sizeof(int)) );
+		// gpuErrchk( cudaMemcpy(bestsol_d,pbb->best_found.initial_perm.data(),size*sizeof(int),cudaMemcpyHostToDevice) );
 
         // bound root node
         #ifdef FSP
@@ -1275,17 +1275,19 @@ gpubb::initFromFac(const int nbint, const int* ids, int*pos, int* end)
         #ifdef TEST
         boundRoot << < 1, 128, sizeof(int) * size >>> (mat_d, dir_d, line_d);
         #endif
-        gpuErrchk(cudaPeekAtLastError());
-        gpuErrchk(cudaDeviceSynchronize());
-        cudaFree(bestsol_d);
+
+        // gpuErrchk(cudaPeekAtLastError());
+        // gpuErrchk(cudaDeviceSynchronize());
+        // cudaFree(bestsol_d);
 
         gpuErrchk(cudaMemcpy(costsBE_h,costsBE_d,2*nbIVM*size*sizeof(int),cudaMemcpyDeviceToHost));
         gpuErrchk(cudaMemcpy(dir_h,dir_d,nbIVM*size,cudaMemcpyDeviceToHost));
         firstbound = false;
     }
 
-	dim3 blks((nbIVM * 32 + 127) / 128);
-	setRoot <<< blks, 128, 0, stream >> > (mat_d, dir_d);
+    const int blocksize = 128;
+	dim3 blks((nbIVM * 32 + blocksize) / blocksize);
+	setRoot <<< blks, blocksize, 0, stream >> > (mat_d, dir_d);
     gpuErrchk(cudaPeekAtLastError());
     gpuErrchk(cudaDeviceSynchronize());
 
