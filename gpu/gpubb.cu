@@ -486,9 +486,6 @@ gpubb::weakBound(const int NN, const int best)
     //         printf("%4d ",costsBE_h[(2*i+1)*size+j]);
     //     printf("\n");
     // }
-    printf("-------- \n");
-    return 0;
-
     gpuErrchk(cudaMemset(costsBE_d, 999999, 2 * size * nbIVM * sizeof(int)));
 	size_t smem;
 
