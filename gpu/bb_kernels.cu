@@ -429,6 +429,11 @@ decodeIVMandFlagLeaf(const T *jobMats_d, const T *dirVecs_d, const T *posVecs_d,
     }
 } // prepareSchedules
 
+/*decode IVMs using one warp (thread_block_tile) per IVM
+
+- decode operation is partially parallelized.
+- resulting schedules in shared mem
+*/
 template < typename T >
 __global__ void // __launch_bounds__(128, 16)
 decodeIVM(const int *jobMats_d,const int *dirVecs_d,const int *posVecs_d,int *limit1s_d,int *limit2s_d,const T *line_d,int *schedules_d, const T *state_d)
@@ -501,10 +506,10 @@ chooseBranchingSortAndPrune(int *jobMats_d,int *dirVecs_d,const int *posVecs_d,i
         dir=tile_branchMaxSum<32>(tile32, jmrow, &costsBE_d[2 * ivm * size_d], &dirVecs_d[ivm*size_d], line[warpID]);
         break;}
     case 2:{
-        dir=tile_branchMinMin<32>(tile32, jmrow, &costsBE_d[2 * ivm * size_d], &dirVecs_d[ivm*size_d], line[warpID]);
+        dir=tile_MinBranch<32>(tile32, jmrow, &costsBE_d[2 * ivm * size_d], &dirVecs_d[ivm*size_d], line[warpID],initialUB);
         break;}
     case 3:{
-        dir=tile_MinBranch<32>(tile32, jmrow, &costsBE_d[2 * ivm * size_d], &dirVecs_d[ivm*size_d], line[warpID],initialUB);
+        dir=tile_branchMinMin<32>(tile32, jmrow, &costsBE_d[2 * ivm * size_d], &dirVecs_d[ivm*size_d], line[warpID]);
         break;}
     }
 

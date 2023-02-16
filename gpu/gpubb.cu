@@ -394,6 +394,9 @@ bool gpubb::decode(const int NN)
 	switch(arguments::boundMode){
         case 1: //strong bound
         {
+            /*
+            decode IVM and prepare mapping for lower bounding
+            */
             gpuErrchk(cudaMemset(todo_d, 0, nbIVM * sizeof(int)));
             gpuErrchk(cudaMemset(flagLeaf, 0, nbIVM * sizeof(int)));
             gpuErrchk(cudaMemcpyToSymbol(targetNode, &target_h, sizeof(unsigned int)));
@@ -407,6 +410,9 @@ bool gpubb::decode(const int NN)
         case 0: //weak bound
         case 2: //mixed
         {
+            /*
+            just decode IVM
+            */
             size_t smem = (NN * (size + 3)) * sizeof(int);
             decodeIVM<<< (nbIVM+NN-1) / NN, NN * 32, smem, stream >>>
                 (mat_d, dir_d, pos_d, lim1_d, lim2_d, line_d, schedule_d, state_d);
