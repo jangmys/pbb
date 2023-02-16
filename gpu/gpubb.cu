@@ -104,6 +104,7 @@ gpubb::initFullInterval()
 		gpuErrchk( cudaMemcpy(mat_d,pbb->best_found.initial_perm.data(),size*sizeof(int),cudaMemcpyHostToDevice) );
 
         //2. compute LB (begin) for all subpb
+        decode(4);
         weakBound(4, best);
 
         int *d_root_tmp;
