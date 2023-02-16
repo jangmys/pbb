@@ -101,13 +101,15 @@ gpubb::initFullInterval()
 		gpuErrchk( cudaMemcpy(mat_d,pbb->best_found.initial_perm.data(),size*sizeof(int),cudaMemcpyHostToDevice) );
 
         //2. compute LB (begin) for all subpb
+        weakBound(4, best);
+
         //3. (if BE) compute LB (end) for all subpb
         //4. choose branch dir
         //(if reverse, reverse job order)
         //5. prune
         //6. save root_d and root_dir_d
 
-        boundRoot << < 1, 1024, (nbMachines_h + sizeof(int)) * size >>> (mat_d, dir_d, line_d, costsBE_d, sums_d, bestsol_d, best, arguments::branchingMode);
+        boundRoot << < 1, 1024, (nbMachines_h + sizeof(int)) * size >>> (mat_d, dir_d, line_d, costsBE_d, sums_d, best, arguments::branchingMode);
         #endif
         #ifdef TEST
         boundRoot << < 1, 128, sizeof(int) * size >>> (mat_d, dir_d, line_d);
@@ -1252,7 +1254,11 @@ gpubb::initFromFac(const int nbint, const int* ids, int*pos, int* end)
 
         // bound root node
         #ifdef FSP
-        boundRoot <<< 1, 1024, (nbMachines_h + sizeof(int)) * size >>> (mat_d, dir_d, line_d, costsBE_d, sums_d, bestsol_d, best, arguments::branchingMode);
+		gpuErrchk( cudaMemcpy(mat_d,pbb->best_found.initial_perm.data(),size*sizeof(int),cudaMemcpyHostToDevice) );
+
+
+
+        boundRoot <<< 1, 1024, (nbMachines_h + sizeof(int)) * size >>> (mat_d, dir_d, line_d, costsBE_d, sums_d, best, arguments::branchingMode);
         #endif
         #ifdef TEST
         boundRoot << < 1, 128, sizeof(int) * size >>> (mat_d, dir_d, line_d);
