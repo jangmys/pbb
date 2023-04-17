@@ -98,6 +98,8 @@ main(int argc, char ** argv)
 
         MPI_Bcast(pbb->best_found.perm.data(), pbb->size, MPI_INT, 0, MPI_COMM_WORLD);
         MPI_Bcast(&pbb->best_found.cost, 1, MPI_INT, 0, MPI_COMM_WORLD);
+
+        MPI_Barrier(MPI_COMM_WORLD);
     }else{
         MPI_Barrier(MPI_COMM_WORLD);
 
@@ -108,6 +110,8 @@ main(int argc, char ** argv)
         MPI_Bcast(&pbb->best_found.cost, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
         FILE_LOG(logINFO) << "Initial solution:\t" <<pbb->best_found;
+
+        MPI_Barrier(MPI_COMM_WORLD);
 
         // pbb->best_found.initial_cost = pbb->sltn->cost;
     }
@@ -153,7 +157,7 @@ main(int argc, char ** argv)
 
                 mstr.initWorks(arguments::initial_work);//3 = cut initial interval in nProc pieces
 
-                //make sure all workers have initialized pbb
+                //make sure all workers have initializedMPI_Bcast(pbb->best_found.perm.data(), pbb->size, MPI_INT, 0, MPI_COMM_WORLD); pbb
                 MPI_Barrier(MPI_COMM_WORLD);
 
                 mstr.run();
@@ -196,31 +200,30 @@ main(int argc, char ** argv)
         }
         case ITERATE_INCREASING_UB:
         {
-            if (myrank == 0){
-                master* mstr = new master(pbb);
-
-                // pbb->buildInitialUB();
-                // printf("Initial Solution:\n");
-                // pbb->sltn->print();
+            if (myrank == 0) {
+                master mstr(pbb);
 
                 struct timespec tstart, tend;
                 clock_gettime(CLOCK_MONOTONIC, &tstart);
 
+                MPI_Barrier(MPI_COMM_WORLD);
+
                 int continueBB=1;
                 while(continueBB){
                     pbb->ttm->reset();
-
-                    mstr->initWorks(3);
-                    mstr->reset();
+                    mstr.initWorks(arguments::initial_work);//3 = cut initial interval in nProc pieces
+                    mstr.reset();
 
                     pbb->best_found.cost++;
-                    MPI_Barrier(MPI_COMM_WORLD);
+                    pbb->best_found.initial_cost++;
+
                     MPI_Bcast(pbb->best_found.perm.data(), pbb->size, MPI_INT, 0, MPI_COMM_WORLD);
                     MPI_Bcast(&pbb->best_found.cost, 1, MPI_INT, 0, MPI_COMM_WORLD);
-                    mstr->run();
 
                     MPI_Barrier(MPI_COMM_WORLD);
-                    continueBB=!pbb->best_found.foundAtLeastOneSolution;
+
+                    mstr.run();
+                    continueBB = !pbb->best_found.foundAtLeastOneSolution;
                     MPI_Bcast(&continueBB, 1, MPI_INT, 0, MPI_COMM_WORLD);
                 }
 
@@ -229,25 +232,40 @@ main(int argc, char ** argv)
             }
             else
             {
-                // ==========================
+                MPI_Barrier(MPI_COMM_WORLD);
+
+                char hostname[1024];
+            	hostname[1023] = '\0';
+            	gethostname(hostname, 1023);
+            	FILE_LOG(logINFO) << "Worker running on :\t"<<hostname<<std::flush;
+
+                worker *wrkr;
                 #ifdef USE_GPU
-                worker *wrkr = new worker_gpu(pbb,arguments::nbivms_gpu);
+                if(arguments::worker_type=='g'){
+                    wrkr = new worker_gpu(pbb,arguments::nbivms_gpu);
+                }else{
+                    int nthreads = (arguments::nbivms_mc < 1) ? get_nprocs() : arguments::nbivms_mc;
+                    wrkr = new worker_mc(pbb,nthreads);
+                }
                 #else
                 int nthreads = (arguments::nbivms_mc < 1) ? get_nprocs() : arguments::nbivms_mc;
-                worker *wrkr = new worker_mc(pbb,nthreads);
+                wrkr = new worker_mc(pbb,nthreads);
+                FILE_LOG(logINFO) << "Worker running with "<<nthreads<<" threads.\n";
                 #endif
 
                 int continueBB=1;
                 while(continueBB){
                     wrkr->reset();
-                    MPI_Barrier(MPI_COMM_WORLD);
+
                     MPI_Bcast(pbb->best_found.perm.data(), pbb->size, MPI_INT, 0, MPI_COMM_WORLD);
                     MPI_Bcast(&pbb->best_found.cost, 1, MPI_INT, 0, MPI_COMM_WORLD);
-                    wrkr->run();
 
                     MPI_Barrier(MPI_COMM_WORLD);
+                    wrkr->run();
                     MPI_Bcast(&continueBB, 1, MPI_INT, 0, MPI_COMM_WORLD);
                 }
+
+                delete wrkr;
             }
             break;
         }

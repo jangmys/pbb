@@ -65,7 +65,7 @@ matrix_controller::initFromFac(const unsigned int nbint, const int * ids, int * 
 int
 matrix_controller::work_share(unsigned id, unsigned thief_id)
 {
-    assert(id != thief);
+    assert(id != thief_id);
     assert(id < get_num_threads());
     assert(thief_id < get_num_threads());
 
