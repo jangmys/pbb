@@ -26,13 +26,13 @@ gpubb::gpubb(pbab * _pbb)
     nbIVM    = arguments::nbivms_gpu;
     ringsize = nbIVM;
 
-    if (arguments::problem[0] == 'f') {
+    if (arguments::problem[0] ::unique_ptr<bound_abstract<int>, std::default_delete<bound_abstract<int>>== 'f') {
         auto bd = std::make_unique<bound_fsp_weak>();
         bd->init(pbb->inst);
-        bound=bd;
+        bound=std::move(bd);
     }
 
-    initialUB = pbb.best_found.initial_cost.load();
+    initialUB = pbb->best_found.initial_cost.load();
 
 	FILE_LOG(logINFO) << "GPU with nbIVM:\t" << nbIVM;
 	FILE_LOG(logINFO) << "Initial UB:\t" << initialUB;
@@ -81,7 +81,7 @@ gpubb::initFullInterval()
 {
     if (firstbound) {
         int best = INT_MAX;
-        pbb.best_found.getBest(best);
+        pbb->best_found.getBest(best);
 		FILE_LOG(logINFO) << "Init Full : Bound Root with UB:\t" << best;
 		FILE_LOG(logINFO) << "Init Full : size:\t" << size << " " << nbMachines_h ;
 		FILE_LOG(logINFO) << "Init Full : Root :\t" << pbb->best_found;
@@ -163,7 +163,7 @@ gpubb::launchBBkernel(const int NN)
 {
     int best = INT_MAX;
 
-    pbb->sltn->getBest(best);
+    pbb->best_found.getBest(best);
 
     gpuErrchk(cudaMemset(counter_d, 0, 6 * sizeof(unsigned int)));
     gpuErrchk(cudaMemset(flagLeaf, 0, nbIVM * sizeof(int)));
@@ -250,7 +250,7 @@ gpubb::next()
     int iter = 0;
     int best = INT_MAX;
 
-    pbb->sltn->getBest(best);
+    pbb->best_found.getBest(best);
 
     int nbsteals = 0;
 	localFoundNew=false;
@@ -536,12 +536,12 @@ gpubb::boundLeaves(bool reached, int& best)
 
             if (update) {
                 best = cost;
-                pbb->sltn->update(schedule_h+k*size,cost);
+                pbb->best_found.update(schedule_h+k*size,cost);
 
 				localFoundNew = true;
                 pbb->best_found.foundAtLeastOneSolution.store(true);
 
-                FILE_LOG(logINFO) << "GPUBB found " << *(pbb->sltn);
+                FILE_LOG(logINFO) << "GPUBB found " << pbb->best_found);
 
                 newUB = true;
             }
@@ -977,11 +977,11 @@ void
 gpubb::initializeBoundFSP()
 {
     // get instance data
-    (pbb->instance->data)->seekg(0);
-    (pbb->instance->data)->clear();
+    (pbb->inst.data)->seekg(0);
+    (pbb->inst.data)->clear();
 
-    *(pbb->instance->data) >> nbJob_h;
-    *(pbb->instance->data) >> nbMachines_h;
+    *(pbb->inst.data) >> nbJob_h;
+    *(pbb->inst.data) >> nbMachines_h;
 
     somme_h = 0;
     for (int i = 1; i < nbMachines_h; i++) somme_h += i;
@@ -996,7 +996,7 @@ gpubb::initializeBoundFSP()
         fillMachine();
 
         for (int j = 0; j < nbJob_h; j++)
-            *(pbb->instance->data) >> tempsJob_h[i * nbJob_h + j];
+            *(pbb->instance.data) >> tempsJob_h[i * nbJob_h + j];
         fillLag();
         fillTabJohnson();
         fillMinTempsArrDep();
@@ -1015,7 +1015,7 @@ gpubb::initializeBoundFSP()
 void
 gpubb::initializeBoundTEST()
 {
-    *(pbb->instance->data) >> size;
+    *(pbb->inst.data) >> size;
     copyH2DconstantTEST();
 }
 
@@ -1211,7 +1211,7 @@ gpubb::initFromFac(const int nbint, const int* ids, int*pos, int* end)
 
     if (firstbound) {
         int best = INT_MAX;
-        pbb->sltn->getBest(best);
+        pbb->best_found.getBest(best);
 
 		FILE_LOG(logINFO) << "Init intervals: Bound Root with UB:\t" << best;
 		FILE_LOG(logINFO) << "Init intervals: Root:\t" << pbb->best_found;
@@ -1284,7 +1284,7 @@ int gpubb::getDeepSubproblem(int *ret, const int N){
 	int gbest;
 	int *bestsol;
 	cudaMallocManaged(&bestsol,size*sizeof(int));
-    pbb->sltn->getBestSolution(bestsol,gbest);
+    pbb->best_found.getBestSolution(bestsol,gbest);
 
     struct timespec startt,endt;
     clock_gettime(CLOCK_MONOTONIC,&startt);
