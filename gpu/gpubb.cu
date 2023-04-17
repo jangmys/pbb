@@ -26,7 +26,7 @@ gpubb::gpubb(pbab * _pbb)
     nbIVM    = arguments::nbivms_gpu;
     ringsize = nbIVM;
 
-    if (arguments::problem[0]== 'f') {
+    if (arguments::problem[0] == 'f') {
         auto bd = std::make_unique<bound_fsp_weak>();
         bd->init(pbb->inst);
         bound=std::move(bd);
@@ -541,7 +541,7 @@ gpubb::boundLeaves(bool reached, int& best)
 				localFoundNew = true;
                 pbb->best_found.foundAtLeastOneSolution.store(true);
 
-                FILE_LOG(logINFO) << "GPUBB found " << pbb->best_found);
+                FILE_LOG(logINFO) << "GPUBB found " << pbb->best_found;
 
                 newUB = true;
             }
@@ -996,7 +996,7 @@ gpubb::initializeBoundFSP()
         fillMachine();
 
         for (int j = 0; j < nbJob_h; j++)
-            *(pbb->instance.data) >> tempsJob_h[i * nbJob_h + j];
+            *(pbb->inst.data) >> tempsJob_h[i * nbJob_h + j];
         fillLag();
         fillTabJohnson();
         fillMinTempsArrDep();
