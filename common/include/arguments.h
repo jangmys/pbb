@@ -48,7 +48,6 @@ public:
     static int timeout;
 
 
-
     static int initial_work;
     static int sortNodes;
     static int nodePriority;
