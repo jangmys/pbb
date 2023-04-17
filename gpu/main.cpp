@@ -31,7 +31,7 @@ main(int argc, char ** argv)
     // );
 
     pbb->set_initial_solution();
-    std::cout<<"initial solution "<<*(pbb->best_found);
+    std::cout<<"initial solution "<<pbb->best_found;
 
 
 	arguments::singleNode=true;
