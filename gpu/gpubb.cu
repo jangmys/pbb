@@ -26,7 +26,7 @@ gpubb::gpubb(pbab * _pbb)
     nbIVM    = arguments::nbivms_gpu;
     ringsize = nbIVM;
 
-    if (arguments::problem[0] ::unique_ptr<bound_abstract<int>, std::default_delete<bound_abstract<int>>== 'f') {
+    if (arguments::problem[0]== 'f') {
         auto bd = std::make_unique<bound_fsp_weak>();
         bd->init(pbb->inst);
         bound=std::move(bd);
