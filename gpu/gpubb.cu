@@ -573,7 +573,7 @@ gpubb::steal_in_device(int iter)
     //    search_cut = 0.1;
     computeMeanLength << < (nbIVM + 127) / 128, 128, 0, stream >> >
     (sumLength_d, meanLength_d, search_cut, nbIVM); // (int)(ctrl_h[2]+1));
-#ifndef NDEDUG
+#ifndef NDEBUG
     gpuErrchk(cudaPeekAtLastError());
     gpuErrchk(cudaDeviceSynchronize());
 #endif
@@ -592,14 +592,14 @@ gpubb::steal_in_device(int iter)
             prepareShare << < (nbIVM + 127) / 128, 128, 0, stream >> >
             (state_d, victim_flag, victim_d, length_d, meanLength_d, off & (q - 1), topoB[dim], topoA[dim]);
     }
-#ifndef NDEDUG
+#ifndef NDEBUG
     gpuErrchk(cudaPeekAtLastError());
     gpuErrchk(cudaDeviceSynchronize());
 #endif
 
     share_on_gpu2 <<< nbIVM / PERBLOCK, 32 * PERBLOCK, 0, stream >>>
     (mat_d, pos_d, end_d, dir_d, line_d, 1, ws_granular, state_d, victim_flag, victim_d, ctrl_d);
-#ifndef NDEDUG
+#ifndef NDEBUG
     gpuErrchk(cudaPeekAtLastError());
     gpuErrchk(cudaDeviceSynchronize());
 #endif

@@ -137,10 +137,8 @@ pbab::printStats()
         std::cout<<"Argmin Cmax:\t"; best_found.print();
     }else{
         std::cout<<"Not improved..."<<std::endl;
-        std::cout<<"Cmax\t"<<best_found.cost<<std::endl;
-        std::cout<<"Optimal makespan is >= "<<best_found.cost<<" (initial solution) "<<std::endl;
+        std::cout<<"Optimal makespan is >= "<<best_found.initial_cost<<" (initial solution) "<<std::endl;
     }
-
 }
 
 pbab::~pbab()

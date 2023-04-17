@@ -77,6 +77,7 @@ main(int argc, char ** argv)
         std::cout<<"\t#ProblemSize:\t\t"<<pbb->size<<std::endl;
     }
 
+
     //MAKE INITIAL SOLUTION (rank 0 --> could run multiple and min-reduce...)
     if(myrank==0){
         FILE_LOG(logINFO) <<"----Initialize incumbent----";
@@ -105,6 +106,8 @@ main(int argc, char ** argv)
 
         MPI_Bcast(pbb->best_found.perm.data(), pbb->size, MPI_INT, 0, MPI_COMM_WORLD);
         MPI_Bcast(&pbb->best_found.cost, 1, MPI_INT, 0, MPI_COMM_WORLD);
+
+        FILE_LOG(logINFO) << "Initial solution:\t" <<pbb->best_found;
 
         // pbb->best_found.initial_cost = pbb->sltn->cost;
     }
@@ -136,26 +139,27 @@ main(int argc, char ** argv)
         ITERATE_INCREASING_UB
     };
 
-    int bbmode=STANDARD;
+    // int bbmode=STANDARD;
+    int bbmode=ITERATE_INCREASING_UB;
 
     switch (bbmode) {
         case STANDARD:
         {
             if (myrank == 0) {
-                master* mstr = new master(pbb);
+                master mstr(pbb);
 
                 struct timespec tstart, tend;
                 clock_gettime(CLOCK_MONOTONIC, &tstart);
 
-                mstr->initWorks(arguments::initial_work);//3 = cut initial interval in nProc pieces
+                mstr.initWorks(arguments::initial_work);//3 = cut initial interval in nProc pieces
 
                 //make sure all workers have initialized pbb
                 MPI_Barrier(MPI_COMM_WORLD);
 
-                mstr->run();
+                mstr.run();
 
                 clock_gettime(CLOCK_MONOTONIC, &tend);
-                printf("\n = Walltime :\t %2.8f\n", (tend.tv_sec - tstart.tv_sec) + (tend.tv_nsec - tstart.tv_nsec) / 1e9f);
+                printf("Walltime :\t %2.8f\n", (tend.tv_sec - tstart.tv_sec) + (tend.tv_nsec - tstart.tv_nsec) / 1e9f);
             }
             else
             {
@@ -168,23 +172,24 @@ main(int argc, char ** argv)
             	FILE_LOG(logINFO) << "Worker running on :\t"<<hostname<<std::flush;
 
                 // ==========================
-                int nthreads = (arguments::nbivms_mc < 1) ? get_nprocs() : arguments::nbivms_mc;
-
+                //
                 worker *wrkr;
                 #ifdef USE_GPU
                 if(arguments::worker_type=='g'){
                     wrkr = new worker_gpu(pbb,arguments::nbivms_gpu);
                 }else{
+                    int nthreads = (arguments::nbivms_mc < 1) ? get_nprocs() : arguments::nbivms_mc;
                     wrkr = new worker_mc(pbb,nthreads);
                 }
                 #else
+                int nthreads = (arguments::nbivms_mc < 1) ? get_nprocs() : arguments::nbivms_mc;
                 wrkr = new worker_mc(pbb,nthreads);
                 #endif
-
-                FILE_LOG(logINFO) << "Worker running with "<<nthreads<<" threads.\n";
-
+                //
+                // FILE_LOG(logINFO) << "Worker running with "<<nthreads<<" threads.\n";
+                //
                 wrkr->run();
-
+                //
                 delete wrkr;
             }
             break;
@@ -220,7 +225,7 @@ main(int argc, char ** argv)
                 }
 
                 clock_gettime(CLOCK_MONOTONIC, &tend);
-                printf("\nWalltime :\t %2.8f\n", (tend.tv_sec - tstart.tv_sec) + (tend.tv_nsec - tstart.tv_nsec) / 1e9f);
+                printf("Walltime :\t %2.8f\n", (tend.tv_sec - tstart.tv_sec) + (tend.tv_nsec - tstart.tv_nsec) / 1e9f);
             }
             else
             {

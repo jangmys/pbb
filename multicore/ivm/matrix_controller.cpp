@@ -67,7 +67,7 @@ matrix_controller::work_share(unsigned id, unsigned thief_id)
 {
     assert(id != thief);
     assert(id < get_num_threads());
-    assert(thief < get_num_threads());
+    assert(thief_id < get_num_threads());
 
     int numShared = 0;
     int l         = 0;
