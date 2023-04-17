@@ -239,7 +239,28 @@ arguments::parse_arguments(int argc, char ** argv)
                             strcpy(inst_name, value);
                             break;
                         case OPT:
-                            init_mode = 0;
+                            if(value){
+                                if(*value == 'f'){
+                                    init_mode = 0;
+                                    printf("file\n");
+                                }
+                                else if(*value == 'i'){
+                                    init_mode = -1;
+                                    initial_ub = INT_MAX;
+                                    printf("infty\n");
+                                }
+                                else if(strcmp(value,"neh") == 0){
+                                    init_mode = 1;
+                                }else if(strcmp(value,"beam") == 0){
+                                    init_mode = 2;
+                                }else{
+                                    printf("value\n");
+                                    init_mode = -1;
+                                    initial_ub = atoi(value);
+                                }
+                            }
+                            printf("%d\n",initial_ub);
+
                             break;
                     }
                 ok = true;

@@ -35,7 +35,7 @@ public:
     Incumbent<int> best_found;
 
     void set_initial_solution();
-    void set_initial_solution(const int* permutation, const int cost);
+    void set_initial_solution(const std::vector<int> permutation, const int cost);
 
     std::atomic<bool> workUpdateAvailable{false};
 

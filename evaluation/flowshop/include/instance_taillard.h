@@ -41,7 +41,6 @@ struct instance_taillard : public instance_abstract {
         std::string tmp;
         int jobs, machines, valeur;
         std::ifstream infile;
-        int initial_ub = INT_MAX;
 
         if (f_exists("../evaluation/flowshop/data/instances.data")) {
             infile = std::ifstream("../evaluation/flowshop/data/instances.data");
@@ -66,9 +65,8 @@ struct instance_taillard : public instance_abstract {
             }
         }
         infile.close();
-        initial_ub = valeur;
 
-        return initial_ub;
+        return valeur;
     };
 };
 

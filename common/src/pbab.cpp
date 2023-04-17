@@ -22,7 +22,7 @@ pbab::pbab(instance_abstract _inst) : inst(_inst),size(inst.size),best_found(siz
     this->ttm = new ttime();
 }
 
-void pbab::set_initial_solution(const int* perm, const int cost)
+void pbab::set_initial_solution(const std::vector<int> perm, const int cost)
 {
     for(int i=0; i<size; i++){
         best_found.initial_perm[i] = perm[i];
@@ -34,64 +34,55 @@ void pbab::set_initial_solution(const int* perm, const int cost)
 
 void pbab::set_initial_solution()
 {
+    int cost=INT_MAX;
+
+    std::vector<int>perm(size);
+    for(int i=0; i<size; i++){
+        perm[i]=i;
+    }
+
     //by default initial upper bound is INFTY
     best_found.cost.store(INT_MAX);
 
     switch (arguments::problem[0]) {
         case 'f':
         {
-            //if set, read initial UB from file
             switch (arguments::init_mode) {
-                case 0:
+                case -1: //initial ub passed as value
                 {
-                    std::cout<<"\t#Get initial upper bound : FILE\n";
-
-                    std::vector<int>perm(size);
-                    int cost=INT_MAX;
-
-                    for(int i=0; i<size; i++){
-                        perm[i]=i;
-                    }
-
+                    set_initial_solution(perm,arguments::initial_ub);
+                    std::cout<<"\t#Initial upper bound : \t"<<arguments::initial_ub<<"\n";
+                    break;
+                }
+                case 0: // get from file
+                {
                     switch (arguments::inst_name[0]) {
-                        case 't':
+                        case 't': //Taillard
                         {
                             cost = static_cast<instance_taillard&>(inst).read_initial_ub_from_file(arguments::inst_name);
-
-                            // cost = dynamic_cast<instance_taillard&>(inst).read_initial_ub_from_file(arguments::inst_name);
-                            // cost = (static_cast<instance_taillard*>(instance.get()))->read_initial_ub_from_file(arguments::inst_name);
                             break;
                         }
-                        case 'V':
+                        case 'V': //VFR
                         {
                             cost = static_cast<instance_vrf&>(inst).get_initial_ub_from_file(arguments::inst_name);
-                            // cost = (static_cast<instance_vrf*>(instance.get()))->get_initial_ub_from_file(arguments::inst_name);
                             break;
                         }
                     }
-                    set_initial_solution(perm.data(),cost);
+                    set_initial_solution(perm,cost);
 
+                    std::cout<<"\t#Initial upper bound - FILE : \t"<<cost<<"\n";
                     break;
                 }
                 case 1:
                 {
-                    std::cout<<"\t#Get initial upper bound : NEH\n";
-
                     fastNEH neh(inst);
-                    // fastNEH neh(instance.get());
 
-                    std::shared_ptr<subproblem> p = std::make_shared<subproblem>(size);
-                    // std::shared_ptr<subproblem> p = std::make_shared<subproblem>(size);
+                    neh.initialSort(perm);
+                    neh.runNEH(perm,cost);
 
-                    int fitness;
+                    set_initial_solution(perm,cost);
 
-                    neh.initialSort(p.get()->schedule);
-                    neh.runNEH(p->schedule,fitness);
-
-                    p->set_fitness(fitness);
-
-                    set_initial_solution(p->schedule.data(),p->fitness());
-
+                    std::cout<<"\t#Initial upper bound - NEH : \t"<<cost<<"\n";
                     break;
                 }
                 case 2:
@@ -103,13 +94,12 @@ void pbab::set_initial_solution()
 
                     bs.run_loop(1<<14,p.get());
 
-                    set_initial_solution(bs.bestSolution->schedule.data(),p->fitness());
+                    set_initial_solution(bs.bestSolution->schedule,p->fitness());
 
                     break;
                 }
                 case 3:
                 {
-
                     break;
                 }
                 default:
