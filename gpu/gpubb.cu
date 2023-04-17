@@ -27,13 +27,12 @@ gpubb::gpubb(pbab * _pbb)
     ringsize = nbIVM;
 
     if (arguments::problem[0] == 'f') {
-        bound_fsp_weak *bd=new bound_fsp_weak();
-        bd->init(pbb->instance.get());
+        auto bd = std::make_unique<bound_fsp_weak>();
+        bd->init(pbb->inst);
         bound=bd;
     }
 
-    initialUB = INT_MAX;
-    pbb->sltn->getBest(initialUB);
+    initialUB = pbb.best_found.initial_cost.load();
 
 	FILE_LOG(logINFO) << "GPU with nbIVM:\t" << nbIVM;
 	FILE_LOG(logINFO) << "Initial UB:\t" << initialUB;
@@ -55,7 +54,6 @@ gpubb::gpubb(pbab * _pbb)
 	execmode.triggered = false;
 
 	// executionmode.triggered=false;
-
 }
 
 gpubb::~gpubb()
@@ -83,7 +81,7 @@ gpubb::initFullInterval()
 {
     if (firstbound) {
         int best = INT_MAX;
-        pbb->sltn->getBest(best);
+        pbb.best_found.getBest(best);
 		FILE_LOG(logINFO) << "Init Full : Bound Root with UB:\t" << best;
 		FILE_LOG(logINFO) << "Init Full : size:\t" << size << " " << nbMachines_h ;
 		FILE_LOG(logINFO) << "Init Full : Root :\t" << pbb->best_found;
