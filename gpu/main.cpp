@@ -47,17 +47,13 @@ main(int argc, char ** argv)
 
     std::cout<<"\t#Initial solution\n"<<pbb->best_found;
 
-    //initialize cuda runtime (exclude it from timing)
+    //use device 0 by default
+    cudaSetDevice(0);
     cudaFree(0);
 
     //start timer
     struct timespec tstart, tend;
     clock_gettime(CLOCK_MONOTONIC, &tstart);
-
-
-
-    //use device 0 by default
-    cudaSetDevice(0);
 
     int device,count;
     cudaGetDeviceCount(&count);

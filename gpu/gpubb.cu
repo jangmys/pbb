@@ -37,11 +37,6 @@ gpubb::gpubb(pbab * _pbb)
 	FILE_LOG(logINFO) << "GPU with nbIVM:\t" << nbIVM;
 	FILE_LOG(logINFO) << "Initial UB:\t" << initialUB;
 
-    gpuErrchk(cudaFree(0));
-
-    gpuErrchk(cudaStreamCreate(stream));
-    gpuErrchk(cudaEventCreateWithFlags(event, cudaEventDisableTiming));
-
     pthread_mutex_init(&mutex_end,NULL);
 
     pthread_mutex_lock(&mutex_end);
@@ -57,10 +52,6 @@ gpubb::gpubb(pbab * _pbb)
 	execmode.triggered = false;
 
 	// executionmode.triggered=false;
-
-    test_kernel<<<16,128,0,*stream>>>();
-    gpuErrchk(cudaPeekAtLastError());
-    gpuErrchk(cudaDeviceSynchronize());
 }
 
 gpubb::~gpubb()
@@ -75,11 +66,23 @@ gpubb::initialize(int rank)
 {
     //-----------mapping MPI_ranks to devices-----------
     int device,num_devices;
-    cudaGetDeviceCount(&num_devices);
-    cudaSetDevice(rank % num_devices);
+    gpuErrchk( cudaGetDeviceCount(&num_devices) );
+    gpuErrchk( cudaSetDevice(rank % num_devices) );
 
-    cudaGetDevice(&device);
+    gpuErrchk( cudaGetDevice(&device) );
     std::cout<<rank<<" using device "<<device<<" of "<<num_devices<<"\n";
+
+    gpuErrchk(cudaFree(0));
+
+    gpuErrchk(cudaStreamCreate(stream));
+    gpuErrchk(cudaEventCreateWithFlags(event, cudaEventDisableTiming));
+
+    //sanity checks =============================
+    test_kernel<<<16,128,0,*stream>>>();
+    gpuErrchk(cudaPeekAtLastError());
+    gpuErrchk(cudaDeviceSynchronize());
+
+
 
     setHypercubeConfig(); //work stealing
     allocate_on_host();
