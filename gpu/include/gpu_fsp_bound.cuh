@@ -983,7 +983,7 @@ makespans(int *schedules_d,int *cmax, int *state_d)
     // nothing to do
     if (state_d[ivm] == 0) return;
 
-    tile_evalSolution(tile32, prmu, _nbJob-1, _tempsJob, &front[warpID * _nbMachines]);
+    tile_evalSolution(tile32, prmu, size_d-1, _tempsJob, &front[warpID * _nbMachines]);
     tile32.sync();
 
     if(tile32.thread_rank()==0){

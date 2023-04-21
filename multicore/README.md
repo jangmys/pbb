@@ -5,7 +5,18 @@
 - Go to the `/build` folder.
 - If the build succeeded, there is an executable `./multicore/bb`.
 
-Several options should be configured for PBB@Multi-core. The easiest is to use the default configuration file `/multicore/mcconfig.ini`. PBB@Multi-core will use all available CPU cores.
+Several options should be configured for PBB@Multi-core:
+
+1) to use the default configuration, pass the `-f` option
+```
+-f ../multicore/mcconfig.ini    
+```
+2) Some options can be configured via command-line arguments
+
+
+
+
+If not configured otherwise, PBB@Multi-core will use all available CPU cores.
 
 _________________________________________
 

@@ -12,7 +12,7 @@
 using namespace cooperative_groups;
 namespace cg = cooperative_groups;
 
-
+//device variables (problem independent)
 __device__ unsigned int todo;
 __device__ unsigned int deviceEnd;
 __device__ unsigned int targetNode;
