@@ -12,7 +12,6 @@
 using namespace cooperative_groups;
 namespace cg = cooperative_groups;
 
-
 __device__ unsigned int todo;
 __device__ unsigned int deviceEnd;
 __device__ unsigned int targetNode;

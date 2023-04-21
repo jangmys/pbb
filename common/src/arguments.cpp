@@ -11,7 +11,7 @@ char arguments::work_directory[50] = "../../bbworks/";
 char arguments::inst_name[50];
 char arguments::problem[50];
 
-char arguments::worker_type='c';
+char arguments::worker_type='c'; // default : CPU
 
 //Bounding options
 int arguments::boundMode     = 2;
@@ -35,11 +35,12 @@ char arguments::ds = 'i';
 //initial upper bound and solutions
 int arguments::init_mode = 1;
 int arguments::initial_ub;
+bool arguments::increaseInitialUB = false;
 
 //parallel
 bool arguments::singleNode = true;// false;
 int arguments::nbivms_mc  = -1;
-int arguments::nbivms_gpu = 4096;
+int arguments::nbivms_gpu = 16384;
 
 //load balance / fault tolerance
 int arguments::checkpointv = 1;
@@ -60,6 +61,7 @@ int arguments::timeout  = 99999;
 bool arguments::printSolutions = false;
 char arguments::logfile[50] = "./logfile.txt";
 int arguments::logLevel = logINFO;
+int arguments::gpuverb=100;
 
 //initial search space
 int arguments::initial_work = 3;
@@ -100,7 +102,7 @@ arguments::readIniFile()
     init_mode = reader.GetInteger("initial", "ub", -1);
 
     nbivms_mc  = reader.GetInteger("multicore", "threads", -1);
-    nbivms_gpu = reader.GetInteger("gpu", "nbIVMs", 4096);
+    nbivms_gpu = reader.GetInteger("gpu", "nbIVMs", 16384);
 
     // sorting
     sortNodes    = reader.GetInteger("bb", "sortedDFS", 1);
@@ -169,8 +171,9 @@ arguments::parse_arguments(int argc, char ** argv)
                 {"findall",  no_argument, NULL,  0 },
                 {"singlenode",  no_argument, NULL,  0 },
                 {"primary-bound",  required_argument, NULL,  0 },
-                {"gpu", no_argument, NULL, 0},
+                {"gpu", optional_argument, NULL, 0},
                 {"ll", no_argument, NULL, 0},
+                {"inc-initial-ub", no_argument, NULL, 0},
                 {0,         0,                 0,  0 }
             };
 
@@ -180,9 +183,12 @@ arguments::parse_arguments(int argc, char ** argv)
         switch (c) {
             case 0: //long_options
             {
+                // --gpu=<nbivm_gpu>
                 if(strcmp(long_options[option_index].name,"gpu") == 0)
                 {
                     worker_type='g';
+                    //how many GPU workers ?
+                    nbivms_gpu=(optarg == NULL) ? 4096 : atoi(optarg);
                 }
                 if(strcmp(long_options[option_index].name,"ll") == 0)
                 {
@@ -203,6 +209,10 @@ arguments::parse_arguments(int argc, char ** argv)
                 else if(strcmp(long_options[option_index].name,"singlenode")  == 0)
                 {
                     singleNode = true;
+                }
+                else if(strcmp(long_options[option_index].name,"inc-initial-ub")  == 0)
+                {
+                    increaseInitialUB = true;
                 }
                 else if(strcmp(long_options[option_index].name,"primary-bound") == 0)
                 {

@@ -62,7 +62,7 @@ target_link_libraries(dbb PUBLIC gmp gmpxx)
 target_link_libraries(dbb PUBLIC MPI::MPI_CXX)
 
 if(GPU)
-    set_target_properties(dbb PROPERTIES CUDA_ARCHITECTURES "35;50;72")
+    set_target_properties(dbb PROPERTIES CUDA_ARCHITECTURES "60;72")
     set_property(TARGET dbb PROPERTY CUDA_ARCHITECTURES OFF)
 
     target_link_libraries(dbb PUBLIC ${CMAKE_CUDA_LIBRARIES})

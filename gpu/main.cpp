@@ -23,6 +23,11 @@ main(int argc, char ** argv)
     FILE* log_fd = fopen(arguments::logfile, "w" );
     Output2FILE::Stream() = log_fd;
 
+    //mandatory options for single-node GPU
+    arguments::singleNode=true;
+    arguments::worker_type='g';
+
+
     pbab * pbb = new pbab(        pbb_instance::make_inst(arguments::problem, arguments::inst_name));
 
     //------------------SET INSTANCE----------------------
@@ -31,18 +36,28 @@ main(int argc, char ** argv)
     // );
 
     pbb->set_initial_solution();
-    std::cout<<"initial solution "<<pbb->best_found;
 
+    std::cout<<"\t#Problem:\t\t"<<arguments::problem<<" / Instance"<<arguments::inst_name<<"\n";
+    std::cout<<"\t#ProblemSize:\t\t"<<pbb->size<<"\n"<<std::endl;
 
-	arguments::singleNode=true;
+    std::cout<<"\t#Worker type:\t\t"<<arguments::worker_type<<std::endl;
+    std::cout<<"\t#GPU workers:\t\t"<<arguments::nbivms_gpu<<std::endl;
+    std::cout<<"\t#Bounding mode:\t\t"<<arguments::boundMode<<std::endl;
+    std::cout<<"\t#Branching:\t\t"<<arguments::branchingMode<<std::endl;
+
+    std::cout<<"\t#Initial solution\n"<<pbb->best_found;
+
+    //initialize cuda runtime (exclude it from timing)
     cudaFree(0);
 
+    //start timer
     struct timespec tstart, tend;
     clock_gettime(CLOCK_MONOTONIC, &tstart);
 
 
-    int device_nb = 0;
-    cudaSetDevice(device_nb);
+
+    //use device 0 by default
+    cudaSetDevice(0);
 
     int device,count;
     cudaGetDeviceCount(&count);
@@ -52,7 +67,7 @@ main(int argc, char ** argv)
     cudaDeviceSetCacheConfig(cudaFuncCachePreferShared);
 
     gpubb* gbb = new gpubb(pbb);//%numDevices);
-    gbb->initialize();// allocate IVM on host/device
+    gbb->initialize(0);// allocate IVM on host/device
 #ifdef FSP
     gbb->initializeBoundFSP();
 #endif
@@ -61,9 +76,7 @@ main(int argc, char ** argv)
 #endif
     gbb->copyH2D();
     gbb->initFullInterval();
-
     gbb->next();
-
     gbb->getStats();
 
 	pbb->printStats();

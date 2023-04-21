@@ -65,6 +65,10 @@ main(int argc, char ** argv)
         FILE_LOG(logINFO) << "Worker start logging";
     }
 
+    //mandatory options for single-node GPU
+    arguments::singleNode=false;
+
+
 //---------------------Configure B&B---------------------
     pbab* pbb = new pbab(        pbb_instance::make_inst(arguments::problem, arguments::inst_name));
 
@@ -74,7 +78,10 @@ main(int argc, char ** argv)
     // );
     if(myrank==0){
         std::cout<<"\t#Problem:\t\t"<<arguments::problem<<" / Instance"<<arguments::inst_name<<"\n";
-        std::cout<<"\t#ProblemSize:\t\t"<<pbb->size<<std::endl;
+        std::cout<<"\t#ProblemSize:\t\t"<<pbb->size<<"\n"<<std::endl;
+
+        std::cout<<"\t#Worker type:\t\t"<<arguments::worker_type<<std::endl;
+        std::cout<<"\t#Bounding mode:\t\t"<<arguments::boundMode<<std::endl;
     }
 
 
@@ -138,139 +145,125 @@ main(int argc, char ** argv)
     //     pbb->best_found.initial_cost
     // ));
 
-    enum bb_mode{
-        STANDARD,
-        ITERATE_INCREASING_UB
-    };
+    if(!arguments::increaseInitialUB)
+    {
+        if (myrank == 0) {
+            master mstr(pbb);
 
-    // int bbmode=STANDARD;
-    int bbmode=ITERATE_INCREASING_UB;
+            struct timespec tstart, tend;
+            clock_gettime(CLOCK_MONOTONIC, &tstart);
 
-    switch (bbmode) {
-        case STANDARD:
+            mstr.initWorks(arguments::initial_work);//3 = cut initial interval in nProc pieces
+
+            //make sure all workers have initializedMPI_Bcast(pbb->best_found.perm.data(), pbb->size, MPI_INT, 0, MPI_COMM_WORLD); pbb
+            MPI_Barrier(MPI_COMM_WORLD);
+
+            mstr.run();
+
+            clock_gettime(CLOCK_MONOTONIC, &tend);
+            printf("Walltime :\t %2.8f\n", (tend.tv_sec - tstart.tv_sec) + (tend.tv_nsec - tstart.tv_nsec) / 1e9f);
+        }
+        else
         {
-            if (myrank == 0) {
-                master mstr(pbb);
+            //make sure all workers have initialized pbb
+            MPI_Barrier(MPI_COMM_WORLD);
 
-                struct timespec tstart, tend;
-                clock_gettime(CLOCK_MONOTONIC, &tstart);
+            char hostname[1024];
+            hostname[1023] = '\0';
+            gethostname(hostname, 1023);
+            FILE_LOG(logINFO) << "Worker running on :\t"<<hostname<<std::flush;
 
+            // ==========================
+            //
+            worker *wrkr;
+            #ifdef USE_GPU
+            if(arguments::worker_type=='g'){
+                wrkr = new worker_gpu(pbb,arguments::nbivms_gpu);
+            }else{
+                int nthreads = (arguments::nbivms_mc < 1) ? get_nprocs() : arguments::nbivms_mc;
+                wrkr = new worker_mc(pbb,nthreads);
+            }
+            #else
+            int nthreads = (arguments::nbivms_mc < 1) ? get_nprocs() : arguments::nbivms_mc;
+            wrkr = new worker_mc(pbb,nthreads);
+            #endif
+            //
+            // FILE_LOG(logINFO) << "Worker running with "<<nthreads<<" threads.\n";
+            //
+
+            wrkr->run();
+            //
+            delete wrkr;
+        }
+    }else{
+        if (myrank == 0) {
+            master mstr(pbb);
+
+            struct timespec tstart, tend;
+            clock_gettime(CLOCK_MONOTONIC, &tstart);
+
+            MPI_Barrier(MPI_COMM_WORLD);
+
+            int continueBB=1;
+            while(continueBB){
+                pbb->ttm->reset();
                 mstr.initWorks(arguments::initial_work);//3 = cut initial interval in nProc pieces
+                mstr.reset();
 
-                //make sure all workers have initializedMPI_Bcast(pbb->best_found.perm.data(), pbb->size, MPI_INT, 0, MPI_COMM_WORLD); pbb
+                pbb->best_found.cost++;
+                pbb->best_found.initial_cost++;
+
+                MPI_Bcast(pbb->best_found.perm.data(), pbb->size, MPI_INT, 0, MPI_COMM_WORLD);
+                MPI_Bcast(&pbb->best_found.cost, 1, MPI_INT, 0, MPI_COMM_WORLD);
+
                 MPI_Barrier(MPI_COMM_WORLD);
 
                 mstr.run();
-
-                clock_gettime(CLOCK_MONOTONIC, &tend);
-                printf("Walltime :\t %2.8f\n", (tend.tv_sec - tstart.tv_sec) + (tend.tv_nsec - tstart.tv_nsec) / 1e9f);
+                continueBB = !pbb->best_found.foundAtLeastOneSolution;
+                MPI_Bcast(&continueBB, 1, MPI_INT, 0, MPI_COMM_WORLD);
             }
-            else
-            {
-                //make sure all workers have initialized pbb
-                MPI_Barrier(MPI_COMM_WORLD);
 
-                char hostname[1024];
-            	hostname[1023] = '\0';
-            	gethostname(hostname, 1023);
-            	FILE_LOG(logINFO) << "Worker running on :\t"<<hostname<<std::flush;
-
-                // ==========================
-                //
-                worker *wrkr;
-                #ifdef USE_GPU
-                if(arguments::worker_type=='g'){
-                    wrkr = new worker_gpu(pbb,arguments::nbivms_gpu);
-                }else{
-                    int nthreads = (arguments::nbivms_mc < 1) ? get_nprocs() : arguments::nbivms_mc;
-                    wrkr = new worker_mc(pbb,nthreads);
-                }
-                #else
-                int nthreads = (arguments::nbivms_mc < 1) ? get_nprocs() : arguments::nbivms_mc;
-                wrkr = new worker_mc(pbb,nthreads);
-                #endif
-                //
-                // FILE_LOG(logINFO) << "Worker running with "<<nthreads<<" threads.\n";
-                //
-                wrkr->run();
-                //
-                delete wrkr;
-            }
-            break;
+            clock_gettime(CLOCK_MONOTONIC, &tend);
+            printf("Walltime :\t %2.8f\n", (tend.tv_sec - tstart.tv_sec) + (tend.tv_nsec - tstart.tv_nsec) / 1e9f);
         }
-        case ITERATE_INCREASING_UB:
+        else
         {
-            if (myrank == 0) {
-                master mstr(pbb);
+            MPI_Barrier(MPI_COMM_WORLD);
 
-                struct timespec tstart, tend;
-                clock_gettime(CLOCK_MONOTONIC, &tstart);
+            char hostname[1024];
+            hostname[1023] = '\0';
+            gethostname(hostname, 1023);
+            FILE_LOG(logINFO) << "Worker running on :\t"<<hostname<<std::flush;
 
-                MPI_Barrier(MPI_COMM_WORLD);
-
-                int continueBB=1;
-                while(continueBB){
-                    pbb->ttm->reset();
-                    mstr.initWorks(arguments::initial_work);//3 = cut initial interval in nProc pieces
-                    mstr.reset();
-
-                    pbb->best_found.cost++;
-                    pbb->best_found.initial_cost++;
-
-                    MPI_Bcast(pbb->best_found.perm.data(), pbb->size, MPI_INT, 0, MPI_COMM_WORLD);
-                    MPI_Bcast(&pbb->best_found.cost, 1, MPI_INT, 0, MPI_COMM_WORLD);
-
-                    MPI_Barrier(MPI_COMM_WORLD);
-
-                    mstr.run();
-                    continueBB = !pbb->best_found.foundAtLeastOneSolution;
-                    MPI_Bcast(&continueBB, 1, MPI_INT, 0, MPI_COMM_WORLD);
-                }
-
-                clock_gettime(CLOCK_MONOTONIC, &tend);
-                printf("Walltime :\t %2.8f\n", (tend.tv_sec - tstart.tv_sec) + (tend.tv_nsec - tstart.tv_nsec) / 1e9f);
-            }
-            else
-            {
-                MPI_Barrier(MPI_COMM_WORLD);
-
-                char hostname[1024];
-            	hostname[1023] = '\0';
-            	gethostname(hostname, 1023);
-            	FILE_LOG(logINFO) << "Worker running on :\t"<<hostname<<std::flush;
-
-                worker *wrkr;
-                #ifdef USE_GPU
-                if(arguments::worker_type=='g'){
-                    wrkr = new worker_gpu(pbb,arguments::nbivms_gpu);
-                }else{
-                    int nthreads = (arguments::nbivms_mc < 1) ? get_nprocs() : arguments::nbivms_mc;
-                    wrkr = new worker_mc(pbb,nthreads);
-                }
-                #else
+            worker *wrkr;
+            #ifdef USE_GPU
+            if(arguments::worker_type=='g'){
+                wrkr = new worker_gpu(pbb,arguments::nbivms_gpu);
+            }else{
                 int nthreads = (arguments::nbivms_mc < 1) ? get_nprocs() : arguments::nbivms_mc;
                 wrkr = new worker_mc(pbb,nthreads);
-                FILE_LOG(logINFO) << "Worker running with "<<nthreads<<" threads.\n";
-                #endif
-
-                int continueBB=1;
-                while(continueBB){
-                    wrkr->reset();
-
-                    MPI_Bcast(pbb->best_found.perm.data(), pbb->size, MPI_INT, 0, MPI_COMM_WORLD);
-                    MPI_Bcast(&pbb->best_found.cost, 1, MPI_INT, 0, MPI_COMM_WORLD);
-
-                    MPI_Barrier(MPI_COMM_WORLD);
-                    wrkr->run();
-                    MPI_Bcast(&continueBB, 1, MPI_INT, 0, MPI_COMM_WORLD);
-                }
-
-                delete wrkr;
             }
-            break;
+            #else
+            int nthreads = (arguments::nbivms_mc < 1) ? get_nprocs() : arguments::nbivms_mc;
+            wrkr = new worker_mc(pbb,nthreads);
+            FILE_LOG(logINFO) << "Worker running with "<<nthreads<<" threads.\n";
+            #endif
+
+            int continueBB=1;
+            while(continueBB){
+                wrkr->reset();
+
+                MPI_Bcast(pbb->best_found.perm.data(), pbb->size, MPI_INT, 0, MPI_COMM_WORLD);
+                MPI_Bcast(&pbb->best_found.cost, 1, MPI_INT, 0, MPI_COMM_WORLD);
+
+                MPI_Barrier(MPI_COMM_WORLD);
+                wrkr->run();
+                MPI_Bcast(&continueBB, 1, MPI_INT, 0, MPI_COMM_WORLD);
+            }
+
+            delete wrkr;
         }
     }
-
 
     MPI_Barrier(MPI_COMM_WORLD);
     MPI_Finalize();
