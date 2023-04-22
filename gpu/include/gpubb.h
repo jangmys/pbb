@@ -56,8 +56,8 @@ public:
     void
     setHypercubeConfig();
 
-    cudaStream_t stream;
-    cudaEvent_t event;
+    cudaStream_t *stream;
+    cudaEvent_t *event;
 
     int id;
 
@@ -151,7 +151,7 @@ public:
     bool boundLeaves(bool reached, int &best);
 
     // ===========================
-    void initialize();
+    void initialize(int rank);
 
 
     void initializeIVM(bool root, int id);

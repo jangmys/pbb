@@ -25,6 +25,7 @@ public:
     // incumbent
     static int init_mode;
     static int initial_ub;
+    static bool increaseInitialUB;
 
 
     // distributed
@@ -46,7 +47,6 @@ public:
 
     static bool mc_timeout;
     static int timeout;
-
 
 
     static int initial_work;
@@ -74,6 +74,7 @@ public:
 
     //verbosity
     static bool printSolutions;
+    static int gpuverb;
 
     //work stealing
     static char mc_ws_select;

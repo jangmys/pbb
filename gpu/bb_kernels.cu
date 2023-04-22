@@ -24,6 +24,18 @@
 #include "gpu_interval.cuh"
 #include "loadbalance.cuh"
 
+
+
+__global__ void test_kernel(){
+    if(threadIdx.x==0 && blockIdx.x==0){
+        printf("kernel launching : OK\n");
+    }
+}
+
+
+
+
+
 /*
  * countNodes_d : count decomposed nodes
  * counter_d : count current states

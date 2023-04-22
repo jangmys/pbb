@@ -27,7 +27,7 @@ else()
     set(cuSources gpubb.cu)
     add_executable(gpubb main.cpp ${cuSources})
 
-    set_target_properties(gpubb PROPERTIES CUDA_ARCHITECTURES "35;50;72")
+    set_target_properties(gpubb PROPERTIES CUDA_ARCHITECTURES "60;72")
 
     set_property(TARGET Threads::Threads PROPERTY INTERFACE_COMPILE_OPTIONS $<$<COMPILE_LANGUAGE:CUDA>:-Xcompiler -pthread> $<$<NOT:$<COMPILE_LANGUAGE:CUDA>>:-pthread>)
 
