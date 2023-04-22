@@ -70,19 +70,22 @@ gpubb::initialize(int rank)
     gpuErrchk( cudaSetDevice(rank % num_devices) );
 
     gpuErrchk( cudaGetDevice(&device) );
-    std::cout<<rank<<" using device "<<device<<" of "<<num_devices<<"\n";
+    // std::cout<<rank<<" using device "<<device<<" of "<<num_devices<<"\n";
 
     gpuErrchk(cudaFree(0));
 
+    // std::cout<<"initialized context\n";
+    stream = (cudaStream_t*)malloc(sizeof(cudaStream_t));
+    event = (cudaEvent_t*)malloc(sizeof(cudaEvent_t));
     gpuErrchk(cudaStreamCreate(stream));
+    // std::cout<<"created stream\n";
+
     gpuErrchk(cudaEventCreateWithFlags(event, cudaEventDisableTiming));
 
     //sanity checks =============================
-    test_kernel<<<16,128,0,*stream>>>();
-    gpuErrchk(cudaPeekAtLastError());
-    gpuErrchk(cudaDeviceSynchronize());
-
-
+    // test_kernel<<<16,128,0,*stream>>>();
+    // gpuErrchk(cudaPeekAtLastError());
+    // gpuErrchk(cudaDeviceSynchronize());
 
     setHypercubeConfig(); //work stealing
     allocate_on_host();
@@ -142,7 +145,7 @@ gpubb::initFullInterval()
 	state_h[0] = -1;
 
     copyH2D_update();
-    // affiche(1);
+    affiche(1);
 }
 
 void
@@ -579,12 +582,6 @@ gpubb::steal_in_device(int iter)
     clock_gettime(CLOCK_MONOTONIC,&startt);
 
     adapt_workstealing(2, nbIVM / 8);
-
-    test_kernel<<<(nbIVM / PERBLOCK), (32 * PERBLOCK), 0, stream[0]>>>();
-#ifndef NDEBUG
-    gpuErrchk(cudaPeekAtLastError());
-    gpuErrchk(cudaDeviceSynchronize());
-#endif
 
     computeLength <<< (nbIVM / PERBLOCK), (32 * PERBLOCK)>>>(pos_d, end_d, length_d, state_d, sumLength_d);
     // computeLength << < (nbIVM / PERBLOCK), (32 * PERBLOCK)>> >(pos_d, end_d, length_d, state_d, sumLength_d);

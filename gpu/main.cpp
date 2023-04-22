@@ -58,7 +58,7 @@ main(int argc, char ** argv)
     int device,count;
     cudaGetDeviceCount(&count);
     cudaGetDevice(&device);
-    printf(" === Device %d/%d ==\n", device+1, count);
+    printf(" === Device %d/%d ==\n", device, count);
 
     cudaDeviceSetCacheConfig(cudaFuncCachePreferShared);
 
