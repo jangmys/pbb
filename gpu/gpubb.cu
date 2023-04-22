@@ -1289,7 +1289,7 @@ gpubb::initFromFac(const int nbint, const int* ids, int*pos, int* end)
 
     const int blocksize = 128;
 	dim3 blks((nbIVM * 32 + blocksize) / blocksize);
-	setRoot <<< blks, blocksize, 0, stream >> > (mat_d, dir_d);
+	setRoot <<< blks, blocksize, 0, stream[0] >> > (mat_d, dir_d);
     gpuErrchk(cudaPeekAtLastError());
     gpuErrchk(cudaDeviceSynchronize());
 
