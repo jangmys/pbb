@@ -134,7 +134,7 @@ public:
     bool decode(const int NN);
     bool weakBound(const int NN, const int best);
 
-    void buildMapping();
+    void buildMapping(int best);
 
     void allocate_on_host();
     void allocate_on_device();

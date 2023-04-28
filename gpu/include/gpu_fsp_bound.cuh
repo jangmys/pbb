@@ -1114,13 +1114,13 @@ boundRoot(int *mat, int *dir, int *line, int *costsBE_d, int *sums_d, const int 
     int d=0; //default
     switch(branchingMode){
     case 1:{
-        d=tile_branchMaxSum(tile32, mat, costsBE_d, dir, line[0]);
+        d=tile_branchMaxSum<32>(tile32, mat, costsBE_d, line[0]);
         break;}
     case 2:{
-        d=tile_branchMinMin(tile32, mat, costsBE_d, dir, line[0]);
+        d=tile_branchMinMin<32>(tile32, mat, costsBE_d, dir, line[0]);
         break;}
     case 3:{
-        d=tile_MinBranch(tile32, mat, costsBE_d, dir, line[0],best);
+        d=tile_MinBranch<32>(tile32, mat, costsBE_d, dir, line[0],best);
         break;}
     }
 

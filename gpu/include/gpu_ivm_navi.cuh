@@ -390,9 +390,17 @@ tile_prune(thread_block_tile<tile_size> g, int * jm_row, const int * costs, cons
 }
 
 // ==================================================
+//input:
+//line : search depth
+//costs[2*N] : begin/end lower bounds ; cost[job] == LB when appending job to front ; cost[size_d+job] == LB when prepend to end ; assumed to be == 0 for already scheduled jobs
+
+//return 1 iff sum(cost[0:size-1]) < sum(cost[size:2*size-1])
+//return 0 else
+//
+//only thread 0 returns correct value
 template <unsigned tile_size>
 inline __device__ int
-tile_branchMaxSum(thread_block_tile<tile_size> g, const int * jm_row, const int * costs, int * dir, const int line)
+tile_branchMaxSum(thread_block_tile<tile_size> g, const int * jm_row, const int * costs, const int line)
 {
     int lane = g.thread_rank();
     int job;
@@ -400,8 +408,12 @@ tile_branchMaxSum(thread_block_tile<tile_size> g, const int * jm_row, const int 
     int val   = 0;
 
     //compute sum(begin-end)
+    //(full warp must be active in tile_sum
     for (int i = 0; i <= (size_d / tile_size); i++) {
         delta = 0;
+        // if(i * tile_size + lane < size_d){
+        //     delta = costs[i * tile_size + lane] - costs[size_d + i * tile_size + lane];
+        // }
         if (i * tile_size + lane < size_d - line) {
             job   = jm_row[i * tile_size + lane];
             delta = costs[job] - costs[size_d + job];
@@ -412,12 +424,7 @@ tile_branchMaxSum(thread_block_tile<tile_size> g, const int * jm_row, const int 
     }
 
     //val = sum(delta) < 0  <==>  cost(begin) < cost(end)
-    if (lane == 0)
-        dir[line] = (val < 0) ? 1 : 0;
-
-    g.sync();
-
-    return dir[line];
+    return (val < 0) ? 1 : 0;
 }
 
 template <unsigned tile_size>
@@ -508,7 +515,7 @@ tile_MinBranch(thread_block_tile<tile_size> g, const int * jm_row, const int * c
 
     //break tie
     if(p0 == p1){
-        dir[line] = tile_branchMaxSum(g, jm_row, costs, dir, line);
+        dir[line] = tile_branchMaxSum(g, jm_row, costs, line);
     }
 
     return dir[line];
