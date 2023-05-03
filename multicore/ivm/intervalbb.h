@@ -75,7 +75,6 @@ public:
 
         int dir = this->branch->pre_bound_choice(this->IVM->getDepth());
 
-
         if(dir<0){
             //get bounds for both children sets using incremental evaluator
             this->primary_bound->boundChildren(
@@ -107,12 +106,14 @@ public:
         //branching direction was selected
         this->IVM->setDirection(dir);
 
+        // std::cout<<"refine bounds\n";
+
         //now refine bounds
         //mark all subproblems not pruned by first bound
         std::vector<bool>mask(this->size,false);
         for (int i = _subpb.limit1 + 1; i < _subpb.limit2; i++) {
             int job = _subpb.schedule[i];
-            // std::cout<<lb[dir][job]<<" "<<this->prune->local_best<<" "<<(*this->prune)(lb[dir][job])<<"\n";
+            // std::cout<<job<<" "<<lb[dir][job]<<" "<<this->prune->local_best<<" "<<(*this->prune)(lb[dir][job])<<"\n";
             if(!(*this->prune)(lb[dir][job])){
                 mask[job] = true;
             }
@@ -129,6 +130,7 @@ public:
                     prio[Branching::Front][job]=costs[1];
                     std::swap(_subpb.schedule[_subpb.limit1 + 1], _subpb.schedule[i]);
                 }
+                // std::cout<<job<<"\t\t"<<lb[dir][job]<<" "<<this->prune->local_best<<" "<<(*this->prune)(lb[dir][job])<<"\n";
             }
         }else{
             int costs[2];
@@ -136,11 +138,12 @@ public:
                 int job = _subpb.schedule[i];
                 if(mask[job]){
                     std::swap(_subpb.schedule[_subpb.limit2 - 1], _subpb.schedule[i]);
-                this->secondary_bound->bornes_calculer(_subpb.schedule.data(), _subpb.limit1, _subpb.limit2-1, costs, this->prune->local_best);
+                    this->secondary_bound->bornes_calculer(_subpb.schedule.data(), _subpb.limit1, _subpb.limit2-1, costs, this->prune->local_best);
                     lb[Branching::Back][job] = costs[0];
                     prio[Branching::Back][job]=costs[1];
                     std::swap(_subpb.schedule[_subpb.limit2 - 1], _subpb.schedule[i]);
                 }
+                // std::cout<<job<<"\t\t"<<lb[dir][job]<<" "<<this->prune->local_best<<" "<<(*this->prune)(lb[dir][job])<<"\n";
             }
         }
 

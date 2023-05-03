@@ -8,14 +8,6 @@ Poolbb::Poolbb(pbab* _pbb) :
     pool(std::make_unique<Pool>(_pbb->size)),
     pbsize(_pbb->size)
     {
-        //default operators (see make_ll_algo.h for options)
-        // prune = std::make_unique<keepSmaller>(_pbb->best_found.initial_cost);
-        // branch = std::make_unique<minMinBranching>(pbsize,_pbb->best_found.initial_cost);
-        // set_bound(
-        //     _pbb->bound_factory->make_bound(_pbb->inst,0)
-        // );
-        // primary_bound = _pbb->bound_factory->make_bound(_pbb->inst,0);
-
         _pbb->best_found.getBest(prune->local_best);
         std::cout<<"initial UB\t"<<prune->local_best<<"\n";
 

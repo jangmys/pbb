@@ -197,6 +197,10 @@ arguments::parse_arguments(int argc, char ** argv)
                 if(strcmp(long_options[option_index].name,"bound") == 0)
                 {
                     boundMode = atoi(optarg);
+                    if(boundMode==2){
+                        primary_bound = 0;
+                        secondary_bound = 1;
+                    }
                 }
                 else if(strcmp(long_options[option_index].name,"branch")  == 0)
                 {

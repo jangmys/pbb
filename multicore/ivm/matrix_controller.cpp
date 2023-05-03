@@ -184,7 +184,7 @@ matrix_controller::explore_multicore()
 
         if (allEnd.load(std::memory_order_relaxed)) {
             break;
-        }else if (!ivmbb[id]->next()){
+        }else if (!ivmbb[id]->next()){ //WORK IS DONE HERE !!!!
             request_work(id);
             thd_data[id]->has_work.store(ivmbb[id]->get_ivm()->beforeEnd());
         }else{

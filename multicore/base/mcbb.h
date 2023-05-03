@@ -16,6 +16,7 @@ public:
         //default
         prune = std::make_unique<keepSmaller>(_pbb->best_found.initial_cost);
         branch = std::make_unique<minMinBranching>(_pbb->size,_pbb->best_found.initial_cost);
+        //TODO : default bound?
     }
 
     virtual ~MCbb(){};
@@ -44,13 +45,14 @@ public:
         prune=std::move(_prune);
     }
 
-    void set_bound(std::unique_ptr<bound_abstract<T>> _bound, const int _bound_choice = 0)
+    void set_primary_bound(std::unique_ptr<bound_abstract<T>> _bound)
     {
-        if(_bound_choice == 0){
-            primary_bound = std::move(_bound);
-        }else{
-            secondary_bound = std::move(_bound);
-        }
+        primary_bound = std::move(_bound);
+    }
+
+    void set_secondary_bound(std::unique_ptr<bound_abstract<T>> _bound)
+    {
+        secondary_bound = std::move(_bound);
     }
 
 protected:

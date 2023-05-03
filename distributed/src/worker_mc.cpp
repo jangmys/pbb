@@ -22,13 +22,6 @@
 #include "../../multicore/base/thread_controller.h"
 #include "../../multicore/ivm/matrix_controller.h"
 
-
-// void
-// worker_mc::interrupt()
-// {
-//     mc->interruptExploration();
-// }
-
 bool
 worker_mc::doWork()
 {

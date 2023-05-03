@@ -76,14 +76,6 @@ main(int argc, char ** argv)
     // pbb->set_instance(
     //     pbb_instance::make_instance(arguments::problem, arguments::inst_name)
     // );
-    if(myrank==0){
-        std::cout<<"\t#Problem:\t\t"<<arguments::problem<<" / Instance"<<arguments::inst_name<<"\n";
-        std::cout<<"\t#ProblemSize:\t\t"<<pbb->size<<"\n"<<std::endl;
-
-        std::cout<<"\t#Worker type:\t\t"<<arguments::worker_type<<std::endl;
-        std::cout<<"\t#Bounding mode:\t\t"<<arguments::boundMode<<std::endl;
-    }
-
 
     //MAKE INITIAL SOLUTION (rank 0 --> could run multiple and min-reduce...)
     if(myrank==0){
@@ -123,27 +115,22 @@ main(int argc, char ** argv)
         // pbb->best_found.initial_cost = pbb->sltn->cost;
     }
 
-    //LOWER BOUND
-    // if(arguments::problem[0]=='f'){
-    //     pbb->set_bound_factory(std::make_unique<BoundFactory>(arguments::earlyStopJohnson,arguments::johnsonPairs));
-    // }else if(arguments::problem[0]=='d'){
-    //     pbb->set_bound_factory(std::make_unique<DummyBoundFactory>());
-    // }
-    //
-    // //PRUNING
-    // if(arguments::findAll){
-    //     pbb->choose_pruning(pbab::prune_greater);
-    // }else{
-    //     pbb->choose_pruning(pbab::prune_greater_equal);
-    // }
-    //
-    // //BRANCHING
-    // std::cout<<"Rank "<<myrank<<" Branching:\t"<<arguments::branchingMode<<" "<<pbb->best_found.initial_cost<<std::endl;
-    // pbb->set_branching_factory(std::make_unique<PFSPBranchingFactory>(
-    //     arguments::branchingMode,
-    //     pbb->size,
-    //     pbb->best_found.initial_cost
-    // ));
+    //--------------------------Summary--------------------------
+    if(myrank==0){
+        std::cout<<"\t#Problem:\t\t"<<arguments::problem<<" / Instance "<<arguments::inst_name<<"\n";
+        std::cout<<"\t#ProblemSize:\t\t"<<pbb->size<<"\n"<<std::endl;
+
+        std::cout<<"\t#Worker type:\t\t"<<arguments::worker_type<<std::endl;
+        std::cout<<"\t#GPU workers:\t\t"<<arguments::nbivms_gpu<<std::endl;
+        std::cout<<"\t#Bounding mode:\t\t"<<arguments::boundMode<<std::endl;
+        if(arguments::primary_bound == 1 || (arguments::boundMode == 2 && arguments::secondary_bound == 1))
+        {
+            std::cout<<"\t\t#Johnson Pairs:\t\t"<<arguments::johnsonPairs<<std::endl;
+            std::cout<<"\t\t#Early Exit:\t\t"<<arguments::earlyStopJohnson<<std::endl;
+        }
+        std::cout<<"\t#Branching:\t\t"<<arguments::branchingMode<<std::endl;
+        std::cout<<"\t#Initial solution\n"<<pbb->best_found;
+    }
 
     if(!arguments::increaseInitialUB)
     {
