@@ -292,6 +292,19 @@ ivm::decodeIVM()
     node.limit2 = l2;
 } // prepareSchedule
 
+
+void reverse_order(int* jobs, int line, int size)
+{
+    int i1=0;
+    int i2=size-line-1;
+    while(i1<i2){
+        std::swap(jobs[i1], jobs[i2]);
+        i1++; i2--;
+    }
+}
+
+
+
 template<typename T>
 void ivm::sortSiblingNodes(std::vector<T> lb,std::vector<T> prio)
 {
@@ -304,13 +317,7 @@ void ivm::sortSiblingNodes(std::vector<T> lb,std::vector<T> prio)
             int prev_dir=(_line>0)?dirVect[_line-1]:0;
             if(prev_dir!=dirVect[_line])
             {
-                // std::cout<<"line "<<_line<<" dir "<<IVM->dirVect[_line]<<" reverse\n";
-                int i1=0;
-                int i2=size-_line-1;
-                while(i1<i2){
-                    std::swap(jm[i1], jm[i2]);
-                    i1++; i2--;
-                }
+                reverse_order(jm,_line,size);
             }
             if(prev_dir==1 && dirVect[_line]==0){
                 for (int l = 0; l < size - _line; l++){

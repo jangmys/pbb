@@ -13,6 +13,9 @@ Interval (IVM)-based BB
 
 #include "libbounds.h"
 
+//base class for interval-based CPU-BB
+//inherits from MCbb (DS-agnostic)
+//child classes override boundAndKeepSurvivors (decomposition method)
 template<typename T>
 class Intervalbb : public MCbb<T>{
 public:
@@ -54,6 +57,7 @@ public:
         get_ivm()->getInterval(pos, end);
     }
 
+    bool print_new_solutions = false;
 protected:
     pbab* pbb;
     int size;

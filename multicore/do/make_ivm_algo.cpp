@@ -3,6 +3,7 @@
 
 #include "make_ivm_algo.h"
 
+//factory for interval-based CPU-BB : build and configure CPU-BB according to arguments
 template<typename T>
 std::shared_ptr<Intervalbb<T>> make_ivmbb(pbab* pbb)
 {
@@ -22,6 +23,8 @@ std::shared_ptr<Intervalbb<T>> make_ivmbb(pbab* pbb)
 
     bb->set_prune( make_prune_ptr<int>(pbb) );
     bb->set_branch( make_branch_ptr<int>(pbb) );
+
+    bb->print_new_solutions = arguments::printSolutions;
 
     return bb;
 }

@@ -231,7 +231,7 @@ Intervalbb<T>::boundLeaf(subproblem& node)
         pbb->best_found.foundNewSolution.store(true);
 
         //print new best solution
-        if(arguments::printSolutions){
+        if(print_new_solutions){
             subproblem tmp(node);
             tmp.set_fitness(cost);
             tmp.set_lower_bound(cost);
