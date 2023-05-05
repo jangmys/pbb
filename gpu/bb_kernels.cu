@@ -37,7 +37,7 @@ __global__ void test_kernel(){
 
 
 /*
- * countNodes_d : count decomposed nodes
+ * count : count decomposed nodes
  * counter_d : count current states
  */
 // template <typename T>
@@ -141,6 +141,7 @@ goToNext2(int * jobMats_d, int * posVecs_d, int * endVecs_d, int * dirVecs_d, in
     int warpID = threadIdx.x / g.size();
 
     //shared memory...... pos,end,state,line
+    //======================================================
     extern __shared__ int shar[];
     int * pv = shar;
     int * ev  = (int *) &pv[NN * size_d];
@@ -164,24 +165,29 @@ goToNext2(int * jobMats_d, int * posVecs_d, int * endVecs_d, int * dirVecs_d, in
 
     // pointers to IVM (just to compute less indices)
     g.sync();
-    //=====================================
     int * jm   = jobMats_d + ivm * size_d * size_d; // global mem matrix
+    //======================================================
 
     // initializing IVM
+    //======================================================
     if (state[warpID] < 0)
         initStep(g,jm,pv,dirVecs_d + ivm * size_d,line[warpID],state[warpID]);
     g.sync();
+    //======================================================
+
+    // exploring IVM
+    //======================================================
     if (state[warpID] > 0) {
         exploreStep(g,jm,pv,ev,line[warpID],state[warpID]);
         g.sync();
         if (state[warpID] == 1) {
-            count[ivm]++;//per IVM counter
             for (int i = g.thread_rank(); i< size_d; i += g.size()){
                 assert(line[warpID] < size_d - 1);
                 parallelGoDown(jm, pv, line[warpID], i, ivm);
             }
             g.sync();
             if (g.thread_rank() == 0){
+                count[ivm]+=1;//per IVM counter
                 atomicInc(&countNodes_d, INT_MAX);//atomic global counter
                 line[warpID]++;
             }

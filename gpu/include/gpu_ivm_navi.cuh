@@ -21,7 +21,7 @@ isSmaller(const T * fac1, const T * fac2)
 }
 
 // __________________________________________________________
-// true if (posVec <= endVec)
+// true iff (posVec <= endVec)
 template <typename T>
 inline __device__ bool
 beforeEnd(const T * posVecs_d, const T * endVecs_d)
@@ -53,7 +53,9 @@ beforeEndPart(const T * posVecs_d, const T * endVecs_d,const int l)
             return false;
         }
     }
-    	return false;
+
+    //==========equality==========
+    return false;
     // return true;
 }
 
