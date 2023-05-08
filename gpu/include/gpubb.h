@@ -116,7 +116,7 @@ public:
     bool startclock;
     bool firstbound;
 
-    //for _FSP_
+    //for flowshop
     int * front_h, * front_d;
     int * back_h, * back_d;
     void initializeBoundFSP();

@@ -6,7 +6,7 @@
 #include "work.h"
 #include "master.h"
 
-//===============================================================
+//copy constructor
 work::work(const work& w)
 {
     size = w.size;// ?
@@ -22,6 +22,7 @@ work::work(const work& w)
     Uinterval = w.Uinterval;
 }
 
+//default constructor
 work::work(){
     if (!isEmpty()) Uinterval.clear();
 
@@ -32,15 +33,16 @@ work::work(){
     size = 0;
 }
 
+//construct from stream
 work::work(std::istream& stream)
 {
     stream >> *this;
 }
 
 work::~work(){ }
-//===============================================================
 
-
+//====================== I/O =========================================
+//write to file and return number of bytes written
 size_t
 work::writeToFile(FILE * bp)
 {
@@ -49,41 +51,43 @@ work::writeToFile(FILE * bp)
 
     //work ID
     err = fwrite(&id, sizeof(int), 1, bp);
-    if (!err) { printf("write: id\n"); exit(-1); }
+    if (!err) { printf("work write error: id\n"); exit(-1); }
     size += sizeof(int);
 
     // how many intervals?
     int num_intervals = Uinterval.size();
     err = fwrite(&num_intervals, sizeof(int), 1, bp);
-    if (!err) { printf("write: unknown number of intervals\n"); exit(-1); }
+    if (!err) { printf("work write error: number of intervals\n"); exit(-1); }
     size += sizeof(int);
 
     // how many intervals MAX?
     err = fwrite(&max_intervals, sizeof(int), 1, bp);
-    if (!err) { printf("write: unknown number of intervals\n"); exit(-1); }
+    if (!err) { printf("work write error: max number of intervals\n"); exit(-1); }
     size += sizeof(int);
 
     // write out intervals
     for (INTERVAL_IT it = Uinterval.begin(); it != Uinterval.end(); ++it) {
         err = fwrite(&(*it)->id, sizeof(int), 1, bp);
         if (!err) {
-            printf("write:unidentified interval\n");
+            printf("work write error: interval id\n");
             exit(-1);
         } else {
             size += sizeof(int); // id
         }
-        size += mpz_out_raw(bp, ((*it)->begin).get_mpz_t());
-        size += mpz_out_raw(bp, ((*it)->end).get_mpz_t());
+        auto sz = mpz_out_raw(bp, ((*it)->begin).get_mpz_t());
+        if (!sz) { printf("work write error: begin\n"); exit(-1); }
+        size += sz;
 
+        sz = mpz_out_raw(bp, ((*it)->end).get_mpz_t());
+        if (!sz) { printf("work write error: end\n"); exit(-1); }
+        size += sz;
         k++;
     }
 
-    if (k != num_intervals) { printf("write:wrong interval count\n"); exit(-1); }
+    if (k != num_intervals) { printf("work write error: wrong interval count\n"); exit(-1); }
 
     return size;
-} // work::writeToFile
-
-// brief: read work from buffer
+}
 
 bool
 intervalSmaller(const std::shared_ptr<interval> &A, const std::shared_ptr<interval> &B)
@@ -91,14 +95,14 @@ intervalSmaller(const std::shared_ptr<interval> &A, const std::shared_ptr<interv
     return (A->begin < B->begin);
 }
 
+//sort intervals in increasing order of [begin;]
 void
 work::sortIntervals()
 {
     std::sort(Uinterval.begin(), Uinterval.end(), intervalSmaller);
 }
 
-//====================================
-//===========================================================
+
 void
 work::clear()
 {
@@ -109,6 +113,7 @@ work::clear()
     if (!isEmpty()) Uinterval.clear();
 }
 
+//set size to sum of interval-lengths
 void
 work::set_size()
 {
@@ -122,6 +127,7 @@ work::set_size()
     }
 }
 
+//set id
 static int id_generator = 0;
 void
 work::set_id()
@@ -188,35 +194,28 @@ work::intersection(const std::shared_ptr<work>& w)
     return intersected;
 } // work::intersection
 
-//
+//returns a new work by taking the first max(take_max,size) intervals
 std::shared_ptr<work>
-work::take(int max){
-    // a new work
-    std::shared_ptr<work> tmp(new work());
+work::take(int take_max){
+    auto tmp = std::make_shared<work>();
 
-    if(Uinterval.size()<(unsigned)max){printf("impossible\n");return tmp;}
-
-//    tmp->set_id();
+    if(Uinterval.size()<(unsigned)take_max){printf("impossible\n");return tmp;}
 
     int i=0;
-    while(i<max && Uinterval.size()>0){
+    while(i<take_max && Uinterval.size()>0){
         (Uinterval.back())->id=i++;
         (tmp->Uinterval).push_back(Uinterval.back());
-        // }
         Uinterval.pop_back();
     }
-//    insert((tmp->Uinterval).end(),
-//                make_move_iterator(Uinterval.begin()),
-//                make_move_iterator(Uinterval.at(max-1)));
 
     return tmp;
 }
 
 
-// divide up to #max intervals (split)
+// returns a new work by splitting up #max intervals (split)
 std::shared_ptr<work> work::divide(int max)
 {
-    std::shared_ptr<work> tmp(new work());     // a new empty work
+    auto tmp = std::make_shared<work>();
     tmp->set_id(); //with an ID
 
     if (isEmpty()) return tmp; //nothing to get
@@ -244,7 +243,7 @@ std::shared_ptr<work> work::divide(int max)
             std::cout << "invalid interval\n" << std::flush; continue;
         }
 
-        (tmp->Uinterval).emplace_back(new interval(coupe+1, it->end, nb_stolen));
+        (tmp->Uinterval).emplace_back(std::make_shared<interval>(coupe+1, it->end, nb_stolen));
         it->end = coupe;
 
         nb_stolen++;
@@ -257,8 +256,6 @@ std::shared_ptr<work> work::divide(int max)
 void
 work::split(size_t n)
 {
-    //	std::cout<<Uinterval.size()<<" ";
-
     size_t nb    = Uinterval.size();
     size_t ratio = n / nb;
 
@@ -283,12 +280,12 @@ work::split(size_t n)
     for (INTERVAL_IT it = Uinterval.begin(); it != Uinterval.end(); it++) {
         len  = (*it)->length();
         part = len / ratio;
-        result.emplace_back(new interval((*it)->begin, (*it)->begin + part, newid++));
+        result.emplace_back(std::make_shared<interval>((*it)->begin, (*it)->begin + part, newid++));
         unsigned int i;
         for (i = 1; i < ratio-1; i++) {
-            result.emplace_back(new interval((*it)->begin + i * part +1, (*it)->begin + (i + 1) * part, newid++));
+            result.emplace_back(std::make_shared<interval>((*it)->begin + i * part +1, (*it)->begin + (i + 1) * part, newid++));
         }
-        result.emplace_back(new interval((*it)->begin + (ratio-1) * part+1, (*it)->end, newid++));
+        result.emplace_back(std::make_shared<interval>((*it)->begin + (ratio-1) * part+1, (*it)->end, newid++));
     }
 
     Uinterval = std::move(result);
@@ -332,20 +329,16 @@ work::split2(size_t n)
 
         // std::cout<<e-b<<std::endl;
 
-        result.emplace_back(new interval(b, e, newid++));
+        result.emplace_back(std::make_shared<interval>(b, e, newid++));
 
         unsigned int i;
         for (i = 1; i < ratio-1; i++) {
             e=b;
             b=5*(*it)->begin/100+95*e/100;
 
-            // std::cout<<i<<" "<<e-b<<std::endl;
-
-            //((*it)->begin+e)/2;
-
             if(e-b<3628800)break;
 
-            result.emplace_back(new interval(b,e, newid++));
+            result.emplace_back(std::make_shared<interval>(b,e, newid++));
         }
 
         result.emplace_back(new interval((*it)->begin, b, newid++));
