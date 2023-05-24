@@ -1,6 +1,9 @@
 #define PERBLOCK 4 // warps per block
 #define TILE_SZ 32 // tile size
 
+#define MAXJOBS 800
+
+
 #include <cuda.h>
 #include <cuda_runtime.h>
 #include <cuda_runtime_api.h>
@@ -170,8 +173,12 @@ goToNext2(int * jobMats_d, int * posVecs_d, int * endVecs_d, int * dirVecs_d, in
 
     // initializing IVM
     //======================================================
-    if (state[warpID] < 0)
-        initStep(g,jm,pv,dirVecs_d + ivm * size_d,line[warpID],state[warpID]);
+    if (state[warpID] < 0){
+        int ret = initStep(g,jm,pv,dirVecs_d + ivm * size_d,line[warpID],state[warpID]);
+        if (g.thread_rank() == 0){
+            count[ivm]+=ret;
+        }
+    }
     g.sync();
     //======================================================
 
@@ -213,6 +220,7 @@ goToNext2(int * jobMats_d, int * posVecs_d, int * endVecs_d, int * dirVecs_d, in
     line_d[ivm]  = line[warpID];
 }
 
+#ifdef FSP
 template<unsigned NN>
 __global__ void
 multistep_triggered(int * jobMats_d, int * posVecs_d, int * endVecs_d, int * dirVecs_d, int * line_d, int * state_d, unsigned long long int * count, unsigned int * counter_d, int *schedule_d, int* lim1_d, int*lim2_d, int*costsBE_d, int *flagLeaf, const int best,const int initialUB)
@@ -368,6 +376,7 @@ multistep_triggered(int * jobMats_d, int * posVecs_d, int * endVecs_d, int * dir
     state_d[ivm] = state[warpID];
     line_d[ivm]  = line[warpID];
 }
+#endif
 
 /*decode IVMs using one warp (thread_block_tile) per IVM
 

@@ -27,13 +27,8 @@ main(int argc, char ** argv)
     arguments::singleNode=true;
     arguments::worker_type='g';
 
-
-    pbab * pbb = new pbab(        pbb_instance::make_inst(arguments::problem, arguments::inst_name));
-
     //------------------SET INSTANCE----------------------
-    // pbb->set_instance(
-    //     pbb_instance::make_instance(arguments::problem, arguments::inst_name)
-    // );
+    pbab * pbb = new pbab(        pbb_instance::make_inst(arguments::problem, arguments::inst_name));
 
     pbb->set_initial_solution();
 
@@ -60,13 +55,11 @@ main(int argc, char ** argv)
     cudaGetDevice(&device);
     printf(" === Device %d/%d ==\n", device, count);
 
-    printf("bound mode:\t %d", arguments::boundMode);
-    printf("branch mode:\t %d", arguments::branchingMode);
-
     cudaDeviceSetCacheConfig(cudaFuncCachePreferShared);
 
     gpubb* gbb = new gpubb(pbb);//%numDevices);
     gbb->initialize(0);// allocate IVM on host/device
+
 #ifdef FSP
     gbb->initializeBoundFSP();
 #endif
@@ -75,6 +68,7 @@ main(int argc, char ** argv)
 #endif
     gbb->copyH2D();
     gbb->initFullInterval();
+    printf(" === initialized ==\n");
     gbb->next();
     gbb->getStats();
 

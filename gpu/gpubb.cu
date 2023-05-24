@@ -33,6 +33,8 @@ gpubb::gpubb(pbab * _pbb)
         // bound_fsp_weak *bd=new bound_fsp_weak();
         // bd->init(pbb->instance.get());
         // bound=bd;
+    }else{
+        bound = std::make_unique<bound_dummy>();
     }
 
     // initialUB = INT_MAX;
@@ -108,9 +110,10 @@ gpubb::initFullInterval()
         int best = INT_MAX;
         pbb->best_found.getBest(best);
 		FILE_LOG(logINFO) << "Init Full : Bound Root with UB:\t" << best;
+        FILE_LOG(logINFO) << "Init Full : Root :\t" << pbb->best_found;
+#ifdef FSP
 		FILE_LOG(logINFO) << "Init Full : size:\t" << size << " " << nbMachines_h ;
-		FILE_LOG(logINFO) << "Init Full : Root :\t" << pbb->best_found;
-
+#endif
         int* tmp_state = new int[nbIVM];
         memset(tmp_state,0,nbIVM*sizeof(int));
         tmp_state[0] = 1;
@@ -184,7 +187,6 @@ gpubb::selectAndBranch(const int NN)
 {
     // int best = INT_MAX;
     // pbb->sltn->getBest(best);
-
     gpuErrchk(cudaMemset(counter_d, 0, 6 * sizeof(unsigned int)));
 	//dense mapping : one thread = one IVM
     // goToNext_dense<<< (nbIVM+127) / 128, 128, 0, stream[0] >>>(mat_d, pos_d, end_d, dir_d, line_d, state_d, nbDecomposed_d, counter_d, NN);
@@ -215,16 +217,19 @@ gpubb::launchBBkernel(const int NN)
     gpuErrchk(cudaMemcpyToSymbol(targetNode, &target_h, sizeof(unsigned int)));
     gpuErrchk(cudaMemset(costsBE_d, 999999, 2 * size * nbIVM * sizeof(int)));
 
+#ifdef FSP
     size_t smem = NN * (3*nbMachines_h + 3 * size + 2) * sizeof(int);
     multistep_triggered<4><<< (nbIVM+NN-1) / NN, NN * 32, smem, stream[0] >>>
     (mat_d, pos_d, end_d, dir_d, line_d, state_d, nbDecomposed_d, counter_d, schedule_d, lim1_d, lim2_d,costsBE_d,flagLeaf, best, initialUB);
+#else
+    size_t smem = 0;
+#endif
 
 #ifndef NDEBUG
     gpuErrchk(cudaPeekAtLastError());
     gpuErrchk(cudaDeviceSynchronize());
 #endif
 }
-
 
 bool
 gpubb::allDone()
@@ -323,6 +328,8 @@ gpubb::next()
     int nbsteals = 0;
 	localFoundNew=false;
 
+    // std::cout<<"got best "<<best<<std::endl;
+
     while (true) {
         nbsteals += steal_in_device(iter);
 
@@ -358,6 +365,7 @@ gpubb::next(int& best, int& iter)
         startclock = false;
     }
     bool end = false;
+    // std::cout<<"next "<<iter<<std::endl;
 
     //modify IVM structures to make them point to next subproblem
     selectAndBranch(4);
@@ -380,6 +388,8 @@ gpubb::next(int& best, int& iter)
 	unsigned int target_h=0;
     gpuErrchk(cudaMemcpyFromSymbol(&target_h, targetNode, sizeof(unsigned int)));
     reachedLeaf = (bool) target_h;
+
+    // affiche(1);
 
     boundLeaves(reachedLeaf,best);
 
@@ -654,6 +664,12 @@ gpubb::boundLeaves(bool reached, int& best)
             bool update;
             if(arguments::findAll)update=(cost<=best);
             else update=(cost<best);
+
+            // for(int i=0;i<size;i++){
+            //     std::cout<<schedule_h[k*size+i]<<" ";
+            // }
+            // std::cout<<std::endl;
+
 
             if (update) {
                 best = cost;
@@ -1136,7 +1152,14 @@ gpubb::initializeBoundFSP()
 void
 gpubb::initializeBoundTEST()
 {
-    *(pbb->inst.data) >> size;
+    std::cout<<"init test bound\n";
+    size = pbb->inst.size;
+    std::cout<<"SIZE : "<<size<<"\n";
+
+    // *(pbb->inst.data) >> size;
+    //
+    // std::cout<<"SIZE : "<<size<<"\n";
+
     copyH2DconstantTEST();
 }
 
@@ -1425,9 +1448,12 @@ int gpubb::getDeepSubproblem(int *ret, const int N){
 
     // int smem = (NN * (3*size + nbMachines_h)) * sizeof(int);
 	// xOver_makespans<32><<<(nbIVM+NN-1) / NN, NN * 32, smem, stream>>>(schedule_d, cmax, state_d, bestsol, lim1_d, lim2_d);
+#ifdef FSP
     int smem = (NN * (size + nbMachines_h)) * sizeof(int);
     makespans<32><<<(nbIVM+NN-1) / NN, NN * 32, smem, stream[0]>>>
         (schedule_d, cmax, state_d);
+#endif
+
     gpuErrchk( cudaPeekAtLastError() );
     gpuErrchk( cudaDeviceSynchronize() );
 	cudaFree(bestsol);

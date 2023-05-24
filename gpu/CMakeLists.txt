@@ -13,7 +13,7 @@ if(TARGET dbb)
 
     target_sources(dbb PUBLIC ${CppSources})
 
-    add_definitions(-DFSP)
+    # add_definitions(-DFSP)
 
     target_include_directories(dbb PUBLIC ${PARENT_DIR}/gpu)
     target_include_directories(dbb PUBLIC ${PARENT_DIR}/gpu/include)
@@ -31,7 +31,7 @@ else()
 
     set_property(TARGET Threads::Threads PROPERTY INTERFACE_COMPILE_OPTIONS $<$<COMPILE_LANGUAGE:CUDA>:-Xcompiler -pthread> $<$<NOT:$<COMPILE_LANGUAGE:CUDA>>:-pthread>)
 
-    add_definitions(-DFSP)
+    # add_definitions(-DFSP)
 
     add_subdirectory(${PARENT_DIR}/common/src ./build_common_gpu)
 
@@ -54,4 +54,11 @@ else()
 #    target_link_libraries(gpubb PUBLIC ${PARENT_DIR}/evaluation/build/libbounds.a)
     target_link_libraries(gpubb PUBLIC bounds)
     target_link_libraries(gpubb PUBLIC fspHeuristic)
+endif()
+
+add_definitions(-DFSP)
+
+if(ENUM)
+    remove_definitions(-DFSP)
+    add_definitions(-DTEST)
 endif()

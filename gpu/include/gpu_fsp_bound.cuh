@@ -7,12 +7,7 @@
 #define MAXSOMME 780 //M*(M-1)/2
 
 #define TILE_SZ 32
-#define MAXJOBS 800
 
-__device__ unsigned int _trigger;
-
-__device__ int root_d[MAXJOBS];
-__device__ int root_dir_d;
 
 // constant GPU data
 __device__ __constant__ int _nbMachines;

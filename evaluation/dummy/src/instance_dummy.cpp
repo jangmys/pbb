@@ -11,7 +11,9 @@ instance_dummy::instance_dummy(const char * inst_name){
     auto nbJob = std::stoi(s);
     size = nbJob;
 
-    std::cout<<nbJob<<"\n";
+    *data << size; 
+
+    std::cout<<"dummy instance : "<<nbJob<<"\n";
 }
 
 instance_dummy::~instance_dummy()

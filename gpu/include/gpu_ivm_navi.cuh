@@ -55,8 +55,8 @@ beforeEndPart(const T * posVecs_d, const T * endVecs_d,const int l)
     }
 
     //==========equality==========
-    return false;
-    // return true;
+    // return false;
+    return true;
 }
 
 
@@ -524,7 +524,7 @@ tile_MinBranch(thread_block_tile<tile_size> g, const int * jm_row, const int * c
 }
 
 template <unsigned tile_size>
-__device__ void
+__device__ int
 initStep(thread_block_tile<tile_size> g, int *jm, int *pv, int *dv, int &line, int &state)
 {
     int * mat_ptr = jm + line * size_d + *(pv + line);
@@ -534,13 +534,16 @@ initStep(thread_block_tile<tile_size> g, int *jm, int *pv, int *dv, int &line, i
         for(int i=line+1+g.thread_rank();i<size_d;i+=g.size()){
             pv[i] = 0;
         }
+        return 0;
     }else{
         if (g.thread_rank() == 0) {
             if (line < size_d - 2) {
                 line++;
                 generateLine2(jm, pv, dv, line, state);
+                return 1;
             } else {
                 state = 1;
+                return 0;
             }
         } // end sequential
     }
@@ -561,11 +564,16 @@ exploreStep(thread_block_tile<tile_size> g, int *jm, int *pv, int *ev, int &line
         int end = ev[l];
 
         state = 0;
+        // printf("pv < end? %d <= %d\n",pv[l],end);
 
         while (pv[l] <= end) {              // approx check for (pos < end ?)
             //END OF LINE
             if (*pos >= (size_d - line)) {
-                if (line == 0) break;      // cannot go up -> interval empty
+                if (line == 0){
+                    // printf("x");
+                    break;      // cannot go up -> interval empty
+                }
+                // printf("u");
                 *pos = 0;
                 line--;                                // aka goUp
                 pos--;                                    // update current pos
@@ -574,6 +582,7 @@ exploreStep(thread_block_tile<tile_size> g, int *jm, int *pv, int *ev, int &line
             }
             else if (*mat_ptr < 0) // aka pruningCellState
             {
+                // printf("r");
                 assert(pv[line] < size_d);
                 (*pos)++;  // aka goRight
                 mat_ptr++; // update pos in matrix (next right)
@@ -581,9 +590,11 @@ exploreStep(thread_block_tile<tile_size> g, int *jm, int *pv, int *ev, int &line
                 assert(jm[line * size_d + pv[line]] >= 0);
                 assert(line < size_d - 1);
 
+                // printf("d?");
                 // found a node to bound --- check validity and set flag to "not empty"
                 if (beforeEndPart(pv, ev,l)) {
-                    // atomicInc(&countNodes_d, INT_MAX);//atomic global counter
+                    // printf("D");
+                    atomicInc(&countNodes_d, INT_MAX);//atomic global counter
                     // count[ivm]++;//per IVM counter
                     state = 1;
                 }
