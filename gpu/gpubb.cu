@@ -186,7 +186,6 @@ gpubb::selectAndBranch(const int NN)
     // pbb->sltn->getBest(best);
 
     gpuErrchk(cudaMemset(counter_d, 0, 6 * sizeof(unsigned int)));
-
 	//dense mapping : one thread = one IVM
     // goToNext_dense<<< (nbIVM+127) / 128, 128, 0, stream[0] >>>(mat_d, pos_d, end_d, dir_d, line_d, state_d, nbDecomposed_d, counter_d, NN);
 
@@ -224,7 +223,6 @@ gpubb::launchBBkernel(const int NN)
     gpuErrchk(cudaPeekAtLastError());
     gpuErrchk(cudaDeviceSynchronize());
 #endif
-    // affiche(1);
 }
 
 
@@ -1174,6 +1172,11 @@ gpubb::getStats()
     std::cout<<"Decomposed :\t"<<gpuDecomposed<<"\n";
     printf("Min\t: %d\n", min);
     printf("Max\t: %d\n", max);
+
+    unsigned int nodeCount;
+    gpuErrchk(cudaMemcpyFromSymbol(&nodeCount, countNodes_d, sizeof(unsigned int)));
+
+    std::cout<<"decomposed : "<<nodeCount<<"\n";
 
 }
 

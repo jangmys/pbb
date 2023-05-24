@@ -555,6 +555,8 @@ exploreStep(thread_block_tile<tile_size> g, int *jm, int *pv, int *ev, int &line
         int l     = 0;          // first split [pos,end]
         while (pv[l] == ev[l] && l < size_d) l++;
 
+        // if(l==size_d-1)printf("aaaaaa\n");
+
         int *pos = pv + line; // current pos
         int end = ev[l];
 
@@ -581,7 +583,7 @@ exploreStep(thread_block_tile<tile_size> g, int *jm, int *pv, int *ev, int &line
 
                 // found a node to bound --- check validity and set flag to "not empty"
                 if (beforeEndPart(pv, ev,l)) {
-                    atomicInc(&countNodes_d, INT_MAX);//atomic global counter
+                    // atomicInc(&countNodes_d, INT_MAX);//atomic global counter
                     // count[ivm]++;//per IVM counter
                     state = 1;
                 }
