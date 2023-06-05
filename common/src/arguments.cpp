@@ -61,7 +61,7 @@ int arguments::timeout  = 99999;
 bool arguments::printSolutions = false;
 char arguments::logfile[50] = "./logfile.txt";
 int arguments::logLevel = logINFO;
-int arguments::gpuverb=100;
+int arguments::gpuverb=0;
 
 //initial search space
 int arguments::initial_work = 3;

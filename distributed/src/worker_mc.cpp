@@ -120,6 +120,8 @@ worker_mc::getIntervals()
     work_buf->nb_decomposed = pbb->stats.totDecomposed;
     work_buf->nb_leaves     = pbb->stats.leaves;
 
+    local_decomposed_count += pbb->stats.totDecomposed;
+
     // dwrk->nb_decomposed      = pbb->stats.totDecomposed;
     // dwrk->nb_leaves           = pbb->stats.leaves;
     pbb->stats.totDecomposed = 0;

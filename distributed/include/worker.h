@@ -18,6 +18,7 @@ public:
     int size;
     int M;
     unsigned nb_heuristic_threads;
+    unsigned long long int local_decomposed_count;
 
     std::unique_ptr<communicator> comm;
     std::shared_ptr<fact_work> work_buf;

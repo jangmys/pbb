@@ -21,7 +21,7 @@
 #include "work.h"
 #include "communicator.h"
 
-worker::worker(pbab * _pbb, unsigned int nbIVM) : pbb(_pbb),size(pbb->size),M(nbIVM),comm(std::make_unique<communicator>(M, size)),
+worker::worker(pbab * _pbb, unsigned int nbIVM) : pbb(_pbb),size(pbb->size),M(nbIVM),local_decomposed_count(0),comm(std::make_unique<communicator>(M, size)),
         work_buf(std::make_shared<fact_work>(M, size))
 {
     dwrk = std::make_shared<work>();
@@ -245,7 +245,9 @@ comm_thread(void * arg)
     }
 
     FILE_LOG(logINFO) << "----------Worker Message Count----------";
-    FILE_LOG(logINFO) <<"Iterations\t"<<nbiter;
+    FILE_LOG(logINFO) <<"CommIterations\t"<<nbiter;
+    FILE_LOG(logINFO) <<"Nodes decomposed\t"<<w->local_decomposed_count;
+
     FILE_LOG(logINFO) <<"WORK\t"<<msg_counter[WORK];
     FILE_LOG(logINFO) <<"NEWWORK\t"<<msg_counter[NEWWORK];
     FILE_LOG(logINFO) <<"BEST\t"<<msg_counter[BEST];
