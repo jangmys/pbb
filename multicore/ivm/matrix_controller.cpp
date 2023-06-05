@@ -35,8 +35,7 @@ matrix_controller::matrix_controller(pbab* _pbb,int _nthreads) : ThreadControlle
 void
 matrix_controller::initFromFac(const unsigned int nbint, const int * ids, int * _pos, int * _end)
 {
-    FILE_LOG(logINFO) << "=== init from factorial ";
-
+    FILE_LOG(logDEBUG) << "=== init from factorial ";
     updatedIntervals=1;
 
     //CLEAR ALL BEFORE REFILL

@@ -44,7 +44,7 @@ void
 worker_mc::updateWorkUnit()
 {
     //INTERSECT IF UPDATE (not new work)?
-    FILE_LOG(logINFO) << "ID "<< dwrk->id << " "<<work_buf->id;
+    FILE_LOG(logDEBUG) << "Update : ID "<< dwrk->id << " "<<work_buf->id;
     //
     // if(dwrk->id == work_buf->id){
     //     pthread_mutex_lock_check(&mutex_wunit);
