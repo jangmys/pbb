@@ -30,8 +30,7 @@ main(int argc, char ** argv)
         exit(-1);
     }
 
-    int nProc;
-    int myrank;
+    int nProc, myrank;
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
     MPI_Comm_size(MPI_COMM_WORLD, &nProc);
 
@@ -71,11 +70,6 @@ main(int argc, char ** argv)
 
 //---------------------Configure B&B---------------------
     pbab* pbb = new pbab(        pbb_instance::make_inst(arguments::problem, arguments::inst_name));
-
-    //SET INSTANCE
-    // pbb->set_instance(
-    //     pbb_instance::make_instance(arguments::problem, arguments::inst_name)
-    // );
 
     //MAKE INITIAL SOLUTION (rank 0 --> could run multiple and min-reduce...)
     if(myrank==0){
@@ -121,7 +115,11 @@ main(int argc, char ** argv)
         std::cout<<"\t#ProblemSize:\t\t"<<pbb->size<<"\n"<<std::endl;
 
         std::cout<<"\t#Worker type:\t\t"<<arguments::worker_type<<std::endl;
-        std::cout<<"\t#GPU workers:\t\t"<<arguments::nbivms_gpu<<std::endl;
+        if(arguments::worker_type=='g')std::cout<<"\t#GPU workers:\t\t"<<arguments::nbivms_gpu<<std::endl;
+        if(arguments::worker_type=='c'){
+            std::cout<<"\t#CPU threads:\t\t"<<arguments::nbivms_mc<<std::endl;
+            std::cout<<"\tCPU work stealing:\t"<<arguments::mc_ws_select<<std::endl;
+        }
         std::cout<<"\t#Bounding mode:\t\t"<<arguments::boundMode<<std::endl;
         if(arguments::primary_bound == 1 || (arguments::boundMode == 2 && arguments::secondary_bound == 1))
         {
