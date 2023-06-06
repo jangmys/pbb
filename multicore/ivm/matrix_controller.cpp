@@ -126,7 +126,9 @@ matrix_controller::explore_multicore()
     int id = explorer_get_new_id();
     FILE_LOG(logDEBUG) << "=== got ID " << id;
 
-    // stick_this_thread_to_core(id);
+    if(!is_distributed()){
+        stick_this_thread_to_core(id);        
+    }
 
     //------check if explorer already exists------
     if(!ivmbb[id]){
