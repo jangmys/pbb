@@ -173,7 +173,8 @@ work::intersection(const std::shared_ptr<work>& w)
             //it and jt overlap
             else if (((*it)->end > (jt)->begin) && ((*it)->begin < (jt)->end)){
                 intersected = true;
-                result.emplace_back(std::make_shared<interval>(intersect(*(*it),*jt)));
+                result.emplace_back(std::make_shared<interval>((*it)->intersection(*jt)));
+                // result.emplace_back(std::make_shared<interval>(intersect(*(*it),*jt)));
 
 
                 // result.emplace_back(new interval(
@@ -508,16 +509,6 @@ operator >> (std::istream& stream, work& w)
     }
     return stream;
 }
-
-work
-intersect(const work& w1, const work& w2)
-{
-    work tmp(w1);
-
-    tmp.intersection(std::make_shared<work>(w2));
-    return tmp;
-}
-
 
 size_t
 work::readFromFile(FILE * bp)

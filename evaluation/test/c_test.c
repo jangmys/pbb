@@ -7,7 +7,10 @@
 
 int main(int argc,char **argv)
 {
-    int inst_id = atoi(argv[1]);
+    int inst_id = 10;
+
+    if(argc>1)
+      inst_id=atoi(argv[1]);
 
     //------------------simple bound------------------
     int N = taillard_get_nb_jobs(inst_id);

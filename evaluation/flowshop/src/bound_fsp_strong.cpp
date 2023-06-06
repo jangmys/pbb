@@ -71,7 +71,6 @@ int
 bound_fsp_strong::borneInfLearn(int *flags, const int *const front, const int* const back, int UB, bool earlyExit)
 {
     const int N = data_lb1->nb_jobs;
-    const int M = data_lb1->nb_machines;
     const int max_pairs = data_lb2->nb_machine_pairs;
 
     // reset periodically...

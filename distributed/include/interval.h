@@ -27,6 +27,14 @@ public:
 
   void operator=(interval& i);
   bool operator==(interval& i) const;
+
+  interval intersection(const interval& other) const
+  {
+      return interval(std::max(begin, other.begin),
+        std::min(end, other.end),other.id
+      );
+  }
+
 };
 
 interval intersect(const interval& a, const interval& b);

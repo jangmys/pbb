@@ -1,8 +1,9 @@
 /*
 ===================================
 Send/Receive routines for work units (sets of intervals)
-
+--------------------------------------------------------
 Author : Jan Gmys (jan.gmys@univ-lille.fr)
+------------------------------------------
 */
 #include "macros.h"
 #include "pbab.h"

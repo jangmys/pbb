@@ -28,8 +28,7 @@ public:
 
     fact_work get_intervals();
     void getIntervals();
-    void getSolutions();
-
+    void getSolutions(int*);
 };
 
 #endif // ifndef WORKER_H

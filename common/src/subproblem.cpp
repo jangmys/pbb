@@ -9,9 +9,6 @@
 #include "../../common/include/misc.h"
 #include "../include/subproblem.h"
 
-#define FWDBR 0
-#define BWDBR 1
-
 subproblem::subproblem(int _size) :
     size(_size),limit1(-1),limit2(_size),
     schedule(std::vector<int>(size))
@@ -52,7 +49,7 @@ subproblem::subproblem(const subproblem& father, int indice, int begin_end)
     limit1 = father.limit1 + 1 - begin_end;
     limit2 = father.limit2 - begin_end;
 
-    if(begin_end == FWDBR)
+    if(begin_end == 0)
 	{
         remove_insert_left(schedule.data(),limit1,indice);
 	}else{

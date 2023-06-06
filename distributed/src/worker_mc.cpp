@@ -166,11 +166,11 @@ worker_mc::get_intervals()
 
 
 void
-worker_mc::getSolutions()
+worker_mc::getSolutions(int* _solutions)
 {
     pthread_mutex_lock_check(&mutex_solutions);
     if(sol_ind_begin >= sol_ind_end){
-        int nb=mc->getSubproblem(solutions,max_sol_ind);
+        int nb=mc->getSubproblem(_solutions,max_sol_ind);
         if(nb>0){
             sol_ind_begin=0;
             sol_ind_end=nb;

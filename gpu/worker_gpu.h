@@ -36,7 +36,7 @@ public:
     getIntervals();
 
     void
-    getSolutions();
+    getSolutions(int*);
 };
 
 #endif // ifndef WORKER_GPU_H

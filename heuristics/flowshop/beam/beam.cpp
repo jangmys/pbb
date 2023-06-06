@@ -21,8 +21,6 @@ Beam::Beam(pbab* _pbb, instance_abstract& inst) :
 int
 Beam::run(const int maxBeamWidth, subproblem* p)
 {
-    int localBest = 999999;
-
     prune->local_best = 999999;
 
     int beamWidth = 1;
@@ -94,15 +92,12 @@ Beam::step_loop_local_pq(unsigned int beamWidth,int localBest){
         std::vector<std::unique_ptr<subproblem>>,
         prio_compare>pq;
 
-
          // auto(*)(std::unique_ptr<subproblem>,std::unique_ptr<subproblem>)->bool > pq{
          //    []( const std::unique_ptr<subproblem> a, const std::unique_ptr<subproblem> b )->bool {
          //        return a->prio < b->prio;
          //    }
          //    };
 //
-    struct timespec t1,t2;
-     clock_gettime(CLOCK_MONOTONIC,&t1);
 
     if(n_parents>0 && activeSet[0]->depth < bestSolution->size-1){
         #pragma omp parallel

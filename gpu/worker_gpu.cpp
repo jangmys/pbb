@@ -63,11 +63,11 @@ worker_gpu::getIntervals()
 }
 
 void
-worker_gpu::getSolutions()
+worker_gpu::getSolutions(int* _solutions)
 {
     pthread_mutex_lock_check(&mutex_solutions);
     if(sol_ind_begin >= sol_ind_end){
-        int nb=gbb->getDeepSubproblem(solutions,max_sol_ind);
+        int nb=gbb->getDeepSubproblem(_solutions,max_sol_ind);
 
         if(nb){
             sol_ind_begin=0;

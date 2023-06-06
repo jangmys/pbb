@@ -21,7 +21,7 @@
 #include "work.h"
 #include "communicator.h"
 
-worker::worker(pbab * _pbb, unsigned int nbIVM) : pbb(_pbb),size(pbb->size),M(nbIVM),local_decomposed_count(0),comm(std::make_unique<communicator>(M, size)),
+worker::worker(pbab * _pbb, unsigned int nbIVM) : pbb(_pbb),size(pbb->size),M(nbIVM),local_decomposed_count(0),comm(std::make_unique<communicator>(size)),
         work_buf(std::make_shared<fact_work>(M, size))
 {
     dwrk = std::make_shared<work>();
@@ -49,9 +49,6 @@ worker::worker(pbab * _pbb, unsigned int nbIVM) : pbb(_pbb),size(pbb->size),M(nb
 
     pthread_cond_init(&cond_updateApplied, NULL);
     pthread_cond_init(&cond_trigger, NULL);
-
-    // local_sol=new solution(pbb->size);
-    // for(int i=0;i<size;i++)local_sol->perm[i]=pbb->best_found.perm[i];
 
     reset();
 }
@@ -356,6 +353,8 @@ heu_thread2(void * arg)
 
     int gbest;
 
+        // solutions=(int*)malloc(max_sol_ind*size*sizeof(int));
+
     while(!w->checkEnd()){
         w->pbb->best_found.getBestSolution(s->schedule.data(),gbest);// lock on pbb->best_found
         int r=intRand(0,100);
@@ -405,19 +404,16 @@ worker::run()
     pthread_create(comm_thd, &attr, comm_thread, (void *) this);
 
     //-------------create heuristic threads-------------
-    int nbHeuThds=nb_heuristic_threads;
     pthread_t heur_thd[100];
-    for(int i=0;i<nbHeuThds;i++)
+    for(size_t i=0;i<nb_heuristic_threads;i++)
     {
         pthread_create(&heur_thd[i], NULL, heu_thread2, (void *) this);
     }
-    FILE_LOG(logDEBUG) << "Created " << nbHeuThds << " heuristic threads.";
-    int workeriter = 0;
+    FILE_LOG(logDEBUG) << "Created " << nb_heuristic_threads << " heuristic threads.";
 
     pthread_barrier_wait(&barrier);// synchronize with communication thread
 
-    // printf("RUN %d\n",M);fflush(stdout);
-
+    int workeriter = 0;
     int count_updates = 0;
 
     // ==========================================
@@ -442,12 +438,10 @@ worker::run()
 
 
         // work is done here... explore intervals(s)
-       bool allEnd = doWork();
-
-        // printf("Rank : %d\n",comm->rank);
+        bool allEnd = doWork();
 
         if(nb_heuristic_threads)
-            getSolutions();
+            getSolutions(solutions);
 
         if(foundNewBest()){
             // std::cout<<"try send best :\t"<<pbb->sltn->cost<<std::endl;

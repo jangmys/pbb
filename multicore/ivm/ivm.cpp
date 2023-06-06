@@ -407,10 +407,9 @@ int ivm::countExplorableSubtrees(const int line)
 // determine the position where to cut the line between the 2 threads
 int ivm::cuttingPosition(const int line, const int division)
 {
-	int nbSubtrees  = endVect[line] - posVect[line];
 	int expSubtrees = countExplorableSubtrees(line);
 
-    assert(expSubtrees <= nbSubtrees);
+    assert(expSubtrees <= (endVect[line] - posVect[line]));
 
 	// victim thread keeps (expSubtrees / division) subtrees plus the one it is
 	// already exploring

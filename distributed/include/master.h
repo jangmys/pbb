@@ -15,22 +15,14 @@
 #include "communicator.h"
 
 class master{
-public:
     pbab* pbb;
-
-    int nProc;
-
-    works* wrks;
-    communicator* comm;
-
-    std::shared_ptr<work> wrk;//(new work(pbb));
-
-    bool globalEnd;
-    bool first;
+    communicator comm;
+    works wrks;
+    std::shared_ptr<work> wrk;
     bool isSharing;
-
+    int nProc;
+public:
     master(pbab* _pbb);
-    ~master();
 
     void reset();
 
