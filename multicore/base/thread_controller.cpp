@@ -29,7 +29,7 @@ void
 ThreadController::counter_decrement()
 {
     end_counter--;
-    FILE_LOG(logDEBUG) << " DECREMENT COUNTER :" << end_counter<<std::flush;
+    // FILE_LOG(logDEBUG) << " DECREMENT COUNTER :" << end_counter<<std::flush;
 }
 
 /* end_counter is atomic*/
@@ -38,11 +38,10 @@ ThreadController::counter_increment(unsigned id)
 {
     end_counter++;
 
-    FILE_LOG(logDEBUG) << "+++ "<<id<<" INCREMENT COUNTER :" << end_counter<<std::flush;
-
+    // FILE_LOG(logDEBUG) << "+++ "<<id<<" INCREMENT COUNTER :" << end_counter<<std::flush;
     if (end_counter.load() == M) {
         allEnd.store(true);
-        FILE_LOG(logDEBUG) << "+++END COUNTER (" << id << ") VAL: " <<end_counter.load()<<"/"<<M<<std::flush;
+        // FILE_LOG(logDEBUG) << "+++END COUNTER (" << id << ") VAL: " <<end_counter.load()<<"/"<<M<<std::flush;
         return true;
     }
 
@@ -74,16 +73,12 @@ ThreadController::pull_request(unsigned id)
 void
 ThreadController::unlock_waiting_thread(unsigned id)
 {
-    FILE_LOG(logDEBUG) << "=== Unlock ("<<id<<")";
-
     //Note: For dependable use of condition variables, and to ensure that you do not lose wake-up operations on condition variables, your application should always use a Boolean predicate and a mutex with the condition variable.
     //https://www.ibm.com/support/knowledgecenter/en/ssw_ibm_i_74/apis/users_76.htm
     pthread_mutex_lock_check(&thd_data[id]->mutex_shared);
     thd_data[id]->received_work.store(true);
     pthread_cond_signal(&thd_data[id]->cond_shared);
     pthread_mutex_unlock(&thd_data[id]->mutex_shared);
-
-    FILE_LOG(logDEBUG) << "=== Unlocked ("<<id<<")";
 }
 
 void
@@ -98,8 +93,6 @@ ThreadController::request_work(unsigned id)
         assert(thief != id);
 
         counter_decrement();
-        FILE_LOG(logDEBUG) << id << " cancel " << thief << " count: "<<end_counter.load();
-
         unlock_waiting_thread(thief);
     }
 
@@ -144,8 +137,6 @@ ThreadController::try_answer_request(unsigned id)
     atom_nb_steals += work_share(id, thief);
 
     counter_decrement();
-    FILE_LOG(logDEBUG) << id << " answer " << thief << " counter: " << end_counter.load() << std::flush;
-
     unlock_waiting_thread(thief);
 
     return ret;
@@ -154,8 +145,6 @@ ThreadController::try_answer_request(unsigned id)
 void
 ThreadController::unlockWaiting(unsigned id)
 {
-    FILE_LOG(logDEBUG) << "=== Unlock all waiting ("<<id<<")";
-
     // unlock threads waiting for work
     for (unsigned i = 0; i < M; i++) {
         if (i == id) continue;
