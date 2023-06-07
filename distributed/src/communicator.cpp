@@ -102,7 +102,7 @@ void communicator::recv_work(std::shared_ptr<work> dst_wrk, int src, int tag, MP
         mpz_inp_raw(src_mpz, fd1);
         tmpe=mpz_class(src_mpz);
 
-        (dst_wrk->Uinterval).emplace_back(new interval(tmpb, tmpe, id));
+        (dst_wrk->Uinterval).emplace_back(std::make_shared<interval>(tmpb, tmpe, id));
     }
 
 

@@ -342,7 +342,8 @@ work::split2(size_t n)
             result.emplace_back(std::make_shared<interval>(b,e, newid++));
         }
 
-        result.emplace_back(new interval((*it)->begin, b, newid++));
+        result.emplace_back(std::make_shared<interval>((*it)->begin, b, newid++));
+        // result.emplace_back(new interval((*it)->begin, b, newid++));
         // len  = (*it)->length();
         // part = len / ratio;
     }
@@ -431,8 +432,8 @@ work::readIntervals(std::istream& stream)
         stream >> iid;
         stream >> bb;
         stream >> ee;
-
-        Uinterval.emplace_back(new interval(bb, ee, iid));
+        Uinterval.emplace_back(std::make_shared<interval>(bb, ee, iid));
+        // Uinterval.emplace_back(new interval(bb, ee, iid));
     }
 
     mpz_class checksz(0);//total size
@@ -556,7 +557,7 @@ work::readFromFile(FILE * bp)
         size += mpz_inp_raw(tmpb, bp);
         size += mpz_inp_raw(tmpe, bp);
 
-        Uinterval.emplace_back(new interval(mpz_class(tmpb), mpz_class(tmpe), iid));
+        Uinterval.emplace_back(std::make_shared<interval>(mpz_class(tmpb), mpz_class(tmpe), iid));
     }
 
     return size;

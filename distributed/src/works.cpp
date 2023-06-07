@@ -28,7 +28,7 @@
 void
 works::init_complete(size_t N)
 {
-    std::shared_ptr<work> w(new work());
+    std::shared_ptr<work> w = std::make_shared<work>();
     w->set_id();
 
     mpz_class a("0");
@@ -38,7 +38,7 @@ works::init_complete(size_t N)
     }
     b -= 1;//...minus one (needed to avoid segfault on conversion to factoradic).
 
-    (w->Uinterval).emplace_back(new interval(a, b, 0));
+    (w->Uinterval).emplace_back(std::make_shared<interval>(a, b, 0));
     unassigned.push_back(w);
 
     FILE_LOG(logINFO)<<"INITIAL WORK UNITS: "<<unassigned.size();
@@ -47,7 +47,7 @@ works::init_complete(size_t N)
 void
 works::init_complete_split(size_t N, const int nParts)
 {
-    std::shared_ptr<work> w(new work());
+    std::shared_ptr<work> w = std::make_shared<work>();
     w->set_id();
 
     mpz_class a("0");
@@ -56,13 +56,13 @@ works::init_complete_split(size_t N, const int nParts)
         b *= i;
     b -= 1;
 
-    (w->Uinterval).emplace_back(new interval(a, b, 0));
+    (w->Uinterval).emplace_back(std::make_shared<interval>(a, b, 0));
     w->split(nParts);
 
     INTERVAL_IT it = (w->Uinterval).begin();
 
     for (it = (w->Uinterval).begin(); it != (w->Uinterval).end(); ++it) {
-        std::shared_ptr<work> tmp(new work());
+        std::shared_ptr<work> tmp = std::make_shared<work>();
         (tmp->Uinterval).push_back(std::move(*it));
 
         unassigned.push_back(tmp);
@@ -74,7 +74,7 @@ works::init_complete_split(size_t N, const int nParts)
 void
 works::init_complete_split_lop(size_t N, const int nParts)
 {
-    std::shared_ptr<work> w(new work());
+    std::shared_ptr<work> w = std::make_shared<work>();
     w->set_id();
 
     mpz_class a("0");
@@ -85,14 +85,14 @@ works::init_complete_split_lop(size_t N, const int nParts)
 
     FILE_LOG(logINFO) << "Searching interval: " << a << "\t" << b;
 
-    (w->Uinterval).emplace_back(new interval(a, b, 0));
+    (w->Uinterval).emplace_back(std::make_shared<interval>(a, b, 0));
     w->split2(nParts);
 
 
     INTERVAL_IT it = (w->Uinterval).begin();
 
     for (it = (w->Uinterval).begin(); it != (w->Uinterval).end(); ++it) {
-        std::shared_ptr<work> tmp(new work());
+        std::shared_ptr<work> tmp = std::make_shared<work>();
         (tmp->Uinterval).push_back(std::move(*it));
         unassigned.push_back(tmp);
     }

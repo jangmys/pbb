@@ -80,7 +80,7 @@ fact_work::fact2dec(std::shared_ptr<work> dw)
         // std::cout<<"V2I\t"<<tmpb<<" "<<tmpe<<std::endl;
 
         if (tmpb < tmpe) {
-            dw->Uinterval.emplace_back(new interval(tmpb, tmpe, ids[i]));
+            dw->Uinterval.emplace_back(std::make_shared<interval>(tmpb, tmpe, ids[i]));
         }
     }
 

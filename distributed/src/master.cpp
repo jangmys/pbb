@@ -298,6 +298,8 @@ master::run()
                     //if updatedBest
                     MPI_Send(&pbb->best_found.cost,1,MPI_INT,status.MPI_SOURCE,BEST,MPI_COMM_WORLD);
                 }
+                delete[]tmp_perm;
+
                 break;
             }
             case END:
