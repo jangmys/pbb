@@ -11,6 +11,8 @@ if(TARGET dbb)
 
     message(STATUS "add to dbb target" ${CppSources})
 
+    set_property(TARGET Threads::Threads PROPERTY INTERFACE_COMPILE_OPTIONS $<$<COMPILE_LANGUAGE:CUDA>:-Xcompiler -pthread> $<$<NOT:$<COMPILE_LANGUAGE:CUDA>>:-pthread>)
+
     target_sources(dbb PUBLIC ${CppSources})
 
     # add_definitions(-DFSP)
