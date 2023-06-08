@@ -8,10 +8,6 @@ ivm::ivm(int _size) : size(_size),line(0),
     node(_size){
     clearInterval();
     posVect[0]=size; //makes interval empty
-
-#ifndef NDEBUG
-    std::cout<<"debug\n";
-#endif
 }
 
 subproblem& ivm::getNode(){

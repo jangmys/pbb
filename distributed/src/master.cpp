@@ -197,8 +197,7 @@ int master::processRequest(std::shared_ptr<work> w) {
     tmp->end_updated=false;
 
     //---------------------------------output---------------------------------
-    // FILE_LOG(logINFO) << "ActiveSize: "<<wrks.get_size()<<"\t Remain#: "<<wrks.get_num_unassigned()
-	<<"\t Active#: "<<wrks.get_num_works();
+    // FILE_LOG(logINFO) << "ActiveSize: "<<wrks.get_size()<<"\t Remain#: "<<wrks.get_num_unassigned()<<"\t Active#: "<<wrks.get_num_works();
     // FILE_LOG(logINFO) << "WORKSIZE : "<<wrks->size<<std::endl;
 
     //DEBUG
