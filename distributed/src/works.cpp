@@ -226,7 +226,7 @@ works::acquireNewWork(int max, bool &tooSmall)
 std::shared_ptr<work>
 works::steal(unsigned int max, bool &tooSmall)
 {
-    // select largest work unit (that was at least updated once)
+    // select largest work unit (that was at least updated once!)
     std::shared_ptr<work> tmp1 = sizes_big();
     // std::shared_ptr<work> tmp1 = ids_oldest();
 

@@ -92,7 +92,9 @@ int master::processRequest(std::shared_ptr<work> w) {
     //find copy of work in works by its ID
     std::shared_ptr<work> tmp = wrks.id_find(w->id);
 
-    FILE_LOG(logDEBUG)<<"treat request";
+    FILE_LOG(logDEBUG)<<"-----------------------";
+    FILE_LOG(logDEBUG)<<"treat request WID "<<w->id;
+    FILE_LOG(logDEBUG)<<"-----------------------";
 
     if(tmp == nullptr){
         //work with requested ID doesn't exist
@@ -185,7 +187,7 @@ int master::processRequest(std::shared_ptr<work> w) {
         // tmp = wrks->acquireNewWork(w->max_intervals,shutdown);
 
         if(tmp==nullptr){
-            FILE_LOG(logDEBUG)<<"ELSE";
+            FILE_LOG(logDEBUG)<<"Stolen work is NULL";
             return NIL;
         }
     }
