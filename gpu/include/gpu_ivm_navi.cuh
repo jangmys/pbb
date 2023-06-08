@@ -594,7 +594,7 @@ exploreStep(thread_block_tile<tile_size> g, int *jm, int *pv, int *ev, int &line
                 // found a node to bound --- check validity and set flag to "not empty"
                 if (beforeEndPart(pv, ev,l)) {
                     // printf("D");
-                    atomicInc(&countNodes_d, INT_MAX);//atomic global counter
+                    //atomicInc(&countNodes_d, INT_MAX);//atomic global counter
                     // count[ivm]++;//per IVM counter
                     state = 1;
                 }
