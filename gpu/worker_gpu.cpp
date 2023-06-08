@@ -17,9 +17,6 @@ worker_gpu::doWork()
     pbb->ttm->on(pbb->ttm->workerExploretime);
     bool allEnd = false;
     allEnd = gbb->next();
-
-    allEnd=true;
-
     pbb->ttm->off(pbb->ttm->workerExploretime);
 
     setNewBest(gbb->localFoundNew);
