@@ -92,6 +92,8 @@ int master::processRequest(std::shared_ptr<work> w) {
     //find copy of work in works by its ID
     std::shared_ptr<work> tmp = wrks.id_find(w->id);
 
+    FILE_LOG(logDEBUG)<<"treat request";
+
     if(tmp == nullptr){
         //work with requested ID doesn't exist
         steal=true;
@@ -103,7 +105,6 @@ int master::processRequest(std::shared_ptr<work> w) {
         if (w->isEmpty()){//trivial: result of intersection is empty
             tmp->Uinterval.clear();
         }else if(!tmp->end_updated){//trivial : tmp hasn't changed since last time... replace!
-
             //-----------sanity check : size shouldn't increase!!!-----------
             auto tmpsz = tmp->wsize(); //master size
             auto wsz = w->wsize(); //worker size
@@ -156,6 +157,7 @@ int master::processRequest(std::shared_ptr<work> w) {
 
     //if result of intersection is empty...
     if (steal) {
+        FILE_LOG(logDEBUG)<<"STEAL";
         if(wrks.isEmpty()){
             FILE_LOG(logINFO)<<"END : "<<wrks.get_size();
             return END;//true;
@@ -245,7 +247,7 @@ master::run()
 
                 //update global (master) node count
                 //==================================
-                FILE_LOG(logDEBUG1) << "Receive node count: " << wrk->nb_decomposed;
+                FILE_LOG(logDEBUG) << "Receive node count: " << wrk->nb_decomposed;
                 pbb->stats.totDecomposed += wrk->nb_decomposed;
                 pbb->stats.leaves += wrk->nb_leaves;
 
