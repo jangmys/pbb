@@ -92,9 +92,9 @@ int master::processRequest(std::shared_ptr<work> w) {
     //find copy of work in works by its ID
     std::shared_ptr<work> tmp = wrks.id_find(w->id);
 
-    // FILE_LOG(logDEBUG)<<"-----------------------";
-    // FILE_LOG(logDEBUG)<<"treat request WID "<<w->id;
-    // FILE_LOG(logDEBUG)<<"-----------------------";
+    FILE_LOG(logDEBUG)<<"-----------------------";
+    FILE_LOG(logDEBUG)<<"treat request WID "<<w->id;
+    FILE_LOG(logDEBUG)<<"-----------------------";
 
     if(tmp == nullptr){
         //work with requested ID doesn't exist
@@ -105,7 +105,7 @@ int master::processRequest(std::shared_ptr<work> w) {
 
         //intersection: const w, tmp can be changed and become empty
         if (w->isEmpty()){//trivial: result of intersection is empty
-            // FILE_LOG(logDEBUG)<<"TMP IS EMPTY "<<w->id<<"\t: "<<wrks.get_size();
+            FILE_LOG(logDEBUG)<<"TMP IS EMPTY "<<w->id<<"\t: "<<wrks.get_size();
             tmp->Uinterval.clear();
         }else if(!tmp->end_updated){//trivial : tmp hasn't changed since last time... replace!
             //-----------sanity check : size shouldn't increase!!!-----------
@@ -130,7 +130,7 @@ int master::processRequest(std::shared_ptr<work> w) {
             tmp->Uinterval=w->Uinterval;
             tmp->end_updated=false;
             wrks.sizes_update(tmp);
-            // FILE_LOG(logDEBUG)<<"REPLACED "<<w->id<<"\t: "<<wrks.get_size();
+            FILE_LOG(logDEBUG)<<"REPLACED "<<w->id<<"\t: "<<wrks.get_size();
             return NIL;
         }else{
             // FILE_LOG(logDEBUG) <<*tmp;//<<std::endl;
@@ -139,8 +139,8 @@ int master::processRequest(std::shared_ptr<work> w) {
 
             return_type = (tmp->intersection(w))?WORK:NIL;
 
-            // if(return_type==WORK)FILE_LOG(logDEBUG)<<"Full Intersect "<<w->id<<"\t: "<<wrks.get_size();
-            // if(return_type==NIL)FILE_LOG(logDEBUG)<<"Full Intersect "<<w->id<<"\t: EMPTY";
+            if(return_type==WORK)FILE_LOG(logDEBUG)<<"Full Intersect "<<w->id<<"\t: "<<wrks.get_size();
+            if(return_type==NIL)FILE_LOG(logDEBUG)<<"Full Intersect "<<w->id<<"\t: EMPTY";
 
             // return_type=tmp->intersection(w)?WORK:NIL;
             wrks.sizes_update(tmp);
@@ -160,13 +160,13 @@ int master::processRequest(std::shared_ptr<work> w) {
 
     //if result of intersection is empty...
     if (steal) {
-        // FILE_LOG(logDEBUG)<<"STEAL";
+        FILE_LOG(logDEBUG)<<"STEAL";
         if(wrks.isEmpty()){
-            // FILE_LOG(logINFO)<<"END : "<<wrks.get_size();
+            FILE_LOG(logINFO)<<"END : "<<wrks.get_size();
             return END;//true;
         }else if (wrks.has_unassigned()) {
             tmp=wrks.adopt(w->max_intervals);
-            // FILE_LOG(logDEBUG)<<"Take NEW "<<tmp->id;
+            FILE_LOG(logDEBUG)<<"Take NEW "<<tmp->id;
             return_type=NEWWORK;
         }else if(isSharing) {
             bool too_small;
@@ -178,16 +178,16 @@ int master::processRequest(std::shared_ptr<work> w) {
                 }
             }
             tmp=wrks.steal(w->max_intervals, too_small);
-            // FILE_LOG(logDEBUG)<<"Take STEAL "<<tmp->id;
+            if(tmp)FILE_LOG(logDEBUG)<<"Take STEAL "<<tmp->id;
             return_type=NEWWORK;
         }else{
-            // FILE_LOG(logDEBUG)<<"Send SLEEP";
+            FILE_LOG(logDEBUG)<<"Send SLEEP";
             return SLEEP;
         }
         // tmp = wrks->acquireNewWork(w->max_intervals,shutdown);
 
         if(tmp==nullptr){
-            // FILE_LOG(logDEBUG)<<"Stolen work is NULL";
+            FILE_LOG(logDEBUG)<<"Stolen work is NULL";
             return NIL;
         }
     }
