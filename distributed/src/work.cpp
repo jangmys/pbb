@@ -219,7 +219,10 @@ std::shared_ptr<work> work::divide(int max)
     auto tmp = std::make_shared<work>();
     tmp->set_id(); //with an ID
 
-    if (isEmpty()) return tmp; //nothing to get
+    if (isEmpty()){
+        FILE_LOG(logDEBUG)<<"Divide NONE";
+        return tmp; //nothing to get
+    }
 
     mpz_class len(0);
 
@@ -250,6 +253,7 @@ std::shared_ptr<work> work::divide(int max)
         nb_stolen++;
     }
 
+    FILE_LOG(logDEBUG)<<"Divide "<<nb_stolen;
     return tmp;
 } // work::divide
 

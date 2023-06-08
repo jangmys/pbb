@@ -236,17 +236,14 @@ works::steal(unsigned int max, bool &tooSmall)
     //create new work by division of tmp1
     std::shared_ptr<work> tmp2(std::move(tmp1->divide(max)));
 
-
     //no steal
     // if(tmp1)
     //     tmp1->end_updated=1;
     // return nullptr;
 
-
-
     // DUPLICATION (interval too small)
     if (tmp2->isEmpty()) {
-        // FILE_LOG(logINFO)<<"TOO SMALL";
+        FILE_LOG(logDEBUG)<<"Divide-BIG returned empty";
         // std::cout<<"duplicate\n"<<std::flush;
         // tooSmall = true;
         return nullptr;
