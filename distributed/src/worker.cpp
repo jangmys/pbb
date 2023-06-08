@@ -227,7 +227,7 @@ comm_thread(void * arg)
             }
             default:
             {
-                FILE_LOG(logERROR) << "unknown message";
+                // FILE_LOG(logERROR) << "unknown message";
                 exit(-1);
             }
         }
@@ -362,7 +362,7 @@ heu_thread2(void * arg)
         pthread_mutex_lock_check(&w->mutex_solutions);
         if(w->sol_ind_begin < w->sol_ind_end && r<80){
             if(w->sol_ind_begin >= w->max_sol_ind){
-                FILE_LOG(logERROR) << "Index out of bounds";
+                // FILE_LOG(logERROR) << "Index out of bounds";
                 exit(-1);
             }
             for(int i=0;i<N;i++){
@@ -383,7 +383,7 @@ heu_thread2(void * arg)
         }
         if(cost<w->pbb->best_found.cost){
             w->pbb->best_found.update(s->schedule.data(),cost);
-            FILE_LOG(logINFO)<<"LocalBest "<<cost<<"\t"<<w->pbb->best_found;
+            // FILE_LOG(logINFO)<<"LocalBest "<<cost<<"\t"<<w->pbb->best_found;
         }
     }
     pthread_exit(0);
@@ -409,7 +409,7 @@ worker::run()
     {
         pthread_create(&heur_thd[i], NULL, heu_thread2, (void *) this);
     }
-    FILE_LOG(logDEBUG) << "Created " << nb_heuristic_threads << " heuristic threads.";
+    // FILE_LOG(logDEBUG) << "Created " << nb_heuristic_threads << " heuristic threads.";
 
     pthread_barrier_wait(&barrier);// synchronize with communication thread
 
@@ -425,7 +425,7 @@ worker::run()
 
         // if comm thread has set END flag, exit
         if (checkEnd()) {
-            FILE_LOG(logINFO) << "Worker : End detected";
+            // FILE_LOG(logINFO) << "Worker : End detected";
             break;
         }
 
@@ -445,11 +445,11 @@ worker::run()
 
         if(foundNewBest()){
             // std::cout<<"try send best :\t"<<pbb->sltn->cost<<std::endl;
-            FILE_LOG(logDEBUG) << "Try launch best-communication";
+            // FILE_LOG(logDEBUG) << "Try launch best-communication";
             tryLaunchCommBest();
         }
         else if(allEnd){
-            FILE_LOG(logDEBUG) << "Try launch work-communicaion";
+            // FILE_LOG(logDEBUG) << "Try launch work-communicaion";
             tryLaunchCommWork();
         }
     }
@@ -458,10 +458,10 @@ worker::run()
     int err = pthread_join(*comm_thd, NULL);
     if (err)
     {
-        FILE_LOG(logDEBUG) << "Failed to join comm thread " << strerror(err);
+        // FILE_LOG(logDEBUG) << "Failed to join comm thread " << strerror(err);
     }
 
-    FILE_LOG(logINFO) << "#updates: "<<count_updates;
+    // FILE_LOG(logINFO) << "#updates: "<<count_updates;
 
     pbb->ttm->logElapsed(pbb->ttm->workerExploretime, "Worker exploration time\t");
 
