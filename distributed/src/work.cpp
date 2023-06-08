@@ -9,27 +9,30 @@
 //copy constructor
 work::work(const work& w)
 {
-    size = w.size;// ?
+    // copy Uinterval
+    Uinterval = w.Uinterval;
 
     id = w.id;
+    nb_intervals = w.nb_intervals;
     max_intervals = w.max_intervals;
     nb_decomposed = w.nb_decomposed;
     nb_leaves = w.nb_leaves;
     end_updated   = w.end_updated;
     nb_updates = w.nb_updates;
-
-    // copy Uinterval
-    Uinterval = w.Uinterval;
+    size = w.size;
 }
 
 //default constructor
 work::work(){
     if (!isEmpty()) Uinterval.clear();
 
+    id = 0;
+    nb_intervals = 0;
+    max_intervals = 0;
     nb_decomposed = 0;
     nb_leaves = 0;
-    nb_updates = 0;
     end_updated = 0;
+    nb_updates = 0;
     size = 0;
 }
 
