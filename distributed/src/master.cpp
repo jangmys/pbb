@@ -165,8 +165,8 @@ int master::processRequest(std::shared_ptr<work> w) {
             FILE_LOG(logINFO)<<"END : "<<wrks.get_size();
             return END;//true;
         }else if (wrks.has_unassigned()) {
-            FILE_LOG(logDEBUG)<<"Take NEW";
             tmp=wrks.adopt(w->max_intervals);
+            FILE_LOG(logDEBUG)<<"Take NEW "<<tmp->id;
             return_type=NEWWORK;
         }else if(isSharing) {
             bool too_small;
@@ -178,7 +178,7 @@ int master::processRequest(std::shared_ptr<work> w) {
                 }
             }
             tmp=wrks.steal(w->max_intervals, too_small);
-            FILE_LOG(logDEBUG)<<"Take STEAL";
+            FILE_LOG(logDEBUG)<<"Take STEAL "<<tmp->id;
             return_type=NEWWORK;
         }else{
             FILE_LOG(logDEBUG)<<"Send SLEEP";
