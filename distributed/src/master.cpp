@@ -126,20 +126,20 @@ int master::processRequest(std::shared_ptr<work> w) {
             tmp->Uinterval=w->Uinterval;
             tmp->end_updated=false;
             wrks.sizes_update(tmp);
-            FILE_LOG(logDEBUG4)<<"REPLACED "<<w->id<<"\t: "<<wrks.get_size();
+            FILE_LOG(logDEBUG)<<"REPLACED "<<w->id<<"\t: "<<wrks.get_size();
             return NIL;
         }else{
-            FILE_LOG(logDEBUG4)<<"Full Intersect "<<w->id<<"\t: "<<wrks.get_size();
-
-            FILE_LOG(logDEBUG4) <<*tmp;//<<std::endl;
-            FILE_LOG(logDEBUG4) <<"<< M ===============***================= W >>";
-            FILE_LOG(logDEBUG4) <<*w;//<<std::endl;
+            // FILE_LOG(logDEBUG) <<*tmp;//<<std::endl;
+            // FILE_LOG(logDEBUG) <<"<< M ===============***================= W >>";
+            // FILE_LOG(logDEBUG) <<*w;//<<std::endl;
 
             return_type = (tmp->intersection(w))?WORK:NIL;
 
+            if(return_type==WORK)FILE_LOG(logDEBUG)<<"Full Intersect "<<w->id<<"\t: "<<wrks.get_size();
+            if(return_type==NIL)FILE_LOG(logDEBUG)<<"Full Intersect "<<w->id<<"\t: EMPTY";
+
             // return_type=tmp->intersection(w)?WORK:NIL;
             wrks.sizes_update(tmp);
-
         }
 
         //if result of intersection is empty work
@@ -149,6 +149,8 @@ int master::processRequest(std::shared_ptr<work> w) {
             tmp=nullptr;
             steal=true;
             return_type=NIL;
+
+            FILE_LOG(logDEBUG)<<"Empty ==> Steal";
         }
     }
 
@@ -157,7 +159,8 @@ int master::processRequest(std::shared_ptr<work> w) {
         if(wrks.isEmpty()){
             FILE_LOG(logINFO)<<"END : "<<wrks.get_size();
             return END;//true;
-        }else if (wrks.has_unassigned())   {
+        }else if (wrks.has_unassigned()) {
+            FILE_LOG(logDEBUG)<<"Take NEW";
             tmp=wrks.adopt(w->max_intervals);
             return_type=NEWWORK;
         }else if(isSharing) {
@@ -170,13 +173,16 @@ int master::processRequest(std::shared_ptr<work> w) {
                 }
             }
             tmp=wrks.steal(w->max_intervals, too_small);
+            FILE_LOG(logDEBUG)<<"Take STEAL";
             return_type=NEWWORK;
         }else{
+            FILE_LOG(logDEBUG)<<"Send SLEEP";
             return SLEEP;
         }
         // tmp = wrks->acquireNewWork(w->max_intervals,shutdown);
 
         if(tmp==nullptr){
+            FILE_LOG(logDEBUG)<<"ELSE";
             return NIL;
         }
     }
@@ -237,12 +243,15 @@ master::run()
                 wrk->clear();
                 comm.recv_work(wrk, status.MPI_SOURCE, WORK, &status);
 
+                //update global (master) node count
+                //==================================
                 FILE_LOG(logDEBUG1) << "Receive node count: " << wrk->nb_decomposed;
                 pbb->stats.totDecomposed += wrk->nb_decomposed;
                 pbb->stats.leaves += wrk->nb_leaves;
 
+                //treat received work unit
+                //=========================
                 pbb->ttm->on(pbb->ttm->processRequest);
-                // bool shutdown_worker=false;
                 int reply_type=processRequest(wrk);
                 pbb->ttm->off(pbb->ttm->processRequest);
 
