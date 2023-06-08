@@ -184,7 +184,7 @@ std::shared_ptr<work>
 works::sizes_big() const
 {
     // return ids.begin()->second; //return smallest ID
-    // return sizes.begin()->second; //return largest
+    return sizes.begin()->second; //return largest
 
     //return largest work which has been updated at least once
     for(auto i:sizes)

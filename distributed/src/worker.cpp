@@ -409,7 +409,7 @@ worker::run()
     {
         pthread_create(&heur_thd[i], NULL, heu_thread2, (void *) this);
     }
-    // FILE_LOG(logDEBUG) << "Created " << nb_heuristic_threads << " heuristic threads.";
+    FILE_LOG(logDEBUG) << "Created " << nb_heuristic_threads << " heuristic threads.";
 
     pthread_barrier_wait(&barrier);// synchronize with communication thread
 
