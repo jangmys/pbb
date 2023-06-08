@@ -77,7 +77,7 @@ master::initWorks(int initMode)
 //work unit received from worker
 //Out : terminate (true if termination condition met)
 //Return : Reply message type
-static bool debug = true;
+static bool debug = false;
 int master::processRequest(std::shared_ptr<work> w) {
     int return_type=NIL;
 

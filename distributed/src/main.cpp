@@ -61,7 +61,6 @@ main(int argc, char ** argv)
         FILE* log_fd = fopen( buf, "w" );
         Output2FILE::Stream() = log_fd;
 
-        FILELog::ReportingLevel() = logDEBUG4;
         FILE_LOG(logINFO) << "Worker start logging";
     }
 
