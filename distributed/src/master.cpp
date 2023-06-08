@@ -103,6 +103,7 @@ int master::processRequest(std::shared_ptr<work> w) {
 
         //intersection: const w, tmp can be changed and become empty
         if (w->isEmpty()){//trivial: result of intersection is empty
+            FILE_LOG(logDEBUG)<<"TMP IS EMPTY "<<w->id<<"\t: "<<wrks.get_size();
             tmp->Uinterval.clear();
         }else if(!tmp->end_updated){//trivial : tmp hasn't changed since last time... replace!
             //-----------sanity check : size shouldn't increase!!!-----------
