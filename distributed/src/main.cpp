@@ -74,11 +74,11 @@ main(int argc, char ** argv)
     //MAKE INITIAL SOLUTION (rank 0 --> could run multiple and min-reduce...)
     if(myrank==0){
         FILE_LOG(logINFO) <<"----Initialize incumbent----";
+
         struct timespec t1,t2;
         clock_gettime(CLOCK_MONOTONIC,&t1);
 
         pbb->set_initial_solution();
-
         pbb->best_found.save();
         FILE_LOG(logINFO) << "Initial solution:\t" <<pbb->best_found;
 
@@ -159,7 +159,6 @@ main(int argc, char ** argv)
             FILE_LOG(logINFO) << "Worker running on :\t"<<hostname<<std::flush;
 
             // ==========================
-            //
             worker *wrkr;
             #ifdef USE_GPU
             if(arguments::worker_type=='g'){

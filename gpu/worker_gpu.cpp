@@ -43,7 +43,7 @@ worker_gpu::updateWorkUnit()
     pthread_cond_signal(&cond_updateApplied);
 }
 
-// copies work units from GPU (resp. thread-private IVMs) to communicator-buffer
+// copies work units from GPU to communicator-buffer
 // --> prepare SEND
 void
 worker_gpu::getIntervals()
@@ -58,6 +58,8 @@ worker_gpu::getIntervals()
 
     work_buf->nb_decomposed = pbb->stats.totDecomposed;
     work_buf->nb_leaves     = pbb->stats.leaves;
+    local_decomposed_count += pbb->stats.totDecomposed;
+
     pbb->stats.totDecomposed = 0;
     pbb->stats.leaves        = 0;
 }

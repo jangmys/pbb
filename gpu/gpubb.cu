@@ -84,8 +84,6 @@ gpubb::initialize(int rank)
     stream = (cudaStream_t*)malloc(sizeof(cudaStream_t));
     event = (cudaEvent_t*)malloc(sizeof(cudaEvent_t));
     gpuErrchk(cudaStreamCreate(stream));
-    // std::cout<<"created stream\n";
-
     gpuErrchk(cudaEventCreateWithFlags(event, cudaEventDisableTiming));
 
     //sanity checks =============================
@@ -339,6 +337,7 @@ gpubb::next()
         }else{
             //one BB step
             end = next(best, iter);
+            iter++;
         }
 
         //conditions to trigger communication with master
@@ -347,6 +346,7 @@ gpubb::next()
                 break;
             }
         }
+        //no more work !
         if(end){
             break;
         }
@@ -493,8 +493,6 @@ gpubb::next(int& best, int& iter)
     gpuErrchk(cudaPeekAtLastError());
     gpuErrchk(cudaDeviceSynchronize());
     #endif
-
-    iter++;
 
     return end; // (ctrl_h[gpuEnd] == 1);
 } // gpubb::next
