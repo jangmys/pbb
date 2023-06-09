@@ -115,16 +115,12 @@ seqGoDown(int * jobMats_d, int * posVecs_d, int * dirVecs_d, const int _line)
     dirVecs_d[line] = 0;
 }
 
-
-//
-//
-template <typename T>
+//sequential
+//fill row `line` of matrix with unscheduled jobs of row `line-1`
 inline __device__ void
-generateLine2(T * jobMats_d, T * posVecs_d,
-  T * dirVecs_d, const T line,
-  const T state)
+generateLine2(int* jobMats_d, int* posVecs_d, int* dirVecs_d, const int line,
+  const int state)
 {
-    //  int line = line_d[mid];
     assert(line > 0);
     assert(line < size_d);
 
@@ -137,12 +133,11 @@ generateLine2(T * jobMats_d, T * posVecs_d,
     for (i = 0; i < size_d - line; i++) {
         if (i < column) jobMats_d[line * size_d + i] = absolute_d(jobMats_d[lineMinus1 * size_d + i]);
         else jobMats_d[line * size_d + i] = absolute_d(jobMats_d[lineMinus1 * size_d + i + 1]);
-        //    if(i<column)jobMats_d[index3D(line,i,mid)] = absolute(jobMats_d[index3D(lineMinus1,i,mid)]);
-        //    else jobMats_d[index3D(line,i,mid)] = absolute(jobMats_d[index3D(lineMinus1,i+1,mid)]);
     }
 
+    //if exploring set position to first job in new row
     if (state > 0) {
-        posVecs_d[line] = 0; // index2D(line, mid)] = 0;
+        posVecs_d[line] = 0;
         dirVecs_d[line] = 0;
     }
 }
@@ -215,22 +210,6 @@ goUp2(T * pos, T * lptr, T * jm, T * mat_ptr)
     //    *mat_ptr = negative_d(*mat_ptr);
 }
 
-//                    *pos = 0;
-//                  (*lptr)--;                                // aka goUp
-//                pos--;                                    // update current pos
-//              mat_ptr = jm + (*lptr) * size_d + (*pos); // update pos in matrix (backtrack)
-//            *mat_ptr = negative_d(*mat_ptr);
-// ________________________________________________
-template <typename T>
-inline __device__ void
-jumpUp(T * pos, T * lptr, T * jm, T * mat_ptr, int cutoff)
-{
-    while ((*lptr) > cutoff) {
-        goUp2(pos, lptr, jm, mat_ptr);
-    }
-} // jumpUp
-
-// _______________________________________________
 template <typename T>
 inline __device__ void
 goDown(T * jobMats_d, T * posVecs_d, T * dirVecs_d,
@@ -246,7 +225,8 @@ goDown(T * jobMats_d, T * posVecs_d, T * dirVecs_d,
     assert(jobMats_d[index3D(line, pos, mid)] >= 0);
 
     line_d[mid]++;
-    generateLine(jobMats_d, posVecs_d, dirVecs_d, line_d, state_d, mid);
+    // generateLine(jobMats_d, posVecs_d, dirVecs_d, line_d, state_d, mid);
+    generateLine2(jobMats_d+mid*size_d*size_d, posVecs_d+mid*size_d, dirVecs_d+mid*size_d, line_d[mid], state_d[mid]);
 }
 
 // ___________________________________________________________
@@ -271,25 +251,7 @@ lookForJob(int job, const char * array, int begin, int end)
     return 0;
 }
 
-// ___________________________________________________________
-template <typename T>
-inline __device__ void
-funfold_gpu(T * jobMats_sh, T * posVecs_sh,
-  T * dirVecs_sh, T * endVecs_sh,
-  T * line_sh, T * state_sh, int matId)
-{
-    if (line_sh[matId] < size_d - 1) {
-        line_sh[matId]++;
-        generateLine(jobMats_sh, posVecs_sh, dirVecs_sh, line_sh, state_sh, matId);
-    } else {
-        state_sh[matId] = 1;
-    }
-}
 
-// ___________________________________________________________
-// ___________________________________________________________
-// ___________________________________________________________
-// template < int T>
 inline __device__ void
 tile_decodeIVM(thread_block_tile<32> g, const int * jm, const int * pos, const int * dir, const int line, int& l1, int& l2, int * prmu)
 {
