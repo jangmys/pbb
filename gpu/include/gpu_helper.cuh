@@ -29,8 +29,8 @@ __constant__ int _nbJob;
 __constant__ int nbIVM_d;
 __constant__ int size_d;
 
-__device__ enum counterID { exploringState, emptyState, initState };
-__device__ enum ctrlID { toDo, gpuEnd, foundLeaf, bestCost };
+enum counterID { exploringState, emptyState, initState };
+enum ctrlID { toDo, gpuEnd, foundLeaf, bestCost };
 
 // ____________________________________________________________
 template <typename T>

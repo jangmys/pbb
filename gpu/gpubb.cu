@@ -21,43 +21,40 @@
 #include "./bb_kernels.cu"
 
 
-gpubb::gpubb(pbab * _pbb)
+gpubb::gpubb(pbab * _pbb) : pbb(_pbb),size(pbb->size),nbIVM(arguments::nbivms_gpu),ws(size,nbIVM)
 {
-    pbb  = _pbb;
-    size = pbb->size;
-    nbIVM    = arguments::nbivms_gpu;
+    // pbb  = _pbb;
+    // size = pbb->size;
+    // nbIVM    = arguments::nbivms_gpu;
     ringsize = nbIVM;
+
+
+
+    // setHypercubeConfig(nbIVM); //work stealing
+
+
 
     if (arguments::problem[0] == 'f') {
         bound = make_bound_ptr<int>(pbb,arguments::primary_bound);
-        // bound_fsp_weak *bd=new bound_fsp_weak();
-        // bd->init(pbb->instance.get());
-        // bound=bd;
     }else{
         bound = std::make_unique<bound_dummy>();
     }
 
-    // initialUB = INT_MAX;
     initialUB = pbb->best_found.getBest();
 
 	FILE_LOG(logINFO) << "GPU with nbIVM:\t" << nbIVM;
 	FILE_LOG(logINFO) << "Initial UB:\t" << initialUB;
 
     pthread_mutex_init(&mutex_end,NULL);
-
     pthread_mutex_lock(&mutex_end);
     allEnd = false;
     pthread_mutex_unlock(&mutex_end);
 
     // "one time events"
-    startclock = true;
     firstbound = true;
-
     search_cut = 1.0;
 
 	execmode.triggered = false;
-
-	// executionmode.triggered=false;
 }
 
 gpubb::~gpubb()
@@ -86,12 +83,6 @@ gpubb::initialize(int rank)
     gpuErrchk(cudaStreamCreate(stream));
     gpuErrchk(cudaEventCreateWithFlags(event, cudaEventDisableTiming));
 
-    //sanity checks =============================
-    // test_kernel<<<16,128,0,*stream>>>();
-    // gpuErrchk(cudaPeekAtLastError());
-    // gpuErrchk(cudaDeviceSynchronize());
-
-    setHypercubeConfig(); //work stealing
     allocate_on_host();
     allocate_on_device();
 
@@ -187,13 +178,13 @@ gpubb::selectAndBranch(const int NN)
     // pbb->sltn->getBest(best);
     gpuErrchk(cudaMemset(counter_d, 0, 6 * sizeof(unsigned int)));
 	//dense mapping : one thread = one IVM
-    // goToNext_dense<<< (nbIVM+127) / 128, 128, 0, stream[0] >>>(mat_d, pos_d, end_d, dir_d, line_d, state_d, nbDecomposed_d, counter_d, NN);
+    goToNext_dense<<< (nbIVM+127) / 128, 128, 0, stream[0] >>>(mat_d, pos_d, end_d, dir_d, line_d, state_d, nbDecomposed_d, counter_d, NN);
 
 	//wide mapping : one warp = one IVM
     // assume:
     // 1 block = NN warps = NN IVM
-    size_t smem = NN * (2 * size * sizeof(int) + 2 * sizeof(int));
-    goToNext2<4><<< (nbIVM+NN-1) / NN, NN * 32, smem, stream[0] >>>(mat_d, pos_d, end_d, dir_d, line_d, state_d, nbDecomposed_d, counter_d);
+    // size_t smem = NN * (2 * size * sizeof(int) + 2 * sizeof(int));
+    // goToNext2<4><<< (nbIVM+NN-1) / NN, NN * 32, smem, stream[0] >>>(mat_d, pos_d, end_d, dir_d, line_d, state_d, nbDecomposed_d, counter_d);
 
 #ifndef NDEBUG
     gpuErrchk(cudaPeekAtLastError());
@@ -333,15 +324,18 @@ gpubb::next()
 
         if(execmode.triggered){
             //perform whole BB in single kernel..break if a threshold of empty explorers is reached.
-            end = triggeredNext(best, iter);
+            end = triggeredNext(best,iter);
         }else{
             //one BB step
-            end = next(best, iter);
-            iter++;
+            end = next(best,iter);
         }
+        iter++;
 
         //conditions to trigger communication with master
         if(!arguments::singleNode){
+            if(execmode.triggered){
+                break;
+            }
             if(((nbsteals > (nbIVM/5)) && iter>100) || localFoundNew || pbb->ttm->period_passed(WORKER_BALANCING)){
                 break;
             }
@@ -361,12 +355,12 @@ gpubb::next()
 
 // returns true iff no more work available
 bool
-gpubb::next(int& best, int& iter)
+gpubb::next(int& best, int iter)
 {
-    if (startclock) {
-        clock_gettime(CLOCK_REALTIME, &starttime);
-        startclock = false;
-    }
+    // if (startclock) {
+    //     clock_gettime(CLOCK_REALTIME, &starttime);
+    //     startclock = false;
+    // }
     bool end = false;
     // std::cout<<"next "<<iter<<std::endl;
 
@@ -501,20 +495,20 @@ gpubb::next(int& best, int& iter)
 } // gpubb::next
 
 
+    // cudaMemcpy(lim1_h, lim1_d, nbIVM * sizeof(int), cudaMemcpyDeviceToHost);
+    // cudaMemcpy(lim2_h, lim2_d, nbIVM * sizeof(int), cudaMemcpyDeviceToHost);
+	// cudaMemcpy(schedule_h, schedule_d, size * nbIVM * sizeof(int), cudaMemcpyDeviceToHost);
+	// for (int i = 0; i < nbIVM; i++) {
+    //     printf("%d %d\t",lim1_h[i],lim2_h[i]);
+	// 	for (int j = 0; j < size; j++) printf("%d\t", (int) schedule_h[i * size + j]);
+	// 	printf("\n");
+	// }
+	// printf("====== \n\n");
+
 
 bool gpubb::decode(const int NN)
 {
     unsigned int target_h = 0;
-
-    // cudaMemcpy(lim1_h, lim1_d, nbIVM * sizeof(int), cudaMemcpyDeviceToHost);
-    // cudaMemcpy(lim2_h, lim2_d, nbIVM * sizeof(int), cudaMemcpyDeviceToHost);
-	// cudaMemcpy(schedule_h, schedule_d, size * nbIVM * sizeof(int), cudaMemcpyDeviceToHost);
-    // for (int i = 0; i < nbIVM; i++) {
-    //     printf("%d %d\t",lim1_h[i],lim2_h[i]);
-    //     for (int j = 0; j < size; j++) printf("%d\t", (int) schedule_h[i * size + j]);
-    //     printf("\n");
-	// }
-	// printf("----- \n\n");
 
 	switch(arguments::boundMode){
         case 1: //strong bound
@@ -548,16 +542,6 @@ bool gpubb::decode(const int NN)
             break;
         }
     }
-
-    // cudaMemcpy(lim1_h, lim1_d, nbIVM * sizeof(int), cudaMemcpyDeviceToHost);
-    // cudaMemcpy(lim2_h, lim2_d, nbIVM * sizeof(int), cudaMemcpyDeviceToHost);
-	// cudaMemcpy(schedule_h, schedule_d, size * nbIVM * sizeof(int), cudaMemcpyDeviceToHost);
-	// for (int i = 0; i < nbIVM; i++) {
-    //     printf("%d %d\t",lim1_h[i],lim2_h[i]);
-	// 	for (int j = 0; j < size; j++) printf("%d\t", (int) schedule_h[i * size + j]);
-	// 	printf("\n");
-	// }
-	// printf("====== \n\n");
 
     return ((bool) target_h);
 }
@@ -702,7 +686,6 @@ gpubb::steal_in_device(int iter)
     adapt_workstealing(2, nbIVM / 8);
 
     computeLength <<< (nbIVM / PERBLOCK), (32 * PERBLOCK)>>>(pos_d, end_d, length_d, state_d, sumLength_d);
-    // computeLength << < (nbIVM / PERBLOCK), (32 * PERBLOCK)>> >(pos_d, end_d, length_d, state_d, sumLength_d);
 #ifndef NDEBUG
     gpuErrchk(cudaPeekAtLastError());
     gpuErrchk(cudaDeviceSynchronize());
@@ -716,19 +699,19 @@ gpubb::steal_in_device(int iter)
     gpuErrchk(cudaDeviceSynchronize());
 #endif
 
-    int nbdims = topoDimensions;
+    int nbdims = ws.topoDimensions;
     int dimb = iter % nbdims;
     int from, to, dim, q;
 
     for (int s = dimb; s < dimb + nbdims; s++) {
         dim  = s % nbdims;
-        q    = (1 << topoB[dim]);
+        q    = (1 << ws.topoB[dim]);
         from = iter & (q - 1);
         to   = from + q;
 
         for (int off = from; off < to; off++)
             prepareShare << < (nbIVM + 127) / 128, 128, 0, stream[0] >> >
-            (state_d, victim_flag, victim_d, length_d, meanLength_d, off & (q - 1), topoB[dim], topoA[dim]);
+            (state_d, victim_flag, victim_d, length_d, meanLength_d, off & (q - 1), ws.topoB[dim], ws.topoA[dim]);
     }
 #ifndef NDEBUG
     gpuErrchk(cudaPeekAtLastError());
@@ -736,7 +719,7 @@ gpubb::steal_in_device(int iter)
 #endif
 
     share_on_gpu2 <<< nbIVM / PERBLOCK, 32 * PERBLOCK, 0, stream[0] >>>
-    (mat_d, pos_d, end_d, dir_d, line_d, 1, ws_granular, state_d, victim_flag, victim_d, ctrl_d);
+    (mat_d, pos_d, end_d, dir_d, line_d, 1, 2, state_d, victim_flag, victim_d, ctrl_d);
 #ifndef NDEBUG
     gpuErrchk(cudaPeekAtLastError());
     gpuErrchk(cudaDeviceSynchronize());
@@ -746,7 +729,7 @@ gpubb::steal_in_device(int iter)
     gpuErrchk(cudaMemcpyFromSymbol(&tmp, gpuBalancedIntern, sizeof(unsigned int)));
 
     clock_gettime(CLOCK_MONOTONIC,&endt);
-	FILE_LOG(logDEBUG1) << "GPU load balanced. Steals: "<<tmp<<" ["<< (endt.tv_sec-startt.tv_sec)+(endt.tv_nsec-startt.tv_nsec)/1e9<<" ]";
+	FILE_LOG(logDEBUG) << "GPU load balanced. Steals: "<<tmp<<" ["<< (endt.tv_sec-startt.tv_sec)+(endt.tv_nsec-startt.tv_nsec)/1e9<<" ]";
 
     return tmp;
 }
@@ -758,133 +741,10 @@ gpubb::adapt_workstealing(int min, int max)
         search_cut += 0.1;
     else if ((counter_h[exploringState] < (int) (7 * nbIVM / 10)) && (search_cut > 0.2))
         search_cut -= 0.1;
-    ws_granular = 2;
 
-	FILE_LOG(logDEBUG1) << "GPUWS length coefficient: "<<search_cut;
+	FILE_LOG(logDEBUG) << "GPUWS length coefficient: "<<search_cut;
 }
 
-void
-gpubb::setHypercubeConfig()
-{
-    //printf("setting up topology %d\n", nbIVM);
-    switch (nbIVM) {
-        case 1:
-            topoDimensions = 1;
-            topoA[0]       = 0;
-            topoB[0]       = 0;
-            break;
-
-        case 4:
-            topoDimensions = 1;
-            topoA[0]       = 0;
-            topoB[0]       = 2;
-            break;
-
-        case 64: // 64 == 4*4*4
-            topoDimensions = 3;
-            topoA[0]       = 0; topoA[1]       = 2; topoA[2]       = 4;
-            topoB[0]       = 2; topoB[1]       = 2; topoB[2]       = 2;
-            break;
-
-        case 128: // 64 == 4*4*4
-            topoDimensions = 3;
-            topoA[0]       = 0;            topoA[1]       = 2;            topoA[2]       = 4;
-            topoB[0]       = 2;            topoB[1]       = 2;            topoB[2]       = 3;
-            break;
-
-        case 512: // 512 == 4*4*4*8
-        {
-            topoDimensions = 4;
-            for(int i=0;i<topoDimensions;i++){
-                topoA[i]=2*i;
-                topoB[i]=2;
-            }
-            topoB[3] = 3;
-            break;
-        }
-        case 1024: // 2**(2 2 2 2 2)
-        {
-            topoDimensions = 5;
-            for(int i=0;i<topoDimensions;i++){
-                topoA[i]=2*i;
-                topoB[i]=2;
-            }
-            break;
-        }
-        case 2048: // 8*8*8*4 == 2**(3+3+3+2)
-        {
-            topoDimensions = 5;
-            for(int i=0;i<topoDimensions;i++){
-                topoA[i]=2*i;
-                topoB[i]=2;
-            }
-            topoB[4] = 3;
-            break;
-        }
-        case 4096: // 4096 == 8**4 (2**12)
-        {
-            topoDimensions = 6;
-            for(int i=0;i<topoDimensions;i++){
-                topoA[i]=2*i;
-                topoB[i]=2;
-            }
-            break;
-        }
-        case 8192: // 4096 == 16 * 8**3 (2**13)
-        {
-            topoDimensions = 6;
-            for(int i=0;i<topoDimensions;i++){
-                topoA[i]=2*i;
-                topoB[i]=2;
-            }
-            topoB[5]       = 3;
-            break;
-        }
-        case 16384: // (2**14)
-        {
-            topoDimensions = 7;
-            for(int i=0;i<topoDimensions;i++){
-                topoA[i]=2*i;
-                topoB[i]=2;
-            }
-            break;
-        }
-        case 32768: // 32768 == 8**5
-        {
-            topoDimensions = 7;
-            for(int i=0;i<topoDimensions;i++){
-                topoA[i]=2*i;
-                topoB[i]=2;
-            }
-            topoB[6]       = 3;
-            break;
-        }
-        case 65536: // 65536 == 2 * 8**5 (2**16)
-        {
-            topoDimensions = 8;
-            for(int i=0;i<topoDimensions;i++){
-                topoA[i]=2*i;
-                topoB[i]=2;
-            }
-            break;
-        }
-        case 131072: // 2**17
-        {
-            topoDimensions = 8;
-            for(int i=0;i<topoDimensions;i++){
-                topoA[i]=2*i;
-                topoB[i]=2;
-            }
-            topoB[7]       = 3;
-            break;
-        }
-
-        default:
-            printf("invalid ivm-nb\n");
-            exit(0);
-            break;
-    }
-} // gpubb::setHypercubeConfig
 
 // = =========================================================
 //
@@ -928,7 +788,7 @@ gpubb::allocate_on_host()
     meanLength_h = (int *) calloc(size, sizeof(int));
     costsBE_h    = (int *) calloc(2 * size_v, sizeof(int));
 
-	depth_histo_h = (unsigned int*)calloc(size, sizeof(unsigned int));
+	// depth_histo_h = (unsigned int*)calloc(size, sizeof(unsigned int));
 
     nbDecomposed_h = (unsigned long long int *) calloc(size_i, sizeof(unsigned long long int));
 }
@@ -960,8 +820,6 @@ gpubb::allocate_on_device()
     gpuErrchk(cudaMalloc((void **) &length_d, size_v * sizeof(int)));
     gpuErrchk(cudaMalloc((void **) &sumLength_d, size * sizeof(int)));
     gpuErrchk(cudaMalloc((void **) &meanLength_d, size * sizeof(int)));
-
-    gpuErrchk(cudaMalloc((void **) &depth_histo_d, size * sizeof(int)));
 
     gpuErrchk(cudaMalloc((void **) &flagLeaf, size_i * sizeof(int)));
 
@@ -1045,8 +903,6 @@ gpubb::copyH2D()
     gpuErrchk(cudaMemcpy(ctrl_d, ctrl_h, 4 * sizeof(unsigned int), cudaMemcpyHostToDevice));
     gpuErrchk(cudaMemcpy(nbDecomposed_d, nbDecomposed_h, nbIVM * sizeof(unsigned long long int),
       cudaMemcpyHostToDevice));
-
-	gpuErrchk(cudaMemcpy(depth_histo_d, depth_histo_h, size * sizeof(unsigned int), cudaMemcpyHostToDevice));
 
     gpuErrchk(cudaMemcpyToSymbol(nbIVM_d, &nbIVM, sizeof(int)));
     gpuErrchk(cudaPeekAtLastError());
@@ -1277,12 +1133,8 @@ gpubb::affiche(int M)
 
 
 bool
-gpubb::triggeredNext(int& best, int& iter)
+gpubb::triggeredNext(int& best, int iter)
 {
-    if (startclock) {
-        clock_gettime(CLOCK_REALTIME, &starttime);
-        startclock = false;
-    }
     bool end = false;
 
     launchBBkernel(4);
@@ -1295,8 +1147,6 @@ gpubb::triggeredNext(int& best, int& iter)
 	unsigned int target_h=0;
     gpuErrchk(cudaMemcpyFromSymbol(&target_h, targetNode, sizeof(unsigned int)));
     boundLeaves((bool) target_h,best);
-
-    iter++;
 
     return end;
 }

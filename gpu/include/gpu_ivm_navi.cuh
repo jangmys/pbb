@@ -2,7 +2,6 @@
 #include <cuda_runtime.h>
 #include <cuda_runtime_api.h>
 
-// __________________________________________________________
 // true if (fac1 <= fac2)
 template <typename T>
 inline __device__ bool
@@ -20,29 +19,11 @@ isSmaller(const T * fac1, const T * fac2)
     return false;// true;
 }
 
-// __________________________________________________________
-// true iff (posVec <= endVec)
-template <typename T>
+//return true iff pos <= end
+//starting check from pos[l] <= end[l] ...
+//[first non-equal digit determines order]
 inline __device__ bool
-beforeEnd(const T * posVecs_d, const T * endVecs_d)
-{
-    #pragma unroll 4
-    for (int i = 0; i < size_d; i++) {
-        if (posVecs_d[i] < endVecs_d[i]) {
-            return true;
-        }
-        if (posVecs_d[i] > endVecs_d[i]) {
-            return false;
-        }
-    }
-    //	return false;
-    return true;
-}
-
-// true if (posVec <= endVec)
-template <typename T>
-inline __device__ bool
-beforeEndPart(const T * posVecs_d, const T * endVecs_d,const int l)
+beforeEndPart(const int* posVecs_d, const int* endVecs_d, const int l)
 {
     #pragma unroll 4
     for (int i = l; i < size_d; i++) {
@@ -54,17 +35,11 @@ beforeEndPart(const T * posVecs_d, const T * endVecs_d,const int l)
         }
     }
 
-    //==========equality==========
-    // return false;
     return true;
 }
 
-
-
-//
-//
 inline __device__ void
-parallelGoDown(int * jobMats_d, int * posVecs_d , const int _line, const int lane, const int mid)
+parallelGoDown(int * jobMats_d, int * posVecs_d , const int _line, const int lane)
 {
     int line = _line;
 
@@ -83,49 +58,19 @@ parallelGoDown(int * jobMats_d, int * posVecs_d , const int _line, const int lan
     if (lane >= pos) off = 1;
     if (lane < size_d - line) jobMats_d[line * size_d + lane] = absolute_d(jobMats_d[(line - 1) * size_d + lane + off]);
 
-    posVecs_d[line] = 0;
-}
-
-//
-//
-inline __device__ void
-seqGoDown(int * jobMats_d, int * posVecs_d, int * dirVecs_d, const int _line)
-{
-    int line = _line;
-
-    assert(line >= 0);
-    assert(line < size_d - 1);
-
-    int pos = posVecs_d[line];
-    assert(pos >= 0);
-    assert(pos < size_d);
-    //    assert(state==1);
-    assert(jobMats_d[line * size_d + pos] >= 0);
-
-    line++;
-
-    for (int i = 0; i < size_d - line; i++) {
-        if (i < pos)
-            jobMats_d[line * size_d + i] = absolute_d(jobMats_d[(line-1) * size_d + i]);
-        else
-            jobMats_d[line * size_d + i] = absolute_d(jobMats_d[(line-1) * size_d + i + 1]);
-    }
-
-    posVecs_d[line] = 0;
-    dirVecs_d[line] = 0;
+    // posVecs_d[line] = 0;
 }
 
 //sequential
 //fill row `line` of matrix with unscheduled jobs of row `line-1`
 inline __device__ void
-generateLine2(int* jobMats_d, int* posVecs_d, int* dirVecs_d, const int line,
-  const int state)
+generateLine2(int* jobMats_d, int* posVecs_d, int* dirVecs_d, const int line, const int state)
 {
     assert(line > 0);
     assert(line < size_d);
 
     int lineMinus1 = line - 1;
-    int column     = posVecs_d[lineMinus1];// index2D(lineMinus1, mid)];
+    int column     = posVecs_d[lineMinus1];
     assert(column < size_d);
 
     int i = 0;
@@ -142,47 +87,18 @@ generateLine2(int* jobMats_d, int* posVecs_d, int* dirVecs_d, const int line,
     }
 }
 
-// ___________________________________________
-template <typename T>
-inline __device__ void
-generateLine(T * jobMats_d, T * posVecs_d,
-  T * dirVecs_d, const T * line_d,
-  const T * state_d, int mid)
-{
-    int line = line_d[mid];
-
-    assert(line > 0);
-    assert(line < size_d);
-
-    int lineMinus1 = line - 1;
-    int column     = posVecs_d[index2D(lineMinus1, mid)];
-    assert(column < size_d);
-
-    int i = 0;
-    #pragma unroll 4
-    for (i = 0; i < size_d - line; i++) {
-        if (i < column) jobMats_d[index3D(line, i, mid)] = absolute_d(jobMats_d[index3D(lineMinus1, i, mid)]);
-        else jobMats_d[index3D(line, i, mid)] = absolute_d(jobMats_d[index3D(lineMinus1, i + 1, mid)]);
-    }
-
-    if (state_d[mid] > 0) {
-        posVecs_d[index2D(line, mid)] = 0;
-        dirVecs_d[index2D(line, mid)] = 0;
-    }
-}
-
 // ________________________________________________
-template <typename T>
-inline __device__ bool
-pruningCellState(const T * jobMats_d, const T * posVecs_d, const T * line_d, int mid)
-{
-    int line = line_d[mid];
-    int pos  = posVecs_d[index2D(line, mid)];
-
-    assert(pos >= 0 && pos < size_d);
-    assert(line >= 0 && line < size_d);
-    return (jobMats_d[index3D(line, pos, mid)] < 0);
-}
+// template <typename T>
+// inline __device__ bool
+// pruningCellState(const T * jobMats_d, const T * posVecs_d, const T * line_d, int mid)
+// {
+//     int line = line_d[mid];
+//     int pos  = posVecs_d[index2D(line, mid)];
+//
+//     assert(pos >= 0 && pos < size_d);
+//     assert(line >= 0 && line < size_d);
+//     return (jobMats_d[index3D(line, pos, mid)] < 0);
+// }
 
 // ________________________________________________
 template <typename T>
@@ -485,13 +401,15 @@ tile_MinBranch(thread_block_tile<tile_size> g, const int * jm_row, const int * c
     return dir[line];
 }
 
+//return 1 to count as decomposed
+//
 template <unsigned tile_size>
 __device__ int
 initStep(thread_block_tile<tile_size> g, int *jm, int *pv, int *dv, int &line, int &state)
 {
     int * mat_ptr = jm + line * size_d + *(pv + line);
 
-    if (*mat_ptr < 0) { // aka pruningCellState
+    if (*mat_ptr < 0) { // stop init and start exploring here
         state = 1;
         for(int i=line+1+g.thread_rank();i<size_d;i+=g.size()){
             pv[i] = 0;
@@ -509,6 +427,7 @@ initStep(thread_block_tile<tile_size> g, int *jm, int *pv, int *dv, int &line, i
             }
         } // end sequential
     }
+    return 0;
 }
 
 template <unsigned tile_size>
