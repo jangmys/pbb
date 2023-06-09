@@ -445,11 +445,12 @@ worker::run()
 
         if(foundNewBest()){
             // std::cout<<"try send best :\t"<<pbb->sltn->cost<<std::endl;
-            // FILE_LOG(logDEBUG) << "Try launch best-communication";
+            FILE_LOG(logDEBUG) << "Try launch best-communication";
             tryLaunchCommBest();
         }
-        else if(allEnd){
-            // FILE_LOG(logDEBUG) << "Try launch work-communicaion";
+        // else if(allEnd){
+        else{
+            FILE_LOG(logDEBUG) << "Try launch work-communicaion";
             tryLaunchCommWork();
         }
     }

@@ -238,6 +238,8 @@ master::run()
         //waiting for any message
         MPI_Probe(MPI_ANY_SOURCE,MPI_ANY_TAG,MPI_COMM_WORLD,&status);
 
+        FILE_LOG(logINFO) << "Receive message-type "<<status.MPI_TAG<<" from "<<status.MPI_SOURCE;
+
         //master active now
         pbb->ttm->on(pbb->ttm->masterWalltime);
         switch (status.MPI_TAG) {
@@ -246,7 +248,6 @@ master::run()
                 work_in++;
                 wrk->clear();
                 comm.recv_work(wrk, status.MPI_SOURCE, WORK, &status);
-
                 //update global (master) node count
                 //==================================
                 // FILE_LOG(logDEBUG) << "Receive node count: " << wrk->nb_decomposed;

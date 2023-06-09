@@ -352,6 +352,9 @@ gpubb::next()
         }
     }
 
+    FILE_LOG(logDEBUG) << "GPU-explore : BREAK";
+
+
 	//return true if allEnd
     return end;
 }
@@ -590,7 +593,7 @@ gpubb::weakBound(const int NN, const int best)
     }
 #endif
 #ifdef TEST
-    //shared memory for schedules
+    //shared memory for schedulesnext
     smem = NN * size * sizeof(int);
     boundWeakFront<<<(nbIVM+NN-1) / NN, NN * 32, smem, stream[0] >>>(state_d,schedule_d,lim1_d,lim2_d,line_d,costsBE_d,flagLeaf);
 #endif

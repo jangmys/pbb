@@ -183,25 +183,23 @@ works::id_find(const int _id)
 std::shared_ptr<work>
 works::sizes_big() const
 {
-    // return ids.begin()->second; //return smallest ID
+    // return largest
     return sizes.begin()->second; //return largest
 
     //return largest work which has been updated at least once
-    for(auto i:sizes)
-    {
-        if(i.second->nb_updates > 0)return i.second;
-    }
-    return nullptr;
-    // ids.begin()->second; //return smallest ID
-    //	return w;
-    //	return (w->big()) ? w : NULL;
+    //(the idea is to avoid some redundancy - but it may just block the work spread in the beginning)
+    // for(auto i:sizes)
+    // {
+    //     if(i.second->nb_updates > 0)return i.second;
+    // }
+    // return nullptr;
 }
 
 
 std::shared_ptr<work>
 works::ids_oldest() const
 {
-    //return oldest work which has been updated at least once
+    //return oldest work which is at least average size
     for(auto i:ids)
     {
         if(i.second->size >= size/ids.size())return i.second;
@@ -227,8 +225,8 @@ std::shared_ptr<work>
 works::steal(unsigned int max, bool &tooSmall)
 {
     // select largest work unit (that was at least updated once!)
-    std::shared_ptr<work> tmp1 = sizes_big();
-    // std::shared_ptr<work> tmp1 = ids_oldest();
+    std::shared_ptr<work> tmp1 = ids_oldest();
+    // std::shared_ptr<work> tmp1 = sizes_big();
 
     //if sizes_big returned nothing
     if(!tmp1)return nullptr;
