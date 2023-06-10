@@ -31,17 +31,27 @@ public:
     size_t N;
     size_t nbIVM;
 
+    float search_cut;
     int topoDimensions;
     int topoA[MaxHypercubeDims];
     int topoB[MaxHypercubeDims];
     int topoRings[MaxHypercubeDims];
 
     int *length_d; // length of intervals (factoradic)
+    int *meanLength_d;
+    int *sumLength_d;   // sum of interval-lengths
+    int *victim_d;
+    int *victim_flag_d;
 
     gpu_worksteal(int _N, int _nbIVM) : N(_N),nbIVM(_nbIVM){
-        gpuErrchk(cudaMalloc((void **) &length_d, N*nbIVM* sizeof(int)));
+        search_cut = 1.0;
 
         std::cout<<"init ws with "<<nbIVM<<std::endl;
+        gpuErrchk(cudaMalloc((void **) &length_d, N*nbIVM*sizeof(int)));
+        gpuErrchk(cudaMalloc((void **) &victim_d, nbIVM*sizeof(int)));
+        gpuErrchk(cudaMalloc((void **) &victim_flag_d, nbIVM*sizeof(int)));
+        gpuErrchk(cudaMalloc((void **) &meanLength_d, N*sizeof(int)));
+        gpuErrchk(cudaMalloc((void **) &sumLength_d, N*sizeof(int)));
 
         switch (nbIVM) {
             case 1:
@@ -162,6 +172,24 @@ public:
                 break;
         }
     }
+
+    ~gpu_worksteal(){
+        gpuErrchk(cudaFree(length_d));
+        gpuErrchk(cudaFree(meanLength_d));
+        gpuErrchk(cudaFree(sumLength_d));
+        gpuErrchk(cudaFree(victim_d));
+        gpuErrchk(cudaFree(victim_flag_d));
+    }
+
+    void adapt_workstealing(unsigned int nb_exploring, unsigned int min, unsigned int max)
+    {
+        if ((nb_exploring >= (unsigned int) (7 * nbIVM / 10)) && (search_cut < 0.8))
+            search_cut += 0.1;
+        else if ((nb_exploring < (unsigned int) (7 * nbIVM / 10)) && (search_cut > 0.2))
+            search_cut -= 0.1;
+
+    	FILE_LOG(logDEBUG) << "GPUWS length coefficient: "<<search_cut;
+    }
 };
 
 
@@ -245,19 +273,17 @@ public:
 
     // =======================================================================
     // WORK STEALING
-    int * split_d; // place to cut interval
-    int * victim_flag;
-    int * victim_h, * victim_d;         // map thief->victim
-    int * length_h, * length_d;         // length of intervals
-    int * sumLength_h, * sumLength_d;   // sum of interval-lengths
-    int * meanLength_h, * meanLength_d; // average interval-length
+    // int * split_d; // place to cut interval
+    // int * victim_flag;
+    // int * victim_h, * victim_d;         // map thief->victim
+    // int * length_h, * length_d;         // length of intervals
+    // int * sumLength_h, * sumLength_d;   // sum of interval-lengths
+    // int * meanLength_h, * meanLength_d; // average interval-length
 
-    int ringsize; // for multi-D topology
-
-    int search_from;
-    int search_to;
-    int search_step; // parameters for extended ring-strategy
-    float search_cut;
+    // int search_from;
+    // int search_to;
+    // int search_step; // parameters for extended ring-strategy
+    // float search_cut;
     // =======================================================================
 
     bool firstbound;
@@ -311,7 +337,7 @@ public:
     bool triggeredNext(int& best, int iter);
 
     int steal_in_device(int);
-    void adapt_workstealing(int, int);
+    // void adapt_workstealing(unsigned int, unsigned int, unsigned int);
 
     void affiche(int M);
     void getStats();

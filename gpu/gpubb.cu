@@ -26,7 +26,7 @@ gpubb::gpubb(pbab * _pbb) : pbb(_pbb),size(pbb->size),nbIVM(arguments::nbivms_gp
     // pbb  = _pbb;
     // size = pbb->size;
     // nbIVM    = arguments::nbivms_gpu;
-    ringsize = nbIVM;
+    // ringsize = nbIVM;
 
 
 
@@ -52,7 +52,7 @@ gpubb::gpubb(pbab * _pbb) : pbb(_pbb),size(pbb->size),nbIVM(arguments::nbivms_gp
 
     // "one time events"
     firstbound = true;
-    search_cut = 1.0;
+    // search_cut = 1.0;
 
 	execmode.triggered = false;
 }
@@ -683,9 +683,9 @@ gpubb::steal_in_device(int iter)
     struct timespec startt,endt;
     clock_gettime(CLOCK_MONOTONIC,&startt);
 
-    adapt_workstealing(2, nbIVM / 8);
+    ws.adapt_workstealing(counter_h[exploringState], 2, nbIVM / 8);
 
-    computeLength <<< (nbIVM / PERBLOCK), (32 * PERBLOCK)>>>(pos_d, end_d, length_d, state_d, sumLength_d);
+    computeLength <<< (nbIVM / PERBLOCK), (32 * PERBLOCK)>>>(pos_d, end_d, ws.length_d, state_d, ws.sumLength_d);
 #ifndef NDEBUG
     gpuErrchk(cudaPeekAtLastError());
     gpuErrchk(cudaDeviceSynchronize());
@@ -693,25 +693,24 @@ gpubb::steal_in_device(int iter)
 
     //    search_cut = 0.1;
     computeMeanLength << < (nbIVM + 127) / 128, 128, 0, stream[0] >> >
-    (sumLength_d, meanLength_d, search_cut, nbIVM); // (int)(ctrl_h[2]+1));
+    (ws.sumLength_d, ws.meanLength_d, ws.search_cut, nbIVM); // (int)(ctrl_h[2]+1));
 #ifndef NDEBUG
     gpuErrchk(cudaPeekAtLastError());
     gpuErrchk(cudaDeviceSynchronize());
 #endif
 
-    int nbdims = ws.topoDimensions;
-    int dimb = iter % nbdims;
+    int dimb = iter % ws.topoDimensions;
     int from, to, dim, q;
 
-    for (int s = dimb; s < dimb + nbdims; s++) {
-        dim  = s % nbdims;
+    for (int s = dimb; s < dimb + ws.topoDimensions; s++) {
+        dim  = s % ws.topoDimensions;
         q    = (1 << ws.topoB[dim]);
         from = iter & (q - 1);
         to   = from + q;
 
         for (int off = from; off < to; off++)
             prepareShare << < (nbIVM + 127) / 128, 128, 0, stream[0] >> >
-            (state_d, victim_flag, victim_d, length_d, meanLength_d, off & (q - 1), ws.topoB[dim], ws.topoA[dim]);
+            (state_d, ws.victim_flag_d, ws.victim_d, ws.length_d, ws.meanLength_d, off & (q - 1), ws.topoB[dim], ws.topoA[dim]);
     }
 #ifndef NDEBUG
     gpuErrchk(cudaPeekAtLastError());
@@ -719,7 +718,7 @@ gpubb::steal_in_device(int iter)
 #endif
 
     share_on_gpu2 <<< nbIVM / PERBLOCK, 32 * PERBLOCK, 0, stream[0] >>>
-    (mat_d, pos_d, end_d, dir_d, line_d, 1, 2, state_d, victim_flag, victim_d, ctrl_d);
+    (mat_d, pos_d, end_d, dir_d, line_d, 1, 2, state_d, ws.victim_flag_d, ws.victim_d, ctrl_d);
 #ifndef NDEBUG
     gpuErrchk(cudaPeekAtLastError());
     gpuErrchk(cudaDeviceSynchronize());
@@ -733,18 +732,6 @@ gpubb::steal_in_device(int iter)
 
     return tmp;
 }
-
-void
-gpubb::adapt_workstealing(int min, int max)
-{
-    if ((counter_h[exploringState] >= (int) (7 * nbIVM / 10)) && (search_cut < 0.8))
-        search_cut += 0.1;
-    else if ((counter_h[exploringState] < (int) (7 * nbIVM / 10)) && (search_cut > 0.2))
-        search_cut -= 0.1;
-
-	FILE_LOG(logDEBUG) << "GPUWS length coefficient: "<<search_cut;
-}
-
 
 // = =========================================================
 //
@@ -781,11 +768,11 @@ gpubb::allocate_on_host()
     lim2_h     = (int *) calloc(size_i, sizeof(int));
     schedule_h = (int *) calloc(size_v, sizeof(int));
 
-    victim_h     = (int *) calloc(size_i, sizeof(int));
-    length_h     = (int *) calloc(size_v, sizeof(int));
+    // victim_h     = (int *) calloc(size_i, sizeof(int));
+    // length_h     = (int *) calloc(size_v, sizeof(int));
     ctrl_h       = (unsigned int *) calloc(8, sizeof(unsigned int));
     counter_h    = (unsigned int *) calloc(6, sizeof(unsigned int));
-    meanLength_h = (int *) calloc(size, sizeof(int));
+    // meanLength_h = (int *) calloc(size, sizeof(int));
     costsBE_h    = (int *) calloc(2 * size_v, sizeof(int));
 
 	// depth_histo_h = (unsigned int*)calloc(size, sizeof(unsigned int));
@@ -815,11 +802,11 @@ gpubb::allocate_on_device()
     gpuErrchk(cudaMalloc((void **) &sums_d, 2 * size_i * sizeof(int)));
 
     //  gpuErrchk(cudaMalloc((void **)&split_d, size_v * sizeof(int)));
-    gpuErrchk(cudaMalloc((void **) &victim_flag, size_i * sizeof(int)));
-    gpuErrchk(cudaMalloc((void **) &victim_d, size_i * sizeof(int)));
-    gpuErrchk(cudaMalloc((void **) &length_d, size_v * sizeof(int)));
-    gpuErrchk(cudaMalloc((void **) &sumLength_d, size * sizeof(int)));
-    gpuErrchk(cudaMalloc((void **) &meanLength_d, size * sizeof(int)));
+    // gpuErrchk(cudaMalloc((void **) &victim_flag, size_i * sizeof(int)));
+    // gpuErrchk(cudaMalloc((void **) &victim_d, size_i * sizeof(int)));
+    // gpuErrchk(cudaMalloc((void **) &length_d, size_v * sizeof(int)));
+    // gpuErrchk(cudaMalloc((void **) &sumLength_d, size * sizeof(int)));
+    // gpuErrchk(cudaMalloc((void **) &meanLength_d, size * sizeof(int)));
 
     gpuErrchk(cudaMalloc((void **) &flagLeaf, size_i * sizeof(int)));
 
@@ -838,8 +825,8 @@ gpubb::allocate_on_device()
 
     // set to 0
     gpuErrchk(cudaMemset(counter_d, 0, 6 * sizeof(unsigned int)));
-    gpuErrchk(cudaMemset(sumLength_d, 0, size * sizeof(int)));
-    gpuErrchk(cudaMemset(victim_flag, 0, size_i * sizeof(int)));
+    gpuErrchk(cudaMemset(ws.sumLength_d, 0, size * sizeof(int)));
+    gpuErrchk(cudaMemset(ws.victim_flag_d, 0, size_i * sizeof(int)));
     gpuErrchk(cudaMemset(ivmId_d, 0, size_v * sizeof(int)));
     gpuErrchk(cudaMemset(sums_d, 0, 2 * size_i * sizeof(int)));
     unsigned int zero=0;
@@ -865,10 +852,10 @@ gpubb::free_on_device()
 
     gpuErrchk(cudaFree(sums_d));
 
-    gpuErrchk(cudaFree(victim_flag));
-    gpuErrchk(cudaFree(victim_d));
-    gpuErrchk(cudaFree(length_d));
-    gpuErrchk(cudaFree(sumLength_d));
+    // gpuErrchk(cudaFree(victim_flag));
+    // gpuErrchk(cudaFree(victim_d));
+    // gpuErrchk(cudaFree(length_d));
+    // gpuErrchk(cudaFree(sumLength_d));
     gpuErrchk(cudaFree(auxArr));
     gpuErrchk(cudaFree(tmp_arr_d));
     gpuErrchk(cudaFree(todo_d));
@@ -899,7 +886,7 @@ gpubb::copyH2D()
     gpuErrchk(cudaMemcpy(state_d, state_h, size_i * sizeof(int), cudaMemcpyHostToDevice));
     gpuErrchk(cudaMemset(costsBE_d, 0, 2 * size_v * sizeof(int)));
 
-    gpuErrchk(cudaMemcpy(victim_d, victim_h, size_i * sizeof(int), cudaMemcpyHostToDevice));
+    // gpuErrchk(cudaMemcpy(victim_d, victim_h, size_i * sizeof(int), cudaMemcpyHostToDevice));
     gpuErrchk(cudaMemcpy(ctrl_d, ctrl_h, 4 * sizeof(unsigned int), cudaMemcpyHostToDevice));
     gpuErrchk(cudaMemcpy(nbDecomposed_d, nbDecomposed_h, nbIVM * sizeof(unsigned long long int),
       cudaMemcpyHostToDevice));
