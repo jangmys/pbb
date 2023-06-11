@@ -23,6 +23,7 @@ struct executionmode
     bool triggered;
 };
 
+
 class gpu_worksteal
 {
 public:
@@ -190,6 +191,9 @@ public:
 
     	FILE_LOG(logDEBUG) << "GPUWS length coefficient: "<<search_cut;
     }
+
+    int
+    steal_in_device(int* line, int* pos, int* end, int* dir, int* mat, int* state, int iter, unsigned int nb_exploring);
 };
 
 
@@ -336,7 +340,7 @@ public:
     bool next(int &, int);
     bool triggeredNext(int& best, int iter);
 
-    int steal_in_device(int);
+    int steal_in_device(int* line, int* pos, int* end, int* dir, int* mat, int* state, int iter);
     // void adapt_workstealing(unsigned int, unsigned int, unsigned int);
 
     void affiche(int M);

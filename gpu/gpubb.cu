@@ -14,11 +14,62 @@
 #include "log.h"
 
 #include "libbounds.h"
-
 #include "gpubb.h"
 
 // all CUDA from this file
 #include "./bb_kernels.cu"
+
+
+
+int gpu_worksteal::steal_in_device(int* line, int* pos, int* end, int* dir, int* mat, int* state, int iter, unsigned int nb_exploring)
+{
+    adapt_workstealing(nb_exploring, 2, nbIVM / 8);
+
+    computeLength <<< (nbIVM / PERBLOCK), (32 * PERBLOCK)>>>(pos, end, state, length_d, sumLength_d);
+#ifndef NDEBUG
+    gpuErrchk(cudaPeekAtLastError());
+    gpuErrchk(cudaDeviceSynchronize());
+#endif
+
+    //    search_cut = 0.1;
+    computeMeanLength << < (nbIVM + 127) / 128, 128>>>
+    (sumLength_d, meanLength_d, search_cut, nbIVM); // (int)(ctrl_h[2]+1));
+#ifndef NDEBUG
+    gpuErrchk(cudaPeekAtLastError());
+    gpuErrchk(cudaDeviceSynchronize());
+#endif
+
+    int dimb = iter % topoDimensions;
+    int from, to, dim, q;
+
+    for (int s = dimb; s < dimb + topoDimensions; s++) {
+        dim  = s % topoDimensions;
+        q    = (1 << topoB[dim]);
+        from = iter & (q - 1);
+        to   = from + q;
+
+        for (int off = from; off < to; off++)
+            prepareShare << < (nbIVM + 127) / 128, 128>>>
+            (state, victim_flag_d, victim_d, length_d, meanLength_d, off & (q - 1), topoB[dim], topoA[dim]);
+    }
+#ifndef NDEBUG
+    gpuErrchk(cudaPeekAtLastError());
+    gpuErrchk(cudaDeviceSynchronize());
+#endif
+
+    share_on_gpu2 <<< nbIVM / PERBLOCK, 32 * PERBLOCK>>>
+    (mat, pos, end, dir, line, 1, 2, state, victim_flag_d, victim_d);
+#ifndef NDEBUG
+    gpuErrchk(cudaPeekAtLastError());
+    gpuErrchk(cudaDeviceSynchronize());
+#endif
+
+    unsigned int tmp = 0;
+    gpuErrchk(cudaMemcpyFromSymbol(&tmp, gpuBalancedIntern, sizeof(unsigned int)));
+
+    return tmp;
+};
+
 
 
 gpubb::gpubb(pbab * _pbb) : pbb(_pbb),size(pbb->size),nbIVM(arguments::nbivms_gpu),ws(size,nbIVM)
@@ -320,7 +371,9 @@ gpubb::next()
     // std::cout<<"got best "<<best<<std::endl;
 
     while (true) {
-        nbsteals += steal_in_device(iter);
+        if (counter_h[exploringState] < 75*nbIVM/100){
+            nbsteals += ws.steal_in_device(line_d, pos_d, end_d, dir_d, mat_d, state_d, iter, counter_h[exploringState]);
+        }
 
         if(execmode.triggered){
             //perform whole BB in single kernel..break if a threshold of empty explorers is reached.
@@ -675,24 +728,18 @@ gpubb::boundLeaves(bool reached, int& best)
 
 
 int
-gpubb::steal_in_device(int iter)
+gpubb::steal_in_device(int* line, int* pos, int* end, int* dir, int* mat, int* state, int iter)
 {
-    // if (counter_h[exploringState] >= nbIVM-2048) return 0;
-    if (counter_h[exploringState] >= 75*nbIVM/100) return 0;
-
-    struct timespec startt,endt;
-    clock_gettime(CLOCK_MONOTONIC,&startt);
-
     ws.adapt_workstealing(counter_h[exploringState], 2, nbIVM / 8);
 
-    computeLength <<< (nbIVM / PERBLOCK), (32 * PERBLOCK)>>>(pos_d, end_d, ws.length_d, state_d, ws.sumLength_d);
+    computeLength <<< (nbIVM / PERBLOCK), (32 * PERBLOCK)>>>(pos, end, state, ws.length_d, ws.sumLength_d);
 #ifndef NDEBUG
     gpuErrchk(cudaPeekAtLastError());
     gpuErrchk(cudaDeviceSynchronize());
 #endif
 
     //    search_cut = 0.1;
-    computeMeanLength << < (nbIVM + 127) / 128, 128, 0, stream[0] >> >
+    computeMeanLength << < (nbIVM + 127) / 128, 128>>>
     (ws.sumLength_d, ws.meanLength_d, ws.search_cut, nbIVM); // (int)(ctrl_h[2]+1));
 #ifndef NDEBUG
     gpuErrchk(cudaPeekAtLastError());
@@ -709,16 +756,16 @@ gpubb::steal_in_device(int iter)
         to   = from + q;
 
         for (int off = from; off < to; off++)
-            prepareShare << < (nbIVM + 127) / 128, 128, 0, stream[0] >> >
-            (state_d, ws.victim_flag_d, ws.victim_d, ws.length_d, ws.meanLength_d, off & (q - 1), ws.topoB[dim], ws.topoA[dim]);
+            prepareShare << < (nbIVM + 127) / 128, 128>>>
+            (state, ws.victim_flag_d, ws.victim_d, ws.length_d, ws.meanLength_d, off & (q - 1), ws.topoB[dim], ws.topoA[dim]);
     }
 #ifndef NDEBUG
     gpuErrchk(cudaPeekAtLastError());
     gpuErrchk(cudaDeviceSynchronize());
 #endif
 
-    share_on_gpu2 <<< nbIVM / PERBLOCK, 32 * PERBLOCK, 0, stream[0] >>>
-    (mat_d, pos_d, end_d, dir_d, line_d, 1, 2, state_d, ws.victim_flag_d, ws.victim_d, ctrl_d);
+    share_on_gpu2 <<< nbIVM / PERBLOCK, 32 * PERBLOCK>>>
+    (mat, pos, end, dir, line, 1, 2, state, ws.victim_flag_d, ws.victim_d);
 #ifndef NDEBUG
     gpuErrchk(cudaPeekAtLastError());
     gpuErrchk(cudaDeviceSynchronize());
@@ -726,9 +773,6 @@ gpubb::steal_in_device(int iter)
 
     unsigned int tmp = 0;
     gpuErrchk(cudaMemcpyFromSymbol(&tmp, gpuBalancedIntern, sizeof(unsigned int)));
-
-    clock_gettime(CLOCK_MONOTONIC,&endt);
-	FILE_LOG(logDEBUG) << "GPU load balanced. Steals: "<<tmp<<" ["<< (endt.tv_sec-startt.tv_sec)+(endt.tv_nsec-startt.tv_nsec)/1e9<<" ]";
 
     return tmp;
 }

@@ -1,4 +1,6 @@
-__global__ void computeLength(const int *posVecs, const int *endVecs, int *length, const int *state, int *sumLength_d) {
+__device__ unsigned int gpuBalancedIntern;
+
+__global__ void computeLength(const int *posVecs, const int *endVecs, const int *state, int *length, int *sumLength_d) {
     thread_block_tile<32> g = tiled_partition<32>(this_thread_block());
 
     int ivm   = (blockIdx.x * blockDim.x + threadIdx.x) / warpSize; // global ivm id
@@ -77,7 +79,7 @@ __global__ void prepareShare(const T *state_d, int *flag, int *victim, const int
 
 // GPU work transfer without init
 template <typename T>
-__global__ void share_on_gpu2(T *jobMat, T *pos, T *end, T *dir, T *line, int numerator, int denominator, T *state, int *victim_flag, int *victim, unsigned int *ctrl_d)
+__global__ void share_on_gpu2(T *jobMat, T *pos, T *end, T *dir, T *line, int numerator, int denominator, T *state, int *victim_flag, int *victim)
 {
     int thPos = threadIdx.x % warpSize;
     int ivm = blockIdx.x * PERBLOCK + threadIdx.x / warpSize;

@@ -21,7 +21,7 @@ __device__ unsigned int _trigger;
 __device__ unsigned int todo;
 __device__ unsigned int deviceEnd;
 __device__ unsigned int targetNode;
-__device__ unsigned int gpuBalancedIntern;
+// __device__ unsigned int gpuBalancedIntern;
 __device__ unsigned int countNodes_d;
 
 __constant__ int _boundMode;
