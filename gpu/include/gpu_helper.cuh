@@ -25,7 +25,6 @@ __device__ unsigned int targetNode;
 __device__ unsigned int countNodes_d;
 
 __constant__ int _boundMode;
-__constant__ int _nbJob;
 __constant__ int nbIVM_d;
 __constant__ int size_d;
 

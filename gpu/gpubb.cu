@@ -921,7 +921,6 @@ gpubb::copyH2Dconstant()
     gpuErrchk(cudaMemcpyToSymbol(_nbMachines, &nbMachines_h, sizeof(int)));
     gpuErrchk(cudaMemcpyToSymbol(_sum, &somme_h, sizeof(int)));
     gpuErrchk(cudaMemcpyToSymbol(size_d, &size, sizeof(int)));
-    gpuErrchk(cudaMemcpyToSymbol(_nbJob, &size, sizeof(int)));
     gpuErrchk(cudaMemcpyToSymbol(_boundMode, &arguments::boundMode, sizeof(int)));
     gpuErrchk(cudaMemcpyToSymbol(_nbJobPairs, &nbJobPairs_h, sizeof(int)));
 
@@ -993,7 +992,6 @@ gpubb::copyH2DconstantTEST()
 {
     gpuErrchk(cudaMemcpyToSymbol(nbIVM_d, &nbIVM, sizeof(int)));
     gpuErrchk(cudaMemcpyToSymbol(size_d, &size, sizeof(int)));
-    gpuErrchk(cudaMemcpyToSymbol(_nbJob, &size, sizeof(int)));
 
     gpuErrchk(cudaPeekAtLastError());
     gpuErrchk(cudaDeviceSynchronize());
