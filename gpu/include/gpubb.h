@@ -44,9 +44,7 @@ public:
     int *victim_d;
     int *victim_flag_d;
 
-    gpu_worksteal(int _N, int _nbIVM) : N(_N),nbIVM(_nbIVM){
-        search_cut = 1.0;
-
+    gpu_worksteal(int _N, int _nbIVM) : N(_N),nbIVM(_nbIVM),search_cut(1.0){
         std::cout<<"init ws with "<<nbIVM<<std::endl;
         gpuErrchk(cudaMalloc((void **) &length_d, N*nbIVM*sizeof(int)));
         gpuErrchk(cudaMalloc((void **) &victim_d, nbIVM*sizeof(int)));
@@ -196,6 +194,26 @@ public:
     steal_in_device(int* line, int* pos, int* end, int* dir, int* mat, int* state, int iter, unsigned int nb_exploring);
 };
 
+class gpu_fsp_bound{
+public:
+    size_t N;
+    size_t M;
+    size_t nbIVM;
+
+    int* front_d;
+    int* back_d;
+
+    gpu_fsp_bound(int _N, int _M, int _nbIVM) : N(_N),M(_M),nbIVM(_nbIVM){
+        gpuErrchk(cudaMalloc((void **) &front_d, nbIVM * M * sizeof(int)));
+        gpuErrchk(cudaMalloc((void **) &back_d, nbIVM * M * sizeof(int)));
+    }
+
+    ~gpu_fsp_bound(){
+        gpuErrchk(cudaFree(front_d));
+        gpuErrchk(cudaFree(back_d));
+    }
+};
+
 
 
 class gpubb {
@@ -228,15 +246,6 @@ public:
     // ==============================================
     gpu_worksteal ws;
 
-    // int topoDimensions;
-    // int topoA[MAX_HYPERCUBE_DIMS];
-    // int topoB[MAX_HYPERCUBE_DIMS];
-    // int topoRings[MAX_HYPERCUBE_DIMS];
-    // void setHypercubeConfig(int nbIVM);
-    // ==============================================
-
-
-
     // ==============================================
     cudaStream_t *stream;
     cudaEvent_t *event;
@@ -258,13 +267,6 @@ public:
     int * costsBE_h, * costsBE_d;
     int * prio_d;
     int * sums_d;
-
-    int * todo_d;
-    int * tmp_arr_d, * auxArr;
-    int * auxEnd;
-
-    int * ivmId_d;
-    int * toSwap_d;
 
     // global counters
     unsigned int * counter_h, * counter_d;
@@ -292,25 +294,37 @@ public:
 
     bool firstbound;
 
+    int * todo_d;
+    int * tmp_arr_d, * auxArr;
+    int * auxEnd;
+
+    int * ivmId_d;
+    int * toSwap_d;
+
     //for flowshop
-    int * front_h, * front_d;
-    int * back_h, * back_d;
+    std::unique_ptr<gpu_fsp_bound> bd;
+
+    // int * front_h, * front_d;
+    // int * back_h, * back_d;
     void initializeBoundFSP();
+    bool weakBound(const int NN, const int best);
+    void buildMapping(int best);
+    bool boundLeaves(bool reached, int &best);
+
 
     //for TEST
     void copyH2DconstantTEST();
     void initializeBoundTEST();
+
+
+
 
     void getExplorationStats(const int,const int);
     void selectAndBranch(const int);
     void launchBBkernel(const int);
 
     bool allDone();
-
     bool decode(const int NN);
-    bool weakBound(const int NN, const int best);
-
-    void buildMapping(int best);
 
     void allocate_on_host();
     void allocate_on_device();
@@ -324,7 +338,6 @@ public:
     void copyD2H();
 
 
-    bool boundLeaves(bool reached, int &best);
 
     // ===========================
     void initialize(int rank);

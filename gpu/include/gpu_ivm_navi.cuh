@@ -196,17 +196,6 @@ tile_decodeIVM(thread_block_tile<32> g, const int * jm, const int * pos, const i
     for (int i = lane; i < size_d - line; i += g.size()) {
         prmu[l1 + 1 + i] = jm[i]; // unscheduled jobs
     }
-
-    // complete unscheduled jobs (read current row of matrix)...
-    // if(dir[line]==dir[line-1]){
-    //     for (int i = lane; i < size_d - line; i += g.size()) {
-    //         prmu[l1 + 1 + i] = jm[i]; // unscheduled jobs
-    //     }
-    // }else{
-    //     for (int i = lane; i < size_d - line; i += g.size()) {
-    //         prmu[l1 + 1 + i] = jm[_nbJob-line-1-i]; // unscheduled jobs
-    //     }
-    // }
 }
 
 // ==================================================
@@ -254,14 +243,14 @@ tile_prune(thread_block_tile<tile_size> g, int * jm_row, const int * costs, cons
 
     int job, val;
 
-    for (int i = 0; i <= _nbJob / g.size(); i++) {
+    for (int i = 0; i <= size_d / g.size(); i++) {
         if (i * g.size() + lane < size_d - line) { // one thread : one matrix cell in row
             job = absolute_d(jm_row[i * g.size() + lane]);
             val = costs[index2D(job, dir)];
             #ifdef FINDALL
-            if (val > best || line == _nbJob - 1) {
+            if (val > best || line == size_d - 1) {
             #else
-            if (val >= best || line >= _nbJob - 1) {
+            if (val >= best || line >= size_d - 1) {
             #endif
                 jm_row[i * g.size() + lane] = negative_d(job);
             }

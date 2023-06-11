@@ -1053,7 +1053,7 @@ xOver_makespans(int *schedules_d,int *cmax, int *state_d, int *parent2, int* l1,
     if (state_d[ivm] == 0) return;
 
 	tile_2point(tile32, prmu, parent2, chld, flag, l1[ivm], l2[ivm]);
-    tile_evalSolution(tile32, chld, _nbJob-1, _tempsJob, &front[warpID * _nbMachines]);
+    tile_evalSolution(tile32, chld, size_d-1, _tempsJob, &front[warpID * _nbMachines]);
     tile32.sync();
 
 	for(i=tile32.thread_rank(); i<size_d; i+=tile_size){
@@ -1088,7 +1088,6 @@ boundRoot(int *mat, int *dir, int *line, int *costsBE_d, int *sums_d, const int 
         // bound begin
         costsBE_d[l] =
         computeCost(permut, 0, l, 0, size_d, _tempsJob, 0, _tabJohnson, 999999);
-        // atomicAdd(&sums_d[0], costsBE_d[l]);
     }
 
     if(branchingMode>0){
@@ -1096,7 +1095,6 @@ boundRoot(int *mat, int *dir, int *line, int *costsBE_d, int *sums_d, const int 
             // bound end
             costsBE_d[size_d + l] =
             computeCost(permut, size_d - 1, l, -1, size_d - 1, _tempsJob, 0, _tabJohnson, 999999);
-            // atomicAdd(&sums_d[1], costsBE_d[size_d + l]);
         }
     }
     bl.sync();

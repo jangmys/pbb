@@ -410,12 +410,7 @@ gpubb::next()
 bool
 gpubb::next(int& best, int iter)
 {
-    // if (startclock) {
-    //     clock_gettime(CLOCK_REALTIME, &starttime);
-    //     startclock = false;
-    // }
     bool end = false;
-    // std::cout<<"next "<<iter<<std::endl;
 
     //modify IVM structures to make them point to next subproblem
     selectAndBranch(4);
@@ -466,22 +461,6 @@ gpubb::next(int& best, int iter)
 #ifdef FSP
                 boundJohnson<<<boundblocks, 128, nbJob_h * nbMachines_h + 64 * nbJob_h, stream[0]>>>(schedule_d, lim1_d, lim2_d, line_d, costsBE_d, sums_d, state_d, toSwap_d,ivmId_d, nbLeaves_d, ctrl_d, flagLeaf, best);
 #endif
-
-                // int *swap_h = new int[size * nbIVM];
-                // int *ivm_h = new int[size * nbIVM];
-                //
-                // cudaMemcpy(swap_h, toSwap_d, size * nbIVM * sizeof(int), cudaMemcpyDeviceToHost);
-                // cudaMemcpy(ivm_h, ivmId_d, size * nbIVM * sizeof(int), cudaMemcpyDeviceToHost);
-                //
-                // printf("swp\t");
-                // for (int j = 0; j < ttodo_h; j++) printf("%2d\t", swap_h[j]);
-                // printf("\n");
-                // printf("id\t");
-                // for (int j = 0; j < ttodo_h; j++) printf("%2d\t", ivm_h[j]);
-                // printf("\n");
-                //
-                // delete[]swap_h;
-                // delete[]ivm_h;
 #ifdef TEST
                 /*
                 boundStrong kernel here!!! (if strong bound only)
@@ -490,9 +469,6 @@ gpubb::next(int& best, int iter)
                 int smem = (4 * (2*size + 2) * sizeof(int));
                 chooseBranchingSortAndPrune<<< (nbIVM+4-1) / 4, 4 * 32, smem, stream[0] >> >
                 (mat_d, dir_d, pos_d, lim1_d, lim2_d, line_d, schedule_d, costsBE_d, prio_d, state_d, todo_d, best, initialUB,arguments::branchingMode);
-
-                //
-                // sortedPrune <<< (nbIVM+PERBLOCK-1) / PERBLOCK, 32 * PERBLOCK, 0, stream[0] >>> (mat_d, dir_d, line_d, costsBE_d, sums_d, state_d, flagLeaf, best);
                 break;
             }
             case 2:
@@ -501,7 +477,7 @@ gpubb::next(int& best, int iter)
                     boundblocks.x = (ttodo_h+127) / 128;
 #ifdef FSP
                     boundOne <<< boundblocks, 128, nbJob_h * nbMachines_h,stream[0] >>>
-                    (schedule_d, lim1_d, lim2_d, dir_d, line_d, costsBE_d, toSwap_d, ivmId_d,best, front_d, back_d);
+                    (schedule_d, lim1_d, lim2_d, dir_d, line_d, costsBE_d, toSwap_d, ivmId_d,best, bd->front_d, bd->back_d);
 #endif
 #ifdef TEST
                     /*
@@ -514,27 +490,6 @@ gpubb::next(int& best, int iter)
 
                     prune2noSort <<< (nbIVM+PERBLOCK-1) / PERBLOCK, 32 * PERBLOCK, 0, stream[0] >> > (mat_d, dir_d, line_d, costsBE_d, state_d, best);
                 }
-
-                // affiche(1);
-
-                // int *swap_h = new int[size * nbIVM];
-                // int *ivm_h = new int[size * nbIVM];
-                //
-                // cudaMemcpy(swap_h, toSwap_d, size * nbIVM * sizeof(int), cudaMemcpyDeviceToHost);
-                // cudaMemcpy(ivm_h, ivmId_d, size * nbIVM * sizeof(int), cudaMemcpyDeviceToHost);
-                //
-                // printf("swp\t");
-                // for (int j = 0; j < ttodo_h; j++) printf("%2d\t", swap_h[j]);
-                // printf("\n");
-                // printf("id\t");
-                // for (int j = 0; j < ttodo_h; j++) printf("%2d\t", ivm_h[j]);
-                // printf("\n");
-
-                // delete[]swap_h;
-                // delete[]ivm_h;
-                // printf("==================================================\n");
-
-
                 break;
     	    }
         }
@@ -546,17 +501,6 @@ gpubb::next(int& best, int iter)
 
     return end; // (ctrl_h[gpuEnd] == 1);
 } // gpubb::next
-
-
-    // cudaMemcpy(lim1_h, lim1_d, nbIVM * sizeof(int), cudaMemcpyDeviceToHost);
-    // cudaMemcpy(lim2_h, lim2_d, nbIVM * sizeof(int), cudaMemcpyDeviceToHost);
-	// cudaMemcpy(schedule_h, schedule_d, size * nbIVM * sizeof(int), cudaMemcpyDeviceToHost);
-	// for (int i = 0; i < nbIVM; i++) {
-    //     printf("%d %d\t",lim1_h[i],lim2_h[i]);
-	// 	for (int j = 0; j < size; j++) printf("%d\t", (int) schedule_h[i * size + j]);
-	// 	printf("\n");
-	// }
-	// printf("====== \n\n");
 
 
 bool gpubb::decode(const int NN)
@@ -607,26 +551,16 @@ gpubb::weakBound(const int NN, const int best)
     gpuErrchk(cudaMemcpyToSymbol(targetNode, &target_h, sizeof(unsigned int)));
     gpuErrchk(cudaMemset(flagLeaf, 0, nbIVM * sizeof(int)));
 
-    // cudaMemcpy(costsBE_h, costsBE_d, 2 * size * nbIVM * sizeof(int), cudaMemcpyDeviceToHost);
-    // for(int i=0;i<nbIVM;i++){
-    //     for(int j=0;j<size;j++)
-    //         printf("%4d ",costsBE_h[2*i*size+j]);
-    //     printf("\n");
-    //     for(int j=0;j<size;j++)
-    //         printf("%4d ",costsBE_h[(2*i+1)*size+j]);
-    //     printf("\n");
-    // }
-    // printf("=== %d %d\n",nbIVM,size);
     gpuErrchk(cudaMemset(costsBE_d, 0, 2 * size * nbIVM * sizeof(int))); //memset sets bytes!
 	size_t smem;
 
 #ifdef FSP
     smem = (NN * (size + 3 * nbMachines_h)) * sizeof(int);
     if(arguments::branchingMode>0){ //BEGIN-END
-        boundWeak_BeginEnd<32><<<(nbIVM+NN-1) / NN, NN * 32, smem, stream[0] >>>(lim1_d, lim2_d, line_d, schedule_d, costsBE_d, state_d, front_d, back_d, best, flagLeaf);
+        boundWeak_BeginEnd<32><<<(nbIVM+NN-1) / NN, NN * 32, smem, stream[0] >>>(lim1_d, lim2_d, line_d, schedule_d, costsBE_d, state_d, bd->front_d, bd->back_d, best, flagLeaf);
     }else if(arguments::branchingMode==-2){ //FWD only
         boundWeak_Begin<32> << < (nbIVM+NN-1) / NN, NN * 32, smem, stream[0] >> >
-        (lim1_d, lim2_d, line_d, schedule_d, costsBE_d, state_d, front_d, back_d, best, flagLeaf);
+        (lim1_d, lim2_d, line_d, schedule_d, costsBE_d, state_d, bd->front_d, bd->back_d, best, flagLeaf);
     }
 #endif
 #ifdef TEST
@@ -1031,8 +965,11 @@ gpubb::initializeBoundFSP()
     copyH2Dconstant();
     free_host_bound_tmp();
 
-    gpuErrchk(cudaMalloc((void **) &front_d, nbIVM * nbMachines_h * sizeof(int)));
-    gpuErrchk(cudaMalloc((void **) &back_d, nbIVM * nbMachines_h * sizeof(int)));
+    // gpuErrchk(cudaMalloc((void **) &front_d, nbIVM * nbMachines_h * sizeof(int)));
+    // gpuErrchk(cudaMalloc((void **) &back_d, nbIVM * nbMachines_h * sizeof(int)));
+
+
+    bd = std::make_unique<gpu_fsp_bound>(nbJob_h,nbMachines_h,nbIVM);
 }
 #endif /* ifdef FSP */
 
