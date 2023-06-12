@@ -12,7 +12,7 @@
 #include <mpi.h>
 
 #include "worker_mc.h"
-#ifdef USE_GPU
+#ifdef WITH_GPU
 #include "worker_gpu.h"
 #endif
 
@@ -160,7 +160,7 @@ main(int argc, char ** argv)
 
             // ==========================
             worker *wrkr;
-            #ifdef USE_GPU
+            #ifdef WITH_GPU
             if(arguments::worker_type=='g'){
                 wrkr = new worker_gpu(pbb,arguments::nbivms_gpu);
             }else{
@@ -220,7 +220,7 @@ main(int argc, char ** argv)
             FILE_LOG(logINFO) << "Worker running on :\t"<<hostname<<std::flush;
 
             worker *wrkr;
-            #ifdef USE_GPU
+            #ifdef WITH_GPU
             if(arguments::worker_type=='g'){
                 wrkr = new worker_gpu(pbb,arguments::nbivms_gpu);
             }else{

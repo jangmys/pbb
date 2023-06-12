@@ -661,56 +661,6 @@ gpubb::boundLeaves(bool reached, int& best)
 }
 
 
-int
-gpubb::steal_in_device(int* line, int* pos, int* end, int* dir, int* mat, int* state, int iter)
-{
-    ws.adapt_workstealing(counter_h[exploringState], 2, nbIVM / 8);
-
-    computeLength <<< (nbIVM / PERBLOCK), (32 * PERBLOCK)>>>(pos, end, state, ws.length_d, ws.sumLength_d);
-#ifndef NDEBUG
-    gpuErrchk(cudaPeekAtLastError());
-    gpuErrchk(cudaDeviceSynchronize());
-#endif
-
-    //    search_cut = 0.1;
-    computeMeanLength << < (nbIVM + 127) / 128, 128>>>
-    (ws.sumLength_d, ws.meanLength_d, ws.search_cut, nbIVM); // (int)(ctrl_h[2]+1));
-#ifndef NDEBUG
-    gpuErrchk(cudaPeekAtLastError());
-    gpuErrchk(cudaDeviceSynchronize());
-#endif
-
-    int dimb = iter % ws.topoDimensions;
-    int from, to, dim, q;
-
-    for (int s = dimb; s < dimb + ws.topoDimensions; s++) {
-        dim  = s % ws.topoDimensions;
-        q    = (1 << ws.topoB[dim]);
-        from = iter & (q - 1);
-        to   = from + q;
-
-        for (int off = from; off < to; off++)
-            prepareShare << < (nbIVM + 127) / 128, 128>>>
-            (state, ws.victim_flag_d, ws.victim_d, ws.length_d, ws.meanLength_d, off & (q - 1), ws.topoB[dim], ws.topoA[dim]);
-    }
-#ifndef NDEBUG
-    gpuErrchk(cudaPeekAtLastError());
-    gpuErrchk(cudaDeviceSynchronize());
-#endif
-
-    share_on_gpu2 <<< nbIVM / PERBLOCK, 32 * PERBLOCK>>>
-    (mat, pos, end, dir, line, 1, 2, state, ws.victim_flag_d, ws.victim_d);
-#ifndef NDEBUG
-    gpuErrchk(cudaPeekAtLastError());
-    gpuErrchk(cudaDeviceSynchronize());
-#endif
-
-    unsigned int tmp = 0;
-    gpuErrchk(cudaMemcpyFromSymbol(&tmp, gpuBalancedIntern, sizeof(unsigned int)));
-
-    return tmp;
-}
-
 // = =========================================================
 //
 //
@@ -746,14 +696,9 @@ gpubb::allocate_on_host()
     lim2_h     = (int *) calloc(size_i, sizeof(int));
     schedule_h = (int *) calloc(size_v, sizeof(int));
 
-    // victim_h     = (int *) calloc(size_i, sizeof(int));
-    // length_h     = (int *) calloc(size_v, sizeof(int));
     ctrl_h       = (unsigned int *) calloc(8, sizeof(unsigned int));
     counter_h    = (unsigned int *) calloc(6, sizeof(unsigned int));
-    // meanLength_h = (int *) calloc(size, sizeof(int));
     costsBE_h    = (int *) calloc(2 * size_v, sizeof(int));
-
-	// depth_histo_h = (unsigned int*)calloc(size, sizeof(unsigned int));
 
     nbDecomposed_h = (unsigned long long int *) calloc(size_i, sizeof(unsigned long long int));
 }
@@ -918,9 +863,9 @@ gpubb::copyH2Dconstant()
 
     // integer constants
     gpuErrchk(cudaMemcpyToSymbol(nbIVM_d, &nbIVM, sizeof(int)));
+    gpuErrchk(cudaMemcpyToSymbol(size_d, &size, sizeof(int)));
     gpuErrchk(cudaMemcpyToSymbol(_nbMachines, &nbMachines_h, sizeof(int)));
     gpuErrchk(cudaMemcpyToSymbol(_sum, &somme_h, sizeof(int)));
-    gpuErrchk(cudaMemcpyToSymbol(size_d, &size, sizeof(int)));
     gpuErrchk(cudaMemcpyToSymbol(_boundMode, &arguments::boundMode, sizeof(int)));
     gpuErrchk(cudaMemcpyToSymbol(_nbJobPairs, &nbJobPairs_h, sizeof(int)));
 

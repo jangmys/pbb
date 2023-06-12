@@ -17,7 +17,8 @@ set(CMAKE_CXX_FLAGS_DEBUG "-g -pg -O0 -rdynamic" CACHE STRING "")
 
 #optional : add GPUBB (requires CUDA)
 if(GPU)
-    add_definitions(-DUSE_GPU)
+    add_definitions(-DWITH_GPU)
+    add_compile_definitions(WITH_GPU)
     add_subdirectory(gpu)
 endif()
 

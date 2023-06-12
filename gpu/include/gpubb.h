@@ -203,7 +203,7 @@ public:
     int* front_d;
     int* back_d;
 
-    gpu_fsp_bound(int _N, int _M, int _nbIVM) : N(_N),M(_M),nbIVM(_nbIVM){
+    gpu_fsp_bound(size_t _N, size_t _M, size_t _nbIVM) : N(_N),M(_M),nbIVM(_nbIVM){
         gpuErrchk(cudaMalloc((void **) &front_d, nbIVM * M * sizeof(int)));
         gpuErrchk(cudaMalloc((void **) &back_d, nbIVM * M * sizeof(int)));
     }
@@ -211,6 +211,24 @@ public:
     ~gpu_fsp_bound(){
         gpuErrchk(cudaFree(front_d));
         gpuErrchk(cudaFree(back_d));
+    }
+};
+
+class gpu_ivm{
+public:
+    size_t N;
+    size_t nbIVM;
+
+    int *mat_d, *mat_h;
+    int *pos_d, *pos_h;
+    int *end_d, *end_h;
+    int *dir_d, *dir_h;
+
+    gpu_ivm(size_t _N, size_t _nbIVM) : N(_N),nbIVM(_nbIVM){
+        gpuErrchk(cudaMalloc((void **) &pos_d, nbIVM * N * N * sizeof(int)));
+        gpuErrchk(cudaMalloc((void **) &pos_d, nbIVM * N * sizeof(int)));
+        gpuErrchk(cudaMalloc((void **) &end_d, nbIVM * N * sizeof(int)));
+        gpuErrchk(cudaMalloc((void **) &dir_d, nbIVM * N * sizeof(int)));
     }
 };
 
