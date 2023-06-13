@@ -720,9 +720,9 @@ gpubb::allocate_on_device()
     gpuErrchk(cudaMalloc((void **) &lim2_d, size_i * sizeof(int)));
     gpuErrchk(cudaMalloc((void **) &schedule_d, size_v * sizeof(int)));
 
-    // gpuErrchk(cudaMalloc((void **) &prio_d, size_v * sizeof(int)));
-    // gpuErrchk(cudaMalloc((void **) &costsBE_d, 2 * size_v * sizeof(int)));
-    // gpuErrchk(cudaMalloc((void **) &sums_d, 2 * size_i * sizeof(int)));
+    gpuErrchk(cudaMalloc((void **) &prio_d, size_v * sizeof(int)));
+    gpuErrchk(cudaMalloc((void **) &costsBE_d, 2 * size_v * sizeof(int)));
+    gpuErrchk(cudaMalloc((void **) &sums_d, 2 * size_i * sizeof(int)));
     //
     //  gpuErrchk(cudaMalloc((void **)&split_d, size_v * sizeof(int)));
     // gpuErrchk(cudaMalloc((void **) &victim_flag, size_i * sizeof(int)));
@@ -731,14 +731,14 @@ gpubb::allocate_on_device()
     // gpuErrchk(cudaMalloc((void **) &sumLength_d, size * sizeof(int)));
     // gpuErrchk(cudaMalloc((void **) &meanLength_d, size * sizeof(int)));
     //
-    // gpuErrchk(cudaMalloc((void **) &flagLeaf, size_i * sizeof(int)));
-    //
-    // gpuErrchk(cudaMalloc((void **) &auxArr, 256 * sizeof(int)));
-    // gpuErrchk(cudaMalloc((void **) &auxEnd, 256 * sizeof(int)));
-    // gpuErrchk(cudaMalloc((void **) &tmp_arr_d, size_i * sizeof(int)));
-    // gpuErrchk(cudaMalloc((void **) &todo_d, size_i * sizeof(int)));
-    // gpuErrchk(cudaMalloc((void **) &toSwap_d, size_v * sizeof(int)));
-    // gpuErrchk(cudaMalloc((void **) &ivmId_d, size_v * sizeof(int)));
+    gpuErrchk(cudaMalloc((void **) &flagLeaf, size_i * sizeof(int)));
+
+    gpuErrchk(cudaMalloc((void **) &auxArr, 256 * sizeof(int)));
+    gpuErrchk(cudaMalloc((void **) &auxEnd, 256 * sizeof(int)));
+    gpuErrchk(cudaMalloc((void **) &tmp_arr_d, size_i * sizeof(int)));
+    gpuErrchk(cudaMalloc((void **) &todo_d, size_i * sizeof(int)));
+    gpuErrchk(cudaMalloc((void **) &toSwap_d, size_v * sizeof(int)));
+    gpuErrchk(cudaMalloc((void **) &ivmId_d, size_v * sizeof(int)));
     //
     // gpuErrchk(cudaMalloc((void **) &ctrl_d, 4 * sizeof(unsigned int)));
     // gpuErrchk(cudaMalloc((void **) &counter_d, 6 * sizeof(unsigned int)));
