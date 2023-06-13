@@ -143,7 +143,7 @@ main(int argc, char ** argv)
             //make sure all workers have initializedMPI_Bcast(pbb->best_found.perm.data(), pbb->size, MPI_INT, 0, MPI_COMM_WORLD); pbb
             MPI_Barrier(MPI_COMM_WORLD);
 
-            // mstr.run();
+            mstr.run();
 
             clock_gettime(CLOCK_MONOTONIC, &tend);
             printf("Walltime :\t %2.8f\n", (tend.tv_sec - tstart.tv_sec) + (tend.tv_nsec - tstart.tv_nsec) / 1e9f);
@@ -175,7 +175,7 @@ main(int argc, char ** argv)
             // FILE_LOG(logINFO) << "Worker running with "<<nthreads<<" threads.\n";
             //
 
-            // wrkr->run();
+            wrkr->run();
 
             delete wrkr;
         }
