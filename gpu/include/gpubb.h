@@ -233,7 +233,6 @@ public:
 };
 
 
-gpubb::gpubb(pbab * _pbb) : pbb(_pbb),size(pbb->size),nbIVM(arguments::nbivms_gpu),ws(size,nbIVM)
 
 class gpubb {
 public:
