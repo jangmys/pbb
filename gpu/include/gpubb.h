@@ -233,25 +233,27 @@ public:
 };
 
 
+gpubb::gpubb(pbab * _pbb) : pbb(_pbb),size(pbb->size),nbIVM(arguments::nbivms_gpu),ws(size,nbIVM)
 
 class gpubb {
 public:
+    pbab * pbb;
+    int size;
+    int nbIVM;
+    gpu_worksteal ws;
+
     gpubb(pbab * pbb);
     ~gpubb();
 
     void
     initializeGPU(int _cost);
 
+    int initialUB;
     std::atomic<bool> allEnd;
     pthread_mutex_t mutex_end;
 
     void interruptExploration();
     void initFullInterval();
-
-    pbab * pbb;
-    int nbIVM;
-    int size;
-    int initialUB;
 
     bool localFoundNew;
 
@@ -262,7 +264,6 @@ public:
 
 
     // ==============================================
-    gpu_worksteal ws;
 
     // ==============================================
     cudaStream_t *stream;
