@@ -21,9 +21,9 @@ public:
 
         //------------GPU-BB------------------------
         gbb->initialize(comm->rank);// allocate IVM on host/device
-// #ifdef FSP
-//         gbb->initializeBoundFSP();
-// #endif
+#ifdef FSP
+        gbb->initializeBoundFSP();
+#endif
 //         gbb->copyH2D();
         FILE_LOG(logDEBUG1) << "GPU Bound initialized";
     }
