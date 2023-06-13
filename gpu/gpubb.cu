@@ -124,7 +124,7 @@ gpubb::initialize(int rank)
     gpuErrchk( cudaSetDevice(rank % num_devices) );
 
     gpuErrchk( cudaGetDevice(&device) );
-    // std::cout<<rank<<" using device "<<device<<" of "<<num_devices<<"\n";
+    std::cout<<rank<<" using device "<<device<<" of "<<num_devices<<"\n";
 
     gpuErrchk(cudaFree(0));
 

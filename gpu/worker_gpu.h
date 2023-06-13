@@ -17,6 +17,8 @@ public:
         worker(_pbb,_nbIVM),
         gbb(std::make_unique<gpubb>(pbb))
     {
+        std::cout<<"gpu init "<<comm->rank<<"\n";
+
         //------------GPU-BB------------------------
         gbb->initialize(comm->rank);// allocate IVM on host/device
 #ifdef FSP
