@@ -724,12 +724,12 @@ gpubb::allocate_on_device()
     gpuErrchk(cudaMalloc((void **) &costsBE_d, 2 * size_v * sizeof(int)));
     gpuErrchk(cudaMalloc((void **) &sums_d, 2 * size_i * sizeof(int)));
 
-    //  gpuErrchk(cudaMalloc((void **)&split_d, size_v * sizeof(int)));
-    // gpuErrchk(cudaMalloc((void **) &victim_flag, size_i * sizeof(int)));
-    // gpuErrchk(cudaMalloc((void **) &victim_d, size_i * sizeof(int)));
-    // gpuErrchk(cudaMalloc((void **) &length_d, size_v * sizeof(int)));
-    // gpuErrchk(cudaMalloc((void **) &sumLength_d, size * sizeof(int)));
-    // gpuErrchk(cudaMalloc((void **) &meanLength_d, size * sizeof(int)));
+     gpuErrchk(cudaMalloc((void **)&split_d, size_v * sizeof(int)));
+    gpuErrchk(cudaMalloc((void **) &victim_flag, size_i * sizeof(int)));
+    gpuErrchk(cudaMalloc((void **) &victim_d, size_i * sizeof(int)));
+    gpuErrchk(cudaMalloc((void **) &length_d, size_v * sizeof(int)));
+    gpuErrchk(cudaMalloc((void **) &sumLength_d, size * sizeof(int)));
+    gpuErrchk(cudaMalloc((void **) &meanLength_d, size * sizeof(int)));
 
     gpuErrchk(cudaMalloc((void **) &flagLeaf, size_i * sizeof(int)));
 

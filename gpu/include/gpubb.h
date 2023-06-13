@@ -298,12 +298,12 @@ public:
 
     // =======================================================================
     // WORK STEALING
-    // int * split_d; // place to cut interval
-    // int * victim_flag;
-    // int * victim_h, * victim_d;         // map thief->victim
-    // int * length_h, * length_d;         // length of intervals
-    // int * sumLength_h, * sumLength_d;   // sum of interval-lengths
-    // int * meanLength_h, * meanLength_d; // average interval-length
+    int * split_d; // place to cut interval
+    int * victim_flag;
+    int * victim_h, * victim_d;         // map thief->victim
+    int * length_h, * length_d;         // length of intervals
+    int * sumLength_h, * sumLength_d;   // sum of interval-lengths
+    int * meanLength_h, * meanLength_d; // average interval-length
 
     // int search_from;
     // int search_to;
