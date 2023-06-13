@@ -743,8 +743,8 @@ gpubb::allocate_on_device()
     gpuErrchk(cudaMalloc((void **) &ctrl_d, 4 * sizeof(unsigned int)));
     gpuErrchk(cudaMalloc((void **) &counter_d, 6 * sizeof(unsigned int)));
     //
-    // gpuErrchk(cudaMalloc((void **) &nbDecomposed_d, size_i * sizeof(unsigned long long int)));
-    // gpuErrchk(cudaMalloc((void **) &nbLeaves_d, size_i * sizeof(int)));
+    gpuErrchk(cudaMalloc((void **) &nbDecomposed_d, size_i * sizeof(unsigned long long int)));
+    gpuErrchk(cudaMalloc((void **) &nbLeaves_d, size_i * sizeof(int)));
     //
     // // set to 0
     // gpuErrchk(cudaMemset(counter_d, 0, 6 * sizeof(unsigned int)));
@@ -753,11 +753,11 @@ gpubb::allocate_on_device()
     //
     // gpuErrchk(cudaMemset(ws.victim_flag_d, 0, size_i * sizeof(int)));
     // gpuErrchk(cudaMemset(ws.sumLength_d, 0, size * sizeof(int)));
-    // unsigned int zero=0;
-    // gpuErrchk(cudaMemcpyToSymbol(countNodes_d,&zero,sizeof(unsigned int)));
-    //
-    // gpuErrchk(cudaPeekAtLastError());
-    // gpuErrchk(cudaDeviceSynchronize());
+    unsigned int zero=0;
+    gpuErrchk(cudaMemcpyToSymbol(countNodes_d,&zero,sizeof(unsigned int)));
+
+    gpuErrchk(cudaPeekAtLastError());
+    gpuErrchk(cudaDeviceSynchronize());
 } // gpubb::allocate_on_device
 
 void
