@@ -19,8 +19,9 @@ set(CMAKE_CXX_FLAGS_DEBUG "-g -pg -O0 -rdynamic" CACHE STRING "")
 #endif()
 
 if(${CMAKE_HOST_SYSTEM_PROCESSOR} MATCHES "aarch64")
-    SET(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -neoverse-n1")
-    SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -neoverse-n1")
+    message(STATUS )
+    SET(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -mcpu=neoverse-n1")
+    SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -mcpu=neoverse-n1")
 endif()
 
 ######################################################################################
