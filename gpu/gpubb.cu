@@ -748,10 +748,11 @@ gpubb::allocate_on_device()
 
     // set to 0
     gpuErrchk(cudaMemset(counter_d, 0, 6 * sizeof(unsigned int)));
-    gpuErrchk(cudaMemset(ws.sumLength_d, 0, size * sizeof(int)));
-    gpuErrchk(cudaMemset(ws.victim_flag_d, 0, size_i * sizeof(int)));
     gpuErrchk(cudaMemset(ivmId_d, 0, size_v * sizeof(int)));
     gpuErrchk(cudaMemset(sums_d, 0, 2 * size_i * sizeof(int)));
+
+    gpuErrchk(cudaMemset(ws.victim_flag_d, 0, size_i * sizeof(int)));
+    gpuErrchk(cudaMemset(ws.sumLength_d, 0, size * sizeof(int)));
     unsigned int zero=0;
     gpuErrchk(cudaMemcpyToSymbol(countNodes_d,&zero,sizeof(unsigned int)));
 
