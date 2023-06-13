@@ -241,7 +241,7 @@ public:
     int nbIVM;
     std::unique_ptr<gpu_worksteal> ws;
 
-    gpubb(pbab * pbb);
+    gpubb(pbab * pbb, int rank);
     ~gpubb();
 
     void

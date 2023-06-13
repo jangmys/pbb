@@ -72,8 +72,12 @@ int gpu_worksteal::steal_in_device(int* line, int* pos, int* end, int* dir, int*
 
 
 
-gpubb::gpubb(pbab * _pbb) : pbb(_pbb),size(pbb->size),nbIVM(arguments::nbivms_gpu)
+gpubb::gpubb(pbab * _pbb, int rank) : pbb(_pbb),size(pbb->size),nbIVM(arguments::nbivms_gpu)
 {
+    int device,num_devices;
+    gpuErrchk( cudaGetDeviceCount(&num_devices) );
+    gpuErrchk( cudaSetDevice(rank % num_devices) );
+
     // pbb  = _pbb;
     // size = pbb->size;
     // nbIVM    = arguments::nbivms_gpu;

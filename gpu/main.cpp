@@ -57,7 +57,7 @@ main(int argc, char ** argv)
 
     cudaDeviceSetCacheConfig(cudaFuncCachePreferShared);
 
-    gpubb* gbb = new gpubb(pbb);//%numDevices);
+    gpubb* gbb = new gpubb(pbb,0);//%numDevices);
     gbb->initialize(0);// allocate IVM on host/device
 
 #ifdef FSP
