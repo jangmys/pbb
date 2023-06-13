@@ -239,7 +239,7 @@ public:
     pbab * pbb;
     int size;
     int nbIVM;
-    gpu_worksteal ws;
+    std::unique_ptr<gpu_worksteal> ws;
 
     gpubb(pbab * pbb);
     ~gpubb();

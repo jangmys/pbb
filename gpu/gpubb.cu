@@ -72,7 +72,7 @@ int gpu_worksteal::steal_in_device(int* line, int* pos, int* end, int* dir, int*
 
 
 
-gpubb::gpubb(pbab * _pbb) : pbb(_pbb),size(pbb->size),nbIVM(arguments::nbivms_gpu),ws(size,nbIVM)
+gpubb::gpubb(pbab * _pbb) : pbb(_pbb),size(pbb->size),nbIVM(arguments::nbivms_gpu)
 {
     // pbb  = _pbb;
     // size = pbb->size;
@@ -83,7 +83,7 @@ gpubb::gpubb(pbab * _pbb) : pbb(_pbb),size(pbb->size),nbIVM(arguments::nbivms_gp
 
     // setHypercubeConfig(nbIVM); //work stealing
 
-
+    ws = std::make_unique<gpu_worksteal>(size,nbIVM);
 
     if (arguments::problem[0] == 'f') {
         bound = make_bound_ptr<int>(pbb,arguments::primary_bound);
@@ -372,7 +372,7 @@ gpubb::next()
 
     while (true) {
         if (counter_h[exploringState] < 75*nbIVM/100){
-            nbsteals += ws.steal_in_device(line_d, pos_d, end_d, dir_d, mat_d, state_d, iter, counter_h[exploringState]);
+            nbsteals += ws->steal_in_device(line_d, pos_d, end_d, dir_d, mat_d, state_d, iter, counter_h[exploringState]);
         }
 
         if(execmode.triggered){
