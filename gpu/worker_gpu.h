@@ -24,7 +24,7 @@ public:
 #ifdef FSP
         gbb->initializeBoundFSP();
 #endif
-//         gbb->copyH2D();
+        gbb->copyH2D();
         FILE_LOG(logDEBUG1) << "GPU Bound initialized";
     }
 
