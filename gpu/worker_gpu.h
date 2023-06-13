@@ -20,11 +20,11 @@ public:
         std::cout<<"gpu init : rank "<<comm->rank<<"\n";
 
         //------------GPU-BB------------------------
-        gbb->initialize(comm->rank);// allocate IVM on host/device
-#ifdef FSP
-        gbb->initializeBoundFSP();
-#endif
-        gbb->copyH2D();
+//         gbb->initialize(comm->rank);// allocate IVM on host/device
+// #ifdef FSP
+//         gbb->initializeBoundFSP();
+// #endif
+//         gbb->copyH2D();
         FILE_LOG(logDEBUG1) << "GPU Bound initialized";
     }
 
