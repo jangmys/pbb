@@ -15,7 +15,7 @@ class worker_gpu : public worker {
 public:
     worker_gpu(pbab * _pbb, unsigned int _nbIVM) :
         worker(_pbb,_nbIVM),
-        gbb(std::make_unique<gpubb>(pbb))
+        gbb(std::make_unique<gpubb>(pbb,comm->rank))
     {
         std::cout<<"gpu init : rank "<<comm->rank<<"\n";
 
