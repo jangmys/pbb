@@ -135,7 +135,7 @@ gpubb::initialize(int rank)
     gpuErrchk(cudaEventCreateWithFlags(event, cudaEventDisableTiming));
 
     allocate_on_host();
-    allocate_on_device();
+    // allocate_on_device();
 
     gpuErrchk(cudaPeekAtLastError());
     gpuErrchk(cudaDeviceSynchronize());

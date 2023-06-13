@@ -20,7 +20,7 @@ public:
         std::cout<<"gpu init : rank "<<comm->rank<<"\n";
 
         //------------GPU-BB------------------------
-//         gbb->initialize(comm->rank);// allocate IVM on host/device
+        gbb->initialize(comm->rank);// allocate IVM on host/device
 // #ifdef FSP
 //         gbb->initializeBoundFSP();
 // #endif
