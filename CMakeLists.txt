@@ -9,9 +9,19 @@ LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
+
+
 set(CMAKE_CXX_FLAGS_RELEASE "-Wall -O2 -DNDEBUG")#-Wno-unused-function -Wno-unused-variable -O2 -DNDEBUG")
 set(CMAKE_C_FLAGS_RELEASE "-std=c99 -Wall -Wextra -pedantic -O2")
 set(CMAKE_CXX_FLAGS_DEBUG "-g -pg -O0 -rdynamic" CACHE STRING "")
+
+#if(${CMAKE_HOST_SYSTEM_PROCESSOR} MATCHES "x64_86")
+#endif()
+
+if(${CMAKE_HOST_SYSTEM_PROCESSOR} MATCHES "aarch64")
+    SET(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -neoverse-n1")
+    SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -neoverse-n1")
+endif()
 
 ######################################################################################
 
@@ -35,7 +45,6 @@ add_subdirectory(evaluation)
 add_subdirectory(heuristics)
 #add multicore IVM-based BB
 add_subdirectory(multicore)
-
 
 
 
