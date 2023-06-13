@@ -123,12 +123,13 @@ void
 gpubb::initialize(int rank)
 {
     //-----------mapping MPI_ranks to devices-----------
-    int device,num_devices;
+    int device;
+    int num_devices;
     gpuErrchk( cudaGetDeviceCount(&num_devices) );
-    gpuErrchk( cudaSetDevice(rank % num_devices) );
-
     gpuErrchk( cudaGetDevice(&device) );
     std::cout<<rank<<" using device "<<device<<" of "<<num_devices<<"\n";
+    // gpuErrchk( cudaSetDevice(rank % num_devices) );
+
 
     gpuErrchk(cudaFree(0));
 
