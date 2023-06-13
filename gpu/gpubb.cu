@@ -110,7 +110,7 @@ gpubb::gpubb(pbab * _pbb) : pbb(_pbb),size(pbb->size),nbIVM(arguments::nbivms_gp
 
 gpubb::~gpubb()
 {
-    free_on_device();
+    // free_on_device();
     // free etc
 }
 
