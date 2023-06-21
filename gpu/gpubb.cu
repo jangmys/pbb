@@ -905,7 +905,7 @@ gpubb::initializeBoundFSP()
         fillMachine();
 
         for (int j = 0; j < nbJob_h; j++)
-            *(pbb->inst.data) >> tempsJob_h[i * nbJob_h + j];
+            *(pbb->inst->data) >> tempsJob_h[i * nbJob_h + j];
         fillLag();
         fillTabJohnson();
         fillMinTempsArrDep();
