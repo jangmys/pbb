@@ -886,11 +886,11 @@ void
 gpubb::initializeBoundFSP()
 {
     // get instance data
-    (pbb->inst.data)->seekg(0);
-    (pbb->inst.data)->clear();
+    (pbb->inst->data)->seekg(0);
+    (pbb->inst->data)->clear();
 
-    *(pbb->inst.data) >> nbJob_h;
-    *(pbb->inst.data) >> nbMachines_h;
+    *(pbb->inst->data) >> nbJob_h;
+    *(pbb->inst->data) >> nbMachines_h;
 
     somme_h = 0;
     for (int i = 1; i < nbMachines_h; i++) somme_h += i;
