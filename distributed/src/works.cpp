@@ -209,19 +209,6 @@ works::ids_oldest() const
 }
 
 std::shared_ptr<work>
-works::acquireNewWork(int max, bool &tooSmall)
-{
-    if(isEmpty()){
-        return nullptr;
-    }else if (!unassigned.empty())   {
-        return adopt(max);
-    } else  {
-        return steal(max, tooSmall);
-    }
-    // std::cout<<ids.size()<<std::endl;
-}
-
-std::shared_ptr<work>
 works::steal(unsigned int max, bool &tooSmall)
 {
     // select largest work unit (that was at least updated once!)
@@ -241,10 +228,10 @@ works::steal(unsigned int max, bool &tooSmall)
 
     // DUPLICATION (interval too small)
     if (tmp2->isEmpty()) {
-        FILE_LOG(logDEBUG)<<"Divide-BIG returned empty";
+        FILE_LOG(logINFO)<<"Divide-BIG returned empty";
+        return nullptr;
         // std::cout<<"duplicate\n"<<std::flush;
         // tooSmall = true;
-        return nullptr;
 
         // if ((tmp1->Uinterval).size() <= max) {
         //     tmp1->end_updated = 1;

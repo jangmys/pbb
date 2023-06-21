@@ -11,12 +11,13 @@ instance_dummy::instance_dummy(const char * inst_name){
     auto nbJob = std::stoi(s);
     size = nbJob;
 
-    *data << size; 
+    (*data) << size;
 
-    std::cout<<"dummy instance : "<<nbJob<<"\n";
+    // std::cout<<"dummy instance : "<<nbJob<<" "<<size<<"\n";
 }
 
 instance_dummy::~instance_dummy()
 {
+    std::cout<<"dummy delete\n";
     delete data;
 }

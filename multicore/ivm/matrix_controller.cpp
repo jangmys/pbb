@@ -127,7 +127,7 @@ matrix_controller::explore_multicore()
     FILE_LOG(logDEBUG) << "=== got ID " << id;
 
     if(!is_distributed()){
-        stick_this_thread_to_core(id);        
+        stick_this_thread_to_core(id);
     }
 
     //------check if explorer already exists------
@@ -197,19 +197,23 @@ matrix_controller::explore_multicore()
         {
             if(pbb->workUpdateAvailable.load(std::memory_order_relaxed))
             {
+                FILE_LOG(logINFO) << "=== BREAK (get works)";
                 break;
             }
             if(atom_nb_steals.load(std::memory_order_relaxed)>(get_num_threads()/4))
             {
+                FILE_LOG(logINFO) << "=== BREAK (steals)";
                 break;
             }
             if(pbb->best_found.foundNewSolution){
                 // FILE_LOG(logINFO) << "=== BREAK (new sol)";
+                FILE_LOG(logINFO) << "=== BREAK (sol)";
                 break;
             }
             bool passed=pbb->ttm->period_passed(WORKER_BALANCING);
             if(passed)
             {
+                FILE_LOG(logINFO) << "=== BREAK (time)";
                 break;
             }
         }

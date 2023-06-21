@@ -274,6 +274,8 @@ void
 worker::tryLaunchCommBest()
 {
     if (commIsReady()) {
+        FILE_LOG(logINFO) <<"trigger comm best";
+
         pthread_mutex_lock_check(&mutex_trigger);
         sendRequestReady = false;
         newBest = true;
@@ -286,6 +288,8 @@ void
 worker::tryLaunchCommWork()
 {
     if (commIsReady()) {
+        FILE_LOG(logINFO) <<"trigger comm work";
+
         pthread_mutex_lock_check(&mutex_wunit);
         getIntervals();// fill buffer (prepare SEND)
         pthread_mutex_unlock(&mutex_wunit);
@@ -345,7 +349,7 @@ heu_thread2(void * arg)
     worker * w = (worker *) arg;
 
     // pthread_mutex_lock_check(&w->pbb->mutex_instance);
-    std::unique_ptr<IG> ils = std::make_unique<IG>(w->pbb->inst);
+    std::unique_ptr<IG> ils = std::make_unique<IG>(*(w->pbb->inst.get()));
     // pthread_mutex_unlock(&w->pbb->mutex_instance);
 
     int N=w->pbb->size;
@@ -438,7 +442,8 @@ worker::run()
 
 
         // work is done here... explore intervals(s)
-        bool allEnd = doWork();
+        if(!foundNewBest())
+            (void)doWork();
 
         if(nb_heuristic_threads)
             getSolutions(solutions);

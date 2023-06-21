@@ -223,38 +223,43 @@ std::shared_ptr<work> work::divide(int max)
     tmp->set_id(); //with an ID
 
     if (isEmpty()){
-        FILE_LOG(logDEBUG)<<"Divide NONE";
+        FILE_LOG(logINFO)<<"Divide NONE";
         return tmp; //nothing to get
     }
 
-    mpz_class len(0);
 
+    mpz_class len(0);
     // mpz_class lar(2432902008176640000);
     // mpz_class lar(6402373705728000);
-    mpz_class lar(362880);//9!
-    // mpz_class lar(720);//6!
+    // mpz_class lar(362880);//9!
+    mpz_class lar(720);//6!
     mpz_class coupe;
 
     int nb_stolen = 0;
 
     // loop over all victim intervals
     for (auto const& it: Uinterval){
-        if (nb_stolen >= max) return tmp; // continue;
+        if (nb_stolen >= max) break; //return tmp; // continue;
 
         len = it->length();// end - (*it)->begin;
-        if (len < lar) continue; //too small
-
+        if (len < lar){
+            //duplicate
+            // (tmp->Uinterval).emplace_back(std::make_shared<interval>(it->begin, it->end, nb_stolen));
+            continue; //too small
+        }
         if (len > 0) {
             coupe = it->begin + 1 * len / 2; //cut-point
+            (tmp->Uinterval).emplace_back(std::make_shared<interval>(coupe+1, it->end, nb_stolen++));
+            it->end = coupe;
         } else {
             std::cout << "invalid interval\n" << std::flush; continue;
         }
-
-        (tmp->Uinterval).emplace_back(std::make_shared<interval>(coupe+1, it->end, nb_stolen));
-        it->end = coupe;
-
-        nb_stolen++;
     }
+
+    if(nb_stolen==0)
+        FILE_LOG(logINFO)<<"DivideNONE "<<std::endl;
+
+
 
     FILE_LOG(logDEBUG)<<"Divide "<<nb_stolen;
     return tmp;

@@ -26,7 +26,7 @@ int main(int argc, char* argv[])
     arguments::parse_arguments(argc, argv);
     std::cout<<" === solving "<<arguments::problem<<" - instance "<<arguments::inst_name<<std::endl;
 
-    instance_abstract instance = pbb_instance::make_inst(arguments::problem, arguments::inst_name);
+    auto instance = pbb_instance::make_inst(arguments::problem, arguments::inst_name);
 
     std::cout<<" === solving "<<arguments::problem<<" - instance "<<atoi(arguments::inst_name+2)<<std::endl;
 
@@ -53,7 +53,7 @@ int main(int argc, char* argv[])
     // int cost;
     // std::vector<int>perm(instance->size);
     // std::generate(perm.begin(), perm.end(), [n = 0] () mutable { return n++; });
-    std::shared_ptr<subproblem> p = std::make_shared<subproblem>(instance.size);
+    std::shared_ptr<subproblem> p = std::make_shared<subproblem>(instance->size);
 
     std::cout<<argv[3]<<std::endl;
 
@@ -73,7 +73,7 @@ int main(int argc, char* argv[])
         }
         case 1:
         {
-            IG ils(instance);
+            IG ils(*(instance.get()));
 
             p->set_fitness(ils.runIG(p));
 
@@ -82,7 +82,7 @@ int main(int argc, char* argv[])
         }
         case 2:
         {
-            LocalSearch ls(instance);
+            LocalSearch ls(*(instance.get()));
 
             auto cost = ls.localSearchBRE(p->schedule);
             std::cout<<"COST-LS-BRE : "<<cost<<"\n";
@@ -101,7 +101,7 @@ int main(int argc, char* argv[])
         {
             // pbab* pbb = new pbab();
 
-            Beam bs(pbb,instance);
+            Beam bs(pbb,*(instance.get()));
 
             // // subproblem *q = new subproblem(instance->size);
             bs.run(1<<14,p.get());
@@ -113,7 +113,7 @@ int main(int argc, char* argv[])
         case 4:
         {
             // pbab* pbb = new pbab();
-            Beam bs(pbb,instance);
+            Beam bs(pbb,*(instance.get()));
 
             // subproblem *q = new subproblem(instance->size);
             bs.run_loop(1<<14,p.get());
@@ -125,7 +125,7 @@ int main(int argc, char* argv[])
         case 5:
         {
             // pbab* pbb = new pbab();
-            Treeheuristic th(pbb,instance);
+            Treeheuristic th(pbb,*(instance.get()));
 
             th.run(p,0);
 

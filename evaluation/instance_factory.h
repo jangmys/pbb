@@ -13,7 +13,7 @@
 
 namespace pbb_instance
 {
-    instance_abstract make_inst(char problem[],char inst_name[]);
+    std::shared_ptr<instance_abstract> make_inst(char problem[],char inst_name[]);
 }
 
 #endif

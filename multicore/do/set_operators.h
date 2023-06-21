@@ -1,6 +1,8 @@
 #ifndef SET_OPERATORS_H_
 #define SET_OPERATORS_H_
 
+#include <iostream>
+
 #include "pruning.h"
 #include "branching.h"
 // #include <mcbb.h>
@@ -57,21 +59,22 @@ std::unique_ptr<bound_abstract<int>> make_bound_ptr(pbab* pbb, const int _bound_
             case 0:
             {
                 auto bd = std::make_unique<bound_fsp_weak>();
-                bd->init(pbb->inst);
+                bd->init(*(pbb->inst.get()));
                 return bd;
             }
             case 1:
             {
                 auto bd = std::make_unique<bound_fsp_strong>();
-                bd->init(pbb->inst);
+                bd->init(*(pbb->inst.get()));
                 bd->earlyExit=arguments::earlyStopJohnson;
                 bd->machinePairs=arguments::johnsonPairs;
                 return bd;
             }
         }
     }else if(arguments::problem[0]=='d'){
+        std::cout<<"Dummy bound\n"<<std::endl;
         auto bd = std::make_unique<bound_dummy>();
-        bd->init(pbb->inst);
+        bd->init(*(pbb->inst.get()));
         return bd;
     }
     return nullptr;

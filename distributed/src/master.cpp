@@ -79,33 +79,33 @@ master::initWorks(int initMode)
 //Return : Reply message type
 static bool debug = false;
 int master::processRequest(std::shared_ptr<work> w) {
-    int return_type=NIL;
-
     //DEBUG
     if (debug) {
         std::cout << "work in : \n (" << (w->Uinterval).size() << "/" << w->max_intervals << ") | ID=" << w->id << std::endl;
         w->displayUinterval();
     }
-
-    bool steal=false;
-
-    //find copy of work in works by its ID
-    std::shared_ptr<work> tmp = wrks.id_find(w->id);
-
     FILE_LOG(logDEBUG)<<"-----------------------";
     FILE_LOG(logDEBUG)<<"treat request WID "<<w->id;
     FILE_LOG(logDEBUG)<<"-----------------------";
 
+    int return_type=NIL;
+    bool steal=false;
+
+    //-------find copy of work in works by its ID-------
+    std::shared_ptr<work> tmp = wrks.id_find(w->id);
+
     if(tmp == nullptr){
-        //work with requested ID doesn't exist
+        //-------work with requested ID doesn't exist-------
+        FILE_LOG(logINFO)<<"TMP IS NULL";
         steal=true;
     }else{
         w->nb_updates++;
         tmp->nb_updates++;
 
-        //intersection: const w, tmp can be changed and become empty
-        if (w->isEmpty()){//trivial: result of intersection is empty
-            FILE_LOG(logDEBUG)<<"TMP IS EMPTY "<<w->id<<"\t: "<<wrks.get_size();
+        //-------intersection: const w, tmp can be changed and become empty-------
+        if (w->isEmpty()){
+            //-----------trivial: result of intersection is empty-----------
+            FILE_LOG(logINFO)<<"W IS EMPTY "<<w->id<<"\t: "<<wrks.get_size();
             tmp->Uinterval.clear();
         }else if(!tmp->end_updated){//trivial : tmp hasn't changed since last time... replace!
             //-----------sanity check : size shouldn't increase!!!-----------
@@ -124,13 +124,12 @@ int master::processRequest(std::shared_ptr<work> w) {
                 // FILE_LOG(logINFO)<<"<< M ================================ W >>";
                 // FILE_LOG(logINFO)<<*w;
             }
-            //---------------------------------------------------------------
 
-            //copy wasn't modified : just replace
+            //--------------copy wasn't modified : just replace--------------
             tmp->Uinterval=w->Uinterval;
             tmp->end_updated=false;
             wrks.sizes_update(tmp);
-            FILE_LOG(logDEBUG)<<"REPLACED "<<w->id<<"\t: "<<wrks.get_size();
+            FILE_LOG(logINFO)<<"REPLACED "<<w->id<<"\t: "<<wrks.get_size();
             return NIL;
         }else{
             // FILE_LOG(logDEBUG) <<*tmp;//<<std::endl;
@@ -169,7 +168,6 @@ int master::processRequest(std::shared_ptr<work> w) {
             FILE_LOG(logDEBUG)<<"Take NEW "<<tmp->id;
             return_type=NEWWORK;
         }else if(isSharing) {
-            bool too_small;
             if(tmp){
                 std::cout<<"tmp not NULL\n";
                 if(!tmp->isEmpty()){
@@ -177,8 +175,10 @@ int master::processRequest(std::shared_ptr<work> w) {
                     std::cout<<*tmp<<std::endl;
                 }
             }
+
+            bool too_small;
             tmp=wrks.steal(w->max_intervals, too_small);
-            if(tmp)FILE_LOG(logDEBUG)<<"Take STEAL "<<tmp->id;
+            // if(tmp)FILE_LOG(logDEBUG)<<"Take STEAL "<<tmp->id;
             return_type=NEWWORK;
         }else{
             FILE_LOG(logDEBUG)<<"Send SLEEP";
@@ -187,7 +187,7 @@ int master::processRequest(std::shared_ptr<work> w) {
         // tmp = wrks->acquireNewWork(w->max_intervals,shutdown);
 
         if(tmp==nullptr){
-            FILE_LOG(logDEBUG)<<"Stolen work is NULL";
+            FILE_LOG(logINFO)<<"Stolen work is NULL "<<wrks.get_size();
             return NIL;
         }
     }
@@ -197,8 +197,8 @@ int master::processRequest(std::shared_ptr<work> w) {
     tmp->end_updated=false;
 
     //---------------------------------output---------------------------------
-    // FILE_LOG(logINFO) << "ActiveSize: "<<wrks.get_size()<<"\t Remain#: "<<wrks.get_num_unassigned()<<"\t Active#: "<<wrks.get_num_works();
-    // FILE_LOG(logINFO) << "WORKSIZE : "<<wrks->size<<std::endl;
+    FILE_LOG(logINFO) << "ActiveSize: "<<wrks.get_size()<<"\t Remain#: "<<wrks.get_num_unassigned()<<"\t Active#: "<<wrks.get_num_works();
+    FILE_LOG(logINFO) << "WORKSIZE : "<<wrks.get_size()<<std::endl;
 
     //DEBUG
     if (debug) {

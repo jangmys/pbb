@@ -27,11 +27,12 @@ main(int argc, char ** argv)
     FILE* log_fd = fopen(arguments::logfile, "w" );
     Output2FILE::Stream() = log_fd;
 
-
     //------------------B&B components-------------------
-    std::shared_ptr<pbab> pbb = std::make_shared<pbab>(
-        pbb_instance::make_inst(arguments::problem, arguments::inst_name)
-    );
+    auto inst = pbb_instance::make_inst(arguments::problem, arguments::inst_name);
+
+    std::shared_ptr<pbab> pbb = std::make_shared<pbab>(inst);
+    //     pbb_instance::make_inst(arguments::problem, arguments::inst_name)
+    // );
 
     //------------------BUILD INITIAL SOLUTION------------------
     pbb->set_initial_solution();
@@ -41,7 +42,12 @@ main(int argc, char ** argv)
     std::cout<<"\t#ProblemSize:\t\t"<<pbb->size<<"\n"<<std::endl;
 
     std::cout<<"\t#Worker type:\t\t"<<arguments::worker_type<<std::endl;
-    std::cout<<"\t#GPU workers:\t\t"<<arguments::nbivms_gpu<<std::endl;
+
+    if(arguments::worker_type=='g')
+        std::cout<<"\t#GPU workers:\t\t"<<arguments::nbivms_gpu<<std::endl;
+    else if(arguments::worker_type=='c')
+        std::cout<<"\t#CPU threads:\t\t"<<arguments::nbivms_mc<<std::endl;
+
     std::cout<<"\t#Bounding mode:\t\t"<<arguments::boundMode<<std::endl;
     if(arguments::primary_bound == 1 || (arguments::boundMode == 2 && arguments::secondary_bound == 1))
     {
@@ -68,13 +74,13 @@ main(int argc, char ** argv)
             }
 
             if(nthreads == 1){ //SEQUENTIAL
+                std::cout<<" === Run single-threaded IVM-BB"<<std::endl;
                 auto sbb = make_ivmbb<int>(pbb.get());
 
                 //set first line of matrix
                 sbb->setRoot(pbb->best_found.initial_perm.data());
                 sbb->initAtInterval(zeroFact, endFact);
 
-                std::cout<<" === Run single-threaded IVM-BB"<<std::endl;
                 sbb->run();
             }else{ //MULTICORE
                 matrix_controller mc(pbb.get(),nthreads);

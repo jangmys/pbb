@@ -186,7 +186,7 @@ ivm::beforeEnd() const
         if (posVect[i] < endVect[i]) return true;
         if (posVect[i] > endVect[i]) return false;
     }
-    return false;//true;
+    return true;
 }
 
 int

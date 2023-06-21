@@ -114,7 +114,7 @@ public:
 
     // work unit creation
     // ============================================
-    std::shared_ptr<work> acquireNewWork(int max, bool&);
+    // std::shared_ptr<work> acquireNewWork(int max, bool&);
 
     // recuperer la seconde moitie d'un work (set of intervals):
     // divide up to max intervals

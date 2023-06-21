@@ -12,12 +12,12 @@
 #include "log.h"
 
 
-pbab::pbab() : inst(instance_dummy("8")),size(inst.size),best_found(size),stats()
+pbab::pbab() : inst(std::make_shared<instance_dummy>("8")),size(inst->size),best_found(size),stats()
 {
     this->ttm = new ttime();
 }
 
-pbab::pbab(instance_abstract _inst) : inst(_inst),size(inst.size),best_found(size),stats()
+pbab::pbab(std::shared_ptr<instance_abstract> _inst) : inst(_inst),size(inst->size),best_found(size),stats()
 {
     this->ttm = new ttime();
 }
@@ -59,12 +59,12 @@ void pbab::set_initial_solution()
                     switch (arguments::inst_name[0]) {
                         case 't': //Taillard
                         {
-                            cost = static_cast<instance_taillard&>(inst).read_initial_ub_from_file(arguments::inst_name);
+                            cost = std::static_pointer_cast<instance_taillard>(inst)->read_initial_ub_from_file(arguments::inst_name);
                             break;
                         }
                         case 'V': //VFR
                         {
-                            cost = static_cast<instance_vrf&>(inst).get_initial_ub_from_file(arguments::inst_name);
+                            cost = std::static_pointer_cast<instance_vrf>(inst)->get_initial_ub_from_file(arguments::inst_name);
                             break;
                         }
                     }
@@ -75,7 +75,7 @@ void pbab::set_initial_solution()
                 }
                 case 1:
                 {
-                    fastNEH neh(inst);
+                    fastNEH neh(*(inst.get()));
 
                     neh.initialSort(perm);
                     neh.runNEH(perm,cost);
@@ -87,7 +87,7 @@ void pbab::set_initial_solution()
                 }
                 case 2:
                 {
-                    Beam bs(this,inst);
+                    Beam bs(this,*(inst.get()));
                     // Beam bs(this,instance.get());
 
                     std::shared_ptr<subproblem> p = std::make_shared<subproblem>(size);
