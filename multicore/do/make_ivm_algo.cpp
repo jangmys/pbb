@@ -10,13 +10,7 @@ std::shared_ptr<Intervalbb<T>> make_ivmbb(pbab* pbb)
     std::shared_ptr<Intervalbb<T>> bb;
 
     if(arguments::boundMode == 0){
-        std::cout<<"make intervalbb\n";
         bb = std::make_shared<Intervalbb<T>>(pbb);
-        std::cout<<"set bound\n";
-
-        auto bd = make_bound_ptr<int>(pbb,arguments::primary_bound);
-
-        std::cout<<"set bound\n";
         bb->set_primary_bound( make_bound_ptr<int>(pbb,arguments::primary_bound));
     }else if(arguments::boundMode == 1){
         bb = std::make_shared<IntervalbbEasy<T>>(pbb);
