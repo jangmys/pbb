@@ -77,8 +77,8 @@ void pbab::set_initial_solution()
                 {
                     fastNEH neh(*(inst.get()));
 
-                    neh.initialSort(perm);
-                    neh.runNEH(perm,cost);
+                    // neh.initialSort(perm);
+                    neh.run(perm,cost);
 
                     set_initial_solution(perm,cost);
 

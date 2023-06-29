@@ -69,6 +69,5 @@ private:
 
 std::ostream&
 operator << (std::ostream& stream, const subproblem& s);
-// std::istream& operator>>(std::istream& stream, sumproblem& s);
 
 #endif // ifndef SUBPROBLEM_H
