@@ -14,19 +14,19 @@ Due to the combinatorial explosion of the search space, this requires massively 
 
 
 
-### Compilation
+## Compilation
 
-#### Prerequisites
+### Prerequisites
 - All
     - [CMake](https://cmake.org/) >=3.13
     - C++ compiler (tested gcc 7.5)
 - For PBB@Cluster
     - [GNU Multiple Precision Arithmetic Library](https://gmplib.org/) (tested GMP 6.1.2)
-    - [OpenMPI](https://www.open-mpi.org/) (tested OpenMPI 2.1.1)
+    - [MPI](https://www.open-mpi.org/) (tested OpenMPI 2.1.1)
 - For PBB@GPU
     - [NVIDIA CUDA Toolkit](https://developer.nvidia.com/cuda-toolkit) (tested CUDA 11.1)
 
-#### Build
+### Build
 To build PBB we use CMake>=3.13.
 
 You can build PBB without GMP, MPI and CUDA - but PBB will be limited to multi-core execution.
@@ -34,7 +34,7 @@ In the PBB root directory:
 
 1. `mkdir build`
 2. `cd build`
-3. `cmake <options> ..` where `<options>` are
+3. `cmake .. <options>` where `<options>` are
     - `-DMPI=true` #enable MPI
     - `-DGPU=true` #enable GPU
     - `-DCMAKE_BUILD_TYPE=Release/Debug` #(un)define NDEBUG
@@ -46,7 +46,12 @@ This will build the following executables (if enabled)
 - `build/gpu/gpubb`
 
 
-### Running PBB
+## Running PBB
+
+There are two ways to configure pbb : configuration file and command line options.
+Command line options take precedence over the configuration file which specifies default arguments.
+
+### Command line options
 
 #### Problem instance
 
@@ -59,10 +64,9 @@ The `-z` multioption allows to select a PFSP problem instance
 where
 - `p=fsp` : the problem (only pfsp, for now)
 - `i=ta20` : the problem instance, here Taillard's instance ta20
-- `o` : set the initial upper bound to optimum (read from file)
+- `o=<ub>` : the initial upper bound. can be <ub>=`inf` for infinity, `f` to read known optimum from a file or an integer UB to set the initial ub to UB.
 
 PFSP Benchmark instances for are included in the `evaluation/flowshop/data` folder.
-
 The available options for the problem instance are:
 
 - `ta1`-`ta120` : [Taillard's instances](http://mistic.heig-vd.ch/taillard/problemes.dir/ordonnancement.dir/ordonnancement.html) (1993)
@@ -91,11 +95,9 @@ The available options for the problem instance are:
     ```    
 
 
-### Command-line options
-- `-z p=fsp,i=<instance>,o`
-    - problem, instance, initial-ub
-    - `instance` either of form `ta35` or `VFR_15_10_4`
-    - `o` is optional for initializing UB best-known solution (from file)
+
+
+#### Other options
 - `-t <nbthreads>`
     - number of threads(multi-core)
 - `--bound <0,1,2>`
