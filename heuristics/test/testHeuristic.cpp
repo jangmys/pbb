@@ -9,9 +9,16 @@
 #include <memory>
 #include <iostream>
 
+
+//============================
+// test PFSP heuristics
+// (Taillard instances)
+//============================
 int main(int argc, char* argv[])
 {
     //==========================================================================
+    // parse args
+    //==================================
     if(argc != 4)
     {
         std::cout<<"Usage: -z p=fsp,i=ta20 <N> with N=...\n";
@@ -26,17 +33,24 @@ int main(int argc, char* argv[])
     arguments::parse_arguments(argc, argv);
     std::cout<<" === solving "<<arguments::problem<<" - instance "<<arguments::inst_name<<std::endl;
 
+    if(arguments::inst_name[0]!='t' && arguments::inst_name[0]!='a'){
+        std::cout<<"only ta instances (ta01-ta120)\n";
+        return -1;
+    }
+
+    //=====================================
+    //make INSTANCE : TAILLARD
+    //====================================
     auto instance = pbb_instance::make_inst(arguments::problem, arguments::inst_name);
 
-    std::cout<<" === solving "<<arguments::problem<<" - instance "<<atoi(arguments::inst_name+2)<<std::endl;
-
-
-    //INSTANCE
     int inst_id = atoi(arguments::inst_name+2);
-
     int N,M;
+
     N=taillard_get_nb_jobs(inst_id);
     M=taillard_get_nb_machines(inst_id);
+
+    std::cout<<" nb jobs : "<<N<<"\t\t nb machines : "<<M<<std::endl;
+    std::cout<<" ==================================="<<std::endl;
 
     std::vector<int>ptm(N*M,0);
     taillard_get_processing_times(ptm.data(),inst_id);
@@ -55,8 +69,6 @@ int main(int argc, char* argv[])
     // std::generate(perm.begin(), perm.end(), [n = 0] () mutable { return n++; });
     std::shared_ptr<subproblem> p = std::make_shared<subproblem>(instance->size);
 
-    std::cout<<argv[3]<<std::endl;
-
     pbab * pbb = new pbab();
 
     struct timespec t1,t2;
@@ -64,20 +76,22 @@ int main(int argc, char* argv[])
 
     switch(atoi(argv[3]))
     {
-        case 0:
+        case 0: //NEH heuristic
         {
-            fastNEH neh(p_times,N,M);
+            std::cout<<" = NEH :\t";
 
-            p = std::make_shared<subproblem>(neh());
+            fastNEH neh(p_times,N,M);
+            neh.run(p);
             break;
         }
         case 1:
         {
-            IG ils(*(instance.get()));
-
-            p->set_fitness(ils.runIG(p));
-
             std::cout<<" = ILS :\t";
+
+            IG ils(p_times,N,M);
+
+            // IG ils(*(instance.get()));
+            ils.run(p);
             break;
         }
         case 2:
@@ -99,8 +113,6 @@ int main(int argc, char* argv[])
         }
         case 3:
         {
-            // pbab* pbb = new pbab();
-
             Beam bs(pbb,*(instance.get()));
 
             // // subproblem *q = new subproblem(instance->size);
@@ -112,7 +124,6 @@ int main(int argc, char* argv[])
         }
         case 4:
         {
-            // pbab* pbb = new pbab();
             Beam bs(pbb,*(instance.get()));
 
             // subproblem *q = new subproblem(instance->size);
@@ -124,7 +135,6 @@ int main(int argc, char* argv[])
         }
         case 5:
         {
-            // pbab* pbb = new pbab();
             Treeheuristic th(pbb,*(instance.get()));
 
             th.run(p,0);
@@ -136,8 +146,7 @@ int main(int argc, char* argv[])
     }
 
     clock_gettime(CLOCK_MONOTONIC,&t2);
-    std::cout<<
-        1000*(t2.tv_sec - t1.tv_sec) +
+    std::cout<<"Elapsed:\t"<<1000*(t2.tv_sec - t1.tv_sec) +
         (t2.tv_nsec - t1.tv_nsec)/1e6 << " ms"<<std::endl ;
 
     for(auto &e : p->schedule)
