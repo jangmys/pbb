@@ -35,8 +35,8 @@ In the PBB root directory:
 1. `mkdir build`
 2. `cd build`
 3. `cmake .. <options>` where `<options>` are
-    - `-DMPI=true` #enable MPI
-    - `-DGPU=true` #enable GPU
+    - `-DMPI=true` #enable MPI build
+    - `-DGPU=true` #enable GPU build
     - `-DCMAKE_BUILD_TYPE=Release/Debug` #(un)define NDEBUG
 4. `make`
 
@@ -49,9 +49,9 @@ This will build the following executables (if enabled)
 ## Running PBB
 
 There are two ways to configure pbb : configuration file and command line options.
-Command line options take precedence over the configuration file which specifies default arguments.
+Command line arguments override the options provided in the configuration file.
 
-### Command line options
+### Command line options
 
 #### Problem instance
 
@@ -64,7 +64,12 @@ The `-z` multioption allows to select a PFSP problem instance
 where
 - `p=fsp` : the problem (only pfsp, for now)
 - `i=ta20` : the problem instance, here Taillard's instance ta20
-- `o=<ub>` : the initial upper bound. can be <ub>=`inf` for infinity, `f` to read known optimum from a file or an integer UB to set the initial ub to UB.
+- `o=<ub>` : the initial upper bound. <ub> can be
+    - `inf` for infinity
+    - `f` to read known optimum from a file
+    - `neh` NEH heuristic
+    - `beam` beam search
+    - N - an integer UB to set the initial ub to UB.
 
 PFSP Benchmark instances for are included in the `evaluation/flowshop/data` folder.
 The available options for the problem instance are:
@@ -110,6 +115,8 @@ The available options for the problem instance are:
     - changes pruning s.th. nodes with lb==ub are NOT pruned
 - `--primary-bound <s,j>`
     - simple or johnson bound
+- `--gpu <nbIVM>`
+    - number of GPU explorers (GPU)
 
 
 
@@ -178,3 +185,8 @@ see
 - [PBB@multicore](./multicore/README.md)
 - [PBB@GPU](./multicore/README.md)
 - [PBB@Cluster](./distributed/README.md)
+
+
+## PFSP Heuristics
+
+- NEH
