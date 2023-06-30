@@ -379,7 +379,7 @@ heu_thread2(void * arg)
         s->limit1=-1;
         s->limit2=w->pbb->size;
 
-        int cost=ils->runIG(s);
+        int cost=ils->runIG(s,ils->igiter);
 //
         if (cost<w->pbb->best_found.getBest()){
             w->pbb->best_found.update(s->schedule.data(),cost);
