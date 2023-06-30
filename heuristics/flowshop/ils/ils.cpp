@@ -125,6 +125,7 @@ std::vector<int> IG::destruction(std::vector<int>& perm, int k)
 
 
 
+
 //=====================================================================
 // void IG::perturbation(int *perm, int k, int a, int b)
 // {
@@ -214,7 +215,7 @@ bool IG::acceptance(int tempcost, int cost,float param)
 
 void IG::run(std::shared_ptr<subproblem> s)
 {
-    int makespan = runIG(s);
+    int makespan = runIG(s,igiter);
 
     s->set_fitness(makespan);
 }
@@ -222,7 +223,7 @@ void IG::run(std::shared_ptr<subproblem> s)
 
 
 //iterated local search from starting point "current"
-int IG::runIG(std::shared_ptr<subproblem> current)
+int IG::runIG(std::shared_ptr<subproblem> current, const int niter)
 {
     std::unique_ptr<subproblem> temp = std::make_unique<subproblem>(nbJob);
     std::unique_ptr<subproblem> best = std::make_unique<subproblem>(nbJob);
@@ -232,9 +233,6 @@ int IG::runIG(std::shared_ptr<subproblem> current)
     int bestcost=nhood->m->computeHeads(best->schedule, nbJob);
     int currentcost=bestcost;
 	current->set_fitness(bestcost);
-
-    int l1=0;//current->limit1+1;
-    int l2=nbJob;//current->limit2;
 
     int perturb=destructStrength;
     std::vector<int> removedJobs(perturb);
@@ -276,7 +274,7 @@ int IG::runIG(std::shared_ptr<subproblem> current)
     return current->fitness();
 }
 
-int IG::runIG(subproblem* current, int l1, int l2)
+int IG::runIG(subproblem* current, int l1, int l2, const int niter)
 {
     std::unique_ptr<subproblem> temp = std::make_unique<subproblem>(nbJob);
     std::unique_ptr<subproblem> best = std::make_unique<subproblem>(nbJob);

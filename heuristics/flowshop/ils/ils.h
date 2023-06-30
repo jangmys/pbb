@@ -46,8 +46,8 @@ public:
 
     void run(std::shared_ptr<subproblem> s);
 
-    int runIG(std::shared_ptr<subproblem> s);
-    int runIG(subproblem* s, int l1, int l2);
+    int runIG(std::shared_ptr<subproblem> s, const int niter);
+    int runIG(subproblem* s, int l1, int l2, const int niter);
 
     // void destruction(std::vector<int>& perm, std::vector<int>& permOut, int k);
 

@@ -90,13 +90,13 @@ int main(int argc, char* argv[])
 
             IG ils(p_times,N,M);
 
-            // IG ils(*(instance.get()));
             ils.run(p);
             break;
         }
         case 2:
         {
-            LocalSearch ls(*(instance.get()));
+            LocalSearch ls(p_times,N,M);
+            // LocalSearch ls(*(instance.get()));
 
             auto cost = ls.localSearchBRE(p->schedule);
             std::cout<<"COST-LS-BRE : "<<cost<<"\n";
