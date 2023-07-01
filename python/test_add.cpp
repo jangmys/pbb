@@ -1,16 +1,46 @@
 #include <pybind11/pybind11.h>
 
-namespace py = pybind11;
+
+#include <iostream>
 
 #include "add.h"
 #include "libbounds.h"
 
+namespace py = pybind11;
 // #include "../evaluation/libbounds.h"
 // #include "../heuristics/flowshop/neh/fastNEH.h"
 
 // int add(int i, int j) {
 //     return i + j;
 // }
+
+class test_abstract {
+public:
+    virtual ~test_abstract() = default;
+
+    virtual void init(instance_abstract& a) = 0;
+
+    virtual int foo() = 0;
+};
+
+class test : public test_abstract {
+public:
+    ~test(){};
+
+    test(){};
+
+    void init(instance_abstract& a){
+        std::cout<<"test";
+    }
+
+    int foo(){return 42;};
+
+private:
+    int* ptr;
+
+};
+
+
 
 
 PYBIND11_MODULE(test_add, m) {
@@ -25,10 +55,27 @@ PYBIND11_MODULE(test_add, m) {
     py::object world = py::cast("World");
     m.attr("what") = world;
 
-    py::class_<bound_abstract<int>>(m, "_bound_base")
-            .def("init", &bound_abstract<int>::init);
-
     // py::class_<bound_fsp_weak, bound_abstract<int>>(m, "bound_fsp")
     //     .def("init", &bound_fsp_weak::init);
 
+    py::class_<bound_abstract<int>>(m, "_bound_base")
+            .def("init", &bound_abstract<int>::init);
+
+    py::class_<bound_fsp_weak>(m, "bound_fsp")
+        .def(py::init<>())
+        .def("init", &bound_fsp_weak::init)
+        .def("eval", &bound_fsp_weak::evalSolution);
+
+    py::class_<instance_abstract>(m, "_instance_base");
+        // .def("init", &instance_abstract::init);
+
+    py::class_<instance_taillard, instance_abstract>(m, "instance_taillard")
+        .def(py::init<const char*>())
+        .def("get_job_number", &instance_taillard::get_job_number)
+        .def("get_machine_number", &instance_taillard::get_machine_number);
+
+
+    py::class_<test>(m, "test")
+        .def(py::init<>())
+        .def("init", &test::init);
 }
