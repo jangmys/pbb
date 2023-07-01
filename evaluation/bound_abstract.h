@@ -6,7 +6,7 @@
 template<typename T>
 class bound_abstract {
 public:
-    virtual ~bound_abstract(){};
+    virtual ~bound_abstract() = default;
 
     virtual void init(instance_abstract& _instance) = 0;
 
