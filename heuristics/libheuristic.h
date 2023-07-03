@@ -15,4 +15,6 @@
 #include "flowshop/beam/beam.h"
 #include "flowshop/beam/treeheuristic.h"
 
+#include "flowshop/vNNEH/vNNEH.h"
+
 #endif

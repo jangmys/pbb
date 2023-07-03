@@ -7,6 +7,7 @@ set(MyCppSources
     beam/beam.cpp
     beam/tree.cpp
     beam/treeheuristic.cpp
+    vNNEH/vNNEH.cpp
     util.cpp
 )
 

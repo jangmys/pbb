@@ -14,7 +14,7 @@ int LocalSearch::operator()(std::vector<int>& perm, int l1, int l2)
 {
     std::vector<int>tmp(perm);
 
-    int best=nhood->m->computeHeads(perm, perm.size());
+    int best=nhood->m->computeHeads(perm);
 
     // int depth = sqrt(nbJob);
     int depth = sqrt(l2-l1);
@@ -42,7 +42,7 @@ LocalSearch::localSearchBRE(std::vector<int>& perm)
 {
     std::vector<int>tmp(perm.size());
 
-    int best=nhood->m->computeHeads(perm, perm.size());
+    int best=nhood->m->computeHeads(perm);
 
     for(int k=0;k<10000;k++){ //max iterations
         bool found=false;
@@ -71,7 +71,7 @@ LocalSearch::localSearchBRE(std::vector<int>& perm, int l1, int l2)
 {
     std::vector<int>tmp(perm.size());
 
-    int best=nhood->m->computeHeads(perm, perm.size());
+    int best=nhood->m->computeHeads(perm);
 
     for(int k=0;k<10000;k++){
         bool found=false;
@@ -100,7 +100,7 @@ LocalSearch::localSearchKI(std::vector<int>& perm,const int kmax)
 {
     std::vector<int>tmp(perm.size());
 
-    int best=nhood->m->computeHeads(perm, perm.size());
+    int best=nhood->m->computeHeads(perm);
     std::cout<<"best : "<<best<<"\n";
 
 	//ls iterations ... 10000 = 'infinity' (likely getting trapped in local min much earlier)

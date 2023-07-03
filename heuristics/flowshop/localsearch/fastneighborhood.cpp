@@ -13,7 +13,7 @@
 template<typename T>
 int fspnhood<T>::fastBREmove(std::vector<int>& perm, int pos)
 {
-    int cmax0=m->computeHeads(perm, perm.size());
+    int cmax0=m->computeHeads(perm);
     int cmax1;
 
     //remove job from position pos...
@@ -42,7 +42,7 @@ int fspnhood<T>::fastBREmove(std::vector<int>& perm, int pos)
 template<typename T>
 int fspnhood<T>::fastBREmove(std::vector<int>& perm, int pos, int l1, int l2)
 {
-    int cmax0=m->computeHeads(perm, perm.size());
+    int cmax0=m->computeHeads(perm);
     //remove job from position pos...
     int rjob=m->remove(perm,pos);
 
@@ -84,7 +84,7 @@ int fspnhood<T>::fastBREmove(std::vector<int>& perm, int pos, int l1, int l2)
 template<typename T>
 int fspnhood<T>::kImove(std::vector<int>& perm,int pos, int kmax)
 {
-    int cmax0=m->computeHeads(perm, perm.size());
+    int cmax0=m->computeHeads(perm);
     int cmax1;
 
     int rjob;
@@ -132,7 +132,7 @@ int fspnhood<T>::fastkImove(std::vector<int>& perm,int kmax)
     int cmax0,cmax1;
     int rjob;
 
-    cmax0=m->computeHeads(perm, perm.size());
+    cmax0=m->computeHeads(perm);
 
     m->tabupos->clear();
     m->tabujobs->clear();
@@ -176,7 +176,7 @@ int fspnhood<T>::fastkImove(std::vector<int>& perm,int kmax,int l1,int l2)
     int cmax0,cmax1;
     int rjob;
 
-    cmax0=m->computeHeads(perm, perm.size());
+    cmax0=m->computeHeads(perm);
     // printf("start with %d\n",cmax0);
 
     m->tabupos->clear();

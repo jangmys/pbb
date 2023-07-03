@@ -28,6 +28,7 @@ int main(int argc, char* argv[])
         std::cout<<"... 2 : LS\n";
         std::cout<<"... 3 : BEAM\n";
         std::cout<<"... 4 : DFS-LS\n";
+
     }
 
     arguments::parse_arguments(argc, argv);
@@ -142,6 +143,29 @@ int main(int argc, char* argv[])
             std::cout<<" = DFLS :\t";
             break;
         }
+        case 6:
+        {
+            std::cout<<"vNNEH\n";
+
+            vNNEH vneh(p_times,N,M);
+
+            vneh.run_plus(p,N);
+
+            // for(int i=1;i<=N-1;i*=2){
+            //     vneh.run(p,i);
+            //     std::cout<<" === CMAX: "<<p->fitness()<<std::endl;
+            // }
+            // vneh.run(p,N-1);
+            // std::cout<<" === CMAX: "<<p->fitness()<<std::endl;
+
+
+            break;
+        }
+        case 7:
+        {
+
+        }
+
 
     }
 

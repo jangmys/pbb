@@ -66,11 +66,11 @@ void fastInsertRemove::reset()
 
 //returns makespan of (partial) schedule [ perm[0],perm[1],...perm[len-1] ]
 //keeps all completion times in heads
-int fastInsertRemove::computeHeads(const std::vector<int>& perm, const int len)
+int fastInsertRemove::computeHeads(const std::vector<int>& perm)
 {
     //machine 0
     head[0][0]=PTM[0][perm[0]];
-    for(int j=1;j<len;j++){
+    for(size_t j=1;j<perm.size();j++){
         head[0][j]=head[0][j-1]+PTM[0][perm[j]];
     }
     //job 0
@@ -78,19 +78,21 @@ int fastInsertRemove::computeHeads(const std::vector<int>& perm, const int len)
         head[k][0]=head[k-1][0]+PTM[k][perm[0]];
     }
 
-    for(int j=1;j<len;j++){
+    for(size_t j=1;j<perm.size();j++){
         int job=perm[j];
         for(int k=1;k<nbMachines;k++){
             head[k][j]=std::max(head[k-1][j],head[k][j-1])+PTM[k][job];
         }
     }
 
-    return head[nbMachines-1][len-1];
+    return head[nbMachines-1][perm.size()-1];
 }
 
 // compute tails for partial schedule [ perm[0],perm[1],...perm[len-1] ]
-void fastInsertRemove::computeTails(const std::vector<int>& perm, int len)
+void fastInsertRemove::computeTails(const std::vector<int>& perm)
 {
+    size_t len = perm.size();
+
     //#machine M
     tail[nbMachines-1][len-1]=PTM[nbMachines-1][perm[len-1]];
     for(int j=len-2;j>=0;j--){
@@ -111,7 +113,7 @@ void fastInsertRemove::computeTails(const std::vector<int>& perm, int len)
     }
 }
 
-void fastInsertRemove::computeInser(const std::vector<int>& perm, int len, int job)
+void fastInsertRemove::computeInser(const std::vector<int>& perm, int job)
 {
 //  #insert before (position 1)
     inser[0][0]=PTM[0][job];
@@ -119,7 +121,7 @@ void fastInsertRemove::computeInser(const std::vector<int>& perm, int len, int j
         inser[k][0]=inser[k-1][0]+PTM[k][job];
     }
 //  #insert 2nd pos to last
-    for(int j=1;j<=len;j++){
+    for(size_t j=1;j<=perm.size();j++){
         inser[0][j]=head[0][j-1]+PTM[0][job];
         for(int k=1;k<nbMachines;k++){
             inser[k][j]=std::max(inser[k-1][j],head[k][j-1])+PTM[k][job];
@@ -129,14 +131,14 @@ void fastInsertRemove::computeInser(const std::vector<int>& perm, int len, int j
 
 //get len+1 makespans obtained by inserting "job" into positions 0,1,...,len of partial permuation of length len
 //returns cmax before job insertion
-int fastInsertRemove::insertMakespans(const std::vector<int>& perm, int len, int job, std::vector<int>& makespans)
+int fastInsertRemove::insertMakespans(const std::vector<int>& perm, int job, std::vector<int>& makespans)
 {
-    int old_cmax = computeHeads(perm, len);
-    computeTails(perm, len);
-    computeInser(perm, len, job);
+    int old_cmax = computeHeads(perm);
+    computeTails(perm);
+    computeInser(perm, job);
 
     //for each possible insertion position
-    for(int i=0;i<=len;i++){
+    for(size_t i=0;i<=perm.size();i++){
         int tmp = 0;
         for(int j=0;j<nbMachines;j++){
             tmp=std::max(tmp,inser[j][i]+tail[j][i]);
@@ -149,10 +151,10 @@ int fastInsertRemove::insertMakespans(const std::vector<int>& perm, int len, int
 
 //get len makespans obtained by removing job at position 0,...,len-1 from partial permutation of length len
 //returns cmax before removal
-int fastInsertRemove::removeMakespans(const std::vector<int>& perm, int len, std::vector<int>& makespans)
+int fastInsertRemove::removeMakespans(const std::vector<int>& perm, std::vector<int>& makespans)
 {
-    computeHeads(perm, len);
-    computeTails(perm, len);
+    computeHeads(perm);
+    computeTails(perm);
 
     //remove first job (i=0)
     int maxi=0;
@@ -161,7 +163,7 @@ int fastInsertRemove::removeMakespans(const std::vector<int>& perm, int len, std
     }
     makespans[0]=maxi;
 
-    for(int i=1;i<len-1;i++){
+    for(size_t i=1;i<perm.size()-1;i++){
         maxi=0;
         for(int j=0;j<nbMachines;j++){
             maxi=std::max(maxi,head[j][i-1]+tail[j][i+1]);
@@ -171,11 +173,11 @@ int fastInsertRemove::removeMakespans(const std::vector<int>& perm, int len, std
 
     maxi=0;
     for(int j=0;j<nbMachines;j++){
-        maxi=std::max(maxi,head[j][len-2]);
+        maxi=std::max(maxi,head[j][perm.size()-2]);
     }
-    makespans[len-1]=maxi;
+    makespans[perm.size()-1]=maxi;
 
-    return head[nbMachines-1][len-1];
+    return head[nbMachines-1][perm.size()-1];
 }
 
 //insert job at position pos in partial permutation of length len
@@ -206,7 +208,7 @@ int fastInsertRemove::bestInsert(std::vector<int>& perm, int job, int &cmax)
     std::vector<int> makespans(perm.size()+1);
 
     //makespans obtained when inserting job at positions 0,...,len
-    insertMakespans(perm, perm.size(), job, makespans);
+    insertMakespans(perm, job, makespans);
 
     int minpos=-1;
     int mini=INT_MAX;
@@ -227,33 +229,6 @@ int fastInsertRemove::bestInsert(std::vector<int>& perm, int job, int &cmax)
     return minpos;
 }
 
-//insert in position which gives best cmax
-// int fastInsertRemove::bestInsert2(std::vector<int>& perm, int &len, int job, int &cmax)
-// {
-//     std::vector<int>makespans(len+1);
-//
-//     //makespans obtained when inserting job at positions 0,...,len
-//     int oldcmax=insertMakespans(perm, len, job, makespans);
-//
-//     std::vector<float> weights;
-//     for(int i=0; i<=len; ++i) {
-//         float val=(float)oldcmax/(float)(makespans[i]-oldcmax);
-//         if(tabupos->isTabu(i))val=0.0;
-//         weights.push_back(val);
-//     }
-//
-//     std::default_random_engine generator;
-//     std::discrete_distribution<int> d1(weights.begin(), weights.end());
-//
-//     int number = d1(generator);
-//
-//     insert(perm,len,number,job);
-//
-//     cmax = makespans[number];
-//     return number;
-// }
-
-
 //remove least well inserted job from perm
 //return removed job in remjob
 //return position of removed job
@@ -261,7 +236,7 @@ int fastInsertRemove::bestRemove(std::vector<int>& perm, int& remjob, int &cmax)
 {
     std::vector<int>makespans(perm.size());
 
-    int oldcmax=removeMakespans(perm, perm.size(), makespans);
+    int oldcmax=removeMakespans(perm, makespans);
 
     int bestpos=-1;
     float maxi=FLT_MIN;
@@ -297,7 +272,7 @@ int fastInsertRemove::bestRemove2(std::vector<int>& perm, int& remjob, int &cmax
 {
     std::vector<int>makespans(perm.size());
 
-    int oldcmax=removeMakespans(perm, perm.size(), makespans);
+    int oldcmax=removeMakespans(perm, makespans);
 
     std::vector<float> weights;
     for(size_t i=0; i<perm.size(); ++i) {

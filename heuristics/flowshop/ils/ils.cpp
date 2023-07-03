@@ -230,7 +230,7 @@ int IG::runIG(std::shared_ptr<subproblem> current, const int niter)
 
     *best=*current;
 
-    int bestcost=nhood->m->computeHeads(best->schedule, nbJob);
+    int bestcost=nhood->m->computeHeads(best->schedule);
     int currentcost=bestcost;
 	current->set_fitness(bestcost);
 
@@ -284,7 +284,7 @@ int IG::runIG(subproblem* current, int l1, int l2, const int niter)
 
     *best=*current;
 
-	bestcost=nhood->m->computeHeads(best->schedule, nbJob);
+	bestcost=nhood->m->computeHeads(best->schedule);
 	currentcost=bestcost;
 
     int perturb=destructStrength;
