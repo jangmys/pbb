@@ -78,8 +78,6 @@ public:
     int bestInsert(std::vector<int>& perm, int job, int &cmax);
     int bestRemove(std::vector<int>& perm, int &remjob, int &cmax);
     int bestRemove2(std::vector<int>& perm, int &remjob, int &cmax);
-
-    // int bestInsert2(std::vector<int>& perm, int &len, int job, int &cmax);
 private:
     std::vector<std::vector<int>> head;
     std::vector<std::vector<int>> tail;
