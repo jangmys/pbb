@@ -151,7 +151,7 @@ int main(int argc, char* argv[])
 
             vneh.run_plus(p,N);
 
-            // for(int i=1;i<=N-1;i*=2){
+            // for(int i=1;i<=N-1;i++){
             //     vneh.run(p,i);
             //     std::cout<<" === CMAX: "<<p->fitness()<<std::endl;
             // }
