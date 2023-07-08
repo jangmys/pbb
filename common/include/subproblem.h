@@ -21,7 +21,7 @@ public:
     operator = (const subproblem& s);
 
     int size;
-    int limit1;
+    int limit1 = -1;
     int limit2;
 
     std::vector<int> schedule;
@@ -63,8 +63,8 @@ public:
     }
 
 private:
-    int _cost;
-    int _ub;
+    int _cost=0;
+    int _ub=0 ;
 };
 
 std::ostream&
