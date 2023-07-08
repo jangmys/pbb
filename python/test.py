@@ -10,3 +10,12 @@ print(inst.get_machine_number(20))
 
 bound=test_add.bound_fsp()
 bound.init(inst)
+
+s=test_add.subproblem(10)
+
+print(s)
+
+s=test_add.subproblem(10,[1,3,5,7,9,0,2,4,6,8])
+print(s)
+
+print(bound.eval(s.schedule))
