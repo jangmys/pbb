@@ -5,22 +5,14 @@
 #include "pbab.h"
 #include "thread_controller.h"
 
-ThreadController::ThreadController(pbab * _pbb, int _nthreads) : pbb(_pbb),M(_nthreads)
+ThreadController::ThreadController(pbab * _pbb, int _nthreads) : pbb(_pbb),M(_nthreads),thd_data(std::vector< std::shared_ptr<RequestQueue> >(_nthreads,nullptr))
 {
-    thd_data = std::vector< std::shared_ptr<RequestQueue> >(get_num_threads(),nullptr);
-    threads = (pthread_t*)malloc(M*sizeof(threads));
-
     //barrier for syncing all explorer threads
     pthread_barrier_init(&barrier, NULL, M);
-
-    atom_nb_explorers.store(0);// id_generator
-    allEnd.store(false);
 }
 
 ThreadController::~ThreadController()
 {
-    free(threads);
-
     pthread_barrier_destroy(&barrier);
 }
 
@@ -29,7 +21,6 @@ void
 ThreadController::counter_decrement()
 {
     end_counter--;
-    // FILE_LOG(logDEBUG) << " DECREMENT COUNTER :" << end_counter<<std::flush;
 }
 
 /* end_counter is atomic*/
@@ -38,10 +29,8 @@ ThreadController::counter_increment(unsigned id)
 {
     end_counter++;
 
-    // FILE_LOG(logDEBUG) << "+++ "<<id<<" INCREMENT COUNTER :" << end_counter<<std::flush;
     if (end_counter.load() == M) {
         allEnd.store(true);
-        // FILE_LOG(logDEBUG) << "+++END COUNTER (" << id << ") VAL: " <<end_counter.load()<<"/"<<M<<std::flush;
         return true;
     }
 
@@ -51,7 +40,6 @@ ThreadController::counter_increment(unsigned id)
 unsigned
 ThreadController::explorer_get_new_id()
 {
-    // assert(atom_nb_explorers.load() < MAX_EXPLORERS);
     return (atom_nb_explorers++);
 }
 

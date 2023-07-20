@@ -243,18 +243,22 @@ matrix_controller::next()
 {
     resetExplorationState();
 
+    pthread_t *_threads = new pthread_t[M];
+
     for (unsigned i = 0; i < get_num_threads(); i++)
-        pthread_create(&threads[i], NULL, mcbb_thread, (void *) this);
+        pthread_create(&_threads[i], NULL, mcbb_thread, (void *) this);
 
     for (unsigned i = 0; i < get_num_threads(); i++)
     {
-        int err = pthread_join(threads[i], NULL);
+        int err = pthread_join(_threads[i], NULL);
         if (err)
         {
             std::cout << "Failed to join Thread : " << strerror(err) << std::endl;
             return err;
         }
     }
+
+    delete[]_threads;
 
     return allEnd.load(std::memory_order_relaxed);
 }
