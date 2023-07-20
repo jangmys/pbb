@@ -219,6 +219,8 @@ Intervalbb<T>::boundLeaf(subproblem& node)
     int cost=this->primary_bound->evalSolution(node.schedule.data());
 
     // std::cout<<cost<<"\t"<<prune->local_best<<"\n";
+    // std::cout<<this->count_leaves<<" ";
+    // node.print();
 
     if(!(*this->prune)(cost)){
         better=true;
@@ -230,8 +232,9 @@ Intervalbb<T>::boundLeaf(subproblem& node)
         pbb->best_found.foundAtLeastOneSolution.store(true);
         pbb->best_found.foundNewSolution.store(true);
 
+
         //print new best solution
-        if(arguments::printSolutions){
+        if(print_new_solutions){
             subproblem tmp(node);
             tmp.set_fitness(cost);
             tmp.set_lower_bound(cost);

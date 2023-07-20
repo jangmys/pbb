@@ -1,3 +1,10 @@
+/*
+====================================================
+Collection of work units (set of sets of intervals)
+--------------------------------------------------------
+Author : Jan Gmys (jan.gmys@univ-lille.fr)
+------------------------------------------
+*/
 #ifndef WORKS_H
 #define WORKS_H
 
@@ -6,24 +13,19 @@
 #include <fstream>
 #include <sstream>
 #include <string>
-#include <list>
 #include <map>
-#include <stack>
 #include <deque>
 #include <memory>
-#include <sys/time.h>
-#include <time.h>
 
 #include "gmp.h"
 #include "gmpxx.h"
 
-#include "pbab.h"
 #include "work.h"
 
 typedef std::shared_ptr<work> work_ptr;
 
-// works are stored in 3 structures, keeping works sorted according to size,id
-
+// works are stored in 2 structures, keeping works sorted according to size,id
+//==============================================================================
 // size
 struct mpz_compare // Du + grand au + petit
 { bool
@@ -34,7 +36,7 @@ struct mpz_compare // Du + grand au + petit
 };
 typedef std::multimap<mpz_class, std::shared_ptr<work>, mpz_compare> sizes_type;
 typedef sizes_type::iterator sizes_iterator;
-
+// =============================================================================
 // ids
 struct id_compare // Du + petit au + grand.
 { bool
@@ -45,49 +47,38 @@ struct id_compare // Du + petit au + grand.
 };
 typedef std::map<int, std::shared_ptr<work>, id_compare> id_type;
 typedef id_type::iterator id_iterator;
+// =============================================================================
 
 // unassigned works
 typedef std::deque<std::shared_ptr<work> > unassigned_type;
 
+
+
 class works
 {
-public:
-    works();
-    works(std::string directory, pbab * pbb);
-
-    void
-    init(pbab * _pbb);
-    void
-    init_complete(pbab * _pbb);
-    void
-    init_complete_split(pbab * _pbb, const int nParts);
-    void
-    init_complete_split_lop(pbab * _pbb, const int nParts);
-    void
-    init_infile(pbab * _pbb);
-
-    pbab * pbb;
-
-    std::string directory;
-
-    // quelques statistiques
-    mpz_class size;// total size
-
-    // more statistics ...
-    mpz_class totalNodes;
-    mpz_class numDivides;
-    mpz_class numIntersects;
-
-    struct timespec startt, endt;
-
-    bool end;
-
     // ensemble d'intervalles organisés selon
     sizes_type sizes; // la taille
-    // times_type times;     // le mis à jour
     id_type ids; // l'identité
-
     unassigned_type unassigned; // intervals not treated by any worker
+
+    mpz_class size;// total size
+public:
+    works() = default;
+    // works(std::string directory, pbab * pbb);
+
+    size_t get_num_works(){return ids.size();}
+    size_t get_num_unassigned(){return unassigned.size();}
+    bool has_unassigned(){return !unassigned.empty();}
+
+    // init works
+    // ================================================
+    void init_complete(size_t N);
+    void init_complete_split(size_t N, const int nParts);
+    void init_complete_split_lop(size_t N, const int nParts);
+
+    // more statistics ...
+    mpz_class numDivides;
+    mpz_class numIntersects;
 
     bool
     isEmpty();
@@ -95,13 +86,12 @@ public:
     nearEmpty();
 
     void
-    save();
-    void
     clear();
     void
     shutdown();
 
     // gerer l'ensemble id
+    // =================================================
     void
     id_insert(std::shared_ptr<work> w);
     void
@@ -110,55 +100,60 @@ public:
     std::shared_ptr<work>
     id_find(const int id);                      // retrouver un work d'un certain id s'il existe
 
-    // gerer l'ensemble sizes
-    void
-    sizes_insert(std::shared_ptr<work> w);
-    void
-    sizes_delete(std::shared_ptr<work> w);
-    void
-    sizes_update(const std::shared_ptr<work> &w);
-    std::shared_ptr<work>
-    sizes_big() const; // retrouver le plus grand intervalle
     std::shared_ptr<work>
     ids_oldest() const;
 
-    // master...
-    std::shared_ptr<work>
-    nbs_close(int nb);
+    // gerer l'ensemble sizes
+    // =================================================
+    void sizes_insert(std::shared_ptr<work> w);
+    void sizes_delete(std::shared_ptr<work> w);
+    void sizes_update(const std::shared_ptr<work> &w);
+    mpz_class get_size();
+    std::shared_ptr<work> sizes_big() const; // retrouver le plus grand intervalle
 
-    // =========== gerer les intervalles =====================
-    std::shared_ptr<work>
-    _update(const std::shared_ptr<work> &w, bool& chgd); // mettre a jour un intervalle
-    std::shared_ptr<work>
-    _fault(); // recuperer un intervalle dans le processus est en panne
 
-    std::shared_ptr<work>
-    acquireNewWork(int max, bool&);
-
-    bool
-    dropWork(std::shared_ptr<work> tmp);
+    // work unit creation
+    // ============================================
+    // std::shared_ptr<work> acquireNewWork(int max, bool&);
 
     // recuperer la seconde moitie d'un work (set of intervals):
     // divide up to max intervals
-    std::shared_ptr<work>
-    steal(unsigned int max, bool&);
-    // recuperer le plus ancen intervalle
-    //	std::shared_ptr<work> _oldest(int max);
-    std::shared_ptr<work>
-    _adopt(int max);
+    std::shared_ptr<work> steal(unsigned int max, bool&);
+    std::shared_ptr<work> adopt(int max);
 
-    // work&
-    void
-    request(std::shared_ptr<work> w, bool& chgd);
-    bool
-    request(std::shared_ptr<work> w);   // , int& _cout, problem*_pr);
-    void
-    voidrequest(work& w);
+    // I/O
+    // =======================================================
+    friend std::ostream&
+    operator << (std::ostream& stream, works& ws)
+    {
+        //number of works
+        stream << ws.ids.size() + ws.unassigned.size() << std::endl;
+
+        for (id_iterator i = ws.ids.begin(); i != ws.ids.end(); ++i)
+            stream << *(i->second);
+        for (auto i: ws.unassigned)
+            stream << *i;
+
+        return stream;
+    }
+
+    friend std::istream& operator>>(std::istream& stream, works& ws)
+    {
+        while(!ws.unassigned.empty())ws.unassigned.pop_front();
+
+        int number;
+        stream >> number;
+
+        for (int i = 0; i < number; i++) {
+            std::shared_ptr<work> w(new work(stream));
+            w->set_id();
+            w->max_intervals=99999;
+            // std::cout<<"work read from stream\n"<<(*w)<<std::endl;
+            ws.unassigned.push_back(std::move(w));
+        }
+        return stream;
+    }
 };
 
-std::ostream&
-operator << (std::ostream& stream, works& ws);
-std::istream&
-operator >> (std::istream& stream, works& ws);
 
 #endif // ifndef WORKS_H

@@ -25,114 +25,74 @@
 #include "master.h"
 
 // =======================================================
-// default
-works::works()
-{}
-
 void
-works::init_complete(pbab * _pbb)
+works::init_complete(size_t N)
 {
-    pbb = _pbb;
-
-    std::shared_ptr<work> w(new work());
+    std::shared_ptr<work> w = std::make_shared<work>();
     w->set_id();
 
     mpz_class a("0");
     mpz_class b("1");
-    for (int i = 1; i <= pbb->size; i++) {
+    for (size_t i = 1; i <= N; i++) {
         b *= i;//n factorial....
     }
     b -= 1;//...minus one (needed to avoid segfault on conversion to factoradic).
 
-    (w->Uinterval).emplace_back(new interval(a, b, 0));
+    (w->Uinterval).emplace_back(std::make_shared<interval>(a, b, 0));
     unassigned.push_back(w);
 
     FILE_LOG(logINFO)<<"INITIAL WORK UNITS: "<<unassigned.size();
 }
 
 void
-works::init_infile(pbab * _pbb)
+works::init_complete_split(size_t N, const int nParts)
 {
-    pbb = _pbb;
-
-    std::ifstream stream((std::string(arguments::work_directory) + "bab" + std::string(arguments::inst_name) + ".save").c_str());
-    stream.seekg(0);
-
-    if (stream) {
-        stream >> pbb->best_found;
-
-        std::cout<<"Root: "<<pbb->best_found<<"\n";
-
-        uint64_t nbdecomposed;
-        stream >> nbdecomposed;
-        pbb->stats.simpleBounds = nbdecomposed;
-
-        stream >> pbb->best_found;
-        stream >> *this;
-        stream.close();
-    }else{
-        printf("trying to read from file\n");
-    }
-}
-
-void
-works::init_complete_split(pbab * _pbb, const int nParts)
-{
-    pbb = _pbb;
-
-    std::shared_ptr<work> w(new work());
+    std::shared_ptr<work> w = std::make_shared<work>();
     w->set_id();
 
     mpz_class a("0");
     mpz_class b("1");
-    for (int i = 1; i <= pbb->size; i++)
+    for (size_t i = 1; i <= N; i++)
         b *= i;
     b -= 1;
 
-    // std::cout << a << " " << b << std::endl;
-
-    (w->Uinterval).emplace_back(new interval(a, b, 0));
+    (w->Uinterval).emplace_back(std::make_shared<interval>(a, b, 0));
     w->split(nParts);
 
     INTERVAL_IT it = (w->Uinterval).begin();
 
     for (it = (w->Uinterval).begin(); it != (w->Uinterval).end(); ++it) {
-        std::shared_ptr<work> tmp(new work());
+        std::shared_ptr<work> tmp = std::make_shared<work>();
         (tmp->Uinterval).push_back(std::move(*it));
 
         unassigned.push_back(tmp);
     }
 
-    //    std::reverse(unassigned.begin(),unassigned.end());
-
-    //    std::cout<<"nProc\t"<<pbb->mstr->nProc<<std::endl;
     FILE_LOG(logINFO)<<"INITIAL WORK UNITS: "<<unassigned.size();
 } // works::init_complete_split
 
 void
-works::init_complete_split_lop(pbab * _pbb, const int nParts)
+works::init_complete_split_lop(size_t N, const int nParts)
 {
-    pbb = _pbb;
-
-    std::shared_ptr<work> w(new work());
+    std::shared_ptr<work> w = std::make_shared<work>();
     w->set_id();
 
     mpz_class a("0");
     mpz_class b("1");
-    for (int i = 1; i <= pbb->size; i++)
+    for (size_t i = 1; i <= N; i++)
         b *= i;
     b -= 1;
 
     FILE_LOG(logINFO) << "Searching interval: " << a << "\t" << b;
 
-    (w->Uinterval).emplace_back(new interval(a, b, 0));
+    (w->Uinterval).emplace_back(std::make_shared<interval>(a, b, 0));
     w->split2(nParts);
 
 
     INTERVAL_IT it = (w->Uinterval).begin();
 
     for (it = (w->Uinterval).begin(); it != (w->Uinterval).end(); ++it) {
-        std::shared_ptr<work> tmp(new work());
+        std::shared_ptr<work> tmp = std::make_shared<work>();
         (tmp->Uinterval).push_back(std::move(*it));
         unassigned.push_back(tmp);
     }
@@ -141,33 +101,6 @@ works::init_complete_split_lop(pbab * _pbb, const int nParts)
 
     FILE_LOG(logINFO)<<"INITIAL WORK UNITS: "<<unassigned.size();
 } // works::init_complete_split
-
-
-
-// static int savenb = 1;
-void works::save()
-{
-    if (!pbb->ttm->period_passed(CHECKPOINT_TTIME))return;// || (size == 0)) //continue
-    // else return;
-
-    std::cout<<"SAVE"<<std::endl;
-
-    // std::ofstream stream("./bbworks/bab.save");
-    // std::ofstream stream(("./bbworks/bab" + std::to_string(arguments::inst_name) + ".save").c_str());
-    std::ofstream stream((std::string(arguments::work_directory) + "bab" + std::string(arguments::inst_name) + ".save").c_str());
-    FILE_LOG(logINFO) << "SAVED TO DISK";
-
-    if(stream){
-        stream << pbb->best_found;
-        stream << pbb->stats.simpleBounds << " ";
-        stream << pbb->best_found;
-        stream << *this;
-        stream.close();
-    }
-
-    // std::cout<<"SAVE "<<totalNodes<<std::endl;
-    // savenb++;
-}
 
 void works::clear()
 {
@@ -209,6 +142,15 @@ works::sizes_update(const std::shared_ptr<work> &w)
     sizes_delete(w);
     sizes_insert(w);// call set_size
 }
+
+mpz_class
+works::get_size()
+{
+    return size;
+}
+
+
+
 // ===========================================================================================
 
 void
@@ -238,39 +180,26 @@ works::id_find(const int _id)
     return (tmp == ids.end()) ? nullptr : tmp->second;
 }
 
-/*
- * std::shared_ptr<work> works::times_fault()
- * {
- * //	std::cout<<"time fault\n";
- *
- *  std::shared_ptr<work> w = times.begin()->second;
- *
- *  return (w->fault()) ? w : NULL;
- * }
- *
- */
 std::shared_ptr<work>
 works::sizes_big() const
 {
-    // return ids.begin()->second; //return smallest ID
-    // return sizes.begin()->second; //return largest
+    // return largest
+    return sizes.begin()->second; //return largest
 
     //return largest work which has been updated at least once
-    for(auto i:sizes)
-    {
-        if(i.second->nb_updates > 0)return i.second;
-    }
-    return nullptr;
-    // ids.begin()->second; //return smallest ID
-    //	return w;
-    //	return (w->big()) ? w : NULL;
+    //(the idea is to avoid some redundancy - but it may just block the work spread in the beginning)
+    // for(auto i:sizes)
+    // {
+    //     if(i.second->nb_updates > 0)return i.second;
+    // }
+    // return nullptr;
 }
 
 
 std::shared_ptr<work>
 works::ids_oldest() const
 {
-    //return oldest work which has been updated at least once
+    //return oldest work which is at least average size
     for(auto i:ids)
     {
         if(i.second->size >= size/ids.size())return i.second;
@@ -280,24 +209,11 @@ works::ids_oldest() const
 }
 
 std::shared_ptr<work>
-works::acquireNewWork(int max, bool &tooSmall)
-{
-    if(isEmpty()){
-        return nullptr;
-    }else if (!unassigned.empty())   {
-        return _adopt(max);
-    } else  {
-        return steal(max, tooSmall);
-    }
-    // std::cout<<ids.size()<<std::endl;
-}
-
-std::shared_ptr<work>
 works::steal(unsigned int max, bool &tooSmall)
 {
-    // select largest work unit (that was at least updated once)
-    std::shared_ptr<work> tmp1 = sizes_big();
-    // std::shared_ptr<work> tmp1 = ids_oldest();
+    // select largest work unit (that was at least updated once!)
+    std::shared_ptr<work> tmp1 = ids_oldest();
+    // std::shared_ptr<work> tmp1 = sizes_big();
 
     //if sizes_big returned nothing
     if(!tmp1)return nullptr;
@@ -305,20 +221,17 @@ works::steal(unsigned int max, bool &tooSmall)
     //create new work by division of tmp1
     std::shared_ptr<work> tmp2(std::move(tmp1->divide(max)));
 
-
     //no steal
     // if(tmp1)
     //     tmp1->end_updated=1;
     // return nullptr;
 
-
-
     // DUPLICATION (interval too small)
     if (tmp2->isEmpty()) {
-        // FILE_LOG(logINFO)<<"TOO SMALL";
+        FILE_LOG(logINFO)<<"Divide-BIG returned empty";
+        return nullptr;
         // std::cout<<"duplicate\n"<<std::flush;
         // tooSmall = true;
-        return nullptr;
 
         // if ((tmp1->Uinterval).size() <= max) {
         //     tmp1->end_updated = 1;
@@ -350,7 +263,7 @@ works::steal(unsigned int max, bool &tooSmall)
 
 // take entire work from list of unattributed works
 std::shared_ptr<work>
-works::_adopt(int max)
+works::adopt(int max)
 {
     std::shared_ptr<work> tmp = unassigned.front();
 
@@ -398,7 +311,7 @@ works::_adopt(int max)
 
         return tmp2;
     }
-} // works::_adopt
+} // works::adopt
 
 bool
 works::isEmpty()
@@ -426,44 +339,4 @@ works::nearEmpty()
     }else{
         return false;
     }
-}
-
-// void
-// works::shutdown()
-// {
-//     end = true;
-// }
-
-//===========================================
-
-std::ostream&
-operator << (std::ostream& stream, works& ws)
-{
-    //number of works
-    stream << ws.ids.size() + ws.unassigned.size() << std::endl;
-
-    for (id_iterator i = ws.ids.begin(); i != ws.ids.end(); ++i)
-        stream << *(i->second);
-    for (auto i: ws.unassigned)
-        stream << *i;
-
-    return stream;
-}
-
-std::istream& operator>>(std::istream& stream, works& ws)
-{
-    while(!ws.unassigned.empty())ws.unassigned.pop_front();
-
-    int number;
-    stream >> number;
-    // printf("number of 'work' : %d\n",number);
-
-    for (int i = 0; i < number; i++) {
-        std::shared_ptr<work> w(new work(stream));
-        w->set_id();
-        w->max_intervals=99999;
-        // std::cout<<"work read from stream\n"<<(*w)<<std::endl;
-        ws.unassigned.push_back(std::move(w));
-    }
-    return stream;
 }

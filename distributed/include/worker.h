@@ -12,19 +12,18 @@
 
 
 class worker {
-    // private:
 public:
     pbab * pbb;
     int size;
     int M;
     unsigned nb_heuristic_threads;
+    unsigned long long int local_decomposed_count;
 
     std::unique_ptr<communicator> comm;
     std::shared_ptr<fact_work> work_buf;
     std::shared_ptr<work> dwrk;
 
-    // solution * local_sol;
-
+    //heuristics ...
     unsigned int sol_ind_begin;
     unsigned int sol_ind_end;
     unsigned int max_sol_ind;
@@ -34,12 +33,10 @@ public:
     worker(pbab * _pbb, unsigned int _nbIVM);
     virtual ~worker();
 
-    int best;
-
     void tryLaunchCommBest();
     void tryLaunchCommWork();
 
-    virtual void getSolutions() = 0;
+    virtual void getSolutions(int*) = 0;
     virtual void getIntervals() = 0;
     virtual void updateWorkUnit() = 0;
     virtual bool doWork() = 0;

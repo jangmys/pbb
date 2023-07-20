@@ -89,7 +89,6 @@ Beam::step_loop_local_pq(unsigned int beamWidth,int localBest){
         std::vector<std::unique_ptr<subproblem>>,
         prio_compare>pq;
 
-
          // auto(*)(std::unique_ptr<subproblem>,std::unique_ptr<subproblem>)->bool > pq{
          //    []( const std::unique_ptr<subproblem> a, const std::unique_ptr<subproblem> b )->bool {
          //        return a->prio < b->prio;

@@ -7,12 +7,7 @@
 #define MAXSOMME 780 //M*(M-1)/2
 
 #define TILE_SZ 32
-#define MAXJOBS 800
 
-__device__ unsigned int _trigger;
-
-__device__ int root_d[MAXJOBS];
-__device__ int root_dir_d;
 
 // constant GPU data
 __device__ __constant__ int _nbMachines;
@@ -767,6 +762,7 @@ boundWeak_BeginEnd(const int *limit1s_d,const int *limit2s_d, const int *line_d,
     int ivm = (blockIdx.x * blockDim.x + threadIdx.x) / tile_size; // global ivm id
     int warpID = threadIdx.x / tile_size;
 
+
     // nothing to do
     if (state_d[ivm] == 0) return;
 
@@ -789,14 +785,18 @@ boundWeak_BeginEnd(const int *limit1s_d,const int *limit2s_d, const int *line_d,
     remain += warpID*_nbMachines;
     prmu += warpID * size_d;
 
+
     // load PTM to smem
     //load schedule limits and line to smem
     int line=line_d[ivm];
     int l1=limit1s_d[ivm];
     int l2=limit2s_d[ivm];
 
+
     for (int i = g.thread_rank(); i < size_d; i+=g.size()) {
         prmu[i]=schedules_d[ivm*size_d+i];
+        costsBE_d[2 * ivm * size_d + i] = 0;
+        costsBE_d[(2 * ivm + 1)* size_d + i] = 0;
     }
     //initialize remain
     for (int i = g.thread_rank(); i < _nbMachines; i+=g.size()) {
@@ -978,7 +978,7 @@ makespans(int *schedules_d,int *cmax, int *state_d)
     // nothing to do
     if (state_d[ivm] == 0) return;
 
-    tile_evalSolution(tile32, prmu, _nbJob-1, _tempsJob, &front[warpID * _nbMachines]);
+    tile_evalSolution(tile32, prmu, size_d-1, _tempsJob, &front[warpID * _nbMachines]);
     tile32.sync();
 
     if(tile32.thread_rank()==0){
@@ -1053,7 +1053,7 @@ xOver_makespans(int *schedules_d,int *cmax, int *state_d, int *parent2, int* l1,
     if (state_d[ivm] == 0) return;
 
 	tile_2point(tile32, prmu, parent2, chld, flag, l1[ivm], l2[ivm]);
-    tile_evalSolution(tile32, chld, _nbJob-1, _tempsJob, &front[warpID * _nbMachines]);
+    tile_evalSolution(tile32, chld, size_d-1, _tempsJob, &front[warpID * _nbMachines]);
     tile32.sync();
 
 	for(i=tile32.thread_rank(); i<size_d; i+=tile_size){
@@ -1070,7 +1070,7 @@ xOver_makespans(int *schedules_d,int *cmax, int *state_d, int *parent2, int* l1,
 
 __global__ void
 __launch_bounds__(1024, 1)
-boundRoot(int *mat, int *dir, int *line, int *costsBE_d, int *sums_d, int *bestpermut, const int best, const int branchingMode) {
+boundRoot(int *mat, int *dir, int *line, int *costsBE_d, int *sums_d, const int best, const int branchingMode) {
 	thread_block bl = this_thread_block();
     thread_block_tile<32> tile32 = tiled_partition<32>(this_thread_block());
     int warpID = bl.thread_rank() / warpSize;
@@ -1081,7 +1081,6 @@ boundRoot(int *mat, int *dir, int *line, int *costsBE_d, int *sums_d, int *bestp
     for(int l=bl.thread_rank(); l<size_d; l+=bl.size())
     {
         permut[l] = l;
-        mat[l] = bestpermut[l];
     }
     bl.sync();
 
@@ -1089,7 +1088,6 @@ boundRoot(int *mat, int *dir, int *line, int *costsBE_d, int *sums_d, int *bestp
         // bound begin
         costsBE_d[l] =
         computeCost(permut, 0, l, 0, size_d, _tempsJob, 0, _tabJohnson, 999999);
-        // atomicAdd(&sums_d[0], costsBE_d[l]);
     }
 
     if(branchingMode>0){
@@ -1097,7 +1095,6 @@ boundRoot(int *mat, int *dir, int *line, int *costsBE_d, int *sums_d, int *bestp
             // bound end
             costsBE_d[size_d + l] =
             computeCost(permut, size_d - 1, l, -1, size_d - 1, _tempsJob, 0, _tabJohnson, 999999);
-            // atomicAdd(&sums_d[1], costsBE_d[size_d + l]);
         }
     }
     bl.sync();
@@ -1110,21 +1107,18 @@ boundRoot(int *mat, int *dir, int *line, int *costsBE_d, int *sums_d, int *bestp
     int d=0; //default
     switch(branchingMode){
     case 1:{
-        d=tile_branchMaxSum(tile32, mat, costsBE_d, dir, line[0]);
+        d=tile_branchMaxSum<32>(tile32, mat, costsBE_d, line[0]);
         break;}
     case 2:{
-        d=tile_branchMinMin(tile32, mat, costsBE_d, dir, line[0]);
+        d=tile_branchMinMin<32>(tile32, mat, costsBE_d, dir, line[0]);
         break;}
     case 3:{
-        d=tile_MinBranch(tile32, mat, costsBE_d, dir, line[0],best);
+        d=tile_MinBranch<32>(tile32, mat, costsBE_d, dir, line[0],best);
         break;}
     }
 
     d=tile32.shfl(d,0);
     tile32.sync();//!!!! every thread has dir
-
-
-
 
 
     if(bl.thread_rank()==0){

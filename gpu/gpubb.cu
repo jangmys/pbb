@@ -8,65 +8,137 @@
 #include "arguments.h"
 //nbivms_gpu, problem, boundMode, branchingMode, findAll, printSolutions,ws_strategy
 
+#include "set_operators.h"
 #include "subproblem.h"
 #include "ttime.h"
 #include "log.h"
 
 #include "libbounds.h"
-
 #include "gpubb.h"
 
 // all CUDA from this file
 #include "./bb_kernels.cu"
 
-gpubb::gpubb(pbab * _pbb)
+
+
+int gpu_worksteal::steal_in_device(int* line, int* pos, int* end, int* dir, int* mat, int* state, int iter, unsigned int nb_exploring)
 {
-    pbb  = _pbb;
-    size = pbb->size;
-    nbIVM    = arguments::nbivms_gpu;
-    ringsize = nbIVM;
+    adapt_workstealing(nb_exploring, 2, nbIVM / 8);
+
+    computeLength <<< (nbIVM / PERBLOCK), (32 * PERBLOCK)>>>(pos, end, state, length_d, sumLength_d);
+#ifndef NDEBUG
+    gpuErrchk(cudaPeekAtLastError());
+    gpuErrchk(cudaDeviceSynchronize());
+#endif
+
+    //    search_cut = 0.1;
+    computeMeanLength << < (nbIVM + 127) / 128, 128>>>
+    (sumLength_d, meanLength_d, search_cut, nbIVM); // (int)(ctrl_h[2]+1));
+#ifndef NDEBUG
+    gpuErrchk(cudaPeekAtLastError());
+    gpuErrchk(cudaDeviceSynchronize());
+#endif
+
+    int dimb = iter % topoDimensions;
+    int from, to, dim, q;
+
+    for (int s = dimb; s < dimb + topoDimensions; s++) {
+        dim  = s % topoDimensions;
+        q    = (1 << topoB[dim]);
+        from = iter & (q - 1);
+        to   = from + q;
+
+        for (int off = from; off < to; off++)
+            prepareShare << < (nbIVM + 127) / 128, 128>>>
+            (state, victim_flag_d, victim_d, length_d, meanLength_d, off & (q - 1), topoB[dim], topoA[dim]);
+    }
+#ifndef NDEBUG
+    gpuErrchk(cudaPeekAtLastError());
+    gpuErrchk(cudaDeviceSynchronize());
+#endif
+
+    share_on_gpu2 <<< nbIVM / PERBLOCK, 32 * PERBLOCK>>>
+    (mat, pos, end, dir, line, 1, 2, state, victim_flag_d, victim_d);
+#ifndef NDEBUG
+    gpuErrchk(cudaPeekAtLastError());
+    gpuErrchk(cudaDeviceSynchronize());
+#endif
+
+    unsigned int tmp = 0;
+    gpuErrchk(cudaMemcpyFromSymbol(&tmp, gpuBalancedIntern, sizeof(unsigned int)));
+
+    return tmp;
+};
+
+
+
+gpubb::gpubb(pbab * _pbb, int rank) : pbb(_pbb),size(pbb->size),nbIVM(arguments::nbivms_gpu)
+{
+    int device,num_devices;
+    gpuErrchk( cudaGetDeviceCount(&num_devices) );
+    gpuErrchk( cudaSetDevice(rank % num_devices) );
+
+    // pbb  = _pbb;
+    // size = pbb->size;
+    // nbIVM    = arguments::nbivms_gpu;
+    // ringsize = nbIVM;
+
+
+
+    // setHypercubeConfig(nbIVM); //work stealing
+
+    ws = std::make_unique<gpu_worksteal>(size,nbIVM);
 
     if (arguments::problem[0] == 'f') {
-        auto bd = std::make_unique<bound_fsp_weak>();
-        bd->init(pbb->inst);
-        bound=std::move(bd);
+        bound = make_bound_ptr<int>(pbb,arguments::primary_bound);
+    }else{
+        bound = std::make_unique<bound_dummy>();
     }
 
-    initialUB = pbb->best_found.initial_cost.load();
+    initialUB = pbb->best_found.getBest();
 
 	FILE_LOG(logINFO) << "GPU with nbIVM:\t" << nbIVM;
 	FILE_LOG(logINFO) << "Initial UB:\t" << initialUB;
-    gpuErrchk(cudaStreamCreate(&stream));
-    gpuErrchk(cudaEventCreateWithFlags(&event, cudaEventDisableTiming));
 
     pthread_mutex_init(&mutex_end,NULL);
-
     pthread_mutex_lock(&mutex_end);
     allEnd = false;
     pthread_mutex_unlock(&mutex_end);
 
     // "one time events"
-    startclock = true;
     firstbound = true;
-
-    search_cut = 1.0;
+    // search_cut = 1.0;
 
 	execmode.triggered = false;
-
-	// executionmode.triggered=false;
 }
 
 gpubb::~gpubb()
 {
-    free_on_device();
+    // free_on_device();
     // free etc
 }
 
 //
 void
-gpubb::initialize()
+gpubb::initialize(int rank)
 {
-    setHypercubeConfig(); //work stealing
+    //-----------mapping MPI_ranks to devices-----------
+    int device;
+    int num_devices;
+    gpuErrchk( cudaGetDeviceCount(&num_devices) );
+    gpuErrchk( cudaGetDevice(&device) );
+    std::cout<<rank<<" using device "<<device<<" of "<<num_devices<<"\n";
+    // gpuErrchk( cudaSetDevice(rank % num_devices) );
+
+
+    gpuErrchk(cudaFree(0));
+
+    // std::cout<<"initialized context\n";
+    stream = (cudaStream_t*)malloc(sizeof(cudaStream_t));
+    event = (cudaEvent_t*)malloc(sizeof(cudaEvent_t));
+    gpuErrchk(cudaStreamCreate(stream));
+    gpuErrchk(cudaEventCreateWithFlags(event, cudaEventDisableTiming));
+
     allocate_on_host();
     allocate_on_device();
 
@@ -83,16 +155,33 @@ gpubb::initFullInterval()
         int best = INT_MAX;
         pbb->best_found.getBest(best);
 		FILE_LOG(logINFO) << "Init Full : Bound Root with UB:\t" << best;
+        FILE_LOG(logINFO) << "Init Full : Root :\t" << pbb->best_found;
+#ifdef FSP
 		FILE_LOG(logINFO) << "Init Full : size:\t" << size << " " << nbMachines_h ;
-		FILE_LOG(logINFO) << "Init Full : Root :\t" << pbb->best_found;
+#endif
+        int* tmp_state = new int[nbIVM];
+        memset(tmp_state,0,nbIVM*sizeof(int));
+        tmp_state[0] = 1;
+        gpuErrchk( cudaMemcpy(state_d, tmp_state, nbIVM*sizeof(int),cudaMemcpyHostToDevice) );
 
-		int *bestsol_d;
-		gpuErrchk( cudaMalloc(&bestsol_d,size*sizeof(int)) );
-		gpuErrchk( cudaMemcpy(bestsol_d,pbb->best_found.initial_perm.data(),size*sizeof(int),cudaMemcpyHostToDevice) );
+        delete[] tmp_state;
 
         // bound root node
         #ifdef FSP
-        boundRoot << < 1, 1024, (nbMachines_h + sizeof(int)) * size >>> (mat_d, dir_d, line_d, costsBE_d, sums_d, bestsol_d, best, arguments::branchingMode);
+        //1. set 1st row of M to bestsol
+		gpuErrchk( cudaMemcpy(mat_d,pbb->best_found.initial_perm.data(),size*sizeof(int),cudaMemcpyHostToDevice) );
+
+        //2. compute LB (begin) for all subpb
+        decode(4);
+        weakBound(4, best);
+
+        int *d_root_tmp;
+        int *d_root_dir_tmp;
+        cudaGetSymbolAddress((void **)&d_root_tmp, root_d);
+        cudaGetSymbolAddress((void **)&d_root_dir_tmp, root_dir_d);
+
+        gpuErrchk( cudaMemcpy(d_root_tmp, mat_d, size*sizeof(int),cudaMemcpyDeviceToDevice) );
+        gpuErrchk( cudaMemcpy(d_root_dir_tmp, dir_d, sizeof(int),cudaMemcpyDeviceToDevice) );
         #endif
         #ifdef TEST
         boundRoot << < 1, 128, sizeof(int) * size >>> (mat_d, dir_d, line_d);
@@ -100,7 +189,7 @@ gpubb::initFullInterval()
         gpuErrchk(cudaPeekAtLastError());
         gpuErrchk(cudaDeviceSynchronize());
 
-        cudaFree(bestsol_d);
+        // cudaFree(bestsol_d);
 
         gpuErrchk(cudaMemcpy(costsBE_h,costsBE_d,2*nbIVM*size*sizeof(int),cudaMemcpyDeviceToHost));
         gpuErrchk(cudaMemcpy(dir_h,dir_d,nbIVM*size,cudaMemcpyDeviceToHost));
@@ -109,7 +198,7 @@ gpubb::initFullInterval()
     }
 
 	dim3 blks((nbIVM * 32 + 127) / 128);
-	setRoot << < blks, 128, 0, stream >> > (mat_d, dir_d);
+	setRoot << < blks, 128, 0, stream[0] >> > (mat_d, dir_d);
     gpuErrchk(cudaPeekAtLastError());
     gpuErrchk(cudaDeviceSynchronize());
 
@@ -121,10 +210,13 @@ gpubb::initFullInterval()
 	for(int i=0;i<size;i++){
 		end_h[i]=size-i-1;
 	}
-	state_h[0] = -1;
+	state_h[0] = -1;//initialize first
 
     copyH2D_update();
+
+    // std::cout<<"ROOT DECOMPOSED =====================\n";
     // affiche(1);
+    // std::cout<<"=====================\n";
 }
 
 void
@@ -140,17 +232,15 @@ gpubb::selectAndBranch(const int NN)
 {
     // int best = INT_MAX;
     // pbb->sltn->getBest(best);
-
     gpuErrchk(cudaMemset(counter_d, 0, 6 * sizeof(unsigned int)));
-
 	//dense mapping : one thread = one IVM
-    // goToNext_dense<<< (nbIVM+127) / 128, 128, 0, stream >>>(mat_d, pos_d, end_d, dir_d, line_d, state_d, nbDecomposed_d, counter_d, NN);
+    goToNext_dense<<< (nbIVM+127) / 128, 128, 0, stream[0] >>>(mat_d, pos_d, end_d, dir_d, line_d, state_d, nbDecomposed_d, counter_d, NN);
 
 	//wide mapping : one warp = one IVM
     // assume:
     // 1 block = NN warps = NN IVM
-    size_t smem = NN * (2 * size * sizeof(int) + 2 * sizeof(int));
-    goToNext2<4><<< (nbIVM+NN-1) / NN, NN * 32, smem, stream >>>(mat_d, pos_d, end_d, dir_d, line_d, state_d, nbDecomposed_d, counter_d);
+    // size_t smem = NN * (2 * size * sizeof(int) + 2 * sizeof(int));
+    // goToNext2<4><<< (nbIVM+NN-1) / NN, NN * 32, smem, stream[0] >>>(mat_d, pos_d, end_d, dir_d, line_d, state_d, nbDecomposed_d, counter_d);
 
 #ifndef NDEBUG
     gpuErrchk(cudaPeekAtLastError());
@@ -172,17 +262,19 @@ gpubb::launchBBkernel(const int NN)
     gpuErrchk(cudaMemcpyToSymbol(targetNode, &target_h, sizeof(unsigned int)));
     gpuErrchk(cudaMemset(costsBE_d, 999999, 2 * size * nbIVM * sizeof(int)));
 
+#ifdef FSP
     size_t smem = NN * (3*nbMachines_h + 3 * size + 2) * sizeof(int);
-    multistep_triggered<4><<< (nbIVM+NN-1) / NN, NN * 32, smem, stream >>>
+    multistep_triggered<4><<< (nbIVM+NN-1) / NN, NN * 32, smem, stream[0] >>>
     (mat_d, pos_d, end_d, dir_d, line_d, state_d, nbDecomposed_d, counter_d, schedule_d, lim1_d, lim2_d,costsBE_d,flagLeaf, best, initialUB);
+#else
+    size_t smem = 0;
+#endif
 
 #ifndef NDEBUG
     gpuErrchk(cudaPeekAtLastError());
     gpuErrchk(cudaDeviceSynchronize());
 #endif
-    // affiche(1);
 }
-
 
 bool
 gpubb::allDone()
@@ -194,11 +286,11 @@ gpubb::allDone()
 
     // blockReduce+atomic
     if (nbIVM >= 1024)
-        checkEnd << < (nbIVM + 1023) / 1024, 1024, 0, stream >>> (state_d);
+        checkEnd << < (nbIVM + 1023) / 1024, 1024, 0, stream[0] >>> (state_d);
     else if (nbIVM == 512)
-        checkEnd << < (nbIVM + 511) / 512, 512, 0, stream >> > (state_d);
+        checkEnd << < (nbIVM + 511) / 512, 512, 0, stream[0] >> > (state_d);
     else{
-        checkEnd << < (2*nbIVM - 1) / nbIVM, std::max(32,nbIVM), 0, stream >> > (state_d);
+        checkEnd << < (2*nbIVM - 1) / nbIVM, std::max(32,nbIVM), 0, stream[0] >> > (state_d);
     }
 #ifndef NDEBUG
     gpuErrchk(cudaPeekAtLastError());
@@ -210,15 +302,18 @@ gpubb::allDone()
 }
 
 void
-gpubb::buildMapping()
+gpubb::buildMapping(int best)
 {
+    //prefix-sum
+
+    //carries
     gpuErrchk(cudaMemset(auxArr, 0, 256 * sizeof(int)));
 
     dim3 blocksz(256);
     dim3 numbblocks((nbIVM + blocksz.x - 1) / blocksz.x);
     size_t smem = 2 * blocksz.x * sizeof(int);
-    reduce<<< numbblocks, blocksz, smem, stream >> > (todo_d, tmp_arr_d, auxArr, blocksz.x);
-	reduce2<<< numbblocks, blocksz, 0, stream >> > (tmp_arr_d, auxArr);
+    reduce<<< numbblocks, blocksz, smem, stream[0] >> > (todo_d, tmp_arr_d, auxArr, blocksz.x);
+	reduce2<<< numbblocks, blocksz, 0, stream[0] >> > (tmp_arr_d, auxArr);
 #ifndef NDEBUG
     gpuErrchk(cudaPeekAtLastError());
     gpuErrchk(cudaDeviceSynchronize());
@@ -227,12 +322,35 @@ gpubb::buildMapping()
 	switch(arguments::boundMode){
 		case 1:
 		{
-			prepareBound2<<<(nbIVM+PERBLOCK-1) / PERBLOCK, 32 * PERBLOCK, 0, stream>>>(lim1_d, lim2_d, todo_d, ivmId_d, toSwap_d, tmp_arr_d);
+            //all
+			prepareBound2<<<(nbIVM+PERBLOCK-1) / PERBLOCK, 32 * PERBLOCK, 0, stream[0]>>>(lim1_d, lim2_d, todo_d, ivmId_d, toSwap_d, tmp_arr_d,state_d);
 			break;
 		}
 		case 2:
 		{
-	    	prepareBound<<<(nbIVM+127) / 128, 128, 0, stream>>>(schedule_d, costsBE_d,dir_d,line_d,lim1_d, lim2_d, todo_d, ivmId_d, toSwap_d, tmp_arr_d);
+            //conditionally on cost
+	    	prepareBound<<<(nbIVM+127) / 128, 128, 0, stream[0]>>>(schedule_d, costsBE_d,dir_d,line_d,lim1_d, lim2_d, todo_d, ivmId_d, toSwap_d, tmp_arr_d, state_d,best);
+
+            // int *swap_h = new int[size * nbIVM];
+            // int *ivm_h = new int[size * nbIVM];
+            //
+            // cudaMemcpy(swap_h, toSwap_d, size * nbIVM * sizeof(int), cudaMemcpyDeviceToHost);
+            // cudaMemcpy(ivm_h, ivmId_d, size * nbIVM * sizeof(int), cudaMemcpyDeviceToHost);
+            //
+            // int ttodo_h;
+            // gpuErrchk(cudaMemcpyFromSymbol(&ttodo_h, todo, sizeof(unsigned int)));
+            //
+            // printf("*** swp\t");
+            // for (int j = 0; j < ttodo_h; j++) printf("%2d\t", swap_h[j]);
+            // printf("\n");
+            // printf("*** id\t");
+            // for (int j = 0; j < ttodo_h; j++) printf("%2d\t", ivm_h[j]);
+            // printf("\n");
+            //
+            // delete[]swap_h;
+            // delete[]ivm_h;
+
+
 			break;
 		}
 	}
@@ -255,27 +373,39 @@ gpubb::next()
     int nbsteals = 0;
 	localFoundNew=false;
 
+    // std::cout<<"got best "<<best<<std::endl;
+
     while (true) {
-        nbsteals += steal_in_device(iter);
+        if (counter_h[exploringState] < 75*nbIVM/100){
+            nbsteals += ws->steal_in_device(line_d, pos_d, end_d, dir_d, mat_d, state_d, iter, counter_h[exploringState]);
+        }
 
         if(execmode.triggered){
             //perform whole BB in single kernel..break if a threshold of empty explorers is reached.
-            end = triggeredNext(best, iter);
+            end = triggeredNext(best,iter);
         }else{
             //one BB step
-            end = next(best, iter);
+            end = next(best,iter);
         }
+        iter++;
 
         //conditions to trigger communication with master
         if(!arguments::singleNode){
+            if(execmode.triggered){
+                break;
+            }
             if(((nbsteals > (nbIVM/5)) && iter>100) || localFoundNew || pbb->ttm->period_passed(WORKER_BALANCING)){
                 break;
             }
         }
+        //no more work !
         if(end){
             break;
         }
     }
+
+    FILE_LOG(logDEBUG) << "GPU-explore : BREAK";
+
 
 	//return true if allEnd
     return end;
@@ -283,22 +413,21 @@ gpubb::next()
 
 // returns true iff no more work available
 bool
-gpubb::next(int& best, int& iter)
+gpubb::next(int& best, int iter)
 {
-    if (startclock) {
-        clock_gettime(CLOCK_REALTIME, &starttime);
-        startclock = false;
-    }
     bool end = false;
 
+    //modify IVM structures to make them point to next subproblem
     selectAndBranch(4);
+    //at each iteration get some exploration statistics
     getExplorationStats(iter,best);
 
+    //check termination
     if (allDone()){
-        // printf("all done\n");
         return true;
     }
 
+    //get subproblems from IVM
     bool reachedLeaf=decode(4);
 
     //if not 'strong-bound-only' ...
@@ -310,17 +439,24 @@ gpubb::next(int& best, int& iter)
     gpuErrchk(cudaMemcpyFromSymbol(&target_h, targetNode, sizeof(unsigned int)));
     reachedLeaf = (bool) target_h;
 
+    // affiche(1);
+
     boundLeaves(reachedLeaf,best);
 
-
+    //evaluate one-by-one
     if(arguments::boundMode != 0){
-        buildMapping();
+        buildMapping(best);
+
+        int ttodo_h;
+        gpuErrchk(cudaMemcpyFromSymbol(&ttodo_h, todo, sizeof(unsigned int)));
+
+        // std::cout<<"TODO_H "<<ttodo_h<<"\n";
+        // affiche(1);
+
 
         cudaMemset(sums_d, 0, 2 * nbIVM * sizeof(int));
         cudaMemset(costsBE_d, 0, 2 * size * nbIVM * sizeof(int));
 
-        int ttodo_h;
-        gpuErrchk(cudaMemcpyFromSymbol(&ttodo_h, todo, sizeof(unsigned int)));
         dim3 boundblocks;
 
         switch(arguments::boundMode){
@@ -328,14 +464,16 @@ gpubb::next(int& best, int& iter)
             {
                 boundblocks.x = (2 * ttodo_h+127) / 128;
 #ifdef FSP
-                boundJohnson<<<boundblocks, 128, nbJob_h * nbMachines_h + 64 * nbJob_h, stream>>>(schedule_d, lim1_d, lim2_d, line_d, costsBE_d, sums_d, state_d, toSwap_d,ivmId_d, nbLeaves_d, ctrl_d, flagLeaf, best);
+                boundJohnson<<<boundblocks, 128, nbJob_h * nbMachines_h + 64 * nbJob_h, stream[0]>>>(schedule_d, lim1_d, lim2_d, line_d, costsBE_d, sums_d, state_d, toSwap_d,ivmId_d, nbLeaves_d, ctrl_d, flagLeaf, best);
 #endif
 #ifdef TEST
                 /*
                 boundStrong kernel here!!! (if strong bound only)
                 */
 #endif
-                sortedPrune <<< (nbIVM+PERBLOCK-1) / PERBLOCK, 32 * PERBLOCK, 0, stream >>> (mat_d, dir_d, line_d, costsBE_d, sums_d, state_d, flagLeaf, best);
+                int smem = (4 * (2*size + 2) * sizeof(int));
+                chooseBranchingSortAndPrune<<< (nbIVM+4-1) / 4, 4 * 32, smem, stream[0] >> >
+                (mat_d, dir_d, pos_d, lim1_d, lim2_d, line_d, schedule_d, costsBE_d, prio_d, state_d, todo_d, best, initialUB,arguments::branchingMode);
                 break;
             }
             case 2:
@@ -343,18 +481,19 @@ gpubb::next(int& best, int& iter)
                 if(ttodo_h>0){
                     boundblocks.x = (ttodo_h+127) / 128;
 #ifdef FSP
-                    boundOne <<< boundblocks, 128, nbJob_h * nbMachines_h,stream >>>
-                    (schedule_d, lim1_d, lim2_d, dir_d, line_d, costsBE_d, toSwap_d, ivmId_d,best, front_d, back_d);
+                    boundOne <<< boundblocks, 128, nbJob_h * nbMachines_h,stream[0] >>>
+                    (schedule_d, lim1_d, lim2_d, dir_d, line_d, costsBE_d, toSwap_d, ivmId_d,best, bd->front_d, bd->back_d);
 #endif
 #ifdef TEST
                     /*
                     TO IMPLEMENT
                     boundStrong kernel here!!! (if mixed bound)
                     */
-                    boundStrongFront <<< boundblocks, 128, 0, stream >>>
+                    boundStrongFront <<< boundblocks, 128, 0, stream[0] >>>
                     (schedule_d, lim1_d, lim2_d, line_d, toSwap_d, ivmId_d, costsBE_d);
 #endif
-                    prune2noSort <<< (nbIVM+PERBLOCK-1) / PERBLOCK, 32 * PERBLOCK, 0, stream >> > (mat_d, dir_d, line_d, costsBE_d, state_d, best);
+
+                    prune2noSort <<< (nbIVM+PERBLOCK-1) / PERBLOCK, 32 * PERBLOCK, 0, stream[0] >> > (mat_d, dir_d, line_d, costsBE_d, state_d, best);
                 }
                 break;
     	    }
@@ -365,60 +504,46 @@ gpubb::next(int& best, int& iter)
     gpuErrchk(cudaDeviceSynchronize());
     #endif
 
-    iter++;
-
     return end; // (ctrl_h[gpuEnd] == 1);
 } // gpubb::next
-
 
 
 bool gpubb::decode(const int NN)
 {
     unsigned int target_h = 0;
 
-    // cudaMemcpy(lim1_h, lim1_d, nbIVM * sizeof(int), cudaMemcpyDeviceToHost);
-    // cudaMemcpy(lim2_h, lim2_d, nbIVM * sizeof(int), cudaMemcpyDeviceToHost);
-	// cudaMemcpy(schedule_h, schedule_d, size * nbIVM * sizeof(int), cudaMemcpyDeviceToHost);
-    // for (int i = 0; i < nbIVM; i++) {
-    //     printf("%d %d\t",lim1_h[i],lim2_h[i]);
-    //     for (int j = 0; j < size; j++) printf("%d\t", (int) schedule_h[i * size + j]);
-    //     printf("\n");
-	// }
-	// printf("----- \n\n");
-
 	switch(arguments::boundMode){
         case 1: //strong bound
         {
+            /*
+            decode IVM and prepare mapping for lower bounding
+            */
             gpuErrchk(cudaMemset(todo_d, 0, nbIVM * sizeof(int)));
             gpuErrchk(cudaMemset(flagLeaf, 0, nbIVM * sizeof(int)));
             gpuErrchk(cudaMemcpyToSymbol(targetNode, &target_h, sizeof(unsigned int)));
 
-            decodeIVMandFlagLeaf <<< nbIVM / 4, 128, 4 * 3 * sizeof(int), stream >>>
-                (mat_d, dir_d, pos_d, lim1_d, lim2_d, line_d, schedule_d, state_d, todo_d, flagLeaf);
+            size_t smem = (NN * (size + 3)) * sizeof(int);
+            decodeIVM<<< (nbIVM+NN-1) / NN, NN * 32, smem, stream[0] >>>
+                    (mat_d, dir_d, pos_d, lim1_d, lim2_d, line_d, schedule_d, state_d);
+
+            flagLeaf_fillTodo<<<(nbIVM+127)/128,128>>>( flagLeaf, todo_d, lim1_d, lim2_d, line_d, state_d);
 
             gpuErrchk(cudaMemcpyFromSymbol(&target_h, targetNode, sizeof(unsigned int)));
      	    break;
         }
-        case 0: //weak bound
-        case 2: //mixed
+        case 0: //weak bound (evaluate children)
+        case 2: //mixed (evaluate children)
         {
+            /*
+            just decode IVM
+            */
             size_t smem = (NN * (size + 3)) * sizeof(int);
-            decodeIVM<<< (nbIVM+NN-1) / NN, NN * 32, smem, stream >>>
+            decodeIVM<<< (nbIVM+NN-1) / NN, NN * 32, smem, stream[0] >>>
                 (mat_d, dir_d, pos_d, lim1_d, lim2_d, line_d, schedule_d, state_d);
 
             break;
         }
     }
-
-    // cudaMemcpy(lim1_h, lim1_d, nbIVM * sizeof(int), cudaMemcpyDeviceToHost);
-    // cudaMemcpy(lim2_h, lim2_d, nbIVM * sizeof(int), cudaMemcpyDeviceToHost);
-	// cudaMemcpy(schedule_h, schedule_d, size * nbIVM * sizeof(int), cudaMemcpyDeviceToHost);
-	// for (int i = 0; i < nbIVM; i++) {
-    //     printf("%d %d\t",lim1_h[i],lim2_h[i]);
-	// 	for (int j = 0; j < size; j++) printf("%d\t", (int) schedule_h[i * size + j]);
-	// 	printf("\n");
-	// }
-	// printf("====== \n\n");
 
     return ((bool) target_h);
 }
@@ -426,38 +551,27 @@ bool gpubb::decode(const int NN)
 bool
 gpubb::weakBound(const int NN, const int best)
 {
-    gpuErrchk(cudaMemset(flagLeaf, 0, nbIVM * sizeof(int)));
-
+    //reset flags
     unsigned int target_h = 0;
     gpuErrchk(cudaMemcpyToSymbol(targetNode, &target_h, sizeof(unsigned int)));
+    gpuErrchk(cudaMemset(flagLeaf, 0, nbIVM * sizeof(int)));
 
-    // cudaMemcpy(costsBE_h, costsBE_d, 2 * size * nbIVM * sizeof(int), cudaMemcpyDeviceToHost);
-    // for(int i=0;i<nbIVM;i++){
-    //     for(int j=0;j<size;j++)
-    //         printf("%4d ",costsBE_h[2*i*size+j]);
-    //     printf("\n");
-    //     for(int j=0;j<size;j++)
-    //         printf("%4d ",costsBE_h[(2*i+1)*size+j]);
-    //     printf("\n");
-    // }
-    // printf("-------- \n");
-
-    gpuErrchk(cudaMemset(costsBE_d, 999999, 2 * size * nbIVM * sizeof(int)));
+    gpuErrchk(cudaMemset(costsBE_d, 0, 2 * size * nbIVM * sizeof(int))); //memset sets bytes!
 	size_t smem;
 
 #ifdef FSP
     smem = (NN * (size + 3 * nbMachines_h)) * sizeof(int);
-    if(arguments::branchingMode>0){
-        boundWeak_BeginEnd<32><<<(nbIVM+NN-1) / NN, NN * 32, smem, stream >>>(lim1_d, lim2_d, line_d, schedule_d, costsBE_d, state_d, front_d, back_d, best, flagLeaf);
-    }else if(arguments::branchingMode==-1){
-        boundWeak_Begin<32> << < (nbIVM+NN-1) / NN, NN * 32, smem, stream >> >
-        (lim1_d, lim2_d, line_d, schedule_d, costsBE_d, state_d, front_d, back_d, best, flagLeaf);
+    if(arguments::branchingMode>0){ //BEGIN-END
+        boundWeak_BeginEnd<32><<<(nbIVM+NN-1) / NN, NN * 32, smem, stream[0] >>>(lim1_d, lim2_d, line_d, schedule_d, costsBE_d, state_d, bd->front_d, bd->back_d, best, flagLeaf);
+    }else if(arguments::branchingMode==-2){ //FWD only
+        boundWeak_Begin<32> << < (nbIVM+NN-1) / NN, NN * 32, smem, stream[0] >> >
+        (lim1_d, lim2_d, line_d, schedule_d, costsBE_d, state_d, bd->front_d, bd->back_d, best, flagLeaf);
     }
 #endif
 #ifdef TEST
-    //shared memory for schedules
+    //shared memory for schedulesnext
     smem = NN * size * sizeof(int);
-    boundWeakFront<<<(nbIVM+NN-1) / NN, NN * 32, smem, stream >>>(state_d,schedule_d,lim1_d,lim2_d,line_d,costsBE_d,flagLeaf);
+    boundWeakFront<<<(nbIVM+NN-1) / NN, NN * 32, smem, stream[0] >>>(state_d,schedule_d,lim1_d,lim2_d,line_d,costsBE_d,flagLeaf);
 #endif
 
 #ifndef NDEBUG
@@ -465,31 +579,25 @@ gpubb::weakBound(const int NN, const int best)
     gpuErrchk(cudaDeviceSynchronize());
 #endif
 
-    // cudaMemcpy(costsBE_h, costsBE_d, 2 * size * nbIVM * sizeof(int), cudaMemcpyDeviceToHost);
-    // for(int i=0;i<nbIVM;i++){
-    //     for(int j=0;j<size;j++)
-    //         printf("%4d ",costsBE_h[2*i*size+j]);
-    //     printf("\n");
-    //     for(int j=0;j<size;j++)
-    //         printf("%4d ",costsBE_h[(2*i+1)*size+j]);
-    //     printf("\n");
-    // }
-    // printf("====== \n");
-
-
-
     gpuErrchk(cudaMemset(todo_d, 0, nbIVM * sizeof(int)));
     if(arguments::branchingMode>0){
+        //dynamic
         smem = (NN * (2*size + 2) * sizeof(int));
-        chooseBranchingSortAndPrune<<< (nbIVM+NN-1) / NN, NN * 32, smem, stream >> >
+        chooseBranchingSortAndPrune<<< (nbIVM+NN-1) / NN, NN * 32, smem, stream[0] >> >
         (mat_d, dir_d, pos_d, lim1_d, lim2_d, line_d, schedule_d, costsBE_d, prio_d, state_d, todo_d, best, initialUB,arguments::branchingMode);
     }
-    else if(arguments::branchingMode==-1){
+    else if(arguments::branchingMode==-3){    }
+    else if(arguments::branchingMode==-2){
+        //forward
         smem = (NN * (2*size + 2) * sizeof(int));
-        ForwardBranchSortAndPrune<<< (nbIVM+NN-1) / NN, NN * 32, smem, stream >> >
+        ForwardBranchSortAndPrune<<< (nbIVM+NN-1) / NN, NN * 32, smem, stream[0] >> >
         (mat_d, dir_d, pos_d, lim1_d, lim2_d, line_d, schedule_d, costsBE_d, prio_d, state_d,
             todo_d, best, flagLeaf);
     }
+    else if(arguments::branchingMode==-1){
+        //backward
+    }
+
 #ifndef NDEBUG
     gpuErrchk(cudaPeekAtLastError());
     gpuErrchk(cudaDeviceSynchronize());
@@ -499,16 +607,16 @@ gpubb::weakBound(const int NN, const int best)
     return ((bool) target_h);
 } // gpubb::decodeAndBound
 
-static int gpuverb=0;
+
 void gpubb::getExplorationStats(const int iter, const int best)
 {
     // Don't remove this memcopy : used in work stealing
     gpuErrchk(cudaMemcpy(counter_h, counter_d, 6 * sizeof(unsigned int), cudaMemcpyDeviceToHost));
 
     //just to get some feedback
-    if ((gpuverb==1) && (iter > 0)) {
-    // if ((gpuverb==1) && (iter % 1000 == 0) && (iter > 0)) {
-		FILE_LOG(logINFO) << "Expl: " << counter_h[exploringState] << "\tEmpty: " << counter_h[emptyState];
+    if ((arguments::gpuverb && iter%arguments::gpuverb==0) && (iter > 0)) {
+        std::cout << "Iter: "<<iter<<"\tExpl: " << counter_h[exploringState] << "\tEmpty: " << counter_h[emptyState] << "\n";
+		// FILE_LOG(logINFO) << "Expl: " << counter_h[exploringState] << "\tEmpty: " << counter_h[emptyState];
     }
 }
 
@@ -534,6 +642,12 @@ gpubb::boundLeaves(bool reached, int& best)
             if(arguments::findAll)update=(cost<=best);
             else update=(cost<best);
 
+            // for(int i=0;i<size;i++){
+            //     std::cout<<schedule_h[k*size+i]<<" ";
+            // }
+            // std::cout<<std::endl;
+
+
             if (update) {
                 best = cost;
                 pbb->best_found.update(schedule_h+k*size,cost);
@@ -551,202 +665,6 @@ gpubb::boundLeaves(bool reached, int& best)
     return newUB;
 }
 
-
-int
-gpubb::steal_in_device(int iter)
-{
-    // if (counter_h[exploringState] >= nbIVM-2048) return 0;
-    if (counter_h[exploringState] >= 75*nbIVM/100) return 0;
-
-    struct timespec startt,endt;
-    clock_gettime(CLOCK_MONOTONIC,&startt);
-
-    adapt_workstealing(2, nbIVM / 8);
-
-    computeLength << < nbIVM / PERBLOCK, 32 * PERBLOCK, 0, stream >> >
-    (pos_d, end_d, length_d, state_d, sumLength_d);
-#ifndef NDEBUG
-    gpuErrchk(cudaPeekAtLastError());
-    gpuErrchk(cudaDeviceSynchronize());
-#endif
-
-    //    search_cut = 0.1;
-    computeMeanLength << < (nbIVM + 127) / 128, 128, 0, stream >> >
-    (sumLength_d, meanLength_d, search_cut, nbIVM); // (int)(ctrl_h[2]+1));
-#ifndef NDEBUG
-    gpuErrchk(cudaPeekAtLastError());
-    gpuErrchk(cudaDeviceSynchronize());
-#endif
-
-    int nbdims = topoDimensions;
-    int dimb = iter % nbdims;
-    int from, to, dim, q;
-
-    for (int s = dimb; s < dimb + nbdims; s++) {
-        dim  = s % nbdims;
-        q    = (1 << topoB[dim]);
-        from = iter & (q - 1);
-        to   = from + q;
-
-        for (int off = from; off < to; off++)
-            prepareShare << < (nbIVM + 127) / 128, 128, 0, stream >> >
-            (state_d, victim_flag, victim_d, length_d, meanLength_d, off & (q - 1), topoB[dim], topoA[dim]);
-    }
-#ifndef NDEBUG
-    gpuErrchk(cudaPeekAtLastError());
-    gpuErrchk(cudaDeviceSynchronize());
-#endif
-
-    share_on_gpu2 <<< nbIVM / PERBLOCK, 32 * PERBLOCK, 0, stream >>>
-    (mat_d, pos_d, end_d, dir_d, line_d, 1, ws_granular, state_d, victim_flag, victim_d, ctrl_d);
-#ifndef NDEBUG
-    gpuErrchk(cudaPeekAtLastError());
-    gpuErrchk(cudaDeviceSynchronize());
-#endif
-
-    unsigned int tmp = 0;
-    gpuErrchk(cudaMemcpyFromSymbol(&tmp, gpuBalancedIntern, sizeof(unsigned int)));
-
-    clock_gettime(CLOCK_MONOTONIC,&endt);
-	FILE_LOG(logDEBUG1) << "GPU load balanced. Steals: "<<tmp<<" ["<< (endt.tv_sec-startt.tv_sec)+(endt.tv_nsec-startt.tv_nsec)/1e9<<" ]";
-
-    return tmp;
-} // steal_in_device
-
-void
-gpubb::adapt_workstealing(int min, int max)
-{
-    if ((counter_h[exploringState] >= (int) (7 * nbIVM / 10)) && (search_cut < 0.8))
-        search_cut += 0.1;
-    else if ((counter_h[exploringState] < (int) (7 * nbIVM / 10)) && (search_cut > 0.2))
-        search_cut -= 0.1;
-    ws_granular = 2;
-
-	FILE_LOG(logDEBUG1) << "GPUWS length coefficient: "<<search_cut;
-}
-
-void
-gpubb::setHypercubeConfig()
-{
-    //printf("setting up topology %d\n", nbIVM);
-    switch (nbIVM) {
-        case 1:
-            topoDimensions = 1;
-            topoA[0]       = 0;
-            topoB[0]       = 0;
-            break;
-
-        case 4:
-            topoDimensions = 1;
-            topoA[0]       = 0;
-            topoB[0]       = 2;
-            break;
-
-        case 64: // 64 == 4*4*4
-            topoDimensions = 3;
-            topoA[0]       = 0; topoA[1]       = 2; topoA[2]       = 4;
-            topoB[0]       = 2; topoB[1]       = 2; topoB[2]       = 2;
-            break;
-
-        case 128: // 64 == 4*4*4
-            topoDimensions = 3;
-            topoA[0]       = 0;            topoA[1]       = 2;            topoA[2]       = 4;
-            topoB[0]       = 2;            topoB[1]       = 2;            topoB[2]       = 3;
-            break;
-
-        case 512: // 512 == 4*4*4*8
-        {
-            topoDimensions = 4;
-            for(int i=0;i<topoDimensions;i++){
-                topoA[i]=2*i;
-                topoB[i]=2;
-            }
-            topoB[3] = 3;
-            break;
-        }
-        case 1024: // 2**(2 2 2 2 2)
-        {
-            topoDimensions = 5;
-            for(int i=0;i<topoDimensions;i++){
-                topoA[i]=2*i;
-                topoB[i]=2;
-            }
-            break;
-        }
-        case 2048: // 8*8*8*4 == 2**(3+3+3+2)
-        {
-            topoDimensions = 5;
-            for(int i=0;i<topoDimensions;i++){
-                topoA[i]=2*i;
-                topoB[i]=2;
-            }
-            topoB[4] = 3;
-            break;
-        }
-        case 4096: // 4096 == 8**4 (2**12)
-        {
-            topoDimensions = 6;
-            for(int i=0;i<topoDimensions;i++){
-                topoA[i]=2*i;
-                topoB[i]=2;
-            }
-            break;
-        }
-        case 8192: // 4096 == 16 * 8**3 (2**13)
-        {
-            topoDimensions = 6;
-            for(int i=0;i<topoDimensions;i++){
-                topoA[i]=2*i;
-                topoB[i]=2;
-            }
-            topoB[5]       = 3;
-            break;
-        }
-        case 16384: // (2**14)
-        {
-            topoDimensions = 7;
-            for(int i=0;i<topoDimensions;i++){
-                topoA[i]=2*i;
-                topoB[i]=2;
-            }
-            break;
-        }
-        case 32768: // 32768 == 8**5
-        {
-            topoDimensions = 7;
-            for(int i=0;i<topoDimensions;i++){
-                topoA[i]=2*i;
-                topoB[i]=2;
-            }
-            topoB[6]       = 3;
-            break;
-        }
-        case 65536: // 65536 == 2 * 8**5 (2**16)
-        {
-            topoDimensions = 8;
-            for(int i=0;i<topoDimensions;i++){
-                topoA[i]=2*i;
-                topoB[i]=2;
-            }
-            break;
-        }
-        case 131072: // 2**17
-        {
-            topoDimensions = 8;
-            for(int i=0;i<topoDimensions;i++){
-                topoA[i]=2*i;
-                topoB[i]=2;
-            }
-            topoB[7]       = 3;
-            break;
-        }
-
-        default:
-            printf("invalid ivm-nb\n");
-            exit(0);
-            break;
-    }
-} // gpubb::setHypercubeConfig
 
 // = =========================================================
 //
@@ -783,14 +701,9 @@ gpubb::allocate_on_host()
     lim2_h     = (int *) calloc(size_i, sizeof(int));
     schedule_h = (int *) calloc(size_v, sizeof(int));
 
-    victim_h     = (int *) calloc(size_i, sizeof(int));
-    length_h     = (int *) calloc(size_v, sizeof(int));
     ctrl_h       = (unsigned int *) calloc(8, sizeof(unsigned int));
     counter_h    = (unsigned int *) calloc(6, sizeof(unsigned int));
-    meanLength_h = (int *) calloc(size, sizeof(int));
     costsBE_h    = (int *) calloc(2 * size_v, sizeof(int));
-
-	depth_histo_h = (unsigned int*)calloc(size, sizeof(unsigned int));
 
     nbDecomposed_h = (unsigned long long int *) calloc(size_i, sizeof(unsigned long long int));
 }
@@ -815,16 +728,14 @@ gpubb::allocate_on_device()
     gpuErrchk(cudaMalloc((void **) &prio_d, size_v * sizeof(int)));
     gpuErrchk(cudaMalloc((void **) &costsBE_d, 2 * size_v * sizeof(int)));
     gpuErrchk(cudaMalloc((void **) &sums_d, 2 * size_i * sizeof(int)));
-
-    //  gpuErrchk(cudaMalloc((void **)&split_d, size_v * sizeof(int)));
+    //
+    gpuErrchk(cudaMalloc((void **)&split_d, size_v * sizeof(int)));
     gpuErrchk(cudaMalloc((void **) &victim_flag, size_i * sizeof(int)));
     gpuErrchk(cudaMalloc((void **) &victim_d, size_i * sizeof(int)));
     gpuErrchk(cudaMalloc((void **) &length_d, size_v * sizeof(int)));
     gpuErrchk(cudaMalloc((void **) &sumLength_d, size * sizeof(int)));
     gpuErrchk(cudaMalloc((void **) &meanLength_d, size * sizeof(int)));
-
-    gpuErrchk(cudaMalloc((void **) &depth_histo_d, size * sizeof(int)));
-
+    //
     gpuErrchk(cudaMalloc((void **) &flagLeaf, size_i * sizeof(int)));
 
     gpuErrchk(cudaMalloc((void **) &auxArr, 256 * sizeof(int)));
@@ -833,19 +744,20 @@ gpubb::allocate_on_device()
     gpuErrchk(cudaMalloc((void **) &todo_d, size_i * sizeof(int)));
     gpuErrchk(cudaMalloc((void **) &toSwap_d, size_v * sizeof(int)));
     gpuErrchk(cudaMalloc((void **) &ivmId_d, size_v * sizeof(int)));
-
+    //
     gpuErrchk(cudaMalloc((void **) &ctrl_d, 4 * sizeof(unsigned int)));
     gpuErrchk(cudaMalloc((void **) &counter_d, 6 * sizeof(unsigned int)));
-
+    //
     gpuErrchk(cudaMalloc((void **) &nbDecomposed_d, size_i * sizeof(unsigned long long int)));
     gpuErrchk(cudaMalloc((void **) &nbLeaves_d, size_i * sizeof(int)));
-
-    // set to 0
-    gpuErrchk(cudaMemset(counter_d, 0, 6 * sizeof(unsigned int)));
-    gpuErrchk(cudaMemset(sumLength_d, 0, size * sizeof(int)));
-    gpuErrchk(cudaMemset(victim_flag, 0, size_i * sizeof(int)));
-    gpuErrchk(cudaMemset(ivmId_d, 0, size_v * sizeof(int)));
-    gpuErrchk(cudaMemset(sums_d, 0, 2 * size_i * sizeof(int)));
+    //
+    // // set to 0
+    // gpuErrchk(cudaMemset(counter_d, 0, 6 * sizeof(unsigned int)));
+    // gpuErrchk(cudaMemset(ivmId_d, 0, size_v * sizeof(int)));
+    // gpuErrchk(cudaMemset(sums_d, 0, 2 * size_i * sizeof(int)));
+    //
+    // gpuErrchk(cudaMemset(ws.victim_flag_d, 0, size_i * sizeof(int)));
+    // gpuErrchk(cudaMemset(ws.sumLength_d, 0, size * sizeof(int)));
     unsigned int zero=0;
     gpuErrchk(cudaMemcpyToSymbol(countNodes_d,&zero,sizeof(unsigned int)));
 
@@ -869,10 +781,10 @@ gpubb::free_on_device()
 
     gpuErrchk(cudaFree(sums_d));
 
-    gpuErrchk(cudaFree(victim_flag));
-    gpuErrchk(cudaFree(victim_d));
-    gpuErrchk(cudaFree(length_d));
-    gpuErrchk(cudaFree(sumLength_d));
+    // gpuErrchk(cudaFree(victim_flag));
+    // gpuErrchk(cudaFree(victim_d));
+    // gpuErrchk(cudaFree(length_d));
+    // gpuErrchk(cudaFree(sumLength_d));
     gpuErrchk(cudaFree(auxArr));
     gpuErrchk(cudaFree(tmp_arr_d));
     gpuErrchk(cudaFree(todo_d));
@@ -883,7 +795,7 @@ gpubb::free_on_device()
     gpuErrchk(cudaFree(nbDecomposed_d));
     gpuErrchk(cudaFree(nbLeaves_d));
 
-    gpuErrchk(cudaStreamDestroy(stream));
+    gpuErrchk(cudaStreamDestroy(*stream));
 }
 
 void
@@ -903,12 +815,10 @@ gpubb::copyH2D()
     gpuErrchk(cudaMemcpy(state_d, state_h, size_i * sizeof(int), cudaMemcpyHostToDevice));
     gpuErrchk(cudaMemset(costsBE_d, 0, 2 * size_v * sizeof(int)));
 
-    gpuErrchk(cudaMemcpy(victim_d, victim_h, size_i * sizeof(int), cudaMemcpyHostToDevice));
+    // gpuErrchk(cudaMemcpy(victim_d, victim_h, size_i * sizeof(int), cudaMemcpyHostToDevice));
     gpuErrchk(cudaMemcpy(ctrl_d, ctrl_h, 4 * sizeof(unsigned int), cudaMemcpyHostToDevice));
     gpuErrchk(cudaMemcpy(nbDecomposed_d, nbDecomposed_h, nbIVM * sizeof(unsigned long long int),
       cudaMemcpyHostToDevice));
-
-	gpuErrchk(cudaMemcpy(depth_histo_d, depth_histo_h, size * sizeof(unsigned int), cudaMemcpyHostToDevice));
 
     gpuErrchk(cudaMemcpyToSymbol(nbIVM_d, &nbIVM, sizeof(int)));
     gpuErrchk(cudaPeekAtLastError());
@@ -959,10 +869,9 @@ gpubb::copyH2Dconstant()
 
     // integer constants
     gpuErrchk(cudaMemcpyToSymbol(nbIVM_d, &nbIVM, sizeof(int)));
+    gpuErrchk(cudaMemcpyToSymbol(size_d, &size, sizeof(int)));
     gpuErrchk(cudaMemcpyToSymbol(_nbMachines, &nbMachines_h, sizeof(int)));
     gpuErrchk(cudaMemcpyToSymbol(_sum, &somme_h, sizeof(int)));
-    gpuErrchk(cudaMemcpyToSymbol(size_d, &size, sizeof(int)));
-    gpuErrchk(cudaMemcpyToSymbol(_nbJob, &size, sizeof(int)));
     gpuErrchk(cudaMemcpyToSymbol(_boundMode, &arguments::boundMode, sizeof(int)));
     gpuErrchk(cudaMemcpyToSymbol(_nbJobPairs, &nbJobPairs_h, sizeof(int)));
 
@@ -977,11 +886,11 @@ void
 gpubb::initializeBoundFSP()
 {
     // get instance data
-    (pbb->inst.data)->seekg(0);
-    (pbb->inst.data)->clear();
+    (pbb->inst->data)->seekg(0);
+    (pbb->inst->data)->clear();
 
-    *(pbb->inst.data) >> nbJob_h;
-    *(pbb->inst.data) >> nbMachines_h;
+    *(pbb->inst->data) >> nbJob_h;
+    *(pbb->inst->data) >> nbMachines_h;
 
     somme_h = 0;
     for (int i = 1; i < nbMachines_h; i++) somme_h += i;
@@ -996,7 +905,7 @@ gpubb::initializeBoundFSP()
         fillMachine();
 
         for (int j = 0; j < nbJob_h; j++)
-            *(pbb->inst.data) >> tempsJob_h[i * nbJob_h + j];
+            *(pbb->inst->data) >> tempsJob_h[i * nbJob_h + j];
         fillLag();
         fillTabJohnson();
         fillMinTempsArrDep();
@@ -1006,8 +915,11 @@ gpubb::initializeBoundFSP()
     copyH2Dconstant();
     free_host_bound_tmp();
 
-    gpuErrchk(cudaMalloc((void **) &front_d, nbIVM * nbMachines_h * sizeof(int)));
-    gpuErrchk(cudaMalloc((void **) &back_d, nbIVM * nbMachines_h * sizeof(int)));
+    // gpuErrchk(cudaMalloc((void **) &front_d, nbIVM * nbMachines_h * sizeof(int)));
+    // gpuErrchk(cudaMalloc((void **) &back_d, nbIVM * nbMachines_h * sizeof(int)));
+
+
+    bd = std::make_unique<gpu_fsp_bound>(nbJob_h,nbMachines_h,nbIVM);
 }
 #endif /* ifdef FSP */
 
@@ -1015,7 +927,14 @@ gpubb::initializeBoundFSP()
 void
 gpubb::initializeBoundTEST()
 {
-    *(pbb->inst.data) >> size;
+    std::cout<<"init test bound\n";
+    size = pbb->inst.size;
+    std::cout<<"SIZE : "<<size<<"\n";
+
+    // *(pbb->inst.data) >> size;
+    //
+    // std::cout<<"SIZE : "<<size<<"\n";
+
     copyH2DconstantTEST();
 }
 
@@ -1024,7 +943,6 @@ gpubb::copyH2DconstantTEST()
 {
     gpuErrchk(cudaMemcpyToSymbol(nbIVM_d, &nbIVM, sizeof(int)));
     gpuErrchk(cudaMemcpyToSymbol(size_d, &size, sizeof(int)));
-    gpuErrchk(cudaMemcpyToSymbol(_nbJob, &size, sizeof(int)));
 
     gpuErrchk(cudaPeekAtLastError());
     gpuErrchk(cudaDeviceSynchronize());
@@ -1048,8 +966,15 @@ gpubb::getStats()
     }
     pbb->stats.totDecomposed = gpuDecomposed;
 
-    // printf("Min\t: %d\n", min);
-    // printf("Max\t: %d\n", max);
+    std::cout<<"Decomposed :\t"<<gpuDecomposed<<"\n";
+    printf("Min\t: %d\n", min);
+    printf("Max\t: %d\n", max);
+
+    unsigned int nodeCount;
+    gpuErrchk(cudaMemcpyFromSymbol(&nodeCount, countNodes_d, sizeof(unsigned int)));
+
+    std::cout<<"decomposed : "<<nodeCount<<"\n";
+
 }
 
 // ==================for DEBUG===================================
@@ -1067,36 +992,38 @@ gpubb::affiche(int M)
     cudaMemcpy(line_h, line_d, nbIVM * sizeof(int), cudaMemcpyDeviceToHost);
     cudaMemcpy(ctrl_h, ctrl_d, 4 * sizeof(int), cudaMemcpyDeviceToHost);
 
+    int ttodo_h;
+    gpuErrchk(cudaMemcpyFromSymbol(&ttodo_h, todo, sizeof(unsigned int)));
+
     for (int i = 0; i < M; i++) {
         if ((state_h[i] != 0) || (i == 0)) {
-            printf("\t TODO: %d\t%d\n", ctrl_h[0], line_h[i]);
-
-            printf("state %d\n",state_h[i]);
+            printf("\n TODO: %d\t LINE: %d\n", ttodo_h, line_h[i]);
+            printf("State: %d\n",state_h[i]);
             //  printf("\t\t PB == %d == %d |||L: %d
             // \n",i,(int)nbDecomposed_h[i],(int)line_h[i]);
             printf("sch\t");
-            for (int j = 0; j < size; j++) printf("%d\t", (int) schedule_h[i * size + j]);
+            for (int j = 0; j < size; j++) printf("%2d\t", (int) schedule_h[i * size + j]);
             printf("\n");
             printf("pos\t");
-            for (int j = 0; j < size; j++) printf("%d\t", (int) pos_h[i * size + j]);
+            for (int j = 0; j < size; j++) printf("%2d\t", (int) pos_h[i * size + j]);
             printf("\n");
             printf("end\t");
-            for (int j = 0; j < size; j++) printf("%d\t", (int) end_h[i * size + j]);
+            for (int j = 0; j < size; j++) printf("%2d\t", (int) end_h[i * size + j]);
             printf("\n");
             printf("dir\t");
-            for (int j = 0; j < size; j++) printf("%d\t", (int) dir_h[i * size + j]);
+            for (int j = 0; j < size; j++) printf("%2d\t", (int) dir_h[i * size + j]);
             printf("\n");
             printf("m[0]\t");
-            for (int j = 0; j < size; j++) printf("%d\t", (int) mat_h[j]);
+            for (int j = 0; j < size; j++) printf("%2d\t", (int) mat_h[j]);
             printf("\n");
             printf("m[l]\t");
-            for (int j = 0; j < size; j++) printf("%d\t", (int) mat_h[line_h[0] * size + j]);
+            for (int j = 0; j < size; j++) printf("%2d\t", (int) mat_h[line_h[0] * size + j]);
             printf("\n");
             printf("c[b]\t");
-            for (int j = 0; j < size; j++) printf("%d\t", costsBE_h[i * size * 2 + j]);
+            for (int j = 0; j < size; j++) printf("%2d\t", costsBE_h[i * size * 2 + j]);
             printf("\n");
             printf("c[e]\t");
-            for (int j = 0; j < size; j++) printf("%d\t", costsBE_h[i * size * 2 + size + j]);
+            for (int j = 0; j < size; j++) printf("%2d\t", costsBE_h[i * size * 2 + size + j]);
             printf("\n");
         }
     }
@@ -1123,12 +1050,8 @@ gpubb::affiche(int M)
 
 
 bool
-gpubb::triggeredNext(int& best, int& iter)
+gpubb::triggeredNext(int& best, int iter)
 {
-    if (startclock) {
-        clock_gettime(CLOCK_REALTIME, &starttime);
-        startclock = false;
-    }
     bool end = false;
 
     launchBBkernel(4);
@@ -1141,8 +1064,6 @@ gpubb::triggeredNext(int& best, int& iter)
 	unsigned int target_h=0;
     gpuErrchk(cudaMemcpyFromSymbol(&target_h, targetNode, sizeof(unsigned int)));
     boundLeaves((bool) target_h,best);
-
-    iter++;
 
     return end;
 }
@@ -1216,28 +1137,32 @@ gpubb::initFromFac(const int nbint, const int* ids, int*pos, int* end)
 		FILE_LOG(logINFO) << "Init intervals: Bound Root with UB:\t" << best;
 		FILE_LOG(logINFO) << "Init intervals: Root:\t" << pbb->best_found;
 
-		int *bestsol_d;
-		gpuErrchk( cudaMalloc(&bestsol_d,size*sizeof(int)) );
-		gpuErrchk( cudaMemcpy(bestsol_d,pbb->best_found.initial_perm.data(),size*sizeof(int),cudaMemcpyHostToDevice) );
-
         // bound root node
         #ifdef FSP
-        boundRoot <<< 1, 1024, (nbMachines_h + sizeof(int)) * size >>> (mat_d, dir_d, line_d, costsBE_d, sums_d, bestsol_d, best, arguments::branchingMode);
+		gpuErrchk( cudaMemcpy(mat_d,pbb->best_found.initial_perm.data(),size*sizeof(int),cudaMemcpyHostToDevice) );
+
+        weakBound(4, best);
+
+        int *d_root_tmp;
+        int *d_root_dir_tmp;
+        cudaGetSymbolAddress((void **)&d_root_tmp, root_d);
+        cudaGetSymbolAddress((void **)&d_root_dir_tmp, root_dir_d);
+
+        gpuErrchk( cudaMemcpy(d_root_tmp, mat_d, size*sizeof(int),cudaMemcpyDeviceToDevice) );
+        gpuErrchk( cudaMemcpy(d_root_dir_tmp, dir_d, sizeof(int),cudaMemcpyDeviceToDevice) );
         #endif
         #ifdef TEST
-        boundRoot << < 1, 128, sizeof(int) * size >>> (mat_d, dir_d, line_d);
+        boundRoot << < 1, 128, sizeof(int) * size, stream[0] >>> (mat_d, dir_d, line_d);
         #endif
-        gpuErrchk(cudaPeekAtLastError());
-        gpuErrchk(cudaDeviceSynchronize());
-        cudaFree(bestsol_d);
 
         gpuErrchk(cudaMemcpy(costsBE_h,costsBE_d,2*nbIVM*size*sizeof(int),cudaMemcpyDeviceToHost));
         gpuErrchk(cudaMemcpy(dir_h,dir_d,nbIVM*size,cudaMemcpyDeviceToHost));
         firstbound = false;
     }
 
-	dim3 blks((nbIVM * 32 + 127) / 128);
-	setRoot <<< blks, 128, 0, stream >> > (mat_d, dir_d);
+    const int blocksize = 128;
+	dim3 blks((nbIVM * 32 + blocksize) / blocksize);
+	setRoot <<< blks, blocksize, 0, stream[0] >> > (mat_d, dir_d);
     gpuErrchk(cudaPeekAtLastError());
     gpuErrchk(cudaDeviceSynchronize());
 
@@ -1291,9 +1216,12 @@ int gpubb::getDeepSubproblem(int *ret, const int N){
 
     // int smem = (NN * (3*size + nbMachines_h)) * sizeof(int);
 	// xOver_makespans<32><<<(nbIVM+NN-1) / NN, NN * 32, smem, stream>>>(schedule_d, cmax, state_d, bestsol, lim1_d, lim2_d);
+#ifdef FSP
     int smem = (NN * (size + nbMachines_h)) * sizeof(int);
-    makespans<32><<<(nbIVM+NN-1) / NN, NN * 32, smem, stream>>>
+    makespans<32><<<(nbIVM+NN-1) / NN, NN * 32, smem, stream[0]>>>
         (schedule_d, cmax, state_d);
+#endif
+
     gpuErrchk( cudaPeekAtLastError() );
     gpuErrchk( cudaDeviceSynchronize() );
 	cudaFree(bestsol);

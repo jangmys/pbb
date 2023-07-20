@@ -35,12 +35,8 @@ Treeheuristic::run(std::shared_ptr<subproblem>& s, int _ub)
     beam->run_loop(1<<10,bsol.get());
     *bsol = *(beam->bestSolution);
 
-
-    // bsol->set_fitness(ig->runIG(bsol.get()));
-
     // bsol->set_fitness(eval->evalSolution(bsol->schedule.data()));
 
-    // int f = ig->runIG(bsol.get(),-1,bsol->size);
     // bsol->set_fitness(f);
     beam->run_loop(1<<12,bsol.get());
     *bsol = *(beam->bestSolution);
@@ -229,8 +225,8 @@ Treeheuristic::insert(std::vector<std::shared_ptr<subproblem>>&ns)
     //for left->right exploration, insert (push) in reverse order
     for (auto i = ns.rbegin(); i != ns.rend(); i++) {
         if((*i)->depth < 50 && (*i)->depth%5 == 0){
-            ig->igiter=20;
-            int f = ig->runIG((*i).get(),(*i)->limit1+1,(*i)->limit2);
+            int nb_iter = 20;
+            int f = ig->runIG((*i).get(),(*i)->limit1+1,(*i)->limit2, nb_iter);
             (*i)->set_fitness(f);
         }else if((*i)->depth%5 == 0){
             int c = (*ls)((*i)->schedule,(*i)->limit1+1,(*i)->limit2);

@@ -1,6 +1,9 @@
 #define PERBLOCK 4 // warps per block
 #define TILE_SZ 32 // tile size
 
+#define MAXJOBS 800
+
+
 #include <cuda.h>
 #include <cuda_runtime.h>
 #include <cuda_runtime_api.h>
@@ -24,177 +27,11 @@
 #include "gpu_interval.cuh"
 #include "loadbalance.cuh"
 
-/*
- * countNodes_d : count decomposed nodes
- * counter_d : count current states
- */
-// template <typename T>
-__global__ void
-goToNext_dense(int * jobMats_d, int * posVecs_d, int * endVecs_d, int * dirVecs_d, int * line_d, int * state_d, unsigned long long int * count, unsigned int * counter_d, int NN)
-{
-    int ivm = (blockIdx.x * blockDim.x + threadIdx.x);
+#include "selection_kernels.cu"
 
-    int state = state_d[ivm];
-    int line  = line_d[ivm];
 
-    int * pv   = &posVecs_d[ivm * size_d];
-    int * ev   = &endVecs_d[ivm * size_d];
-    int * jm   = jobMats_d + ivm * size_d * size_d; // global mem matrix
-    int * mat_ptr = jm + line * size_d + *(pv + line);
 
-    // initializing IVM
-    if (state < 0) {
-        if (*mat_ptr < 0) { // aka pruningCellState
-            state = 1;
-            for(int i=line+1;i<size_d;i++){
-                pv[i] = 0;
-            }
-        }else{
-            if (line < size_d - 2) {
-                line++;
-                generateLine2(jm, pv, dirVecs_d + ivm * size_d, line, state);
-            } else {
-                state = 1;
-            }
-        }
-    }
-
-    if (state > 0) {
-        int l     = 0;          // first split [pos,end]
-        while (pv[l] == ev[l] && l < size_d) l++;
-
-        int * pos = pv + line; // current pos
-
-        state = 0;
-        // while (beforeEnd(pv, endv + warpID * size_d)) {
-        while (pv[l] <= ev[l]) {              // approx check for (pos < end ?)
-            //END OF LINE
-            if (*pos >= (size_d - line)) {
-                if (line == 0) break;      // cannot go up -> interval empty
-                *pos = 0;
-                line--;                                // aka goUp
-                pos--;                                    // update current pos
-                mat_ptr = jm + line * size_d + (*pos); // update pos in matrix (backtrack)
-                *mat_ptr = negative_d(*mat_ptr);
-            }
-            else if (*mat_ptr < 0) // aka pruningCellState
-            {
-                assert(pv[line] < size_d);
-                (*pos)++;  // aka goRight
-                mat_ptr++; // update pos in matrix (next right)
-            } else {
-                assert(jm[line * size_d + pv[line]] >= 0);
-                assert(line < size_d - 1);
-
-                // found a node to bound --- check validity and set flag to "not empty"
-                if (beforeEndPart(pv, ev, l)) {
-                    atomicInc(&countNodes_d, INT_MAX);//atomic global counter
-                    count[ivm]++;//per IVM counter
-                    state = 1;
-                }
-                break;
-            }
-        }
-
-        if (state == 1) {
-            assert(line < size_d - 1);
-            seqGoDown(jm, pv, &dirVecs_d[ivm*size_d], line);
-            line++;
-        }
-    }
-
-    // increment statistics counters
-    if (state > 0) atomicInc(&counter_d[exploringState], INT_MAX);
-    if (state == 0) atomicInc(&counter_d[emptyState], INT_MAX);
-    if (state < 0) atomicInc(&counter_d[initState], nbIVM_d);
-
-    state_d[ivm] = state;
-    line_d[ivm]  = line;
-}
-
-/*
- * 4(N+2)*sizeof(int) shared memory
- *
- * countNodes_d : count decomposed nodes
- * counter_d : count current states
- */
-template<unsigned NN>
-__global__ void
-goToNext2(int * jobMats_d, int * posVecs_d, int * endVecs_d, int * dirVecs_d, int * line_d, int * state_d, unsigned long long int * count, unsigned int * counter_d)
-{
-    thread_block_tile<32> g = tiled_partition<32>(this_thread_block());
-
-    int ivm = (blockIdx.x * blockDim.x + threadIdx.x) / g.size(); // global ivm id
-    int thPos = g.thread_rank();
-    int warpID = threadIdx.x / g.size();
-
-    //shared memory...... pos,end,state,line
-    extern __shared__ int shar[];
-    int * pv = shar;
-    int * ev  = (int *) &pv[NN * size_d];
-    int * state = (int *) &ev[NN * size_d];
-    int * line  = (int *) &state[NN];
-
-    // int * pv   = posv + warpID * size_d;            // shared mem - vector
-    pv += warpID * size_d;
-    ev += warpID * size_d;
-
-    //load to shared memory ...
-    for (int i = g.thread_rank(); i < size_d; i+=warpSize){
-        pv[i] = posVecs_d[ivm * size_d + i];
-        // posv[warpID * size_d + i] = posVecs_d[ivm * size_d + i];
-        ev[i] = endVecs_d[ivm * size_d + i];
-    }
-    if (thPos == 0) {
-        state[warpID] = state_d[ivm];
-        line[warpID]  = line_d[ivm];
-    }
-
-    // pointers to IVM (just to compute less indices)
-    g.sync();
-    //=====================================
-    int * jm   = jobMats_d + ivm * size_d * size_d; // global mem matrix
-
-    // initializing IVM
-    if (state[warpID] < 0)
-        initStep(g,jm,pv,dirVecs_d + ivm * size_d,line[warpID],state[warpID]);
-    g.sync();
-    if (state[warpID] > 0) {
-        exploreStep(g,jm,pv,ev,line[warpID],state[warpID]);
-        g.sync();
-        if (state[warpID] == 1) {
-            count[ivm]++;//per IVM counter
-            for (int i = g.thread_rank(); i< size_d; i += g.size()){
-                assert(line[warpID] < size_d - 1);
-                parallelGoDown(jm, pv, line[warpID], i, ivm);
-            }
-            g.sync();
-            if (g.thread_rank() == 0){
-                atomicInc(&countNodes_d, INT_MAX);//atomic global counter
-                line[warpID]++;
-            }
-        }
-    }
-    g.sync();
-
-    // increment statistics counters
-    if (g.thread_rank() == 0) {
-        if (state[warpID] > 0) atomicInc(&counter_d[exploringState], INT_MAX);
-        if (state[warpID] == 0) atomicInc(&counter_d[emptyState], INT_MAX);
-        if (state[warpID] < 0) atomicInc(&counter_d[initState], nbIVM_d);
-    }
-
-    g.sync();
-//    __syncthreads();
-
-    // back to global mem
-    for (int i = thPos; i < size_d; i+=g.size()) {
-        posVecs_d[ivm * size_d + i] = pv[i];
-    }
-    state_d[ivm] = state[warpID];
-    line_d[ivm]  = line[warpID];
-}
-
+#ifdef FSP
 template<unsigned NN>
 __global__ void
 multistep_triggered(int * jobMats_d, int * posVecs_d, int * endVecs_d, int * dirVecs_d, int * line_d, int * state_d, unsigned long long int * count, unsigned int * counter_d, int *schedule_d, int* lim1_d, int*lim2_d, int*costsBE_d, int *flagLeaf, const int best,const int initialUB)
@@ -248,8 +85,9 @@ multistep_triggered(int * jobMats_d, int * posVecs_d, int * endVecs_d, int * dir
     //fixed max number of steps...
     for(int i=0;i<500;i++){
         // initializing IVM
-        if (state[warpID] < 0)
-            initStep(g,jm,pv,dirVecs_d + ivm * size_d,line[warpID],state[warpID]);
+        if (state[warpID] < 0){
+            (void)initStep(g,jm,pv,dirVecs_d + ivm * size_d,line[warpID],state[warpID]);
+        }
         g.sync();
         if (state[warpID] > 0) {
             exploreStep(g,jm,pv,ev,line[warpID],state[warpID]);
@@ -259,7 +97,8 @@ multistep_triggered(int * jobMats_d, int * posVecs_d, int * endVecs_d, int * dir
                 for (int i = g.thread_rank(); i< size_d; i += g.size()){
                     assert(line[warpID] < size_d - 1);
                     assert(line[warpID] >= 0);
-                    parallelGoDown(jm, pv, line[warpID], i, ivm);
+                    parallelGoDown(jm, pv, line[warpID], i);
+                    pv[line[warpID]] = 0;
                 }
                 g.sync();
                 if (g.thread_rank() == 0)
@@ -341,9 +180,7 @@ multistep_triggered(int * jobMats_d, int * posVecs_d, int * endVecs_d, int * dir
         if (state[warpID] == 0) atomicInc(&counter_d[emptyState], INT_MAX);
         if (state[warpID] < 0) atomicInc(&counter_d[initState], nbIVM_d);
     }
-
     g.sync();
-//    __syncthreads();
 
     // back to global mem
     for (int i = thPos; i < size_d; i+=g.size()) {
@@ -352,86 +189,15 @@ multistep_triggered(int * jobMats_d, int * posVecs_d, int * endVecs_d, int * dir
     state_d[ivm] = state[warpID];
     line_d[ivm]  = line[warpID];
 }
+#endif
 
-template < typename T >
-__global__ void
-decodeIVMandFlagLeaf(const T *jobMats_d, const T *dirVecs_d, const T *posVecs_d, T *limit1s_d, T *limit2s_d, const T *line_d, T *schedules_d, T *state_d, int *todo_d, int *flagleaf)
-{
-    int ivm    = (blockIdx.x * blockDim.x + threadIdx.x) / warpSize; // global ivm id
-    int warpID = threadIdx.x / warpSize;
-    int thPos  = threadIdx.x % warpSize;                                           // threadIdx.x
-                                                                     // % warpSize;
-    extern __shared__ T decode_smem[];
-    T *l1   = decode_smem;
-    T *l2   = (T *)&l1[4];
-    T *line = (T *)&l2[4];
+/*decode IVMs using one warp (thread_block_tile) per IVM
 
-    if (thPos == 0) {
-        line[warpID] = line_d[ivm];
-    }
-
-    int *prmu = schedules_d + ivm * size_d;
-
-    __syncthreads();
-
-    int pointed, job;
-    const int *jm = jobMats_d + ivm * size_d * size_d;
-
-    // nothing to do
-    if (state_d[ivm] == 0) return;
-
-    //sequential
-    if (thPos == 0) {
-        l1[warpID] = -1;
-        l2[warpID] = size_d;
-
-        for (int j = 0; j < line[warpID]; j++) {
-            pointed = posVecs_d[index2D(j, ivm)];
-            job     = jm[j * size_d + pointed]; // jobMats_d[index3D(j, pointed,
-                                                // ivm)];
-
-            if (dirVecs_d[index2D(j, ivm)] == 0) {
-                l1[warpID]++;
-                prmu[l1[warpID]] = job;
-            } else {
-                l2[warpID]--;
-                prmu[l2[warpID]] = job;
-            }
-        }
-    }
-
-    for(int l=thPos;l<size_d;l+=warpSize){
-        schedules_d[index2D(l1[warpID] + 1 + l, ivm)] = jobMats_d[index3D(line_d[ivm], l, ivm)];
-    }
-    // for (int l = 0; l <= size_d / warpSize; l++) {
-    //     if (l * warpSize + thPos < size_d - line_d[ivm]) {
-    //         schedules_d[index2D(l1[warpID] + 1 + l * warpSize + thPos, ivm)] = jobMats_d[index3D(line_d[ivm], l * warpSize + thPos, ivm)];
-    //     }
-    // }
-
-    if (thPos == 0) {
-        if (line_d[ivm] == size_d - 1) {
-            flagleaf[ivm] = 1;
-            atomicInc(&targetNode, UINT_MAX);
-        }
-    }
-    __threadfence();
-
-    limit1s_d[ivm] = l1[warpID];
-    limit2s_d[ivm] = l2[warpID];
-
-    if (thPos == 0) {
-        todo_d[ivm] = 0;
-
-        if ((state_d[ivm] != 2) && (state_d[ivm] != 0)) {
-            todo_d[ivm] = limit2s_d[ivm] - limit1s_d[ivm] - 1;
-        }
-    }
-} // prepareSchedules
-
-template < typename T >
+- decode operation is partially parallelized.
+- resulting schedules in shared mem
+*/
 __global__ void // __launch_bounds__(128, 16)
-decodeIVM(const int *jobMats_d,const int *dirVecs_d,const int *posVecs_d,int *limit1s_d,int *limit2s_d,const T *line_d,int *schedules_d, const T *state_d)
+decodeIVM(const int *jobMats_d,const int *dirVecs_d,const int *posVecs_d,int *limit1s_d,int *limit2s_d,const int *line_d,int *schedules_d, const int *state_d)
 {
     thread_block_tile<32> tile32 = tiled_partition<32>(this_thread_block());
 
@@ -462,6 +228,21 @@ decodeIVM(const int *jobMats_d,const int *dirVecs_d,const int *posVecs_d,int *li
     limit1s_d[ivm] = l1[warpID];
     limit2s_d[ivm] = l2[warpID];
 } // prepareSchedules
+
+__global__ void
+flagLeaf_fillTodo(int *flagLeaf, int *todo_d, const int *l1, const int *l2, const int *line_d, const int *state_d){
+    int ivm = blockIdx.x*blockDim.x + threadIdx.x;
+
+    if (line_d[ivm] == size_d - 1) {
+        flagLeaf[ivm] = 1;
+        atomicInc(&targetNode, UINT_MAX);
+    }
+
+    todo_d[ivm] = 0;
+    if (state_d[ivm] != 0) {
+        todo_d[ivm] = l2[ivm] - l1[ivm] - 1;
+    }
+}
 
 __global__ void
 chooseBranchingSortAndPrune(int *jobMats_d,int *dirVecs_d,const int *posVecs_d,int *limit1s_d,int *limit2s_d, const int *line_d,int *schedules_d,int *costsBE_d,int *prio_d, int *state_d,int *todo_d,const int best,const int initialUB,const int branchStrategy)
@@ -497,23 +278,33 @@ chooseBranchingSortAndPrune(int *jobMats_d,int *dirVecs_d,const int *posVecs_d,i
 
     int dir;
     switch(branchStrategy){
-    case 1:{
-        dir=tile_branchMaxSum<32>(tile32, jmrow, &costsBE_d[2 * ivm * size_d], &dirVecs_d[ivm*size_d], line[warpID]);
-        break;}
-    case 2:{
-        dir=tile_branchMinMin<32>(tile32, jmrow, &costsBE_d[2 * ivm * size_d], &dirVecs_d[ivm*size_d], line[warpID]);
-        break;}
-    case 3:{
+    case 1:
+    {
+        dir=tile_branchMaxSum<32>(tile32, jmrow, &costsBE_d[2 * ivm * size_d], line[warpID]);
+        break;
+    }
+    case 2:
+    {
         dir=tile_MinBranch<32>(tile32, jmrow, &costsBE_d[2 * ivm * size_d], &dirVecs_d[ivm*size_d], line[warpID],initialUB);
-        break;}
+        break;
+    }
+    case 3:
+    {
+        dir=tile_branchMinMin<32>(tile32, jmrow, &costsBE_d[2 * ivm * size_d], &dirVecs_d[ivm*size_d], line[warpID]);
+        break;
+    }
     }
 
+    //only thread 0 has correct value : broadcast
     dir=tile32.shfl(dir,0);
     tile32.sync();//!!!! every thread has dir
 
-    tile32.sync();
-
+    //order jobs in next row
     if(thPos==0){
+        dirVecs_d[ivm*size_d + line[warpID]] = dir; //tile32.shfl(dir,0);
+        assert(dirVecs_d[ivm*size_d + line[warpID]] == dir);
+        // dirVecs_d[ivm*size_d] = dir;
+
         if(line[warpID]==size_d-1){
             jmrow[0] = negative_d(jmrow[0]);
         }
@@ -540,16 +331,29 @@ chooseBranchingSortAndPrune(int *jobMats_d,int *dirVecs_d,const int *posVecs_d,i
     }
 
     tile32.sync();
+
+    //prune
     tile_prune<32>(tile32, jmrow, costsBE_d+2*ivm*size_d, dir, line[warpID], best);
 
+    //prapare strong bound
     if(_boundMode>=1){
         if (thPos == 0) {
             //popc ballot ... !
             todo_d[ivm] = 0;
-            while (jmrow[todo_d[ivm]] >= 0 && todo_d[ivm] < size_d - line[warpID]) todo_d[ivm]++;//count non-pruned
+            for(int i=0;i<size_d - line[warpID];i++){
+                if(jmrow[i] >= 0){
+                    // printf("job=%d\n",jmrow[i]);
+                    todo_d[ivm]++;//count non-pruned
+                }
+            }
+
+            // while (jmrow[todo_d[ivm]] >= 0 && todo_d[ivm] < size_d - line[warpID])
+            //     todo_d[ivm]++;//count non-pruned
+            // printf("todo[%d]=%d\n",ivm,todo_d[ivm]);
         }
     }
 
+    //back to main mem
     __syncthreads();
     for (int i = thPos; i < size_d; i+=warpSize) {
         jobMats_d[index3D(line[warpID],i,ivm)]=jmrow[i];
@@ -740,7 +544,7 @@ __global__ void sortedPrune(T *jobMats_d, T *dirVecs_d, const T *line_d,
     int dir;
 
     // setting directionVector
-    if (sums_d[2 * ivm] > sums_d[2 * ivm + 1]) {
+    if (sums_d[2 * ivm] >= sums_d[2 * ivm + 1]) {
         dir                                  = 0;
         dirVecs_d[index2D(line_d[ivm], ivm)] = 0;
     } else {
@@ -811,23 +615,26 @@ __global__ void sortedPrune(T *jobMats_d, T *dirVecs_d, const T *line_d,
 }
 
 // ------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-template < typename T >
-__global__ void prepareBound(T* schedule_d, int* costsBE_d, T* dirVecs_d,T* line_d,T *limit1s_d, T *limit2s_d, int *todo_d, int *ivmId_d, int *toSwap_d, int *tempArr_d)
+__global__ void prepareBound(int* schedule_d, int* costsBE_d, int* dirVecs_d, int* line_d, int *limit1s_d, int *limit2s_d, int *todo_d, int *ivmId_d, int *toSwap_d, int *tempArr_d, int *state_d, int best)
 {
     int tid = blockIdx.x * blockDim.x + threadIdx.x;
-    int ivm   = tid;// / warpSize;
+    int ivm   = tid;
+    int job;
 
-    int job,dir;
+    if (state_d[ivm] == 0) return;
 
-//    if(thPos==0){
-        dir=dirVecs_d[index2D(line_d[ivm],ivm)];
-        for(int i=limit1s_d[ivm] + 1;i<limit2s_d[ivm];i++){
-            job=schedule_d[index2D(i,ivm)];
-            if(costsBE_d[index2D(job,2*ivm+dir)]>=0){
-                ivmId_d[tempArr_d[ivm] + i]  = ivm;
-                toSwap_d[tempArr_d[ivm] + i] = i;//limit1s_d[ivm] + 1 + i;
-            }
+    assert(limit2s_d[ivm]-limit1s_d[ivm]-1 == size_d-line_d[ivm]);
+
+    int cc=0;
+    int dir=dirVecs_d[index2D(line_d[ivm],ivm)];
+    for(int i=limit1s_d[ivm] + 1;i<limit2s_d[ivm];i++){
+        job=schedule_d[index2D(i,ivm)];
+        if(costsBE_d[index2D(job,2*ivm+dir)]<best){
+            ivmId_d[tempArr_d[ivm] + cc]  = ivm;
+            toSwap_d[tempArr_d[ivm] + cc] = i;//limit1s_d[ivm] + 1 + i;
+            cc++;
         }
+    }
 
     if (tid == 0) {
         todo = tempArr_d[nbIVM_d - 1] + todo_d[nbIVM_d - 1];
@@ -837,7 +644,7 @@ __global__ void prepareBound(T* schedule_d, int* costsBE_d, T* dirVecs_d,T* line
 
 template < typename T >
 __global__ void
-prepareBound2(T *limit1s_d, T *limit2s_d, int *todo_d, int *ivmId_d, int *toSwap_d, int *tempArr_d)
+prepareBound2(T *limit1s_d, T *limit2s_d, int *todo_d, int *ivmId_d, int *toSwap_d, int *tempArr_d, int *state_d)
 {
     int thPos = threadIdx.x % warpSize;
     int tid   = blockIdx.x * blockDim.x + threadIdx.x;
@@ -845,14 +652,34 @@ prepareBound2(T *limit1s_d, T *limit2s_d, int *todo_d, int *ivmId_d, int *toSwap
     // int ivm = blockIdx.x * PERBLOCK + threadIdx.x / warpSize;
     int ivm = tid / warpSize;
 
-    int l = 0;
+    if (state_d[ivm] == 0) return;
 
-    for (l = 0; l <= size_d / warpSize; l++) {
-        if (l * warpSize + thPos < todo_d[ivm]) {
-            ivmId_d[tempArr_d[ivm] + l * warpSize + thPos]  = ivm; // ivm;
-            toSwap_d[tempArr_d[ivm] + l * warpSize + thPos] = limit1s_d[ivm] + 1 + l * warpSize + thPos;
+    if(thPos==0){
+        int cc=0;
+        for(int i=limit1s_d[ivm] + 1;i<limit2s_d[ivm];i++){
+            ivmId_d[tempArr_d[ivm] + cc]  = ivm;
+            toSwap_d[tempArr_d[ivm] + cc] = i;//limit1s_d[ivm] + 1 + i;
+            cc++;
         }
     }
+
+    //    0 ... l2 - l1 - 2
+    // l1+1 ... l2 - 1
+
+
+
+    // for(l = thPos; l < todo_d[ivm]; l += warpSize)
+    // {
+    //     ivmId_d[tempArr_d[ivm] + l]  = ivm; // ivm;
+    //     toSwap_d[tempArr_d[ivm] + l] = limit1s_d[ivm] + 1 + l;
+    // }
+
+    // for (l = 0; l <= size_d / warpSize; l++) {
+    //     if (l * warpSize + thPos < todo_d[ivm]) {
+    //         ivmId_d[tempArr_d[ivm] + l * warpSize + thPos]  = ivm; // ivm;
+    //         toSwap_d[tempArr_d[ivm] + l * warpSize + thPos] = limit1s_d[ivm] + 1 + l * warpSize + thPos;
+    //     }
+    // }
 
     if (tid == 0) {
         todo = tempArr_d[nbIVM_d - 1] + todo_d[nbIVM_d - 1];

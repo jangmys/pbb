@@ -116,7 +116,7 @@ computeLen(int * length, const int * pos, const int * end)
 {
     int hold = 0;
 
-    if (beforeEnd(pos, end)) {
+    if (beforeEndPart(pos, end, 0)) {
         for (int i = size_d - 1; i >= 0; i--) {
             int d = end[i] - pos[i] - hold;
             if (d >= 0) {

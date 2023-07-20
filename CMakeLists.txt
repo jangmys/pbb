@@ -9,15 +9,27 @@ LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
+
+
 set(CMAKE_CXX_FLAGS_RELEASE "-Wall -O2 -DNDEBUG")#-Wno-unused-function -Wno-unused-variable -O2 -DNDEBUG")
 set(CMAKE_C_FLAGS_RELEASE "-std=c99 -Wall -Wextra -pedantic -O2")
 set(CMAKE_CXX_FLAGS_DEBUG "-g -pg -O0 -rdynamic" CACHE STRING "")
+
+#if(${CMAKE_HOST_SYSTEM_PROCESSOR} MATCHES "x64_86")
+#endif()
+
+if(${CMAKE_HOST_SYSTEM_PROCESSOR} MATCHES "aarch64")
+    message(STATUS )
+    SET(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -mcpu=neoverse-n1")
+    SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -mcpu=neoverse-n1")
+endif()
 
 ######################################################################################
 
 #optional : add GPUBB (requires CUDA)
 if(GPU)
-    add_definitions(-DUSE_GPU)
+    add_definitions(-DWITH_GPU)
+    add_compile_definitions(WITH_GPU)
     add_subdirectory(gpu)
 endif()
 
@@ -34,7 +46,6 @@ add_subdirectory(evaluation)
 add_subdirectory(heuristics)
 #add multicore IVM-based BB
 add_subdirectory(multicore)
-
 
 
 

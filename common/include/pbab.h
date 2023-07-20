@@ -26,10 +26,10 @@ class pbab
 {
 public:
     pbab();
-    pbab(instance_abstract _inst);
+    pbab(std::shared_ptr<instance_abstract> _inst);
     ~pbab();
 
-    instance_abstract inst;
+    std::shared_ptr<instance_abstract> inst;
     int size;
 
     Incumbent<int> best_found;

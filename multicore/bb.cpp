@@ -18,7 +18,6 @@ main(int argc, char ** argv)
 {
     //------------------PARAMETER PARSING-----------------
     arguments::parse_arguments(argc, argv);
-    std::cout<<" === solving "<<arguments::problem<<" - instance "<<arguments::inst_name<<std::endl;
 
     //------------------SET UP LOGGING--------------------
     FILELog::ReportingLevel() = logERROR;
@@ -28,65 +27,70 @@ main(int argc, char ** argv)
     FILE* log_fd = fopen(arguments::logfile, "w" );
     Output2FILE::Stream() = log_fd;
 
-
     //------------------B&B components-------------------
-    std::shared_ptr<pbab> pbb = std::make_shared<pbab>(
-        pbb_instance::make_inst(arguments::problem, arguments::inst_name)
-    );
+    auto inst = pbb_instance::make_inst(arguments::problem, arguments::inst_name);
+
+    std::shared_ptr<pbab> pbb = std::make_shared<pbab>(inst);
+    //     pbb_instance::make_inst(arguments::problem, arguments::inst_name)
+    // );
 
     //------------------BUILD INITIAL SOLUTION------------------
     pbb->set_initial_solution();
 
-    //------------------CHOOSE ALGORITHM-----------------------
-    enum algo{
-        ivm_seqbb,
-        ll_sequential,
-        ivm_multicore,
-        ll_multicore
-    };
+    //--------------------------Summary--------------------------
+    std::cout<<"#Problem:\t\t"<<arguments::problem<<" / Instance "<<arguments::inst_name<<"\n";
+    std::cout<<"#ProblemSize:\t\t"<<pbb->size<<"\n"<<std::endl;
 
-    int choice=ivm_multicore;
-	if(arguments::nbivms_mc==1)
-		choice=ivm_seqbb;
+    std::cout<<"#Worker type:\t\t"<<arguments::worker_type<<std::endl;
 
-    pbb->ttm->on(pbb->ttm->wall);
+    if(arguments::worker_type=='g')
+        std::cout<<"#GPU workers:\t\t"<<arguments::nbivms_gpu<<std::endl;
+    else if(arguments::worker_type=='c')
+        std::cout<<"#CPU threads:\t\t"<<arguments::nbivms_mc<<std::endl;
+
+    std::cout<<"#Bounding mode:\t\t"<<arguments::boundMode<<std::endl;
+    if(arguments::primary_bound == 1 || (arguments::boundMode == 2 && arguments::secondary_bound == 1))
+    {
+        std::cout<<"\t#Johnson Pairs:\t\t"<<arguments::johnsonPairs<<std::endl;
+        std::cout<<"\t#Early Exit:\t\t"<<arguments::earlyStopJohnson<<std::endl;
+    }
+    std::cout<<"#Branching:\t\t"<<arguments::branchingMode<<std::endl;
+
+    std::cout<<"==========================\n";
+    std::cout<<"#Initial solution\n"<<pbb->best_found;
+    std::cout<<"==========================\n";
+
 
     //---------------------RUN-------------------------------------
+    pbb->ttm->on(pbb->ttm->wall);
     switch(arguments::ds){
         case 'i': //IVM
         {
-            if(arguments::nbivms_mc == 1){ //SEQUENTIAL
+            int nthreads = (arguments::nbivms_mc < 1) ? get_nprocs() : arguments::nbivms_mc;
+
+            //interval to explore (full [0,N!])
+            std::vector<int> zeroFact(pbb->size,0);
+            std::vector<int> endFact(pbb->size,0);
+            for (int i = 0; i < pbb->size; i++) {
+                endFact[i]  = pbb->size - i - 1;
+            }
+
+            if(nthreads == 1){ //SEQUENTIAL
+                std::cout<<" === Run single-threaded IVM-BB"<<std::endl;
                 auto sbb = make_ivmbb<int>(pbb.get());
 
                 //set first line of matrix
                 sbb->setRoot(pbb->best_found.initial_perm.data());
-
-                //initial interval
-                std::vector<int> zeroFact(pbb->size,0);
-                std::vector<int> endFact(pbb->size,0);
-
-                for (int i = 0; i < pbb->size; i++) {
-                    endFact[i]  = pbb->size - i - 1;
-                }
                 sbb->initAtInterval(zeroFact, endFact);
 
-                std::cout<<" === Run single-threaded IVM-BB"<<std::endl;
                 sbb->run();
-            }else{
-                int nthreads = (arguments::nbivms_mc < 1) ? get_nprocs() : arguments::nbivms_mc;
-
+            }else{ //MULTICORE
                 matrix_controller mc(pbb.get(),nthreads);
                 mc.set_victim_select(make_victim_selector(nthreads,arguments::mc_ws_select));
 
-                //initial intervals
                 std::vector<int>_id(nthreads,0);
-                std::vector<int>_pos(nthreads*pbb->size,0);
-                std::vector<int>_end(nthreads*pbb->size,0);
 
-                for (int i = 0; i < pbb->size; i++) {
-                    _end[i]  = pbb->size - i - 1;
-                }
-                mc.initFromFac(1,_id.data(),_pos.data(),_end.data());
+                mc.initFromFac(1,_id.data(),zeroFact.data(),endFact.data());
 
                 std::cout<<" === Run multi-core IVM-based BB with "<<nthreads<<" threads"<<std::endl;
                 mc.next();

@@ -15,20 +15,15 @@ class worker_gpu : public worker {
 public:
     worker_gpu(pbab * _pbb, unsigned int _nbIVM) :
         worker(_pbb,_nbIVM),
-        gbb(std::make_unique<gpubb>(pbb))
+        gbb(std::make_unique<gpubb>(pbb,comm->rank))
     {
-        //-----------mapping MPI_ranks to devices-----------
-        int num_devices = 0;
-        cudaGetDeviceCount(&num_devices);
-        cudaSetDevice((comm->rank) % num_devices);
-
-        int device;
-        cudaGetDevice(&device);
-        FILE_LOG(logINFO) << comm->rank << " using device" << device <<"/" << num_devices;
+        std::cout<<"gpu init : rank "<<comm->rank<<"\n";
 
         //------------GPU-BB------------------------
-        gbb->initialize();// allocate IVM on host/device
+        gbb->initialize(comm->rank);// allocate IVM on host/device
+#ifdef FSP
         gbb->initializeBoundFSP();
+#endif
         gbb->copyH2D();
         FILE_LOG(logDEBUG1) << "GPU Bound initialized";
     }
@@ -43,7 +38,7 @@ public:
     getIntervals();
 
     void
-    getSolutions();
+    getSolutions(int*);
 };
 
 #endif // ifndef WORKER_GPU_H

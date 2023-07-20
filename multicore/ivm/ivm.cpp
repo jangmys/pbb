@@ -8,10 +8,6 @@ ivm::ivm(int _size) : size(_size),line(0),
     node(_size){
     clearInterval();
     posVect[0]=size; //makes interval empty
-
-#ifndef NDEBUG
-    std::cout<<"debug\n";
-#endif
 }
 
 subproblem& ivm::getNode(){
@@ -190,7 +186,7 @@ ivm::beforeEnd() const
         if (posVect[i] < endVect[i]) return true;
         if (posVect[i] > endVect[i]) return false;
     }
-    return false;//true;
+    return true;
 }
 
 int
@@ -292,6 +288,19 @@ ivm::decodeIVM()
     node.limit2 = l2;
 } // prepareSchedule
 
+
+void reverse_order(int* jobs, int line, int size)
+{
+    int i1=0;
+    int i2=size-line-1;
+    while(i1<i2){
+        std::swap(jobs[i1], jobs[i2]);
+        i1++; i2--;
+    }
+}
+
+
+
 template<typename T>
 void ivm::sortSiblingNodes(std::vector<T> lb,std::vector<T> prio)
 {
@@ -304,13 +313,7 @@ void ivm::sortSiblingNodes(std::vector<T> lb,std::vector<T> prio)
             int prev_dir=(_line>0)?dirVect[_line-1]:0;
             if(prev_dir!=dirVect[_line])
             {
-                // std::cout<<"line "<<_line<<" dir "<<IVM->dirVect[_line]<<" reverse\n";
-                int i1=0;
-                int i2=size-_line-1;
-                while(i1<i2){
-                    std::swap(jm[i1], jm[i2]);
-                    i1++; i2--;
-                }
+                reverse_order(jm,_line,size);
             }
             if(prev_dir==1 && dirVect[_line]==0){
                 for (int l = 0; l < size - _line; l++){
@@ -400,10 +403,9 @@ int ivm::countExplorableSubtrees(const int line)
 // determine the position where to cut the line between the 2 threads
 int ivm::cuttingPosition(const int line, const int division)
 {
-	int nbSubtrees  = endVect[line] - posVect[line];
 	int expSubtrees = countExplorableSubtrees(line);
 
-    assert(expSubtrees <= nbSubtrees);
+    assert(expSubtrees <= (endVect[line] - posVect[line]));
 
 	// victim thread keeps (expSubtrees / division) subtrees plus the one it is
 	// already exploring

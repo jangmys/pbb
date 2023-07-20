@@ -13,10 +13,7 @@
 
 namespace pbb_instance
 {
-    // std::unique_ptr<instance_abstract>
-    //     make_instance(char problem[],char inst_name[]);
-
-    instance_abstract make_inst(char problem[],char inst_name[]);
+    std::shared_ptr<instance_abstract> make_inst(char problem[],char inst_name[]);
 }
 
 #endif

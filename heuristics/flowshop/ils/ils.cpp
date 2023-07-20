@@ -7,7 +7,38 @@
 IG::IG(const std::vector<std::vector<int>> p_times, const int N, const int M) :
     nhood(std::make_unique<fspnhood<int>>(p_times,N,M)),
     ls(std::make_unique<LocalSearch>(p_times,N,M))
-{};
+{
+    nbJob=nhood->m->nbJob;
+    nbMachines=nhood->m->nbMachines;
+
+    int sum=0;
+    for(int j=0;j<nbMachines;j++){
+        for(int i=0;i<nbJob;i++){
+            sum += nhood->m->PTM[j][i];
+        }
+    }
+    avgPT = (float)sum/(nbJob*nbMachines);
+    acceptanceParameter=0.2;
+	destructStrength=2;
+
+    igiter=200;
+
+    visitOrder = std::vector<int>(nbJob);
+
+    // std::cout<<"heeeree\n"<<std::endl;
+
+	int start=nbJob/2;
+	int ind=0;
+	for(int i=start;i<nbJob;i++){
+		visitOrder[ind]=i;
+		ind+=2;
+	}
+	ind=1;
+	for(int i=start-1;i>=0;i--){
+		visitOrder[ind]=i;
+		ind+=2;
+	}
+};
 
 
 IG::IG(instance_abstract& inst) :
@@ -46,10 +77,16 @@ IG::IG(instance_abstract& inst) :
 	}
 }
 
+
+/*
+1. choose randomly without repetion k jobs in perm (between positions a+1 and b-1)
+2. remove those k jobs
+3. return list of removed jobs (and modify sequence perm)
+*/
 std::vector<int> IG::destruction(std::vector<int>& perm, int k, int a, int b)
 {
 	if(b-a < k){
-		std::cout<<a<<" "<<b<<" "<<k<<"destruction not possible\n"; exit(-1);
+		std::cout<<"can't remove "<<k<<" jobs in "<<a+1<<" ... "<<b-1<<". EXIT\n"; exit(-1);
 	}
 
     //indices [a+1 ... b-1]
@@ -65,9 +102,9 @@ std::vector<int> IG::destruction(std::vector<int>& perm, int k, int a, int b)
     //first k indices = the postions to remove
     std::vector<int> removePos(v.begin(),v.begin()+k);
     std::sort(removePos.begin(),removePos.end(),std::greater<int>());
-
     std::vector<int>removedJobs;
 
+    //save removed jobs
     for(int i=0;i<k;i++){
         removedJobs.push_back(perm[removePos[i]]);
     }
@@ -79,35 +116,48 @@ std::vector<int> IG::destruction(std::vector<int>& perm, int k, int a, int b)
     return removedJobs;
 }
 
-void IG::perturbation(int *perm, int k, int a, int b)
+std::vector<int> IG::destruction(std::vector<int>& perm, int k)
 {
-    std::random_device rd;
-    std::mt19937 g(rd());
-
-    //SELECT k RANDOM positions
-    std::vector<int>sel1(b-a);
-    for(int i=0;i<b-a;i++){
-        sel1[i]=a+i;
-    }
-
-    std::shuffle(sel1.begin(), sel1.end(), g);
-    // shuffle(sel1.data(),(b-a));
-    std::vector<int>sel2(k);
-    for(int i=0;i<k;i++){
-        sel2[i]=sel1[i];
-    }
-
-    for(int i=0;i<k;i++){
-        sel1[i]=perm[sel2[i]];
-    }
-
-    std::shuffle(sel1.begin(), sel1.begin()+k, g);
-
-    for(int i=0;i<k;i++){
-        perm[sel2[i]]=sel1[i];
-    }
+    return destruction(perm, k, -1, nbJob);
 }
 
+
+
+
+
+
+//=====================================================================
+// void IG::perturbation(int *perm, int k, int a, int b)
+// {
+//     std::random_device rd;
+//     std::mt19937 g(rd());
+//
+//     //SELECT k RANDOM positions
+//     std::vector<int>sel1(b-a);
+//     for(int i=0;i<b-a;i++){
+//         sel1[i]=a+i;
+//     }
+//
+//     std::shuffle(sel1.begin(), sel1.end(), g);
+//     // shuffle(sel1.data(),(b-a));
+//     std::vector<int>sel2(k);
+//     for(int i=0;i<k;i++){
+//         sel2[i]=sel1[i];
+//     }
+//
+//     for(int i=0;i<k;i++){
+//         sel1[i]=perm[sel2[i]];
+//     }
+//
+//     std::shuffle(sel1.begin(), sel1.begin()+k, g);
+//
+//     for(int i=0;i<k;i++){
+//         perm[sel2[i]]=sel1[i];
+//     }
+// }
+
+
+//successively insert jobs in permOut in perm (don't touch 0...a, b...N-1)
 
 void IG::construction(std::vector<int>& perm, std::vector<int>& permOut, int k,int a, int b)
 {
@@ -125,6 +175,22 @@ void IG::construction(std::vector<int>& perm, std::vector<int>& permOut, int k,i
 		nhood->m->bestInsert(perm, permOut[j], cost);
     }
 }
+
+void IG::construction(std::vector<int>& perm, std::vector<int>& permOut)
+{
+    int cost;
+
+    nhood->m->tabupos->clear();
+
+    for(size_t j=0;j<permOut.size();j++){
+        nhood->m->bestInsert(perm, permOut[j], cost);
+    }
+}
+
+
+
+
+
 
 bool IG::acceptance(int tempcost, int cost,float param)
 {
@@ -144,8 +210,20 @@ bool IG::acceptance(int tempcost, int cost,float param)
     else return false;
 }
 
+
+
+
+void IG::run(std::shared_ptr<subproblem> s)
+{
+    int makespan = runIG(s,igiter);
+
+    s->set_fitness(makespan);
+}
+
+
+
 //iterated local search from starting point "current"
-int IG::runIG(std::shared_ptr<subproblem> current)
+int IG::runIG(std::shared_ptr<subproblem> current, const int niter)
 {
     std::unique_ptr<subproblem> temp = std::make_unique<subproblem>(nbJob);
     std::unique_ptr<subproblem> best = std::make_unique<subproblem>(nbJob);
@@ -156,9 +234,6 @@ int IG::runIG(std::shared_ptr<subproblem> current)
     int currentcost=bestcost;
 	current->set_fitness(bestcost);
 
-    int l1=0;//current->limit1+1;
-    int l2=nbJob;//current->limit2;
-
     int perturb=destructStrength;
     std::vector<int> removedJobs(perturb);
 
@@ -168,8 +243,8 @@ int IG::runIG(std::shared_ptr<subproblem> current)
     for(int iter=0;iter<igiter;iter++){
 		*temp=*current;
 
-		removedJobs = destruction(temp->schedule, perturb, l1, l2);
-		construction(temp->schedule, removedJobs, perturb,l1,l2);
+		removedJobs = destruction(temp->schedule, perturb);
+		construction(temp->schedule, removedJobs);
 
 		int tempcost=ls->localSearchKI(temp->schedule,kmax);
 
@@ -199,7 +274,7 @@ int IG::runIG(std::shared_ptr<subproblem> current)
     return current->fitness();
 }
 
-int IG::runIG(subproblem* current, int l1, int l2)
+int IG::runIG(subproblem* current, int l1, int l2, const int niter)
 {
     std::unique_ptr<subproblem> temp = std::make_unique<subproblem>(nbJob);
     std::unique_ptr<subproblem> best = std::make_unique<subproblem>(nbJob);

@@ -22,7 +22,9 @@ public:
 
     void initialSort(std::vector<int>& perm);
     void runNEH(std::vector<int>& perm, int &cost);
+
     void run(std::vector<int>& perm, int &cost);
+    void run(std::shared_ptr<subproblem> p);
 
     subproblem operator()();
 private:

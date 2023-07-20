@@ -22,13 +22,6 @@
 #include "../../multicore/base/thread_controller.h"
 #include "../../multicore/ivm/matrix_controller.h"
 
-
-// void
-// worker_mc::interrupt()
-// {
-//     mc->interruptExploration();
-// }
-
 bool
 worker_mc::doWork()
 {
@@ -51,7 +44,7 @@ void
 worker_mc::updateWorkUnit()
 {
     //INTERSECT IF UPDATE (not new work)?
-    FILE_LOG(logINFO) << "ID "<< dwrk->id << " "<<work_buf->id;
+    FILE_LOG(logDEBUG) << "Update : ID "<< dwrk->id << " "<<work_buf->id;
     //
     // if(dwrk->id == work_buf->id){
     //     pthread_mutex_lock_check(&mutex_wunit);
@@ -127,6 +120,8 @@ worker_mc::getIntervals()
     work_buf->nb_decomposed = pbb->stats.totDecomposed;
     work_buf->nb_leaves     = pbb->stats.leaves;
 
+    local_decomposed_count += pbb->stats.totDecomposed;
+
     // dwrk->nb_decomposed      = pbb->stats.totDecomposed;
     // dwrk->nb_leaves           = pbb->stats.leaves;
     pbb->stats.totDecomposed = 0;
@@ -171,11 +166,11 @@ worker_mc::get_intervals()
 
 
 void
-worker_mc::getSolutions()
+worker_mc::getSolutions(int* _solutions)
 {
     pthread_mutex_lock_check(&mutex_solutions);
     if(sol_ind_begin >= sol_ind_end){
-        int nb=mc->getSubproblem(solutions,max_sol_ind);
+        int nb=mc->getSubproblem(_solutions,max_sol_ind);
         if(nb>0){
             sol_ind_begin=0;
             sol_ind_end=nb;

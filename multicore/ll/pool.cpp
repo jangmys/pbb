@@ -13,7 +13,7 @@ Pool::insert(const int* perm, int l1, int l2, unsigned int psize)
 {
     std::unique_ptr<subproblem> root = std::make_unique<subproblem>(psize);
 
-    for(int i=0;i<psize;i++){
+    for(size_t i=0;i<psize;i++){
         root->schedule[i]=perm[i];
     }
     root->set_lower_bound(0);

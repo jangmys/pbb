@@ -7,6 +7,11 @@ if(GPU)
     add_definitions(-DFSP)
 endif()
 
+if(ENUM)
+    remove_definitions(-DFSP)
+    add_definitions(-DTEST)
+endif()
+
 
 get_filename_component(PARENT_DIR ${CMAKE_CURRENT_SOURCE_DIR} DIRECTORY)
 
@@ -52,6 +57,7 @@ target_include_directories(dbb PUBLIC ${PARENT_DIR}/multicore/ll)
 
 target_include_directories(dbb PUBLIC ${PROJECT_SOURCE_DIR}/include/)
 target_include_directories(dbb PUBLIC ${MPI_CXX_INCLUDE_PATH})
+target_include_directories(dbb PUBLIC /usr/include)
 
 target_compile_options(dbb PUBLIC ${MPI_CXX_COMPILE_FLAGS})
 
@@ -62,7 +68,7 @@ target_link_libraries(dbb PUBLIC gmp gmpxx)
 target_link_libraries(dbb PUBLIC MPI::MPI_CXX)
 
 if(GPU)
-    set_target_properties(dbb PROPERTIES CUDA_ARCHITECTURES "35;50;72")
+    set_target_properties(dbb PROPERTIES CUDA_ARCHITECTURES "60;72")
     set_property(TARGET dbb PROPERTY CUDA_ARCHITECTURES OFF)
 
     target_link_libraries(dbb PUBLIC ${CMAKE_CUDA_LIBRARIES})

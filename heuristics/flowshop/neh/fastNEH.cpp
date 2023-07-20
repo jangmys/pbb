@@ -1,3 +1,15 @@
+/*
+Nawaz-Enscore-Ham (NEH) heuristic
+[https://www.sciencedirect.com/science/article/abs/pii/0305048383900889]
+
+using
+
+Taillard's acceleration
+[https://www.sciencedirect.com/science/article/abs/pii/037722179090090X;]
+
+
+Author : Jan GMYS (jan.gmys@univ-lille.fr)
+*/
 #include <limits.h>
 #include <iostream>
 #include <algorithm>
@@ -42,6 +54,23 @@ void fastNEH::run(std::vector<int>& perm, int &cost)
 
     runNEH(perm,cost);
 }
+
+void fastNEH::run(std::shared_ptr<subproblem> p)
+{
+    m->reset();
+
+    //fill 0,1,...N-1
+    p->schedule.resize(nbJob);
+    std::iota(p->schedule.begin(),p->schedule.end(),0);
+
+    util::sort_by_key<int>(p->schedule,m->sumPT);
+
+    int makespan;
+    runNEH(p->schedule,makespan);
+    p->set_fitness(makespan);
+};
+
+
 
 subproblem fastNEH::operator()()
 {

@@ -12,20 +12,24 @@
 using namespace cooperative_groups;
 namespace cg = cooperative_groups;
 
+__device__ int root_d[MAXJOBS];
+__device__ int root_dir_d;
+
+//device variables (problem independent)
+__device__ unsigned int _trigger;
 
 __device__ unsigned int todo;
 __device__ unsigned int deviceEnd;
 __device__ unsigned int targetNode;
-__device__ unsigned int gpuBalancedIntern;
+// __device__ unsigned int gpuBalancedIntern;
 __device__ unsigned int countNodes_d;
 
 __constant__ int _boundMode;
-__constant__ int _nbJob;
 __constant__ int nbIVM_d;
 __constant__ int size_d;
 
-__device__ enum counterID { exploringState, emptyState, initState };
-__device__ enum ctrlID { toDo, gpuEnd, foundLeaf, bestCost };
+enum counterID { exploringState, emptyState, initState };
+enum ctrlID { toDo, gpuEnd, foundLeaf, bestCost };
 
 // ____________________________________________________________
 template <typename T>

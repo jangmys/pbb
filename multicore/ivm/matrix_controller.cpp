@@ -35,8 +35,7 @@ matrix_controller::matrix_controller(pbab* _pbb,int _nthreads) : ThreadControlle
 void
 matrix_controller::initFromFac(const unsigned int nbint, const int * ids, int * _pos, int * _end)
 {
-    FILE_LOG(logINFO) << "=== init from factorial ";
-
+    FILE_LOG(logDEBUG) << "=== init from factorial ";
     updatedIntervals=1;
 
     //CLEAR ALL BEFORE REFILL
@@ -127,7 +126,9 @@ matrix_controller::explore_multicore()
     int id = explorer_get_new_id();
     FILE_LOG(logDEBUG) << "=== got ID " << id;
 
-    stick_this_thread_to_core(id);
+    if(!is_distributed()){
+        stick_this_thread_to_core(id);
+    }
 
     //------check if explorer already exists------
     if(!ivmbb[id]){
@@ -184,7 +185,7 @@ matrix_controller::explore_multicore()
 
         if (allEnd.load(std::memory_order_relaxed)) {
             break;
-        }else if (!ivmbb[id]->next()){
+        }else if (!ivmbb[id]->next()){ //WORK IS DONE HERE !!!!
             request_work(id);
             thd_data[id]->has_work.store(ivmbb[id]->get_ivm()->beforeEnd());
         }else{
@@ -196,19 +197,23 @@ matrix_controller::explore_multicore()
         {
             if(pbb->workUpdateAvailable.load(std::memory_order_relaxed))
             {
+                FILE_LOG(logINFO) << "=== BREAK (get works)";
                 break;
             }
             if(atom_nb_steals.load(std::memory_order_relaxed)>(get_num_threads()/4))
             {
+                FILE_LOG(logINFO) << "=== BREAK (steals)";
                 break;
             }
             if(pbb->best_found.foundNewSolution){
                 // FILE_LOG(logINFO) << "=== BREAK (new sol)";
+                FILE_LOG(logINFO) << "=== BREAK (sol)";
                 break;
             }
             bool passed=pbb->ttm->period_passed(WORKER_BALANCING);
             if(passed)
             {
+                FILE_LOG(logINFO) << "=== BREAK (time)";
                 break;
             }
         }

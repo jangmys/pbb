@@ -1,3 +1,8 @@
+/*
+=======================================
+Work units in factoradic format (int*)
+---------------------------------------
+*/
 #ifndef FACT_WORK_H
 #define FACT_WORK_H
 
@@ -9,9 +14,8 @@
 #include "gmp.h"
 #include "gmpxx.h"
 
-// class work;
-
-#define MAX_JOBS 800
+//Max number of jobs (max length of permutation)
+constexpr size_t MAX_JOBS=800;
 
 //// TODO : move weights and decimal stuff to work ?
 
@@ -67,7 +71,6 @@ public:
     int *end;
 
     int *states;
-
 
     fact_work(int _size);
     fact_work(int _max, int _size);

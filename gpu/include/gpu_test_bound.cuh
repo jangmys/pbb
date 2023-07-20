@@ -146,9 +146,9 @@ boundStrongFront(const T * schedules_d, const T * lim1_d, const T * lim2_d, cons
         int Swap2 = limit1;//...and where to place it (only front)
 
         int jobnb = schedules_d[index2D(Swap1, ivmnb)];
-        int where = ivmnb * 2 * _nbJob + (int) jobnb; //index where to write LB in cost array ...
+        int where = ivmnb * 2 * size_d + (int) jobnb; //index where to write LB in cost array ...
 
-        if (line_d[ivmnb] < (_nbJob - 1)) { // compute bounds!!!!!!!
+        if (line_d[ivmnb] < (size_d - 1)) { // compute bounds!!!!!!!
             costsBE_d[where] = computeBoundStrongThread(schedules_d+ivmnb*size_d, limit1, limit2, Swap1, Swap2);
         }
     }

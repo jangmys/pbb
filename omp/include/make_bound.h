@@ -6,6 +6,8 @@
 template<typename T>
 std::unique_ptr<bound_abstract<int>> make_bound_ptr(instance_abstract inst, const int _bound_choice = 0)
 {
+    std::cout<<"make_bound_ptr\n"<<std::endl;
+
     if(arguments::problem[0]=='f'){
         switch (_bound_choice) {
             case 0:
@@ -26,6 +28,7 @@ std::unique_ptr<bound_abstract<int>> make_bound_ptr(instance_abstract inst, cons
             }
         }
     }else if(arguments::problem[0]=='d'){
+        std::cout<<"Dummy bound\n";
         auto bd = std::make_unique<bound_dummy>();
         bd->init(inst);
         return bd;
