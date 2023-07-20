@@ -300,7 +300,7 @@ int fastInsertRemove::bestRemove2(std::vector<int>& perm, int& remjob, int &cmax
     int oldcmax=removeMakespans(perm, perm.size(), makespans);
 
     std::vector<float> weights;
-    for(int i=0; i<perm.size(); ++i) {
+    for(size_t i=0; i<perm.size(); ++i) {
         int job=perm[i];
         float val=(float)(oldcmax-makespans[i])/(float)sumPT[job];
         if(tabujobs->isTabu(job))val=0.0;
