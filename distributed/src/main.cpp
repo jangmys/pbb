@@ -143,8 +143,8 @@ main(int argc, char ** argv)
         ITERATE_INCREASING_UB
     };
 
-    // int bbmode=STANDARD;
-    int bbmode=ITERATE_INCREASING_UB;
+    int bbmode=STANDARD;
+    // int bbmode=ITERATE_INCREASING_UB;
 
     switch (bbmode) {
         case STANDARD:
