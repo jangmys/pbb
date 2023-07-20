@@ -27,9 +27,6 @@ public:
     void explore_multicore();
 
     //----------------for distributed mode----------------
-    // void set_distributed(){
-    //     _distributed = true;
-    // }
 
     bool is_distributed(){
         return _distributed;
