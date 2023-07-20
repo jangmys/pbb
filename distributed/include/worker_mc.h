@@ -15,9 +15,8 @@ class worker_mc : public worker
 public:
     worker_mc(pbab * _pbb,int _nthreads) :
         worker(_pbb,_nthreads),
-        mc(std::make_unique<matrix_controller>(pbb,_nthreads))
+        mc(std::make_unique<matrix_controller>(pbb,_nthreads,true))
     {
-        mc->set_distributed();
         mc->set_victim_select(std::make_unique<RandomVictimSelector>(M));
     };
 

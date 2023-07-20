@@ -16,7 +16,7 @@
 class matrix_controller : public ThreadController{
     friend class worker_mc;
 public:
-    matrix_controller(pbab* _pbb,int _nthreads);
+    matrix_controller(pbab* _pbb,int _nthreads,bool distributed = false);
 
     int work_share(unsigned id, unsigned thief);
 
@@ -27,9 +27,9 @@ public:
     void explore_multicore();
 
     //----------------for distributed mode----------------
-    void set_distributed(){
-        _distributed = true;
-    }
+    // void set_distributed(){
+    //     _distributed = true;
+    // }
 
     bool is_distributed(){
         return _distributed;

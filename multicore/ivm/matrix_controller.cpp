@@ -20,7 +20,7 @@
 
 #include "make_ivm_algo.h"
 
-matrix_controller::matrix_controller(pbab* _pbb,int _nthreads) : ThreadController(_pbb,_nthreads){
+matrix_controller::matrix_controller(pbab* _pbb,int _nthreads,bool distributed /*=false*/) : ThreadController(_pbb,_nthreads),_distributed(distributed){
     ivmbb = std::vector< std::shared_ptr<Intervalbb<int>> >(get_num_threads(),nullptr);
 
     state = std::vector<int>(get_num_threads(),0);
