@@ -329,7 +329,7 @@ master::run()
         }
         pbb->ttm->off(pbb->ttm->masterWalltime);
 
-        if(pbb->ttm->period_passed(CHECKPOINT_TTIME)){
+        if(pbb->ttm->period_passed(T_CHECKPOINT)){
             std::cout<<"SAVE"<<std::endl;
 
             std::ofstream stream((std::string(arguments::work_directory) + "bab" + std::string(arguments::inst_name) + ".save").c_str());

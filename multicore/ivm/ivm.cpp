@@ -309,6 +309,11 @@ void ivm::sortSiblingNodes(std::vector<T> lb,std::vector<T> prio)
     switch (arguments::sortNodes) {
         case 0:
         {
+            /*
+            if scheduling direction changed, reverse order of unscheduled jobs.
+
+            lexicographic with begin-end
+            */
             int *jm = getRowPtr(_line);
             int prev_dir=(_line>0)?dirVect[_line-1]:0;
             if(prev_dir!=dirVect[_line])

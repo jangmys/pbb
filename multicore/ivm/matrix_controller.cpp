@@ -210,7 +210,7 @@ matrix_controller::explore_multicore()
                 FILE_LOG(logINFO) << "=== BREAK (sol)";
                 break;
             }
-            bool passed=pbb->ttm->period_passed(WORKER_BALANCING);
+            bool passed=pbb->ttm->period_passed(T_WORKER_BALANCING);
             if(passed)
             {
                 FILE_LOG(logINFO) << "=== BREAK (time)";
