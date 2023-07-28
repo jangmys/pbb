@@ -22,7 +22,7 @@ bool arguments::earlyStopJohnson = true;
 int arguments::johnsonPairs      = 0;
 
 //Branching options
-int arguments::branchingMode = 3;
+int arguments::branchingMode = 1;
 int arguments::sortNodes         = 0;
 
 //Pruning options
