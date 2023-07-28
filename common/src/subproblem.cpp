@@ -15,7 +15,7 @@ subproblem::subproblem(int _size) :
 {
     std::iota(schedule.begin(),schedule.end(),0);
 
-    _cost = 0;
+    lb = 0;
 	_ub=0;
 	depth=0;
 }
@@ -36,7 +36,7 @@ subproblem::subproblem(const subproblem& s)
     for (int j = 0; j < size; j++)
         schedule[j] = s.schedule[j];
 
-    _cost = s._cost;
+    lb = s.lb;
 	_ub = s._ub;
 	depth= s.depth;
 }
@@ -57,7 +57,7 @@ subproblem::subproblem(const subproblem& father, int indice, int begin_end)
 	}
 
     depth=father.depth+1;
-    _cost = 0;
+    lb = 0;
     _ub=0;
 }
 
@@ -108,7 +108,7 @@ subproblem::print()
     {
         printf("%3d ",schedule[i]);
     }
-    printf("\t %d\n",_cost);
+    printf("\t %d\n",lb);
 }
 
 void
@@ -134,7 +134,7 @@ subproblem::operator=(const subproblem& s)
     for (int j = 0; j < size; j++)
         schedule[j] = s.schedule[j];
 
-    _cost = s._cost;
+    lb = s.lb;
 	_ub = s._ub;
     depth = s.depth;
 
@@ -150,7 +150,7 @@ operator << (std::ostream& stream, const subproblem& s)
     for (int i = 0; i < s.size; i++) {
         stream << s.schedule[i] << " ";
     }
-	stream << "\t" << s._cost << " " << s._ub;
+	stream << "\t" << s.lb << " " << s._ub;
 
     return stream;
 }

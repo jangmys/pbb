@@ -50,20 +50,20 @@ public:
         return _ub;
     }
     int lower_bound() const{
-        return _cost;
+        return lb;
     }
 
     void set_fitness(const int ub)
     {
         _ub = ub;
     }
-    void set_lower_bound(const int lb)
+    void set_lower_bound(const int _lb)
     {
-        _cost = lb;
+        lb = _lb;
     }
 
-private:
-    int _cost;
+// private:
+    int lb;
     int _ub;
 };
 
