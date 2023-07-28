@@ -76,10 +76,6 @@ public:
     void init_complete_split(size_t N, const int nParts);
     void init_complete_split_lop(size_t N, const int nParts);
 
-    // more statistics ...
-    mpz_class numDivides;
-    mpz_class numIntersects;
-
     bool
     isEmpty();
     bool
