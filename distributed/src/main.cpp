@@ -38,8 +38,19 @@ main(int argc, char ** argv)
         std::cout<<"-----MPI initialized with "<<nProc<<" procs-----\n";
 
 // -----------------------Parse args----------------------
-// .. pass ini file with -f <path-to-ini-file> option !
+// .. pass ini file with -f <path-to-ini-file> option
     arguments::parse_arguments(argc, argv);
+
+    arguments::singleNode = false;
+
+    // if(arguments::branchingMode != 1){
+    //     arguments::branchingMode = 1;
+    //     if(myrank==0){
+    //         std::cout<<"setting branchingMode to 1\n";
+    //     }
+    // }
+
+
 
 // --------------------Set up logging--------------------
     FILELog::ReportingLevel() = logINFO;
@@ -62,9 +73,6 @@ main(int argc, char ** argv)
 
         FILE_LOG(logINFO) << "Worker start logging";
     }
-
-    //mandatory options for single-node GPU
-    arguments::singleNode=false;
 
 
 //---------------------Configure B&B---------------------

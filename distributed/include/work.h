@@ -34,16 +34,16 @@ public:
     INTERVAL_VEC Uinterval; //...as decimals
 
     //the meta-data
-    int id;//work ID
-    int nb_intervals;
-    int max_intervals;
-    int nb_decomposed;
-    int nb_leaves;
+    int id = 0;//work ID
+    int nb_intervals = 0;
+    int max_intervals = 0;
+    int nb_decomposed = 0;
+    int nb_leaves = 0;
 
-    int end_updated;//flag : was end modified?
-    int nb_updates;
+    int end_updated = 0;//flag : was end modified?
+    int nb_updates = 0;
 
-    mpz_class size;
+    mpz_class size = 0;
 
     //Constructeurs
     work();

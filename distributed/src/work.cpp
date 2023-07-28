@@ -25,15 +25,6 @@ work::work(const work& w)
 //default constructor
 work::work(){
     if (!isEmpty()) Uinterval.clear();
-
-    id = 0;
-    nb_intervals = 0;
-    max_intervals = 0;
-    nb_decomposed = 0;
-    nb_leaves = 0;
-    end_updated = 0;
-    nb_updates = 0;
-    size = 0;
 }
 
 //construct from stream

@@ -14,7 +14,7 @@ char arguments::problem[50];
 char arguments::worker_type='c'; // default : CPU
 
 //Bounding options
-int arguments::boundMode     = 2;
+int arguments::boundMode     = 0;
 int arguments::primary_bound     = 0;
 int arguments::secondary_bound   = 1;
 
@@ -23,8 +23,7 @@ int arguments::johnsonPairs      = 0;
 
 //Branching options
 int arguments::branchingMode = 3;
-int arguments::sortNodes         = 1;
-int arguments::nodePriority = 1;
+int arguments::sortNodes         = 0;
 
 //Pruning options
 bool arguments::findAll        = false;
@@ -43,14 +42,14 @@ int arguments::nbivms_mc  = -1;
 int arguments::nbivms_gpu = 16384;
 
 //load balance / fault tolerance
-int arguments::checkpointv = 1;
+int arguments::checkpointv = 3600;
 int arguments::balancingv  = 1;
 int arguments::timeout  = 99999;
 
 char arguments::mc_ws_select = 'a'; //random
 
 //heuristic...
-int arguments::heuristic_threads       = 1;
+int arguments::heuristic_threads       = 0;
 int arguments::heuristic_iters         = 1;
 int arguments::initial_heuristic_iters = 100;
 char arguments::heuristic_type         = 'n';
@@ -130,38 +129,37 @@ arguments::readIniFile(std::string inifile)
     read_init_mode(init_mode_str, init_mode, initial_ub);
 
     // -----------------checkpoint / load balancing intervals -----------------
-    checkpointv = reader.GetInteger("time", "checkpoint", 3600);// default values;
-    balancingv  = reader.GetInteger("time", "balance", 1);
-    timeout  = reader.GetInteger("time", "timeout", 99999);
+    checkpointv = reader.GetInteger("time", "checkpoint", checkpointv);// use default values;
+    balancingv  = reader.GetInteger("time", "balance", balancingv);
+    timeout  = reader.GetInteger("time", "timeout", timeout);
 
     // ------------------------nb concurrent explorers------------------------
-    nbivms_mc  = reader.GetInteger("multicore", "threads", -1);
-    nbivms_gpu = reader.GetInteger("gpu", "nbIVMs", 16384);
+    nbivms_mc  = reader.GetInteger("multicore", "threads", nbivms_mc);
+    nbivms_gpu = reader.GetInteger("gpu", "nbIVMs", nbivms_gpu);
 
     // ---------------------------sort sibling nodes---------------------------
-    sortNodes    = reader.GetInteger("bb", "sortedDFS", 1);
-    nodePriority = reader.GetInteger("bb", "sortingCriterion", 1);
+    sortNodes    = reader.GetInteger("bb", "sortedDFS", sortNodes);
 
     // ----------------------------------bound----------------------------------
-    primary_bound = reader.GetInteger("bb", "primaryBound", 0);
-    secondary_bound = reader.GetInteger("bb", "secondaryBound", 1);
+    primary_bound = reader.GetInteger("bb", "primaryBound", primary_bound);
+    secondary_bound = reader.GetInteger("bb", "secondaryBound", secondary_bound);
 
     // -----------------------------johnson bound-----------------------------
-    johnsonPairs     = reader.GetInteger("bb", "JohnsonMode", 1);
-    earlyStopJohnson = reader.GetBoolean("bb", "earlyStopJohnson", true);
-    boundMode        = reader.GetInteger("bb", "boundingMode", 2);
+    johnsonPairs     = reader.GetInteger("bb", "JohnsonMode", johnsonPairs);
+    earlyStopJohnson = reader.GetBoolean("bb", "earlyStopJohnson", earlyStopJohnson);
+    boundMode        = reader.GetInteger("bb", "boundingMode", boundMode);
 
     //
-    findAll    = reader.GetBoolean("bb", "findAll", false);
+    findAll    = reader.GetBoolean("bb", "findAll", findAll);
 
     // single
-    singleNode = reader.GetBoolean("bb", "singleNode", false);
+    singleNode = reader.GetBoolean("bb", "singleNode", singleNode);
 
     // --------------------------------branching--------------------------------
-    branchingMode = reader.GetInteger("bb", "adaptiveBranchingMode", 3);
+    branchingMode = reader.GetInteger("bb", "adaptiveBranchingMode", branchingMode);
 
     // -------------------------------verbosity---------------------------------
-    printSolutions = reader.GetBoolean("verbose", "printSolutions", false);
+    printSolutions = reader.GetBoolean("verbose", "printSolutions", printSolutions);
     // if(printSolutions)
     //     std::cout<<"Printing Solutions..."<<std::endl;
 
@@ -169,12 +167,12 @@ arguments::readIniFile(std::string inifile)
     // type         = reader.Get("bb", "type", "c")[0];
 
     // --------------------------------heuristic--------------------------------
-    heuristic_threads       = reader.GetInteger("heuristic", "heuristic_threads", 1);
-    initial_heuristic_iters = reader.GetInteger("heuristic", "initial_heuristic_iters", 100);
-    heuristic_iters         = reader.GetInteger("heuristic", "heuristic_iters", 100);
+    heuristic_threads       = reader.GetInteger("heuristic", "heuristic_threads", heuristic_threads);
+    initial_heuristic_iters = reader.GetInteger("heuristic", "initial_heuristic_iters", initial_heuristic_iters);
+    heuristic_iters         = reader.GetInteger("heuristic", "heuristic_iters", heuristic_iters);
     heuristic_type = reader.Get("heuristic", "heuristic_type", "n")[0];
 
-    initial_work = reader.GetInteger("distributed", "initialWork", 3);
+    initial_work = reader.GetInteger("distributed", "initialWork", initial_work);
 }
 
 
