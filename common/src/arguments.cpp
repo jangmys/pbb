@@ -63,7 +63,7 @@ bool arguments::printSolutions = false;
 //logfile
 char arguments::logfile[50] = "./logfile.txt";
 //logging level : error < info < debug < debug4
-int arguments::logLevel = logINFO;
+TLogLevel arguments::logLevel = logINFO;
 //GPU execution output every N iterations (0 : off)
 int arguments::gpuverb=0;
 
@@ -91,34 +91,6 @@ void read_init_mode(char* init_mode_str, int& init_mode, int& initial_ub)
             initial_ub = atoi(init_mode_str);
         }
     }
-}
-
-void arguments::arg_summary()
-{
-    FILE_LOG(logINFO)<<"log";
-
-    if (singleNode){
-        std::cout << "Single-node mode" << std::endl;
-    }
-
-    // stdout
-    std::cout<<"Problem:\t\t"<<arguments::problem<<" / Instance "<<arguments::inst_name<<"\n";
-    std::cout<<"Worker type:\t\t"<<arguments::worker_type<<std::endl;
-    if(arguments::worker_type=='g'){
-        std::cout<<"#GPU workers:\t\t"<<arguments::nbivms_gpu<<std::endl;
-    }
-    else if(arguments::worker_type=='c'){
-        std::cout<<"#CPU threads:\t\t"<<arguments::nbivms_mc<<std::endl;
-    }
-
-    std::cout<<"Bounding mode:\t\t"<<arguments::boundMode<<std::endl;
-    if(arguments::primary_bound == 1 || (arguments::boundMode == 2 && arguments::secondary_bound == 1))
-    {
-        std::cout<<"\t#Johnson Pairs:\t\t"<<arguments::johnsonPairs<<std::endl;
-        std::cout<<"\tEarly Exit:\t\t"<<arguments::earlyStopJohnson<<std::endl;
-    }
-    std::cout<<"Branching:\t\t"<<arguments::branchingMode<<std::endl;
-
 }
 
 bool file_exists (char *filename) {
@@ -351,4 +323,52 @@ arguments::parse_arguments(int argc, char ** argv)
     }
 
     return ok;
+}
+
+void arguments::arg_summary()
+{
+    if (singleNode){
+        std::cout << "Single-node mode" << std::endl;
+    }
+
+    // stdout
+    std::cout<<"Problem:\t\t"<<arguments::problem<<" / Instance "<<arguments::inst_name<<"\n";
+    std::cout<<"Worker type:\t\t"<<arguments::worker_type<<std::endl;
+    if(arguments::worker_type=='g'){
+        std::cout<<"#GPU workers:\t\t"<<arguments::nbivms_gpu<<std::endl;
+    }
+    else if(arguments::worker_type=='c'){
+        std::cout<<"#CPU threads:\t\t"<<arguments::nbivms_mc<<std::endl;
+    }
+
+    std::cout<<"Bounding mode:\t\t"<<arguments::boundMode<<std::endl;
+    if(arguments::primary_bound == 1 || (arguments::boundMode == 2 && arguments::secondary_bound == 1))
+    {
+        std::cout<<"\t#Johnson Pairs:\t\t"<<arguments::johnsonPairs<<std::endl;
+        std::cout<<"\tEarly Exit:\t\t"<<arguments::earlyStopJohnson<<std::endl;
+    }
+    std::cout<<"Branching:\t\t"<<arguments::branchingMode<<std::endl;
+
+    //===============================================================================================
+    if (singleNode){
+        FILE_LOG(logINFO) << "Single-node mode" << std::endl;
+    }
+
+    // stdout
+    FILE_LOG(logINFO)<<"Problem:\t\t"<<arguments::problem<<" / Instance "<<arguments::inst_name;
+    FILE_LOG(logINFO)<<"Worker type:\t\t"<<arguments::worker_type;
+    if(arguments::worker_type=='g'){
+        FILE_LOG(logINFO)<<"#GPU workers:\t\t"<<arguments::nbivms_gpu;
+    }
+    else if(arguments::worker_type=='c'){
+        FILE_LOG(logINFO)<<"#CPU threads:\t\t"<<arguments::nbivms_mc;
+    }
+
+    FILE_LOG(logINFO)<<"Bounding mode:\t\t"<<arguments::boundMode;
+    if(arguments::primary_bound == 1 || (arguments::boundMode == 2 && arguments::secondary_bound == 1))
+    {
+        FILE_LOG(logINFO)<<"\t#Johnson Pairs:\t\t"<<arguments::johnsonPairs;
+        FILE_LOG(logINFO)<<"\tEarly Exit:\t\t"<<arguments::earlyStopJohnson;
+    }
+    FILE_LOG(logINFO)<<"Branching:\t\t"<<arguments::branchingMode;
 }

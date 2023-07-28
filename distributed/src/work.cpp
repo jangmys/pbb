@@ -256,12 +256,8 @@ std::shared_ptr<work> work::divide(int max)
         }
     }
 
-    if(nb_stolen==0)
-        FILE_LOG(logINFO)<<"DivideNONE "<<std::endl;
-
-
-
     FILE_LOG(logDEBUG)<<"Divide "<<nb_stolen;
+
     return tmp;
 } // work::divide
 

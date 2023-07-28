@@ -60,7 +60,7 @@ public:
     static char work_directory[50];
 
     static char logfile[50];
-    static int logLevel;
+    static TLogLevel logLevel;
 
     // problem specific (FSP) =================
     static bool earlyStopJohnson;

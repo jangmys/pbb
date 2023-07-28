@@ -106,7 +106,7 @@ int main(int argc, char* argv[])
             cost = ls.localSearchKI(p->schedule,10);
             std::cout<<"COST-LS-KI : "<<cost<<"\n";
 
-            p->set_fitness(ls(p->schedule,-1,p->size));
+            p->ub = ls(p->schedule,-1,p->size);
 
             std::cout<<" = LS :\t";
             break;
@@ -153,5 +153,5 @@ int main(int argc, char* argv[])
     {
         std::cout<<e<<" ";
     }
-    std::cout<<" === CMAX: "<<p->fitness()<<std::endl;
+    std::cout<<" === CMAX: "<<p->ub<<std::endl;
 }

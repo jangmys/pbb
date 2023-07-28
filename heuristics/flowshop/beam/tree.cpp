@@ -27,7 +27,7 @@ Tree::setRoot(std::vector<int> perm, int l1, int l2)
     for(int i=0;i<psize;i++){
         root->schedule[i]=perm[i];
     }
-    root->set_lower_bound(0);
+    root->lb=0;
     root->limit1=l1;
     root->limit2=l2;
 

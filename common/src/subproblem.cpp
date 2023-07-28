@@ -10,19 +10,10 @@
 #include "../include/subproblem.h"
 
 subproblem::subproblem(int _size) :
-    size(_size),limit1(-1),limit2(_size),
-    schedule(std::vector<int>(size))
+    size(_size),limit2(size),
+    schedule(std::vector<int>(size)),mask(std::vector<bool>(size,true))
 {
     std::iota(schedule.begin(),schedule.end(),0);
-
-    lb = 0;
-	_ub=0;
-	depth=0;
-}
-
-subproblem::~subproblem()
-{
-    // free(schedule);
 }
 
 subproblem::subproblem(const subproblem& s)
@@ -37,40 +28,21 @@ subproblem::subproblem(const subproblem& s)
         schedule[j] = s.schedule[j];
 
     lb = s.lb;
-	_ub = s._ub;
+	ub = s.ub;
 	depth= s.depth;
 }
 
-subproblem::subproblem(const subproblem& father, int indice, int begin_end)
+subproblem::subproblem(const subproblem& father, const int indice, const int begin_end) : size(father.size),
+    limit1(father.limit1 + 1 - begin_end),limit2(father.limit2 - begin_end),schedule(father.schedule),mask(std::vector<bool>(size,true)),depth(father.depth+1)
 {
-    size = father.size;
-    schedule = father.schedule;//std::vector<int>(size);
-
-    limit1 = father.limit1 + 1 - begin_end;
-    limit2 = father.limit2 - begin_end;
-
     if(begin_end == 0)
 	{
         remove_insert_left(schedule.data(),limit1,indice);
 	}else{
         remove_insert_right(schedule.data(),indice,limit2);
 	}
-
-    depth=father.depth+1;
-    lb = 0;
-    _ub=0;
 }
 
-
-int subproblem::locate(const int job)
-{
-    for(int i=0;i<size;i++)
-    {
-        if(schedule[i]==job)
-            return i;
-    }
-    return -1; //error: not found
-}
 
 void subproblem::swap(int a, int b)
 {
@@ -80,7 +52,7 @@ void subproblem::swap(int a, int b)
 }
 
 bool
-subproblem::simple()  const
+subproblem::is_simple()  const
 {
     return (limit2-limit1 == 3);
 }
@@ -94,6 +66,7 @@ subproblem::leaf()  const
 void
 subproblem::print()
 {
+    printf("[");
     for(int i=0;i<=limit1;i++)
     {
         printf("%3d ",schedule[i]);
@@ -108,7 +81,9 @@ subproblem::print()
     {
         printf("%3d ",schedule[i]);
     }
-    printf("\t %d\n",lb);
+    printf("]");
+    printf("\t LB: %d",lb);
+    printf("\t UB: %d\n",ub);
 }
 
 void
@@ -131,12 +106,13 @@ subproblem::operator=(const subproblem& s)
     limit1 = s.limit1;
     limit2 = s.limit2;
 
-    for (int j = 0; j < size; j++)
-        schedule[j] = s.schedule[j];
+    schedule = s.schedule;
+    mask = s.mask;
 
-    lb = s.lb;
-	_ub = s._ub;
     depth = s.depth;
+    prio = s.prio;
+    lb = s.lb;
+	ub = s.ub;
 
     return *this;
 }
@@ -150,7 +126,7 @@ operator << (std::ostream& stream, const subproblem& s)
     for (int i = 0; i < s.size; i++) {
         stream << s.schedule[i] << " ";
     }
-	stream << "\t" << s.lb << " " << s._ub;
+	stream << "\t" << s.lb << " " << s.ub;
 
     return stream;
 }
