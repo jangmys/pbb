@@ -183,7 +183,7 @@ matrix_controller::explore_multicore()
         ivmbb[id]->setBest(bestCost);
 
 
-        if (allEnd.load(std::memory_order_relaxed)) {
+        if (allEnd.load(std::memory_order_seq_cst)) {
             break;
         }else if (!ivmbb[id]->next()){ //WORK IS DONE HERE !!!!
             request_work(id);
@@ -195,12 +195,12 @@ matrix_controller::explore_multicore()
 #ifdef WITH_MPI
         if(is_distributed())
         {
-            if(pbb->workUpdateAvailable.load(std::memory_order_relaxed))
+            if(pbb->workUpdateAvailable.load(std::memory_order_seq_cst))
             {
                 FILE_LOG(logINFO) << "=== BREAK (get works)";
                 break;
             }
-            if(atom_nb_steals.load(std::memory_order_relaxed)>(get_num_threads()/4))
+            if(atom_nb_steals.load(std::memory_order_seq_cst)>(get_num_threads()/4))
             {
                 FILE_LOG(logINFO) << "=== BREAK (steals)";
                 break;
@@ -260,7 +260,7 @@ matrix_controller::next()
 
     delete[]_threads;
 
-    return allEnd.load(std::memory_order_relaxed);
+    return allEnd.load(std::memory_order_seq_cst);
 }
 
 

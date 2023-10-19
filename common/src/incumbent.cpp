@@ -99,7 +99,7 @@ int Incumbent<T>::getBest()
     int ret;
 
     // pthread_rwlock_rdlock(&lock_sol);
-    ret=cost.load(std::memory_order_relaxed);
+    ret=cost.load(std::memory_order_seq_cst);
     // pthread_rwlock_unlock(&lock_sol);
     return ret;
 }
@@ -109,7 +109,7 @@ void Incumbent<T>::getBest(int& _cost)
 {
     // pthread_rwlock_rdlock(&lock_sol);
     if (cost.load() < _cost) {
-        _cost = cost.load(std::memory_order_relaxed);
+        _cost = cost.load(std::memory_order_seq_cst);
     }
     // pthread_rwlock_unlock(&lock_sol);
     return;
