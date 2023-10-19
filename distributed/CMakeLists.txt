@@ -57,7 +57,7 @@ target_include_directories(dbb PUBLIC ${PARENT_DIR}/multicore/ll)
 
 target_include_directories(dbb PUBLIC ${PROJECT_SOURCE_DIR}/include/)
 target_include_directories(dbb PUBLIC ${MPI_CXX_INCLUDE_PATH})
-target_include_directories(dbb PUBLIC ${ENV{INCLUDE})
+target_include_directories(dbb PUBLIC $ENV{INCLUDE})
 target_include_directories(dbb PUBLIC /usr/include)
 
 target_compile_options(dbb PUBLIC ${MPI_CXX_COMPILE_FLAGS})
