@@ -85,10 +85,18 @@ ThreadController::request_work(unsigned id)
     }
 
     unsigned victim = 0;
-
-    while(!thd_data[victim]->has_work.load() && !allEnd.load()){
+    do{
         victim = (*victim_select)(id);
-    }
+
+        if((victim < 0)||(victim >=M)){
+            std::cout<<"fatal error : victim id out of bounds\n";
+            exit(-1);
+        }
+        if(!thd_data[victim]){
+            std::cout<<"fatal error : victim thread data uninitialized\n";
+            exit(-1);
+        }
+    }while(!thd_data[victim]->has_work.load() && !allEnd.load());
 
     FILE_LOG(logDEBUG4) << id << " select " << victim << "\tcounter: "<<end_counter.load() << std::flush;
 
