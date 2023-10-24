@@ -196,6 +196,7 @@ arguments::parse_arguments(int argc, char ** argv)
                 {"bound",   required_argument, NULL,  0 },
                 {"branch",  required_argument, NULL,  0 },
                 {"findall",  no_argument, NULL,  0 },
+                {"print-sol",  no_argument, NULL,  0 },
                 {"singlenode",  no_argument, NULL,  0 },
                 {"primary-bound",  required_argument, NULL,  0 },
                 {"gpu", optional_argument, NULL, 0},
@@ -247,6 +248,10 @@ arguments::parse_arguments(int argc, char ** argv)
             else if(strcmp(long_options[option_index].name,"findall")  == 0)
             {
                 findAll = true;
+            }
+            else if(strcmp(long_options[option_index].name,"print-sol")  == 0)
+            {
+                printSolutions = true;
             }
             else if(strcmp(long_options[option_index].name,"singlenode")  == 0)
             {

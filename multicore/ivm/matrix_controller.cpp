@@ -134,6 +134,10 @@ matrix_controller::explore_multicore()
     if(!ivmbb[id]){
         //make sequential bb-explorer
         ivmbb[id] = make_ivmbb<int>(pbb);
+
+        if(is_distributed())
+            ivmbb[id]->print_new_solutions=false;
+
         //thread-local data for MC exploration
         thd_data[id] = std::make_shared<RequestQueue>();
 

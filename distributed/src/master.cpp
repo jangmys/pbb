@@ -311,6 +311,12 @@ master::run()
                 {
                     pbb->best_found.foundAtLeastOneSolution.store(true);
                     pbb->best_found.save();
+
+                    if(arguments::printSolutions){
+                        std::cout<<"New Best:\t";
+                        pbb->best_found.print();
+                    }
+
                     MPI_Send(&pbb->best_found.cost,1,MPI_INT,status.MPI_SOURCE,BEST,MPI_COMM_WORLD);
                 }else{
                     //if updatedBest
