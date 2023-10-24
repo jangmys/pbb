@@ -43,10 +43,10 @@ public:
 class RandomVictimSelector : public VictimSelector
 {
 public:
-    explicit RandomVictimSelector(unsigned _nthreads) : VictimSelector(_nthreads)
+    explicit RandomVictimSelector(unsigned _nthreads) : VictimSelector(_nthreads),random_engine((std::random_device())())
     {
         auto seed = static_cast<long int>(std::time(nullptr));
-        random_engine = std::mt19937(size_t(seed));
+        // random_engine = std::mt19937(size_t(seed));
         // generator = std::random_device{ } ();
         unif = std::uniform_int_distribution<int>(0,nthreads-1);
     };
@@ -74,6 +74,7 @@ public:
         return victim;
     }
 private:
+    // std::random_device random_device;
     std::mt19937 random_engine;
     std::uniform_int_distribution<int> unif;
 };
