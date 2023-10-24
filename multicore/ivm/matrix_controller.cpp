@@ -147,27 +147,21 @@ matrix_controller::explore_multicore()
 
     (void)pthread_barrier_wait(&barrier);
 
-    int bestCost=INT_MAX;
-
-    //get global best UB
-    pbb->best_found.getBest(bestCost);
     //set local UB
+    int bestCost=INT_MAX;
+    pbb->best_found.getBest(bestCost);
     ivmbb[id]->setBest(bestCost);
+    //reset counters and request queue
+    thd_data[id]->reset_request_queue();
+    ivmbb[id]->reset_node_counter();
 
     if(updatedIntervals){
         // std::cout<<"ID "<<id<<" init at interval\n";
         pthread_mutex_lock_check(&mutex_buffer);
         bool _active = ivmbb[id]->initAtInterval(pos[id], end[id]);
         pthread_mutex_unlock(&mutex_buffer);
-
         thd_data[id]->has_work.store(_active);
     }
-
-    //reset counters and request queue
-    thd_data[id]->reset_request_queue();
-
-    ivmbb[id]->reset_node_counter();
-
     //make sure all are initialized
     int ret = pthread_barrier_wait(&barrier);
     if(ret==PTHREAD_BARRIER_SERIAL_THREAD)
@@ -181,7 +175,6 @@ matrix_controller::explore_multicore()
         pbb->best_found.getBest(bestCost);
         //set local UB
         ivmbb[id]->setBest(bestCost);
-
 
         if (allEnd.load(std::memory_order_seq_cst)) {
             break;
