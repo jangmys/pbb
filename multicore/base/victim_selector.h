@@ -59,6 +59,12 @@ public:
         do {
             // randomly select thread
             victim = unif(random_engine);
+
+            if((victim<0)||(victim>=nthreads)){
+                std::cout<<"out of bounds :"<<victim<<"\n";
+                exit(-1);
+            }
+
             // rand() / (RAND_MAX /  nthreads);
             // if(++attempts > nthreads){
             //     break;
