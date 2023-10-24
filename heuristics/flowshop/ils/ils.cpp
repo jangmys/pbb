@@ -217,7 +217,7 @@ void IG::run(std::shared_ptr<subproblem> s)
 {
     int makespan = runIG(s,igiter);
 
-    s->set_fitness(makespan);
+    s->ub = makespan;
 }
 
 
@@ -232,7 +232,7 @@ int IG::runIG(std::shared_ptr<subproblem> current, const int niter)
 
     int bestcost=nhood->m->computeHeads(best->schedule, nbJob);
     int currentcost=bestcost;
-	current->set_fitness(bestcost);
+	current->ub=bestcost;
 
     int perturb=destructStrength;
     std::vector<int> removedJobs(perturb);
@@ -248,7 +248,7 @@ int IG::runIG(std::shared_ptr<subproblem> current, const int niter)
 
 		int tempcost=ls->localSearchKI(temp->schedule,kmax);
 
-		temp->set_fitness(tempcost);
+		temp->ub = tempcost;
 
         if(acceptance(tempcost, currentcost, acceptanceParameter)){
 			currentcost=tempcost;
@@ -271,7 +271,7 @@ int IG::runIG(std::shared_ptr<subproblem> current, const int niter)
 		*current=*best;
 	}
 
-    return current->fitness();
+    return current->ub;
 }
 
 int IG::runIG(subproblem* current, int l1, int l2, const int niter)

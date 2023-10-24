@@ -94,7 +94,7 @@ void pbab::set_initial_solution()
 
                     bs.run_loop(1<<14,p.get());
 
-                    set_initial_solution(bs.bestSolution->schedule,p->fitness());
+                    set_initial_solution(bs.bestSolution->schedule,p->ub);
 
                     break;
                 }

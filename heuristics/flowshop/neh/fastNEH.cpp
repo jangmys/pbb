@@ -67,7 +67,7 @@ void fastNEH::run(std::shared_ptr<subproblem> p)
 
     int makespan;
     runNEH(p->schedule,makespan);
-    p->set_fitness(makespan);
+    p->ub = makespan;
 };
 
 
@@ -79,7 +79,7 @@ subproblem fastNEH::operator()()
     int makespan;
 
     run(perm.schedule,makespan);
-    perm.set_fitness(makespan);
+    perm.ub = makespan;
 
     return perm;
 }

@@ -46,14 +46,14 @@ public:
         std::unique_ptr<subproblem> tmp;
 
         //if only 2 solutions ...
-        if (n.simple()) {
+        if (n.is_simple()) {
             tmp = std::make_unique<subproblem>(n, n.limit1 + 1, Branching::Front);
-            tmp->set_lower_bound(primary_bound->evalSolution(tmp->schedule.data()));
+            tmp->lb = primary_bound->evalSolution(tmp->schedule.data());
             if(!(*prune)(tmp.get()))
                 children.push_back(std::move(tmp));
 
             tmp = std::make_unique<subproblem>(n, n.limit1+2, Branching::Front);
-            tmp->set_lower_bound(primary_bound->evalSolution(tmp->schedule.data()));
+            tmp->lb = primary_bound->evalSolution(tmp->schedule.data());
             if(!(*prune)(tmp.get()))
                 children.push_back(std::move(tmp));
         } else {
@@ -88,7 +88,7 @@ public:
                     int job = n.schedule[j];
                     if(!(*prune)(cost[dir][job])){
                         tmp = std::make_unique<subproblem>(n, j, dir);
-                        tmp->set_lower_bound(cost[dir][job]);
+                        tmp->lb = cost[dir][job];
                         tmp->prio=prio[dir][job];
                         children.push_back(std::move(tmp));
                     }
@@ -102,7 +102,7 @@ public:
 
                     if(!(*prune)(tmp_lb[0])){
                         tmp = std::make_unique<subproblem>(n, j, dir);
-                        tmp->set_lower_bound(tmp_lb[0]);
+                        tmp->lb = tmp_lb[0];
                         tmp->prio=tmp_lb[1];
                         children.push_back(std::move(tmp));
                     }
@@ -117,7 +117,7 @@ public:
 
                     if(!(*prune)(tmp_lb[0])){
                         tmp = std::make_unique<subproblem>(n, j, dir);
-                        tmp->set_lower_bound(tmp_lb[0]);
+                        tmp->lb = tmp_lb[0];
                         tmp->prio=tmp_lb[1];
                         children.push_back(std::move(tmp));
                     }
@@ -142,14 +142,14 @@ public:
         std::unique_ptr<subproblem> tmp;
 
         //if only 2 solutions ...
-        if (n.simple()) {
+        if (n.is_simple()) {
             tmp = std::make_unique<subproblem>(n, n.limit1 + 1, Branching::Front);
-            tmp->set_lower_bound(primary_bound->evalSolution(tmp->schedule.data()));
+            tmp->lb = primary_bound->evalSolution(tmp->schedule.data());
             if(!(*prune)(tmp.get()))
                 children.push_back(std::move(tmp));
 
             tmp = std::make_unique<subproblem>(n, n.limit1+2, Branching::Front);
-            tmp->set_lower_bound(primary_bound->evalSolution(tmp->schedule.data()));
+            tmp->lb = primary_bound->evalSolution(tmp->schedule.data());
             if(!(*prune)(tmp.get()))
                 children.push_back(std::move(tmp));
         } else {
@@ -202,7 +202,7 @@ public:
 
                         if(!(*prune)(tmp_lb[0])){
                             tmp = std::make_unique<subproblem>(n, j, Branching::Front);
-                            tmp->set_lower_bound(tmp_lb[0]);
+                            tmp->lb = tmp_lb[0];
                             tmp->prio=tmp_lb[1];
                             children.push_back(std::move(tmp));
                         }
@@ -221,7 +221,7 @@ public:
 
                         if(!(*prune)(tmp_lb[0])){
                             tmp = std::make_unique<subproblem>(n, j, Branching::Back);
-                            tmp->set_lower_bound(tmp_lb[0]);
+                            tmp->lb = tmp_lb[0];
                             tmp->prio=tmp_lb[1];
                             children.push_back(std::move(tmp));
                         }

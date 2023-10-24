@@ -34,10 +34,10 @@ bool Poolbb::next()
         auto n = std::move(pool->take_top());
 
         if(n->leaf()){
-            if(!(*prune)(n->lower_bound()))
+            if(!(*prune)(n->lb))
             {
-                prune->local_best = n->lower_bound();
-                std::cout<<n->lower_bound()<<"\t"<<prune->local_best<<"\n";
+                prune->local_best = n->lb;
+                std::cout<<n->lb<<"\t"<<prune->local_best<<"\n";
             }
             count_leaves++;
         }
@@ -62,14 +62,14 @@ Poolbb::decompose(subproblem& n){
     std::unique_ptr<subproblem> tmp;
 
     //if only 2 solutions ...
-    if (n.simple()) {
+    if (n.is_simple()) {
         tmp = std::make_unique<subproblem>(n, n.limit1 + 1, Branching::Front);
-        tmp->set_lower_bound(primary_bound->evalSolution(tmp->schedule.data()));
+        tmp->lb = primary_bound->evalSolution(tmp->schedule.data());
         if(!(*prune)(tmp.get()))
             children.push_back(std::move(tmp));
 
         tmp = std::make_unique<subproblem>(n, n.limit1+2 , Branching::Front);
-        tmp->set_lower_bound(primary_bound->evalSolution(tmp->schedule.data()));
+        tmp->lb = primary_bound->evalSolution(tmp->schedule.data());
         if(!(*prune)(tmp.get()))
             children.push_back(std::move(tmp));
     } else {
@@ -105,7 +105,7 @@ Poolbb::decompose(subproblem& n){
 
                 if(!(*prune)(costFwd[job])){
                     tmp = std::make_unique<subproblem>(n, j, Branching::Front);
-                    tmp->set_lower_bound(costFwd[job]);
+                    tmp->lb = costFwd[job];
                     tmp->prio=prioFwd[job];
                     children.push_back(std::move(tmp));
                 }
@@ -115,7 +115,7 @@ Poolbb::decompose(subproblem& n){
                 int job = n.schedule[j];
                 if(!(*prune)(costBwd[job])){
                     tmp = std::make_unique<subproblem>(n, j, Branching::Back);
-                    tmp->set_lower_bound(costBwd[job]);
+                    tmp->lb = costBwd[job];
                     tmp->prio=prioBwd[job];
                     children.push_back(std::move(tmp));
                 }
