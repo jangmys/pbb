@@ -89,7 +89,7 @@ ThreadController::request_work(unsigned id)
         victim = (*victim_select)(id);
 
         if((victim < 0)||(victim >=M)){
-            std::cout<<"fatal error : victim id out of bounds\n";
+            std::cout<<"fatal error : victim id "<<victim<<" out of bounds (0-"<<M<<")\n";
             exit(-1);
         }
         if(!thd_data[victim]){
