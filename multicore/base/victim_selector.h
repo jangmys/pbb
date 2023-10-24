@@ -38,6 +38,7 @@ public:
     }
 };
 
+
 //select victim randomly (may select idle victim)
 class RandomVictimSelector : public VictimSelector
 {
@@ -56,11 +57,12 @@ public:
         unsigned int attempts = 0;
 
         do {
-            // randomly select active thread (at most nbIVM attempts...otherwise loop may be infinite)
-            victim = rand() / (RAND_MAX /  nthreads);
-            if(++attempts > nthreads){
-                break;
-            }
+            // randomly select thread
+            victim = unif(random_engine);
+            // rand() / (RAND_MAX /  nthreads);
+            // if(++attempts > nthreads){
+            //     break;
+            // }
         }while(victim == id);
 
         return victim;
