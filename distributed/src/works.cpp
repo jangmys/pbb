@@ -266,27 +266,18 @@ works::adopt(int max)
 {
     std::shared_ptr<work> tmp = unassigned.front();
 
-    // printf("remaining unexplored :\t%d\n",unassigned.size());
-
-    // tmp->displayUinterval();
-
     int nbinterv = (tmp->Uinterval).size();
-    // printf("%d\t%d",nbinterv,max);
 
-    if (nbinterv == 0) {
-        // printf("THIS %d\n",unassigned.size());fflush(stdout);
-        unassigned.pop_front();
-        return tmp;// nullptr;
+    if (!tmp||nbinterv == 0) {
+        std::cout<<"Initial list of works contains empty work : I refuse to continue.";
+        exit(-1);
     }
 
-    // contains less intervals than requested : split
     if (nbinterv <= max) {
+        // contains less intervals than requested : split
+        // ==============================================
         // divide into
         tmp->split(max);
-
-        FILE_LOG(logINFO) << "Take unassigned " << (tmp->Uinterval).size();
-        // tmp->displayUinterval();
-
         tmp->set_id();
 
         id_insert(tmp);
@@ -296,18 +287,13 @@ works::adopt(int max)
 
         FILE_LOG(logDEBUG4) << "#unassigned " << unassigned.size();
         return tmp;
-        // contains more intervals than requested :
     } else  {
-        // printf("\ttake\t");
-        //		std::shared_ptr<work> tmp2(std::move(tmp->divide(max)));
+        // contains more intervals than requested :
+        // ==============================================
         std::shared_ptr<work> tmp2(std::move(tmp->take(max)));
-
         tmp2->set_id();
-
         id_insert(tmp2);
         sizes_insert(tmp2);
-        // times_insert(tmp2, true);
-
         return tmp2;
     }
 } // works::adopt

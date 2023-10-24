@@ -28,7 +28,6 @@ public:
 
     void initWorks(int initMode);
     int processRequest(std::shared_ptr<work> w);
-    void shutdown();
     void run();
 };
 
