@@ -61,7 +61,7 @@ public:
             victim = unif(random_engine);
 
             if((victim<0)||(victim>=nthreads)){
-                std::cout<<"out of bounds :"<<victim<<"\n";
+                std::cout<<"rand out of bounds :"<<victim<<" >= "<<nthreads<<"\n";
                 exit(-1);
             }
 
