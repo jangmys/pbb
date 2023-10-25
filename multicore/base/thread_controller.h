@@ -16,16 +16,18 @@ base class for multi-core exploration, independent from data structure used for 
 
 class ThreadController{
 public:
-    ThreadController(pbab * _pbb,int _nthreads);
+    ThreadController(pbab * _pbb,int _nthreads,int _worker_rank=0);
     virtual ~ThreadController();
 
     void set_victim_select(std::unique_ptr<VictimSelector> _select)
     {
         victim_select = std::move(_select);
     }
+    unsigned explorer_get_new_id();
 protected:
     pbab* pbb;
     unsigned M;
+    unsigned local_mpi_rank;
     std::vector<std::shared_ptr<RequestQueue>>thd_data;
 
     std::atomic<unsigned int> atom_nb_explorers{0};
@@ -42,7 +44,6 @@ protected:
 
     void counter_decrement();
     bool counter_increment(unsigned id);
-    unsigned explorer_get_new_id();
 
     void push_request(unsigned victim, unsigned id);
     unsigned pull_request(unsigned id);

@@ -176,7 +176,11 @@ main(int argc, char ** argv)
             }
             #else
             int nthreads = (arguments::nbivms_mc < 1) ? get_nprocs() : arguments::nbivms_mc;
-            wrkr = new worker_mc(pbb,nthreads);
+
+            int num_cores = sysconf(_SC_NPROCESSORS_ONLN);
+            int nproc_per_node = num_cores/nthreads;
+
+            wrkr = new worker_mc(pbb,nthreads,(myrank-1)%nproc_per_node);
             #endif
             //
             // FILE_LOG(logINFO) << "Worker running with "<<nthreads<<" threads.\n";

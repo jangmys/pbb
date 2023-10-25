@@ -16,6 +16,7 @@ public:
     pbab * pbb;
     int size;
     int M;
+    int mpi_local_rank;
     unsigned nb_heuristic_threads;
     unsigned long long int local_decomposed_count;
 
@@ -30,7 +31,7 @@ public:
     int *solutions;
     pthread_mutex_t mutex_solutions;
 
-    worker(pbab * _pbb, unsigned int _nbIVM);
+    worker(pbab * _pbb, unsigned int _nbIVM,int _mpi_local_rank = 0);
     virtual ~worker();
 
     void tryLaunchCommBest();

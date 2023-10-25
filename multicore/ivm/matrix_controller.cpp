@@ -20,7 +20,7 @@
 
 #include "make_ivm_algo.h"
 
-matrix_controller::matrix_controller(pbab* _pbb,int _nthreads,bool distributed /*=false*/) : ThreadController(_pbb,_nthreads),_distributed(distributed){
+matrix_controller::matrix_controller(pbab* _pbb,int _nthreads,bool distributed /*=false*/,int _local_mpi_rank/*=0*/) : ThreadController(_pbb,_nthreads,_local_mpi_rank),_distributed(distributed){
     ivmbb = std::vector< std::shared_ptr<Intervalbb<int>> >(get_num_threads(),nullptr);
 
     state = std::vector<int>(get_num_threads(),0);
@@ -106,29 +106,33 @@ stick_this_thread_to_core(int core_id)
 {
     int num_cores = sysconf(_SC_NPROCESSORS_ONLN);
 
-    if (core_id < 0 || core_id >= num_cores)
-        return EINVAL;
+    if (core_id < 0 || core_id >= num_cores){
+        printf("core %d not available\n",core_id);
+        exit(-1);
+    }
 
-    cpu_set_t cpuset;
-    CPU_ZERO(&cpuset);
-    CPU_SET(core_id, &cpuset);
+    cpu_set_t cpuset;//a bitmask
+    CPU_ZERO(&cpuset);//set to zero
+    CPU_SET(core_id, &cpuset);//add core_id to set
 
     pthread_t current_thread = pthread_self();
-    return pthread_setaffinity_np(current_thread, sizeof(cpu_set_t), &cpuset);
+    return pthread_setaffinity_np(current_thread, sizeof(cpu_set_t), &cpuset);//set current threads affinity mask
 }
 
 // run by multiple threads!!!
 // in distributed setting re-entry is possible
 void
-matrix_controller::explore_multicore()
+matrix_controller::explore_multicore(unsigned id)
 {
-    //---------------get unique ID---------------
-    int id = explorer_get_new_id();
-    FILE_LOG(logDEBUG) << "=== got ID " << id;
+    // //---------------get unique ID---------------
+    // int id = explorer_get_new_id();
+    // FILE_LOG(logDEBUG) << "=== got ID " << id;
 
-    if(!is_distributed()){
-        stick_this_thread_to_core(id);
-    }
+    // if(!is_distributed()){
+        int core_id = local_mpi_rank*M + id;
+        std::cout<<"local_rank "<<local_mpi_rank<<" fix worker "<<id<<" to core "<<core_id<<"\n";
+        stick_this_thread_to_core(core_id);
+    // }
 
     //------check if explorer already exists------
     if(!ivmbb[id]){
@@ -231,7 +235,12 @@ void *
 mcbb_thread(void * _mc)
 {
     matrix_controller * mc = (matrix_controller *) _mc;
-    mc->explore_multicore();
+
+    //---------------get unique ID---------------
+    unsigned id = mc->explorer_get_new_id();
+    FILE_LOG(logDEBUG) << "=== got ID " << id;
+
+    mc->explore_multicore(id);
     return NULL;
 }
 
