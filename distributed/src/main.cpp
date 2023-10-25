@@ -177,8 +177,15 @@ main(int argc, char ** argv)
             #else
             int nthreads = (arguments::nbivms_mc < 1) ? get_nprocs() : arguments::nbivms_mc;
 
-            int num_cores = sysconf(_SC_NPROCESSORS_ONLN);
+            int num_cores = get_nprocs();
+            if(nthreads > num_cores){
+                std::cout<<"running more threads than available cores ("<<num_cores<<") not supported. Setting to max.";
+                nthreads=num_cores;
+            }
+
             int nproc_per_node = num_cores/nthreads;
+
+
 
             wrkr = new worker_mc(pbb,nthreads,(myrank-1)%nproc_per_node);
             #endif

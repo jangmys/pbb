@@ -129,9 +129,9 @@ matrix_controller::explore_multicore(unsigned id)
     // FILE_LOG(logDEBUG) << "=== got ID " << id;
 
     // if(!is_distributed()){
-        int core_id = local_mpi_rank*M + id;
-        std::cout<<"local_rank "<<local_mpi_rank<<" fix worker "<<id<<" to core "<<core_id<<"\n";
-        stick_this_thread_to_core(core_id);
+    int core_id = local_mpi_rank*M + id;
+        // std::cout<<"local_rank "<<local_mpi_rank<<" fix worker "<<id<<" to core "<<core_id<<"\n";
+    stick_this_thread_to_core(core_id);
     // }
 
     //------check if explorer already exists------
