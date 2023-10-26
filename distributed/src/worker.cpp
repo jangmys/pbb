@@ -37,8 +37,6 @@ worker::worker(pbab * _pbb, unsigned int nbIVM, int _mpi_local_rank) : pbb(_pbb)
     pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_ERRORCHECK);
 
     pthread_mutex_init(&mutex_wunit, &attr);
-    pthread_mutex_init(&mutex_inst, &attr);
-    pthread_mutex_init(&mutex_best, &attr);
     pthread_mutex_init(&mutex_end, &attr);
     pthread_mutex_init(&mutex_updateAvail, &attr);
     pthread_mutex_init(&mutex_trigger, &attr);
@@ -60,8 +58,6 @@ worker::~worker()
     pthread_barrier_destroy(&barrier);
 
     pthread_mutex_destroy(&mutex_wunit);
-    pthread_mutex_destroy(&mutex_inst);
-    pthread_mutex_destroy(&mutex_best);
     pthread_mutex_destroy(&mutex_end);
     pthread_mutex_destroy(&mutex_updateAvail);
     pthread_mutex_destroy(&mutex_trigger);
@@ -86,6 +82,9 @@ worker::reset()
     setNewBest(false);
 }
 
+//=====================================================
+//functions for communication threads
+//=====================================================
 void
 worker::wait_for_trigger(bool& check, bool& best)
 {
@@ -115,7 +114,7 @@ worker::wait_for_update_complete()
     pthread_mutex_unlock(&mutex_updateAvail);
 }
 
-// use main thread....
+// dedicated communication thread : handles all communications with master
 void *
 comm_thread(void * arg)
 {
@@ -125,6 +124,7 @@ comm_thread(void * arg)
     w->sendRequest      = false;
     w->setNewBest(false);
 
+    //synchronize with worker thread
     pthread_barrier_wait(&w->barrier);
 
     int nbiter = 0;
@@ -138,7 +138,7 @@ comm_thread(void * arg)
         if (w->checkEnd()) break;
 
         //------------------WAIT ***** ------------------
-        //...until triggered and get reason (checkpoint or best)
+        //...until triggered (sendRequest set to true) and get reason (checkpoint or best)
         bool doCheckpoint, doBest;
         w->wait_for_trigger(doCheckpoint, doBest);
 
@@ -150,11 +150,7 @@ comm_thread(void * arg)
             pthread_mutex_unlock(&w->mutex_trigger);
 
             //convert to mpz integer intervals and sort...
-            // w->dwrk = convert::fact2dec(w->work_buf,w->pbb->size);
             w->work_buf->fact2dec(w->dwrk);
-
-            // FILE_LOG(logINFO) <<"SEDN WORK\t"<<*(w->dwrk);
-
             //...send to MASTER
             w->comm->send_work(w->dwrk, 0, WORK);
         } else if (doBest) {
@@ -162,14 +158,17 @@ comm_thread(void * arg)
             //reset best-trigger
             w->setNewBest(false);
             //get worker-best-solution and cost
+
+            int *perm = new int[w->pbb->size];
             // solution tmp(w->pbb->size);
-            // int tmpcost;
+            int tmpcost;
             //
-            // w->pbb->best_found.getBestSolution(tmp.perm.data(),tmpcost);
+            w->pbb->best_found.getBestSolution(perm,tmpcost);
             // tmp.cost.store(tmpcost);
 
             //send to master
-            w->comm->send_sol(w->pbb->best_found.perm.data(), w->pbb->best_found.cost, 0, BEST);
+            w->comm->send_sol(perm, tmpcost, 0, BEST);
+            // w->comm->send_sol(w->pbb->best_found.perm.data(), w->pbb->best_found.cost, 0, BEST);
         }
 
         nbiter++;
@@ -210,7 +209,9 @@ comm_thread(void * arg)
             {
                 MPI_Recv(&dummy, 1, MPI_INT, 0, END, MPI_COMM_WORLD, &status);
                 FILE_LOG(logINFO) << "Rank " << w->comm->rank << " terminates.";
+                pthread_mutex_lock_check(&w->mutex_end);
                 w->end = true;
+                pthread_mutex_unlock(&w->mutex_end);
                 break;
             }
             case NIL: /*nothing : still receive master-best*/
@@ -340,6 +341,11 @@ void worker::setNewBest(bool _v){
     pthread_mutex_unlock(&mutex_trigger);
 };
 
+// void worker::setSendRequest(bool _v){
+//     pthread_mutex_lock_check(&mutex_trigger);
+//     newBest=_v;
+//     pthread_mutex_unlock(&mutex_trigger);
+// };
 
 
 // performs heuristic in parallel to exploration process
