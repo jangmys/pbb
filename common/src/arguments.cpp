@@ -203,6 +203,7 @@ arguments::parse_arguments(int argc, char ** argv)
                 {"ll", no_argument, NULL, 0},
                 {"inc-initial-ub", no_argument, NULL, 0},
                 {"file",required_argument,NULL, 0},
+                {"heuristic-threads",  required_argument, NULL,  0 },
                 {0,         0,                 0,  0 }
             };
 
@@ -273,6 +274,10 @@ arguments::parse_arguments(int argc, char ** argv)
                 // printf(" == primary-bound %c\n",optarg[0]);
                 // printf(" == primary-bound %c\n",optarg[2]);
                 // printf(" == primary-bound %c\n",optarg[4]);
+            }
+            else if(strcmp(long_options[option_index].name,"heuristic-threads")  == 0)
+            {
+                heuristic_threads = atoi(optarg);
             }
             break;
         }

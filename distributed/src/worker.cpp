@@ -129,7 +129,6 @@ comm_thread(void * arg)
 
     int nbiter = 0;
     int dummy  = 11;
-    int masterbest;
 
     int *msg_counter = new int[10];
 
@@ -142,8 +141,8 @@ comm_thread(void * arg)
         bool doCheckpoint, doBest;
         w->wait_for_trigger(doCheckpoint, doBest);
 
-        //---------CHECKPOINT : SEND intervals------------
         if (doCheckpoint) {
+            //---------CHECKPOINT : SEND intervals------------
             //reset checkpoint-trigger
             pthread_mutex_lock_check(&w->mutex_trigger);
             w->sendRequest = false;
@@ -154,21 +153,16 @@ comm_thread(void * arg)
             //...send to MASTER
             w->comm->send_work(w->dwrk, 0, WORK);
         } else if (doBest) {
-        //-------------BEST : SEND local best-------------
+            //-------------BEST : SEND local best-------------
             //reset best-trigger
             w->setNewBest(false);
             //get worker-best-solution and cost
-
             int *perm = new int[w->pbb->size];
-            // solution tmp(w->pbb->size);
             int tmpcost;
-            //
             w->pbb->best_found.getBestSolution(perm,tmpcost);
-            // tmp.cost.store(tmpcost);
-
             //send to master
             w->comm->send_sol(perm, tmpcost, 0, BEST);
-            // w->comm->send_sol(w->pbb->best_found.perm.data(), w->pbb->best_found.cost, 0, BEST);
+            delete[]perm;
         }
 
         nbiter++;
@@ -183,9 +177,9 @@ comm_thread(void * arg)
 
         switch(status.MPI_TAG)
         {
-            /* new work */
-            case WORK:
-            case NEWWORK: {
+            case WORK: /*modified work*/
+            case NEWWORK: /* new work */
+            {
                 //the receive buffer (decimal intervals)...
                 auto rwrk = std::make_shared<work>();
                 //receive
@@ -195,13 +189,14 @@ comm_thread(void * arg)
                 w->work_buf->dec2fact(rwrk);
                 //signal and wait
                 w->wait_for_update_complete();
-
                 break;
             }
             case BEST: /* improved best */
+            case NIL: /*nothing : receive master-best anyway*/
             {
                 // printf("worker receive best\n");fflush(stdout);
-                MPI_Recv(&masterbest, 1, MPI_INT, status.MPI_SOURCE, BEST, MPI_COMM_WORLD, &status);
+                int masterbest;
+                MPI_Recv(&masterbest, 1, MPI_INT, 0, status.MPI_TAG, MPI_COMM_WORLD, &status);
                 w->pbb->best_found.updateCost(masterbest);
                 break;
             }
@@ -214,13 +209,6 @@ comm_thread(void * arg)
                 pthread_mutex_unlock(&w->mutex_end);
                 break;
             }
-            case NIL: /*nothing : still receive master-best*/
-            {
-                MPI_Recv(&masterbest, 1, MPI_INT, 0, NIL, MPI_COMM_WORLD, &status);
-                w->pbb->best_found.updateCost(masterbest);
-
-                break;
-            }
             case SLEEP:
             {
                 //master has no free work units and steal fails...retry, but wait a little (1 millisec)
@@ -230,7 +218,7 @@ comm_thread(void * arg)
             }
             default:
             {
-                // FILE_LOG(logERROR) << "unknown message";
+                std::cout<<"Fatal error : worker received message with unknown tag.\n";
                 exit(-1);
             }
         }
@@ -357,46 +345,50 @@ heu_thread2(void * arg)
     worker * w = (worker *) arg;
 
     // pthread_mutex_lock_check(&w->pbb->mutex_instance);
-    std::unique_ptr<IG> ils = std::make_unique<IG>(*(w->pbb->inst.get()));
+    // std::unique_ptr<IG> ils = std::make_unique<IG>(*(w->pbb->inst.get()));
     // pthread_mutex_unlock(&w->pbb->mutex_instance);
 
-    int N=w->pbb->size;
-    std::shared_ptr<subproblem> s = std::make_shared<subproblem>(N);
-
-    int gbest;
-
+    // int N=w->pbb->size;
+    // std::shared_ptr<subproblem> s = std::make_shared<subproblem>(N);
+    //
+    // int gbest;
+    //
+    // std::cout<<"IG thread : hello\n";
         // solutions=(int*)malloc(max_sol_ind*size*sizeof(int));
 
     while(!w->checkEnd()){
-        w->pbb->best_found.getBestSolution(s->schedule.data(),gbest);// lock on pbb->best_found
-        int r=intRand(0,100);
-
-        pthread_mutex_lock_check(&w->mutex_solutions);
-        if(w->sol_ind_begin < w->sol_ind_end && r<80){
-            if(w->sol_ind_begin >= w->max_sol_ind){
-                // FILE_LOG(logERROR) << "Index out of bounds";
-                exit(-1);
-            }
-            for(int i=0;i<N;i++){
-                s->schedule[i]=w->solutions[w->sol_ind_begin*N+i];
-            }
-            w->sol_ind_begin++;
-        }
-        pthread_mutex_unlock(&w->mutex_solutions);
-
-        s->limit1=-1;
-        s->limit2=w->pbb->size;
-
-        int cost=ils->runIG(s,ils->igiter);
-//
-        if (cost<w->pbb->best_found.getBest()){
-            w->pbb->best_found.update(s->schedule.data(),cost);
-            w->tryLaunchCommBest();
-        }
-        if(cost<w->pbb->best_found.cost){
-            w->pbb->best_found.update(s->schedule.data(),cost);
-            // FILE_LOG(logINFO)<<"LocalBest "<<cost<<"\t"<<w->pbb->best_found;
-        }
+        usleep(10000);
+//         w->pbb->best_found.getBestSolution(s->schedule.data(),gbest);// lock on pbb->best_found
+//         int r=intRand(0,100);
+// //
+//         pthread_mutex_lock_check(&w->mutex_solutions);
+//         if(w->sol_ind_begin < w->sol_ind_end && r<80){
+//             if(w->sol_ind_begin >= w->max_sol_ind){
+//                 // FILE_LOG(logERROR) << "Index out of bounds";
+//                 exit(-1);
+//             }
+//             for(int i=0;i<N;i++){
+//                 s->schedule[i]=w->solutions[w->sol_ind_begin*N+i];
+//             }
+//             w->sol_ind_begin++;
+//         }
+//         pthread_mutex_unlock(&w->mutex_solutions);
+// //
+//         s->limit1=-1;
+//         s->limit2=w->pbb->size;
+// //
+//         int cost=ils->runIG(s,ils->igiter);
+//         std::cout<<"IG found "<<cost<<"\n";
+// //
+//         if (cost<w->pbb->best_found.getBest()){
+//             std::cout<<"IG improved "<<cost<<"\n";
+//             w->pbb->best_found.update(s->schedule.data(),cost);
+//             w->tryLaunchCommBest();
+//         }
+        // if(cost<w->pbb->best_found.cost){
+        //     w->pbb->best_found.update(s->schedule.data(),cost);
+        //     // FILE_LOG(logINFO)<<"LocalBest "<<cost<<"\t"<<w->pbb->best_found;
+        // }
     }
     pthread_exit(0);
 }
