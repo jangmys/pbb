@@ -25,15 +25,6 @@ work::work(const work& w)
 //default constructor
 work::work(){
     if (!isEmpty()) Uinterval.clear();
-
-    id = 0;
-    nb_intervals = 0;
-    max_intervals = 0;
-    nb_decomposed = 0;
-    nb_leaves = 0;
-    end_updated = 0;
-    nb_updates = 0;
-    size = 0;
 }
 
 //construct from stream
@@ -256,12 +247,8 @@ std::shared_ptr<work> work::divide(int max)
         }
     }
 
-    if(nb_stolen==0)
-        FILE_LOG(logINFO)<<"DivideNONE "<<std::endl;
-
-
-
     FILE_LOG(logDEBUG)<<"Divide "<<nb_stolen;
+
     return tmp;
 } // work::divide
 

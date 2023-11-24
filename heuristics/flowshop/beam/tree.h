@@ -33,8 +33,8 @@ struct lb_compare {
     bool
     operator () (std::shared_ptr<subproblem> p1, std::shared_ptr<subproblem> p2) const
     {
-        if(p1->lower_bound() > p2->lower_bound())return true;
-        if(p1->lower_bound() < p2->lower_bound())return false;
+        if(p1->lb > p2->lb)return true;
+        if(p1->lb < p2->lb)return false;
         return (p1->depth < p2->depth);
     }
 };
@@ -45,8 +45,8 @@ struct ub_compare {
     operator () (std::shared_ptr<subproblem> p1, std::shared_ptr<subproblem> p2) const
     {
         //smaller cost first
-        if(p1->fitness() > p2->fitness())return true;
-        if(p1->fitness() < p2->fitness())return false;
+        if(p1->ub > p2->ub)return true;
+        if(p1->ub < p2->ub)return false;
         //depth first
         if(p1->depth < p2->depth)return true;
         if(p1->depth > p2->depth)return false;
@@ -54,8 +54,8 @@ struct ub_compare {
         if(p1->prio > p2->prio)return true;
         if(p1->prio < p2->prio)return false;
         // smaller bound first
-        if(p1->lower_bound() > p2->lower_bound())return true;
-        if(p1->lower_bound() < p2->lower_bound())return false;
+        if(p1->lb > p2->lb)return true;
+        if(p1->lb < p2->lb)return false;
 
         return false;
     }

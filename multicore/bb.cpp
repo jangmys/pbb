@@ -20,7 +20,7 @@ main(int argc, char ** argv)
     arguments::parse_arguments(argc, argv);
 
     //------------------SET UP LOGGING--------------------
-    FILELog::ReportingLevel() = logERROR;
+    FILELog::ReportingLevel() = logINFO;
 #ifndef NDEBUG
     FILELog::ReportingLevel() = logDEBUG;
 #endif
@@ -38,26 +38,12 @@ main(int argc, char ** argv)
     pbb->set_initial_solution();
 
     //--------------------------Summary--------------------------
-    std::cout<<"\t#Problem:\t\t"<<arguments::problem<<" / Instance "<<arguments::inst_name<<"\n";
-    std::cout<<"\t#ProblemSize:\t\t"<<pbb->size<<"\n"<<std::endl;
+    arguments::arg_summary();
 
-    std::cout<<"\t#Worker type:\t\t"<<arguments::worker_type<<std::endl;
-
-    if(arguments::worker_type=='g')
-        std::cout<<"\t#GPU workers:\t\t"<<arguments::nbivms_gpu<<std::endl;
-    else if(arguments::worker_type=='c')
-        std::cout<<"\t#CPU threads:\t\t"<<arguments::nbivms_mc<<std::endl;
-
-    std::cout<<"\t#Bounding mode:\t\t"<<arguments::boundMode<<std::endl;
-    if(arguments::primary_bound == 1 || (arguments::boundMode == 2 && arguments::secondary_bound == 1))
-    {
-        std::cout<<"\t\t#Johnson Pairs:\t\t"<<arguments::johnsonPairs<<std::endl;
-        std::cout<<"\t\t#Early Exit:\t\t"<<arguments::earlyStopJohnson<<std::endl;
-    }
-    std::cout<<"\t#Branching:\t\t"<<arguments::branchingMode<<std::endl;
-
-    std::cout<<"\t#Initial solution\n"<<pbb->best_found;
-
+    std::cout<<"#ProblemSize:\t\t"<<pbb->size<<"\n"<<std::endl;
+    std::cout<<"==========================\n";
+    std::cout<<"#Initial solution\n"<<pbb->best_found;
+    std::cout<<"==========================\n";
 
     //---------------------RUN-------------------------------------
     pbb->ttm->on(pbb->ttm->wall);
@@ -122,6 +108,7 @@ main(int argc, char ** argv)
         }
     }
 
+    std::cout<<"stop\n";
 	pbb->printStats();
     pbb->ttm->off(pbb->ttm->wall);
     pbb->ttm->printElapsed(pbb->ttm->wall,"Walltime");

@@ -256,7 +256,6 @@ works::steal(unsigned int max, bool &tooSmall)
         // times_insert(tmp2);    // insert created work
     }
 
-    numDivides++; //counter
     return tmp2;// return created work
 } // works::steal
 

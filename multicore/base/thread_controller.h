@@ -25,20 +25,20 @@ public:
     }
 protected:
     pbab* pbb;
-    pthread_t *threads;
-
-    unsigned int get_num_threads();
-    void interruptExploration();
-
-    virtual int work_share(unsigned id, unsigned dest) = 0;
-
+    unsigned M;
     std::vector<std::shared_ptr<RequestQueue>>thd_data;
 
     std::atomic<unsigned int> atom_nb_explorers{0};
     std::atomic<unsigned int> atom_nb_steals{0};
     std::atomic<bool> allEnd{false};
+    std::atomic<unsigned int>end_counter{0};
 
     pthread_barrier_t barrier;
+
+    virtual int work_share(unsigned id, unsigned dest) = 0;
+
+    unsigned int get_num_threads();
+    void interruptExploration();
 
     void counter_decrement();
     bool counter_increment(unsigned id);
@@ -57,9 +57,7 @@ protected:
 
     std::unique_ptr<VictimSelector> victim_select;
 private:
-    unsigned M;
 
-    std::atomic<unsigned int>end_counter{0};
 };
 
 #endif

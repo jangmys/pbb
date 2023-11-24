@@ -44,8 +44,6 @@ public:
     //time
     static int checkpointv;
     static int balancingv;
-
-    static bool mc_timeout;
     static int timeout;
 
 
@@ -58,11 +56,11 @@ public:
     //problem
     static char problem[50];
     static char inst_name[50];
-    static char inifile[50];
+    // static char inifile[50];
     static char work_directory[50];
 
     static char logfile[50];
-    static int logLevel;
+    static TLogLevel logLevel;
 
     // problem specific (FSP) =================
     static bool earlyStopJohnson;
@@ -79,7 +77,10 @@ public:
     //work stealing
     static char mc_ws_select;
 
-    static void readIniFile();
+    static void arg_summary();
+
+    static void readIniFile(char inifile[]);
+    static void readIniFile(std::string inifile);
     static bool parse_arguments(int argc, char **argv);
 };
 

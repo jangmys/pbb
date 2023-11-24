@@ -74,7 +74,7 @@ worker::reset()
 {
     end     = false;
     updateAvailable = false;
-    pbb->workUpdateAvailable.store(false,std::memory_order_relaxed);
+    pbb->workUpdateAvailable.store(false,std::memory_order_seq_cst);
 
     pbb->stats.totDecomposed = 0;
     pbb->stats.johnsonBounds = 0;
@@ -104,7 +104,7 @@ worker::wait_for_update_complete()
     pthread_mutex_lock_check(&mutex_updateAvail);
     // signal update
     updateAvailable = true;
-    pbb->workUpdateAvailable.store(true,std::memory_order_relaxed);//break exploration loop
+    pbb->workUpdateAvailable.store(true,std::memory_order_seq_cst);//break exploration loop
 
     // wait until done
     while (updateAvailable) {
@@ -379,7 +379,7 @@ heu_thread2(void * arg)
         s->limit1=-1;
         s->limit2=w->pbb->size;
 
-        int cost=ils->runIG(s);
+        int cost=ils->runIG(s,ils->igiter);
 //
         if (cost<w->pbb->best_found.getBest()){
             w->pbb->best_found.update(s->schedule.data(),cost);

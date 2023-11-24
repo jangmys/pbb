@@ -274,7 +274,7 @@ master::run()
                     case NEWWORK:
                     case WORK:
                     {
-                        FILE_LOG(logINFO) << "Send "<<status.MPI_SOURCE<<" to WORK";
+                        FILE_LOG(logINFO) << "Send WORK to "<<status.MPI_SOURCE;
                         // FILE_LOG(logINFO) << "send work "<<*wrk<<" to " << status.MPI_SOURCE;
                         comm.send_work(wrk,status.MPI_SOURCE, reply_type);
                         work_out++;
@@ -282,7 +282,7 @@ master::run()
                     }
                     case NIL: //SEND BESTCOST (confirm reception)
                     {
-                        FILE_LOG(logINFO) << "Send "<<status.MPI_SOURCE<<" to NIL";
+                        FILE_LOG(logINFO) << "Send NIL to "<<status.MPI_SOURCE;
                         MPI_Send(&pbb->best_found.cost,1,MPI_INT,status.MPI_SOURCE,NIL,MPI_COMM_WORLD);
                         break;
                     }
@@ -311,6 +311,12 @@ master::run()
                 {
                     pbb->best_found.foundAtLeastOneSolution.store(true);
                     pbb->best_found.save();
+
+                    if(arguments::printSolutions){
+                        std::cout<<"New Best:\t";
+                        pbb->best_found.print();
+                    }
+
                     MPI_Send(&pbb->best_found.cost,1,MPI_INT,status.MPI_SOURCE,BEST,MPI_COMM_WORLD);
                 }else{
                     //if updatedBest
@@ -329,7 +335,7 @@ master::run()
         }
         pbb->ttm->off(pbb->ttm->masterWalltime);
 
-        if(pbb->ttm->period_passed(CHECKPOINT_TTIME)){
+        if(pbb->ttm->period_passed(T_CHECKPOINT)){
             std::cout<<"SAVE"<<std::endl;
 
             std::ofstream stream((std::string(arguments::work_directory) + "bab" + std::string(arguments::inst_name) + ".save").c_str());

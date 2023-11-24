@@ -394,7 +394,7 @@ gpubb::next()
             if(execmode.triggered){
                 break;
             }
-            if(((nbsteals > (nbIVM/5)) && iter>100) || localFoundNew || pbb->ttm->period_passed(WORKER_BALANCING)){
+            if(((nbsteals > (nbIVM/5)) && iter>100) || localFoundNew || pbb->ttm->period_passed(T_WORKER_BALANCING)){
                 break;
             }
         }

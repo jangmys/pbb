@@ -9,16 +9,19 @@
 #include "../include/arguments.h"
 #include "../include/log.h"
 
+
+
 // ___________________________________________
 ttime::ttime()
 {
-    period_set(CHECKPOINT_TTIME, arguments::checkpointv);
-    // std::cout<<"lasts 1 "<<arguments::checkpointv<<" "<<lasts[CHECKPOINT_TTIME]<<" "<<periods[CHECKPOINT_TTIME]<<std::endl;
-    period_set(WORKER_BALANCING, arguments::balancingv);
-    // std::cout<<"lasts 2 "<<lasts[WORKER_BALANCING]<<" "<<periods[WORKER_BALANCING]<<std::endl;
+    period_set(T_CHECKPOINT, arguments::checkpointv);
+    period_set(T_WORKER_BALANCING, arguments::balancingv);
 
-    lasts[TTIMEOUT]   = (time_t) time_get();// - (t * 1.0) * drand48());
-    periods[TTIMEOUT] = arguments::timeout;
+    FILE_LOG(logINFO) << "Checkpointing interval: "<<periods[T_CHECKPOINT]<<" sec, starting from "<<lasts[T_CHECKPOINT];
+    FILE_LOG(logINFO) << "Balancing interval: "<<periods[T_WORKER_BALANCING]<<" sec, starting from "<<lasts[T_WORKER_BALANCING];
+
+    lasts[T_TIMEOUT]   = (time_t) time_get();// - (t * 1.0) * drand48());
+    periods[T_TIMEOUT] = arguments::timeout;
 
     processRequest = new mytimer();
     masterWalltime = new mytimer();
@@ -26,7 +29,6 @@ ttime::ttime()
     wall   = new mytimer();
     update = new mytimer();
     split  = new mytimer();
-    test   = new mytimer();
 
     workerExploretime = new mytimer();
 
@@ -40,6 +42,8 @@ ttime::~ttime()
     delete wall;
     delete update;
     delete split;
+
+    pthread_mutex_destroy(&mutex_lasttime);
 }
 
 void ttime::reset()
@@ -66,30 +70,19 @@ ttime::time_get()
     return tmp;
 }
 
-// void
-// ttime::wait(int index)
-// {
-//     srand48(getpid());
-//     double t = (unsigned int) (periods[index] * 1.0) * drand48();
-//     std::cout << (unsigned int) t << std::endl << std::flush;
-//
-//     std::cout << "debut" << std::endl << std::flush;
-//     sleep((unsigned int) t);
-//     std::cout << "fin" << std::endl << std::flush;
-// }
-
-// ___________________________________________
 
 void
-ttime::period_set(int index, time_t t)
+ttime::period_set(TTimeIndex index, time_t t)
 {
+    //sets period[index] to t and
+    //initializes lasts[index] to NOW (randomly delayed in the past)
     srand48(getpid());
     lasts[index]   = (time_t) (time_get() - (t * 1.0) * drand48());
     periods[index] = t;
 }
 
 bool
-ttime::period_passed(int index)
+ttime::period_passed(TTimeIndex index)
 {
     time_t tmp = time_get();
 
@@ -100,9 +93,7 @@ ttime::period_passed(int index)
     // multi-core worker threads execute this function...
     pthread_mutex_lock(&mutex_lasttime);
     lasts[index] = tmp;
-    // std::cout<<"PASSED "<<lasts[index]<<"\n"<<std::flush;
     pthread_mutex_unlock(&mutex_lasttime);
-
 
     return true;
 }
@@ -156,7 +147,7 @@ ttime::subtractTime(struct timespec t2, struct timespec t1)
     t2.tv_nsec -= t1.tv_nsec;
     while (t2.tv_nsec < 0) {
         t2.tv_sec--;
-        t2.tv_nsec += NSECS;
+        t2.tv_nsec += nsecs_per_sec;
     }
     return t2;
 }
@@ -166,9 +157,9 @@ ttime::addTime(struct timespec t1, struct timespec t2)
 {
     t1.tv_sec  += t2.tv_sec;
     t1.tv_nsec += t2.tv_nsec;
-    while (t1.tv_nsec > NSECS) {
+    while (t1.tv_nsec > nsecs_per_sec) {
         t1.tv_sec++;
-        t1.tv_nsec -= NSECS;
+        t1.tv_nsec -= nsecs_per_sec;
     }
     return t1;
 }

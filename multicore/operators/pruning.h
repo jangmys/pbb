@@ -20,7 +20,7 @@ public:
     //returns true if subproblem can be eliminatedfor further exploration
     bool operator()(const subproblem * pr)
     {
-        return operator()(pr->lower_bound());
+        return operator()(pr->lb);
     }
 
     int local_best;

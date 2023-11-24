@@ -38,28 +38,26 @@ public:
     }
 };
 
+
 //select victim randomly (may select idle victim)
 class RandomVictimSelector : public VictimSelector
 {
 public:
-    explicit RandomVictimSelector(unsigned _nthreads) : VictimSelector(_nthreads)
-    {
-        auto seed = static_cast<long int>(std::time(nullptr));
-        random_engine = std::mt19937(size_t(seed));
-        // generator = std::random_device{ } ();
-        unif = std::uniform_int_distribution<int>(0,nthreads-1);
-    };
+    explicit RandomVictimSelector(unsigned _nthreads) : VictimSelector(_nthreads),random_engine((std::random_device())())
+    {};
 
     unsigned operator()(unsigned id)
     {
         unsigned victim = (id == 0) ? (nthreads - 1) : (id - 1);
-        unsigned int attempts = 0;
+        std::uniform_int_distribution<int>unif(0,nthreads-1);
 
         do {
-            // randomly select active thread (at most nbIVM attempts...otherwise loop may be infinite)
-            victim = rand() / (RAND_MAX /  nthreads);
-            if(++attempts > nthreads){
-                break;
+            // randomly select thread
+            victim = unif(random_engine);
+
+            if((victim<0)||(victim>=nthreads)){
+                std::cout<<"victim select - rand is out of bounds :"<<victim<<" >= "<<nthreads<<"\n";
+                exit(-1);
             }
         }while(victim == id);
 
@@ -67,7 +65,6 @@ public:
     }
 private:
     std::mt19937 random_engine;
-    std::uniform_int_distribution<int> unif;
 };
 
 class HonestVictimSelector : public VictimSelector

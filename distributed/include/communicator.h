@@ -29,12 +29,12 @@ Author : Jan Gmys (jan.gmys@univ-lille.fr)
 //-----------------------------------
 //constexpr size_t MAX_COMM_BUFFER=8388608; //8MB
 //constexpr size_t MAX_COMM_BUFFER=16777216; //16 MB
-constexpr size_t MAX_COMM_BUFFER=33554432;
+constexpr size_t MAX_COMM_BUFFER=33554432; //32MB
 //constexpr size_t MAX_COMM_BUFFER=134217728; //128MB
 
 
 //Max number of digits in factorial (log(10;N!))
-constexpr size_t MAX_MPZLEN=2000;
+constexpr size_t MAX_MPZLEN=2000; //log(10;800!) ~= 1976
 
 //Message identifiers
 constexpr int WORK=1;

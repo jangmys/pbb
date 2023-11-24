@@ -6,6 +6,9 @@ Fast insertion and fast removal (allows to know the best position for inserting 
 Taillard, E. (1990). Some efficient heuristic methods for the flow shop sequencing problem. European Journal of Operational Research, 47, 67-74.
 
 Laurent Deroussi, Michel Gourgand, Sylvie Norre, New effective neighborhoods for the permutation flow shop problem, Research Report LIMOS/RR-06-09
+
+
+Author : Jan GMYS (jan.gmys@univ-lille.fr)
 */
 #ifndef FASTINSERTREMOVE_H_
 #define FASTINSERTREMOVE_H_
