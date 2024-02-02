@@ -7,6 +7,11 @@
 #include "libbounds.h"
 #include "subproblem.h"
 
+#include "matrix_controller.h"
+
+
+#include "libheuristic.h"
+
 namespace py = pybind11;
 // #include "../evaluation/libbounds.h"
 // #include "../heuristics/flowshop/neh/fastNEH.h"
@@ -42,6 +47,13 @@ private:
 };
 
 
+void print_vector(std::vector<int> v){
+    for(auto &&a : v){
+        std::cout<<a<<" ";
+    }
+    std::cout<<std::endl;
+}
+
 
 
 PYBIND11_MODULE(test_add, m) {
@@ -62,7 +74,7 @@ PYBIND11_MODULE(test_add, m) {
 
     //=============================================================
 
-    py::class_<subproblem>(m, "subproblem")
+    py::class_<subproblem,std::shared_ptr<subproblem>>(m, "subproblem")
         .def(py::init<int>())
         .def(py::init<const int, const std::vector<int>>())
         .def("__str__",
@@ -70,31 +82,24 @@ PYBIND11_MODULE(test_add, m) {
                     std::ostringstream stream;
                     stream << a;
                     return stream.str();
-
                     // return "<example.Pet named '" + a.name + "'>";
                 }
             )
         .def_readwrite("schedule", &subproblem::schedule)
         .def_readwrite("size", &subproblem::size)
         .def_readwrite("limit1", &subproblem::limit1)
+        .def_readwrite("limit2", &subproblem::limit2)
         ;
     // .def("init", &subproblem::init);
     //     .def("eval", &bound_fsp_weak::evalSolution);
-
-
-
-
-
-
-
-
 
 
     // py::class_<bound_fsp_weak, bound_abstract<int>>(m, "bound_fsp")
     //     .def("init", &bound_fsp_weak::init);
 
     py::class_<bound_abstract<int>>(m, "_bound_base")
-            .def("init", &bound_abstract<int>::init);
+            .def("init", &bound_abstract<int>::init)
+            .def("eval", &bound_abstract<int>::evalSolution);
 
     py::class_<bound_fsp_weak>(m, "bound_fsp")
         .def(py::init<>())
@@ -109,4 +114,22 @@ PYBIND11_MODULE(test_add, m) {
         .def(py::init<const char*>())
         .def("get_job_number", &instance_taillard::get_job_number)
         .def("get_machine_number", &instance_taillard::get_machine_number);
+
+    // py::class_<pbab>(m, "pbab")
+    //     .def(py::init<>())
+    //     .def(py::init<std::shared_ptr<instance_abstract>>())
+    //     ;
+    //
+    // py::class_<matrix_controller>(m, "matrix_controller")
+    //     .def(py::init<pbab*,int,bool>());
+
+    py::class_<fastNEH>(m, "fastNEH")
+        .def(py::init<instance_abstract&>())
+        .def(py::init<const std::vector<std::vector<int>>, const int, const int>())
+        // .def("run", py::overload_cast<std::vector<int>&, int &>(&fastNEH::run))
+        .def("run", py::overload_cast<std::shared_ptr<subproblem>>(&fastNEH::run))
+        ;
+
+
+    m.def("printvec", &print_vector, "A function that prints a vector");
 }
