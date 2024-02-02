@@ -1,22 +1,18 @@
 #include "treeheuristic.h"
 #include "set_operators.h"
 
+#include "pruning.h"
+#include "branching.h"
 
 Treeheuristic::Treeheuristic(pbab* _pbb,instance_abstract& inst) :
     pbb(_pbb),
     tr(std::make_unique<Tree>(inst,inst.size)),
     eval(std::make_unique<bound_fsp_weak_idle>())
 {
-    prune = make_prune_ptr<int>(_pbb);
-    branch = make_branch_ptr<int>(_pbb);
+    prune = make_prune_ptr<int>(_pbb->best_found.initial_cost);
+    branch = make_branch_ptr<int>(_pbb->size,_pbb->best_found.initial_cost);
 
     tr->strategy = PRIOQ;
-
-    if(arguments::findAll){
-        prune = std::make_unique<keepSmaller>(pbb->best_found.initial_cost);
-    }else{
-        prune = std::make_unique<keepEqualOrSmaller>(pbb->best_found.initial_cost);
-    }
 
     eval->init(inst);
     bestSolution = std::make_unique<subproblem>(inst.size);
@@ -98,7 +94,7 @@ Treeheuristic::exploreNeighborhood(std::shared_ptr<subproblem> s,long long int c
     tr->clearPool();
     tr->setRoot(s->schedule, s->limit1, s->limit2);
     (tr->top())->lb = 0;
-    (tr->top())->ub = eval->evalSolution(tr->top()->schedule.data());
+    (tr->top())->ub = eval->evalSolution(tr->top()->schedule);
 
     bool foundSolution = false;
 
@@ -159,11 +155,11 @@ Treeheuristic::decompose(subproblem& n)
 
     if (n.is_simple()) { //2 solutions ...
         tmp        = std::make_shared<subproblem>(n, n.limit1 + 1, BEGIN_ORDER);
-        tmp->lb = eval->evalSolution(tmp->schedule.data());
+        tmp->lb = eval->evalSolution(tmp->schedule);
         children.push_back(tmp);
 
         tmp        = std::make_shared<subproblem>(n, n.limit1+2 , BEGIN_ORDER);
-        tmp->lb = eval->evalSolution(tmp->schedule.data());
+        tmp->lb = eval->evalSolution(tmp->schedule);
         children.push_back(tmp);
     } else {
         std::vector<int> costFwd(n.size);
@@ -173,7 +169,7 @@ Treeheuristic::decompose(subproblem& n)
         std::vector<float> prioBwd(n.size);
 
         //evaluate lower bounds and priority
-        eval->boundChildren(n.schedule.data(),n.limit1,n.limit2, costFwd.data(),costBwd.data(), prioFwd.data(),prioBwd.data());
+        eval->boundChildren(n.schedule,n.limit1,n.limit2, costFwd.data(),costBwd.data(), prioFwd.data(),prioBwd.data());
         //branching heuristic
         int dir = (*branch)(
             costFwd.data(),costBwd.data(),n.depth
@@ -229,7 +225,7 @@ Treeheuristic::insert(std::vector<std::shared_ptr<subproblem>>&ns)
             int c = (*ls)((*i)->schedule,(*i)->limit1+1,(*i)->limit2);
             (*i)->ub = c;
         }else{
-            (*i)->ub = eval->evalSolution((*i)->schedule.data());
+            (*i)->ub = eval->evalSolution((*i)->schedule);
         }
 
         tr->push(std::move(*i));

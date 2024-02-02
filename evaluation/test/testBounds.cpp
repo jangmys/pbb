@@ -83,11 +83,11 @@ int main(int argc,char **argv){
     std::iota(perm.begin(),perm.end(),0);
 
     //evaluate objective function
-    costs[0] = bound->evalSolution(perm.data());
+    costs[0] = bound->evalSolution(perm);
     printf("Makespan LB1: %d\n",costs[0]);
 
     //evaluate objective function
-    costs[0] = bound2->evalSolution(perm.data());
+    costs[0] = bound2->evalSolution(perm);
     printf("Makespan LB2: %d\n",costs[0]);
 
 
@@ -117,7 +117,7 @@ int main(int argc,char **argv){
     std::vector<int>prio_beginI(inst->size,0);
     std::vector<int>prio_endI(inst->size,0);
 
-    bound->boundChildren(solutions[0].data(), l1, l2, lb_begin.data(), lb_end.data(), prio_beginI.data(), prio_endI.data(),999999);
+    bound->boundChildren(solutions[0], l1, l2, lb_begin.data(), lb_end.data(), prio_beginI.data(), prio_endI.data(),999999);
 
     for(auto &lbb : lb_begin){
         std::cout<<lbb<<" ";
@@ -132,7 +132,7 @@ int main(int argc,char **argv){
 
     clock_gettime(CLOCK_MONOTONIC,&t1);
     for(auto &p : solutions){
-        bound->bornes_calculer(p.data(), l1+5, l2-5, costs, 99999);
+        bound->bornes_calculer(p, l1+5, l2-5, costs, 99999);
     }
     clock_gettime(CLOCK_MONOTONIC,&t2);
     std::cout<<(t2.tv_sec-t1.tv_sec)+(t2.tv_nsec-t1.tv_nsec)/1e9<<"\n";
@@ -140,7 +140,7 @@ int main(int argc,char **argv){
 
     clock_gettime(CLOCK_MONOTONIC,&t1);
     for(auto &p : solutions){
-        bound2->bornes_calculer(p.data(), l1+5, l2-5, costs, 99999);
+        bound2->bornes_calculer(p, l1+5, l2-5, costs, 99999);
     }
     clock_gettime(CLOCK_MONOTONIC,&t2);
     std::cout<<(t2.tv_sec-t1.tv_sec)+(t2.tv_nsec-t1.tv_nsec)/1e9<<"\n";
@@ -148,7 +148,7 @@ int main(int argc,char **argv){
 
     clock_gettime(CLOCK_MONOTONIC,&t1);
     for(auto &p : solutions){
-        bound3->bornes_calculer(p.data(), l1+5, l2-5, costs, 99999);
+        bound3->bornes_calculer(p, l1+5, l2-5, costs, 99999);
     }
     clock_gettime(CLOCK_MONOTONIC,&t2);
     std::cout<<(t2.tv_sec-t1.tv_sec)+(t2.tv_nsec-t1.tv_nsec)/1e9<<"\n";
@@ -157,7 +157,7 @@ int main(int argc,char **argv){
 
     clock_gettime(CLOCK_MONOTONIC,&t1);
     for(auto &p : solutions){
-        bound->boundChildren(p.data(), l1+5, l2-5, lb_begin.data(), lb_end.data(), prio_beginI.data(), prio_endI.data(),9999999);
+        bound->boundChildren(p, l1+5, l2-5, lb_begin.data(), lb_end.data(), prio_beginI.data(), prio_endI.data(),9999999);
     }
     clock_gettime(CLOCK_MONOTONIC,&t2);
     std::cout<<(t2.tv_sec-t1.tv_sec)+(t2.tv_nsec-t1.tv_nsec)/1e9<<"\n";
@@ -166,7 +166,7 @@ int main(int argc,char **argv){
 
     clock_gettime(CLOCK_MONOTONIC,&t1);
     for(auto &p : solutions){
-        bound3->boundChildren(p.data(), l1+5, l2-5, lb_begin.data(), lb_end.data(), prio_begin.data(), prio_end.data());
+        bound3->boundChildren(p, l1+5, l2-5, lb_begin.data(), lb_end.data(), prio_begin.data(), prio_end.data());
     }
     clock_gettime(CLOCK_MONOTONIC,&t2);
     std::cout<<(t2.tv_sec-t1.tv_sec)+(t2.tv_nsec-t1.tv_nsec)/1e9<<"\n";
@@ -175,12 +175,12 @@ int main(int argc,char **argv){
 
     std::iota(perm.begin(),perm.end(),0);
     //LB
-    bound->bornes_calculer(perm.data(), l1, l2, costs, 99999);
+    bound->bornes_calculer(perm, l1, l2, costs, 99999);
     printf("LB1 [root]:\t %d\n",costs[0]);
 
     //LB2
     if(bound2){
-        bound2->bornes_calculer(perm.data(), l1, l2, costs, 99999);
+        bound2->bornes_calculer(perm, l1, l2, costs, 99999);
         printf("LB2 [root]:\t %d\n",costs[0]);
     }
 
@@ -188,12 +188,12 @@ int main(int argc,char **argv){
 
     l1=0; //fix first job
     l2=inst->size-1; //fix last job
-    bound->bornes_calculer(perm.data(), l1, l2, costs, 99999);
+    bound->bornes_calculer(perm, l1, l2, costs, 99999);
     printf("LB1 [+1/-1]:\t %d\n",costs[0]);
 
     //LB2
     if(bound2){
-        bound2->bornes_calculer(perm.data(), l1, l2, costs, 99999);
+        bound2->bornes_calculer(perm, l1, l2, costs, 99999);
         printf("LB1 [+1/-1]:\t %d\n",costs[0]);
         // printf("LB2 [root]:\t %d\n",costs[0]);
     }
@@ -206,12 +206,12 @@ int main(int argc,char **argv){
     l2=inst->size;
     for(int i=0;i<inst->size-1;i++){
         l1++;
-        bound->bornes_calculer(perm.data(), l1, l2, costs, 99999);
+        bound->bornes_calculer(perm, l1, l2, costs, 99999);
         printf("L1=%d :\t %d\n",l1,costs[0]);
     }
 
     if(bound2){
-        bound2->bornes_calculer(perm.data(), l1, l2, costs, 99999);
+        bound2->bornes_calculer(perm, l1, l2, costs, 99999);
         printf("LB2 [+4/-3]:\t %d\n",costs[0]);
     }
     // free(perm);

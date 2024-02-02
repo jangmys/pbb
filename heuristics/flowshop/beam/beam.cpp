@@ -3,14 +3,16 @@
 #include "omp.h"
 #include "beam.h"
 #include "set_operators.h"
+#include "branching.h"
+#include "pruning.h"
 
 Beam::Beam(pbab* _pbb, instance_abstract& inst) :
     pbb(_pbb),
     tr(std::make_unique<Tree>(inst,inst.size)),
     eval(std::make_unique<bound_fsp_weak_idle>())
 {
-    prune = make_prune_ptr<int>(_pbb);
-    branch = make_branch_ptr<int>(_pbb);
+    prune = make_prune_ptr<int>(_pbb->best_found.initial_cost);
+    branch = make_branch_ptr<int>(_pbb->size,_pbb->best_found.initial_cost);
 
     tr->strategy = DEQUE;
     eval->init(inst);
@@ -402,11 +404,11 @@ Beam::decompose(const subproblem& n, std::vector<std::unique_ptr<subproblem>>& c
 
     if (n.is_simple()) { //2 solutions ...
         tmp        = std::make_unique<subproblem>(n, n.limit1 + 1, BEGIN_ORDER);
-        tmp->lb=eval->evalSolution(tmp->schedule.data());
+        tmp->lb=eval->evalSolution(tmp->schedule);
         children.push_back(std::move(tmp));
 
         tmp        = std::make_unique<subproblem>(n, n.limit1+2 , BEGIN_ORDER);
-        tmp->lb=eval->evalSolution(tmp->schedule.data());
+        tmp->lb=eval->evalSolution(tmp->schedule);
         children.push_back(std::move(tmp));
     } else {
         std::vector<int> costFwd(n.size);
@@ -416,7 +418,7 @@ Beam::decompose(const subproblem& n, std::vector<std::unique_ptr<subproblem>>& c
         std::vector<float> prioBwd(n.size);
 
         //evaluate lower bounds and priority
-        eval->boundChildren(n.schedule.data(),n.limit1,n.limit2, costFwd.data(),costBwd.data(), prioFwd.data(),prioBwd.data());
+        eval->boundChildren(n.schedule,n.limit1,n.limit2, costFwd.data(),costBwd.data(), prioFwd.data(),prioBwd.data());
         //branching heuristic
         int dir = (*branch)(costFwd.data(),costBwd.data(),n.depth);
 

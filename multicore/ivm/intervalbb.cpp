@@ -119,7 +119,7 @@ void Intervalbb<T>::boundAndKeepSurvivors(subproblem& _subpb)
     if(dir<0){    //if undecided
         // get lower bounds : both directions
         this->primary_bound->boundChildren(
-                _subpb.schedule.data(),_subpb.limit1,_subpb.limit2,
+                _subpb.schedule,_subpb.limit1,_subpb.limit2,
                 costFwd.data(),costBwd.data(),
                 prioFwd.data(),prioBwd.data(),this->prune->local_best
             );
@@ -133,14 +133,14 @@ void Intervalbb<T>::boundAndKeepSurvivors(subproblem& _subpb)
     }else if(dir == Branching::Front){
         // get lower bounds : forward only
         this->primary_bound->boundChildren(
-                _subpb.schedule.data(),_subpb.limit1,_subpb.limit2,
+                _subpb.schedule,_subpb.limit1,_subpb.limit2,
                 costFwd.data(),nullptr,
                 prioFwd.data(),nullptr,this->prune->local_best
             );
     }else{
         // get lower bounds : backward only
         this->primary_bound->boundChildren(
-                _subpb.schedule.data(),_subpb.limit1,_subpb.limit2,
+                _subpb.schedule,_subpb.limit1,_subpb.limit2,
                 nullptr,costBwd.data(),
                 nullptr,prioBwd.data(),this->prune->local_best
             );
@@ -216,7 +216,7 @@ Intervalbb<T>::boundLeaf(subproblem& node)
     FILE_LOG(logDEBUG) << " === bound Leaf"<<std::flush;
 
     bool better=false;
-    int cost=this->primary_bound->evalSolution(node.schedule.data());
+    int cost=this->primary_bound->evalSolution(node.schedule);
 
     // std::cout<<cost<<"\t"<<prune->local_best<<"\n";
     // std::cout<<this->count_leaves<<" ";

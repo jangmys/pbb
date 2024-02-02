@@ -117,7 +117,7 @@ bound_fsp_strong::borneInfLearn(int *flags, const int *const front, const int* c
 // COMPUTE BOUND
 // ==============================
 void
-bound_fsp_strong::bornes_calculer(int permutation[], int limite1, int limite2, int * couts, int best)
+bound_fsp_strong::bornes_calculer(std::vector<int> permutation, int limite1, int limite2, int * couts, int best)
 {
     if (limite2 - limite1 == 1) {
         // printf("this happens\n");
@@ -126,11 +126,11 @@ bound_fsp_strong::bornes_calculer(int permutation[], int limite1, int limite2, i
         std::vector<int>front(data_lb1->nb_machines);
         std::vector<int>back(data_lb1->nb_machines);
 
-        schedule_front(data_lb1, permutation,limite1,front.data());
-        schedule_back(data_lb1, permutation,limite2,back.data());
+        schedule_front(data_lb1, permutation.data(),limite1,front.data());
+        schedule_back(data_lb1, permutation.data(),limite2,back.data());
 
         int *flags =new int[data_lb1->nb_jobs];
-        set_flags(permutation, limite1, limite2, data_lb1->nb_jobs, flags);
+        set_flags(permutation.data(), limite1, limite2, data_lb1->nb_jobs, flags);
 
         if (machinePairs == 3) {
             couts[0] = borneInfLearn(flags, front.data(), back.data(), best, true);
@@ -144,7 +144,7 @@ bound_fsp_strong::bornes_calculer(int permutation[], int limite1, int limite2, i
 }
 
 void
-bound_fsp_strong::boundChildren(int permutation[], int limit1, int limit2, int * costsBegin, int * costsEnd, int * prioBegin, int * prioEnd, int best)
+bound_fsp_strong::boundChildren(std::vector<int> permutation, int limit1, int limit2, int * costsBegin, int * costsEnd, int * prioBegin, int * prioEnd, int best)
 {
     std::vector<int>costs(2,0);
 
@@ -171,13 +171,13 @@ bound_fsp_strong::boundChildren(int permutation[], int limit1, int limit2, int *
 }
 
 int
-bound_fsp_strong::evalSolution(int * permut)
+bound_fsp_strong::evalSolution(std::vector<int> permut)
 {
-    return eval_solution(data_lb1,permut);
+    return eval_solution(data_lb1,permut.data());
 }
 
 int
-bound_fsp_strong::bornes_calculer(int * schedule, int limit1, int limit2)
+bound_fsp_strong::bornes_calculer(std::vector<int> schedule, int limit1, int limit2)
 {
     int costs[2];
     bornes_calculer(schedule, limit1, limit2,costs,INT_MAX);

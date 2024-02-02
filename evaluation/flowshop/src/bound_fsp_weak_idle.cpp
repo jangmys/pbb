@@ -230,7 +230,7 @@ bound_fsp_weak_idle::addBackAndBound(int job, float &idle, const std::vector<int
 // get all lower bounds for all children
 // begin/end if both LB pointers are given
 void
-bound_fsp_weak_idle::boundChildren(const int * schedule, int limit1, int limit2, int * costsBegin, int * costsEnd, float * prioBegin, float * prioEnd)
+bound_fsp_weak_idle::boundChildren(std::vector<int> schedule, int limit1, int limit2, int * costsBegin, int * costsEnd, float * prioBegin, float * prioEnd)
 {
     std::vector<int> front(nbMachines, 0);
     std::vector<int> back(nbMachines, 0);
@@ -243,7 +243,7 @@ bound_fsp_weak_idle::boundChildren(const int * schedule, int limit1, int limit2,
         memset(costsBegin, 0, nbJob * sizeof(int));
         memset(costsEnd, 0, nbJob * sizeof(int));
 
-        computePartial(schedule, limit1, limit2, front, idleFront, back, idleBack, remain);
+        computePartial(schedule.data(), limit1, limit2, front, idleFront, back, idleBack, remain);
         for (int i = limit1 + 1; i < limit2; i++) {
             int job = schedule[i];
             costsBegin[job] = addFrontAndBound(job, prioBegin[job], front, idleFront, back, idleBack, remain);
@@ -258,7 +258,7 @@ bound_fsp_weak_idle::boundChildren(const int * schedule, int limit1, int limit2,
         // BEGIN
         memset(costsBegin, 0, nbJob * sizeof(int));
 
-        computePartial(schedule, limit1, limit2, front, idleFront, back, idleBack, remain);
+        computePartial(schedule.data(), limit1, limit2, front, idleFront, back, idleBack, remain);
         for (int i = limit1 + 1; i < limit2; i++) {
             int job = schedule[i];
             costsBegin[job] = addFrontAndBound(job, prioBegin[job], front, idleFront, back, idleBack, remain);
@@ -267,7 +267,7 @@ bound_fsp_weak_idle::boundChildren(const int * schedule, int limit1, int limit2,
         // END
         memset(costsEnd, 0, nbJob * sizeof(int));
 
-        computePartial(schedule, limit1, limit2, front, idleFront, back, idleBack, remain);
+        computePartial(schedule.data(), limit1, limit2, front, idleFront, back, idleBack, remain);
         for (int i = limit1 + 1; i < limit2; i++) {
             int job = schedule[i];
             costsBegin[job] = addBackAndBound(job, prioEnd[job], front, idleFront, back, idleBack, remain);
@@ -277,7 +277,7 @@ bound_fsp_weak_idle::boundChildren(const int * schedule, int limit1, int limit2,
 
 // evaluate full permutation
 int
-bound_fsp_weak_idle::evalSolution(int * permut)
+bound_fsp_weak_idle::evalSolution(std::vector<int> permut)
 {
     std::vector<int> tmp(nbMachines, 0);
 
@@ -295,7 +295,7 @@ bound_fsp_weak_idle::evalSolution(int * permut)
 /////////////////////////////////////////////
 // get lower bound for one subproblem (...)
 void
-bound_fsp_weak_idle::bornes_calculer(int permutation[], int limite1, int limite2, int * couts, int best)
+bound_fsp_weak_idle::bornes_calculer(std::vector<int> permutation, int limite1, int limite2, int * couts, int best)
 {
     std::vector<int> front(nbMachines, 0);
     std::vector<int> back(nbMachines, 0);
@@ -303,9 +303,9 @@ bound_fsp_weak_idle::bornes_calculer(int permutation[], int limite1, int limite2
     std::vector<float> idleFront(nbMachines, 0.0f);
     std::vector<float> idleBack(nbMachines, 0.0f);
 
-    scheduleFront(permutation, limite1, front, idleFront);
-    scheduleBack(permutation, limite2, back, idleBack);
-    sumUnscheduled(permutation, limite1, limite2, remain);
+    scheduleFront(permutation.data(), limite1, front, idleFront);
+    scheduleBack(permutation.data(), limite2, back, idleBack);
+    sumUnscheduled(permutation.data(), limite1, limite2, remain);
 
     int lb;
     int tmp0, tmp1, cmax;
@@ -325,5 +325,5 @@ bound_fsp_weak_idle::bornes_calculer(int permutation[], int limite1, int limite2
 }
 
 void
-bound_fsp_weak_idle::bornes_calculer(int permutation[], int limite1, int limite2)
+bound_fsp_weak_idle::bornes_calculer(std::vector<int> permutation, int limite1, int limite2)
 { }

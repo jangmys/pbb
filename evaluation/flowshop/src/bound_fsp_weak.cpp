@@ -50,34 +50,34 @@ bound_fsp_weak::init(instance_abstract& _instance)
 // get all lower bounds for all children
 // begin/end if both LB pointers are given
 void
-bound_fsp_weak::boundChildren(int * schedule, int limit1, int limit2, int * costsBegin, int * costsEnd, int * prioBegin, int * prioEnd, int best)
+bound_fsp_weak::boundChildren(std::vector<int> schedule, int limit1, int limit2, int * costsBegin, int * costsEnd, int * prioBegin, int * prioEnd, int best)
 {
     if (costsBegin && costsEnd) {
-        lb1_children_bounds(data,schedule,limit1,limit2,costsBegin,costsEnd,prioBegin,prioEnd,0);
+        lb1_children_bounds(data,schedule.data(),limit1,limit2,costsBegin,costsEnd,prioBegin,prioEnd,0);
     } else if (costsBegin) {
-        lb1_children_bounds(data,schedule,limit1,limit2,costsBegin,costsEnd,prioBegin,prioEnd,-1);
+        lb1_children_bounds(data,schedule.data(),limit1,limit2,costsBegin,costsEnd,prioBegin,prioEnd,-1);
     } else if (costsEnd) {
-        lb1_children_bounds(data,schedule,limit1,limit2,costsBegin,costsEnd,prioBegin,prioEnd,1);
+        lb1_children_bounds(data,schedule.data(),limit1,limit2,costsBegin,costsEnd,prioBegin,prioEnd,1);
     }
 }
 
 // evaluate full permutation
 int
-bound_fsp_weak::evalSolution(int * permut)
+bound_fsp_weak::evalSolution(std::vector<int> permut)
 {
-    return eval_solution(data,permut);
+    return eval_solution(data,permut.data());
 }
 
 /////////////////////////////////////////////
 // get lower bound for one subproblem (...)
 void
-bound_fsp_weak::bornes_calculer(int permutation[], int limit1, int limit2, int * couts, int best)
+bound_fsp_weak::bornes_calculer(std::vector<int> permutation, int limit1, int limit2, int * couts, int best)
 {
-    *couts = lb1_bound(data, permutation, limit1, limit2);
+    *couts = lb1_bound(data, permutation.data(), limit1, limit2);
 }
 
 int
-bound_fsp_weak::bornes_calculer(int permutation[], int limit1, int limit2)
+bound_fsp_weak::bornes_calculer(std::vector<int> permutation, int limit1, int limit2)
 {
-    return lb1_bound(data, permutation, limit1, limit2);
+    return lb1_bound(data, permutation.data(), limit1, limit2);
 }

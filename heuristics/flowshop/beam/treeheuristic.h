@@ -7,12 +7,12 @@
 
 #include "pbab.h"
 #include "tree.h"
-#include "branching.h"
-#include "pruning.h"
 #include "beam.h"
 
 class Tree;
 class Beam;
+class Pruning;
+class Branching;
 
 class Treeheuristic{
 public:

@@ -82,7 +82,7 @@ public:
         if(dir<0){
             //get bounds for both children sets using incremental evaluator
             this->primary_bound->boundChildren(
-                    _subpb.schedule.data(),_subpb.limit1,_subpb.limit2,
+                    _subpb.schedule,_subpb.limit1,_subpb.limit2,
                     lb[Branching::Front].data(),lb[Branching::Back].data(),
                     prio[Branching::Front].data(),prio[Branching::Back].data(),this->prune->local_best
                 );
@@ -95,13 +95,13 @@ public:
             );
         }else if(dir==Branching::Front){
             this->primary_bound->boundChildren(
-                    _subpb.schedule.data(),_subpb.limit1,_subpb.limit2,
+                    _subpb.schedule,_subpb.limit1,_subpb.limit2,
                     lb[Branching::Front].data(),nullptr,
                     prio[Branching::Front].data(),nullptr,this->prune->local_best
                 );
         }else if(dir==Branching::Back){
             this->primary_bound->boundChildren(
-                    _subpb.schedule.data(),_subpb.limit1,_subpb.limit2,
+                    _subpb.schedule,_subpb.limit1,_subpb.limit2,
                     nullptr,lb[Branching::Back].data(),
                     nullptr,prio[Branching::Back].data(),this->prune->local_best
                 );
@@ -129,7 +129,7 @@ public:
                 int job = _subpb.schedule[i];
                 if(mask[job]){
                     std::swap(_subpb.schedule[_subpb.limit1 + 1], _subpb.schedule[i]);
-                    this->secondary_bound->bornes_calculer(_subpb.schedule.data(), _subpb.limit1 + 1, _subpb.limit2, costs, this->prune->local_best);
+                    this->secondary_bound->bornes_calculer(_subpb.schedule, _subpb.limit1 + 1, _subpb.limit2, costs, this->prune->local_best);
                     lb[Branching::Front][job] = costs[0];
                     prio[Branching::Front][job]=costs[1];
                     std::swap(_subpb.schedule[_subpb.limit1 + 1], _subpb.schedule[i]);
@@ -142,7 +142,7 @@ public:
                 int job = _subpb.schedule[i];
                 if(mask[job]){
                     std::swap(_subpb.schedule[_subpb.limit2 - 1], _subpb.schedule[i]);
-                    this->secondary_bound->bornes_calculer(_subpb.schedule.data(), _subpb.limit1, _subpb.limit2-1, costs, this->prune->local_best);
+                    this->secondary_bound->bornes_calculer(_subpb.schedule, _subpb.limit1, _subpb.limit2-1, costs, this->prune->local_best);
                     lb[Branching::Back][job] = costs[0];
                     prio[Branching::Back][job]=costs[1];
                     std::swap(_subpb.schedule[_subpb.limit2 - 1], _subpb.schedule[i]);
@@ -184,13 +184,13 @@ public:
                 if(mask[job]){
                     //front
                     std::swap(_subpb.schedule[_subpb.limit1 + 1], _subpb.schedule[i]);
-                    this->primary_bound->bornes_calculer(_subpb.schedule.data(), _subpb.limit1 + 1, _subpb.limit2, costs, this->prune->local_best);
+                    this->primary_bound->bornes_calculer(_subpb.schedule, _subpb.limit1 + 1, _subpb.limit2, costs, this->prune->local_best);
                     lb[Branching::Front][job] = costs[0];
                     prio[Branching::Front][job]=costs[1];
                     std::swap(_subpb.schedule[_subpb.limit1 + 1], _subpb.schedule[i]);
                     //back
                     std::swap(_subpb.schedule[_subpb.limit2 - 1], _subpb.schedule[i]);
-                    this->primary_bound->bornes_calculer(_subpb.schedule.data(), _subpb.limit1, _subpb.limit2 - 1, costs, this->prune->local_best);
+                    this->primary_bound->bornes_calculer(_subpb.schedule, _subpb.limit1, _subpb.limit2 - 1, costs, this->prune->local_best);
                     lb[Branching::Back][job] = costs[0];
                     prio[Branching::Back][job]=costs[1];
                     std::swap(_subpb.schedule[_subpb.limit2 - 1], _subpb.schedule[i]);
@@ -210,7 +210,7 @@ public:
                 int job = _subpb.schedule[i];
                 if(mask[job]){
                     std::swap(_subpb.schedule[_subpb.limit1 + 1], _subpb.schedule[i]);
-                    this->primary_bound->bornes_calculer(_subpb.schedule.data(), _subpb.limit1 + 1, _subpb.limit2, costs, this->prune->local_best);
+                    this->primary_bound->bornes_calculer(_subpb.schedule, _subpb.limit1 + 1, _subpb.limit2, costs, this->prune->local_best);
                     lb[Branching::Front][job] = costs[0];
                     prio[Branching::Front][job]=costs[1];
                     std::swap(_subpb.schedule[_subpb.limit1 + 1], _subpb.schedule[i]);
@@ -223,7 +223,7 @@ public:
                 int job = _subpb.schedule[i];
                 if(mask[job]){
                     std::swap(_subpb.schedule[_subpb.limit2 - 1], _subpb.schedule[i]);
-                    this->primary_bound->bornes_calculer(_subpb.schedule.data(), _subpb.limit1, _subpb.limit2-1, costs, this->prune->local_best);
+                    this->primary_bound->bornes_calculer(_subpb.schedule, _subpb.limit1, _subpb.limit2-1, costs, this->prune->local_best);
                     lb[Branching::Back][job] = costs[0];
                     prio[Branching::Back][job]=costs[1];
                     std::swap(_subpb.schedule[_subpb.limit2 - 1], _subpb.schedule[i]);
