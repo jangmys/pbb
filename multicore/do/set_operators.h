@@ -9,21 +9,21 @@
 
 //choose pruning operator of a MCbb (IVM or Pool) from pbab and arguments
 template<typename T>
-std::unique_ptr<Pruning> make_prune_ptr(pbab* pbb)
+std::unique_ptr<Pruning> make_prune_ptr(T initial_cost) //pbab* pbb)
 {
     if(!arguments::findAll){
         //keepSmaller <==> prune if LB equal to best
-        return std::make_unique<keepSmaller>(pbb->best_found.initial_cost);
+        return std::make_unique<keepSmaller>(initial_cost);
     }else{
         //keepEqualOrSmaller <==> prune if LB worse than best
-        return std::make_unique<keepEqualOrSmaller>(pbb->best_found.initial_cost);
+        return std::make_unique<keepEqualOrSmaller>(initial_cost);
     }
     return nullptr;
 };
 
 //choosebranching operator of a MCbb (IVM or Pool) from pbab and arguments
 template<typename T>
-std::unique_ptr<Branching> make_branch_ptr(pbab* pbb)
+std::unique_ptr<Branching> make_branch_ptr(int size, T initial_cost)
 {
     switch (arguments::branchingMode) {
         case -3:{
@@ -36,13 +36,13 @@ std::unique_ptr<Branching> make_branch_ptr(pbab* pbb)
             return std::make_unique<backwardBranching>();
         }
         case 1:{
-            return std::make_unique<maxSumBranching>(pbb->size);
+            return std::make_unique<maxSumBranching>(size);
         }
         case 2:{
-            return std::make_unique<minBranchBranching>(pbb->size,pbb->best_found.initial_cost);
+            return std::make_unique<minBranchBranching>(size,initial_cost);
         }
         case 3:{
-            return std::make_unique<minMinBranching>(pbb->size,pbb->best_found.initial_cost);
+            return std::make_unique<minMinBranching>(size,initial_cost);
         }
         default:{
             printf("branching rule not defined\n");

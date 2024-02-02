@@ -31,6 +31,7 @@ public:
     std::unique_ptr<LocalSearch> ls;
     std::unique_ptr<IG> ig;
     std::unique_ptr<Beam> beam;
+    std::unique_ptr<fastNEH> neh;
 
     int run(std::shared_ptr<subproblem>& s, int _ub);
 

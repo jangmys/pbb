@@ -115,8 +115,8 @@ int main(int argc, char* argv[])
         {
             Beam bs(pbb,*(instance.get()));
 
-            // // subproblem *q = new subproblem(instance->size);
             bs.run(1<<14,p.get());
+            // bs.run_loop(1<<14,p.get());
             *p = *(bs.bestSolution);
             //
             // std::cout<<" = BEAM :\t";
@@ -126,6 +126,7 @@ int main(int argc, char* argv[])
         {
             Beam bs(pbb,*(instance.get()));
 
+            p->ub=999999;
             // subproblem *q = new subproblem(instance->size);
             bs.run_loop(1<<14,p.get());
             *p = *(bs.bestSolution);

@@ -29,9 +29,11 @@ Beam::run(const int maxBeamWidth, subproblem* p)
     do{
         tr->setRoot(p->schedule,p->limit1,p->limit2);
 
-        // while(step(beamWidth,localBest));
+        while(step(beamWidth,prune->local_best));
 
         beamWidth *=2;
+
+        std::cout<<"best "<<prune->local_best<<"\n";
     }while(beamWidth < maxBeamWidth);
 
     *p = *bestSolution;
@@ -43,7 +45,6 @@ Beam::run(const int maxBeamWidth, subproblem* p)
  Beam::run_loop(const int maxBeamWidth, subproblem* p)
  {
      int localBest = p->ub;
-
      prune->local_best = p->ub;
 
      int beamWidth = 1;
@@ -51,7 +52,7 @@ Beam::run(const int maxBeamWidth, subproblem* p)
         activeSet.clear();
 
         std::unique_ptr<subproblem> root = std::make_unique<subproblem>(*p);
-        root->lb=0;
+        // root->lb=0;
         activeSet.push_back(std::move(root));
 
         // while(step_loop(beamWidth,localBest));
@@ -66,6 +67,10 @@ Beam::run(const int maxBeamWidth, subproblem* p)
      return 0;
 }
 
+
+
+
+//with priority queue
 bool
 Beam::step_loop_local_pq(unsigned int beamWidth,int localBest){
     int n_parents = activeSet.size();
@@ -80,10 +85,12 @@ Beam::step_loop_local_pq(unsigned int beamWidth,int localBest){
         activeSet.clear();
 
         if(slice_min->lb < prune->local_best){
+            std::cout<<"new best\t"<<prune->local_best<<" -> "<<slice_min->lb<<"\n";
+
             slice_min->ub = slice_min->lb;
             prune->local_best = slice_min->ub;
             bestSolution = std::move(slice_min);
-            std::cout<<"best\t"<<*bestSolution<<"\n";
+            std::cout<<"SOL\t"<<*bestSolution<<"\n";
         }
 
         return false;
@@ -165,11 +172,12 @@ Beam::step_loop_local_pq(unsigned int beamWidth,int localBest){
 
 
 
-
+//work with separate activeSet (vector) and priority queue (next slice)- openMP parallel
 bool
 Beam::step_loop_pq(unsigned int beamWidth,int localBest){
     int n_parents = activeSet.size();
 
+    //Reached last level and activeSet is not empty
     if(n_parents>0 && activeSet[0]->depth == bestSolution->size-1){
         std::unique_ptr<subproblem> slice_min(std::move(activeSet[0]));
         for(int i=1;i<n_parents;i++){
@@ -217,7 +225,7 @@ Beam::step_loop_pq(unsigned int beamWidth,int localBest){
                 local_children.insert(local_children.end(), make_move_iterator(ns.begin()), make_move_iterator(ns.end()));
             }
 
-
+            //
             #pragma omp critical
             {
                 // std::cout<<"thread "<<omp_get_thread_num()<<" "<<local_children.size()<<"/"<<beamWidth<<"\n";
@@ -251,11 +259,14 @@ Beam::step_loop_pq(unsigned int beamWidth,int localBest){
     return true;
 }
 
+//work with separate activeSet (vector) - openMP parallel
 bool
 Beam::step_loop(unsigned int beamWidth,int localBest){
     int n_parents = activeSet.size();
 
+    //Reached last level and activeSet is not empty
     if(n_parents>0 && activeSet[0]->depth == bestSolution->size-1){
+        //get parent with smallest lb
         std::unique_ptr<subproblem> slice_min(std::move(activeSet[0]));
         for(int i=1;i<n_parents;i++){
             if(activeSet[i]->lb < slice_min->lb){
@@ -263,7 +274,7 @@ Beam::step_loop(unsigned int beamWidth,int localBest){
             }
         }
         activeSet.clear();
-
+        //found new best solution
         if(slice_min->lb < prune->local_best){
             slice_min->ub = slice_min->lb;
             prune->local_best = slice_min->ub;
@@ -318,7 +329,7 @@ Beam::step_loop(unsigned int beamWidth,int localBest){
     //
     // clock_gettime(CLOCK_MONOTONIC,&t1);
     //
-    //sort slice (or make tr a pqueue insert directly with check on length...)
+    //sort slice
     std::sort(children.begin(),children.end(),
         [](const std::unique_ptr<subproblem>& a,const std::unique_ptr<subproblem>& b){
             return a->prio > b->prio;
@@ -344,54 +355,60 @@ Beam::step_loop(unsigned int beamWidth,int localBest){
 }
 
 
-// bool
-// Beam::step(int beamWidth,int localBest)
-// {
-//     //current state
-//     std::shared_ptr<subproblem> n;
-//     //next slice
-//     std::vector<std::shared_ptr<subproblem>>children;
-//
-//     while (!tr->empty()) {
-//         n = tr->take();
-//         if(!(*prune)(n.get())){
-//             if (n->leaf()) {
-//                 n->ub = n->cost;
-//                 prune->local_best = n->ub;
-//                 *bestSolution = *n;
-//             }else{
-//                 //expand (compute lower bounds, priorities and generate surviving successors)
-//                 std::vector<std::unique_ptr<subproblem>>ns;
-//                 ns = decompose(*n);
-//
-//                 //compute priorities
-//                 float alpha = (float)(n->depth)/n->size;
-//                 for(auto &c : ns){
-//                     c->prio = (1.0f-alpha)*(c->cost)*c->prio + alpha*(c->cost);
-//                 }
-//
-//                 //insert in next slice
-//                 children.insert(children.end(), make_move_iterator(ns.begin()), make_move_iterator(ns.end()));
-//             }
-//         }
-// 	}
-//
-//     //sort slice (or make tr a pqueue insert directly with check on length...)
-//     std::sort(children.begin(),children.end(),
-//         [](std::shared_ptr<subproblem> a,std::shared_ptr<subproblem> b){
-//             return a->prio > b->prio;
-//         }
-//     );
-//
-//     //truncate
-//     for (auto i = children.rbegin(); i != children.rend(); i++) {
-//     	if(tr->size()<beamWidth){
-// 			tr->push(std::move(*i));
-// 	    }
-// 	}
-//
-//     return !tr->empty();
-// }
+
+
+bool
+Beam::step(unsigned int beamWidth,int localBest)
+{
+    //current state
+    std::shared_ptr<subproblem> n;
+    //next slice
+    std::vector<std::shared_ptr<subproblem>>children;
+
+    //for all live nodes
+    while (!tr->empty()) {
+        n = tr->take();
+        if(!(*prune)(n.get())){
+            if (n->leaf()) {
+                //if last
+                n->ub = n->lb;
+                prune->local_best = n->ub;
+                *bestSolution = *n;
+            }else{
+                //expand (compute lower bounds, priorities and generate surviving successors)
+                std::vector<std::unique_ptr<subproblem>>ns;
+                decompose(*n,ns);
+
+                //compute priorities
+                float alpha = (float)(n->depth)/n->size;
+                for(auto &c : ns){
+                    c->prio = (1.0f-alpha)*(c->lb)*c->prio + alpha*(c->lb);
+                }
+
+                //insert in next slice
+                children.insert(children.end(), make_move_iterator(ns.begin()), make_move_iterator(ns.end()));
+            }
+        }
+	}
+
+    std::cout<<"beamWidth: "<<beamWidth<<"\tslice "<<children.size()<<"\n";
+
+    //sort slice according to priority
+    std::sort(children.begin(),children.end(),
+        [](std::shared_ptr<subproblem> a,std::shared_ptr<subproblem> b){
+            return a->prio > b->prio;
+        }
+    );
+
+    //truncate
+    for (auto i = children.rbegin(); i != children.rend(); i++) {
+    	if(tr->size()<beamWidth){
+			tr->push(std::move(*i));
+	    }
+	}
+
+    return !tr->empty();
+}
 
 void
 Beam::decompose(const subproblem& n, std::vector<std::unique_ptr<subproblem>>& children)
