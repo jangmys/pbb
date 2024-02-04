@@ -18,47 +18,50 @@ void vNNEH::run(std::shared_ptr<subproblem> p, const int N)
     int n_iter = std::rint(std::ceil((float)nbJob/N));
 
     int mincmax=INT_MAX;
+    int NN = N;
 
     // for(int i=0;i<n_iter;i++){
     while(!jobs.empty())
     {
-        int NN = intRand(1,N);
+        // NN=intRand(1,N);
 
-        size_t take_jobs = std::min((size_t)N,jobs.size());
+        size_t take_jobs = std::min((size_t)NN,jobs.size());
         std::vector<int> lvn(jobs.begin(),jobs.begin()+take_jobs);
         jobs.erase(jobs.begin(),jobs.begin()+take_jobs);
 
         while(!lvn.empty())
-        {    std::vector<int> jobs(p->schedule);
+        {
+            // std::vector<int> jobs(p->schedule);
             mincmax=INT_MAX;
             int inpos=-1;
             int rempos=-1;
             int minjob=-1;
 
-            //evaluate each job in lvn at each position ...
+            std::vector<std::vector<int>> makespans(lvn.size(),std::vector<int>(partial.size()+1,0));
+
+            m->insertNJobsMakespansPar(partial,lvn,makespans);
+
             for(size_t j=0;j<lvn.size();j++){
-                // std::cout<<"L_vn["<<lvn[j]<<"] : ";
-                std::vector<int> makespans(partial.size()+1,0);
-
-                m->insertMakespans(partial,lvn[j],makespans);
-
                 for(unsigned i=0;i<=partial.size();i++){
-                    if(makespans[i]<mincmax){
-                        mincmax=makespans[i];
+                    if(makespans[j][i]<mincmax){
+                        mincmax=makespans[j][i];
                         inpos=i;
                         minjob=lvn[j];
                         rempos=j;
                     }
-                    // std::cout<<makespans[i]<<" ";
                 }
-                // std::cout<<"\n";
             }
 
-            // std::cout<<"insert job "<<rempos<<"("<<minjob<<") at "<<inpos<<"  = "<<mincmax<<"\n\n";
             m->insert(partial,inpos,minjob);
             lvn.erase(lvn.begin()+rempos);
+
+            if(!jobs.empty()){
+                lvn.push_back(jobs.front());
+                jobs.erase(jobs.begin());
+            }
+
         }
-        std::cout<<take_jobs<<" =========================\n";
+        // std::cout<<take_jobs<<" =========================\n";
     }
 
     for(size_t i=0;i<partial.size();i++){
@@ -83,7 +86,7 @@ void vNNEH::run_me(std::shared_ptr<subproblem> p, const int N)
 
     while(!jobs.empty())
     {
-        int NN = intRand(1,N);
+        // int NN = intRand(1,N);
 
         size_t take_jobs = std::min((size_t)N,jobs.size());
 
@@ -113,16 +116,16 @@ void vNNEH::run_plus(std::shared_ptr<subproblem> p, const int N){
     std::iota(tmp->schedule.begin(),tmp->schedule.end(),0);
     util::sort_by_key<int>(tmp->schedule,m->sumPT);
 
-    for(int i=1;i<N;i+=1){
+    for(int i=1;i<=N;i+=1){
         run(tmp,i);
-        std::cout<<" ? "<<tmp->fitness()<<"\n";
+        // std::cout<<" ? "<<tmp->fitness()<<"\n";
         if(tmp->fitness() < best->fitness()){
             for(size_t i=0;i<tmp->schedule.size();i++){
                 best->schedule[i]=tmp->schedule[i];
             }
             best->set_fitness(tmp->fitness());
 
-            std::cout<<"better "<<best->fitness()<<"\n";
+            std::cout<<i<<" better "<<best->fitness()<<"\n";
         }
     }
 

@@ -129,6 +129,23 @@ void fastInsertRemove::computeInser(const std::vector<int>& perm, int job)
     }
 }
 
+void fastInsertRemove::computeInser(const std::vector<int>& perm, int job, std::vector<std::vector<int>>& t_ins)
+{
+//  #insert before (position 1)
+    t_ins[0][0]=PTM[0][job];
+    for(int k=1;k<nbMachines;k++){
+        t_ins[k][0]=t_ins[k-1][0]+PTM[k][job];
+    }
+//  #insert 2nd pos to last
+    for(size_t j=1;j<=perm.size();j++){
+        t_ins[0][j]=head[0][j-1]+PTM[0][job];
+        for(int k=1;k<nbMachines;k++){
+            t_ins[k][j]=std::max(t_ins[k-1][j],head[k][j-1])+PTM[k][job];
+        }
+    }
+}
+
+
 //get len+1 makespans obtained by inserting "job" into positions 0,1,...,len of partial permuation of length len
 //returns cmax before job insertion
 int fastInsertRemove::insertMakespans(const std::vector<int>& perm, int job, std::vector<int>& makespans)
@@ -148,6 +165,80 @@ int fastInsertRemove::insertMakespans(const std::vector<int>& perm, int job, std
 
     return old_cmax;
 }
+
+int fastInsertRemove::insertNJobsMakespans(const std::vector<int>& perm, const std::vector<int>& jobs, std::vector<std::vector<int>>& makespans)
+{
+    int old_cmax = computeHeads(perm);
+    computeTails(perm);
+
+    // #pragma omp parallel
+    // {
+    //     std::vector<std::vector<int>> t_ins(nbMachines, std::vector<int>(nbJob,0));
+    //
+    //     #pragma omp for
+    //     for(size_t j=0;j<jobs.size();j++){
+    //         int job=jobs[j];
+    //         computeInser(perm, job, t_ins);
+    //         for(size_t i=0;i<=perm.size();i++){
+    //             int tmp = 0;
+    //             for(int m=0;m<nbMachines;m++){
+    //                 tmp=std::max(tmp,t_ins[m][i]+tail[m][i]);
+    //             }
+    //             // cmax[i]=tmp;
+    //             makespans[j][i]=tmp;
+    //         }
+    //     }
+    // }
+
+    for(size_t j=0;j<jobs.size();j++){
+        int job=jobs[j];
+        computeInser(perm, job);
+
+        //for each possible insertion position
+        for(size_t i=0;i<=perm.size();i++){
+            int tmp = 0;
+            for(int m=0;m<nbMachines;m++){
+                tmp=std::max(tmp,inser[m][i]+tail[m][i]);
+            }
+            makespans[j][i]=tmp;
+        }
+    }
+
+    return old_cmax;
+}
+
+int fastInsertRemove::insertNJobsMakespansPar(const std::vector<int>& perm, const std::vector<int>& jobs, std::vector<std::vector<int>>& makespans)
+{
+    int old_cmax = computeHeads(perm);
+    computeTails(perm);
+
+    #pragma omp parallel
+    {
+        std::vector<std::vector<int>> t_ins(nbMachines, std::vector<int>(nbJob,0));
+
+        #pragma omp for
+        for(size_t j=0;j<jobs.size();j++){
+            int job=jobs[j];
+            computeInser(perm, job, t_ins);
+            for(size_t i=0;i<=perm.size();i++){
+                int tmp = 0;
+                for(int m=0;m<nbMachines;m++){
+                    tmp=std::max(tmp,t_ins[m][i]+tail[m][i]);
+                }
+                // cmax[i]=tmp;
+                makespans[j][i]=tmp;
+            }
+        }
+    }
+
+    return old_cmax;
+}
+
+
+
+
+
+
 
 //get len makespans obtained by removing job at position 0,...,len-1 from partial permutation of length len
 //returns cmax before removal

@@ -66,11 +66,15 @@ public:
     void reset();
 
     int insertMakespans(const std::vector<int>& perm, int job, std::vector<int>& makespans);
+    int insertNJobsMakespans(const std::vector<int>& perm, const std::vector<int>& job, std::vector<std::vector<int>>& makespans);
+    int insertNJobsMakespansPar(const std::vector<int>& perm, const std::vector<int>& job, std::vector<std::vector<int>>& makespans);
+
     int removeMakespans(const std::vector<int>& perm, std::vector<int>& makespans);
 
     int computeHeads(const std::vector<int>& perm);
     void computeTails(const std::vector<int>& perm);
     void computeInser(const std::vector<int>& perm, int job);
+    void computeInser(const std::vector<int>& perm, int job, std::vector<std::vector<int>>& t_ins);
 
     void insert(std::vector<int>& perm, int pos, int job);
     int remove(std::vector<int>& perm, const int pos);

@@ -151,7 +151,7 @@ int main(int argc, char* argv[])
 
             vneh.run_plus(p,N);
 
-            // for(int i=1;i<=N-1;i++){
+            // for(int i=1;i<=N;i++){
             //     vneh.run(p,i);
             //     std::cout<<" === CMAX: "<<p->fitness()<<std::endl;
             // }
@@ -163,7 +163,39 @@ int main(int argc, char* argv[])
         }
         case 7:
         {
+            auto best = std::make_shared<subproblem>(N);
+            best->set_fitness(INT_MAX);
 
+            #pragma omp parallel
+            {
+                vNNEH vneh(p_times,N,M);
+
+                auto tmp = std::make_shared<subproblem>(N);
+                std::iota(tmp->schedule.begin(),tmp->schedule.end(),0);
+                util::sort_by_key<int>(tmp->schedule,vneh.m->sumPT);
+
+                #pragma omp for
+                for(int i=1;i<=N;i+=1){
+                    vneh.run(tmp,i);
+                    // std::cout<<" ? "<<tmp->fitness()<<"\n";
+                    #pragma omp critical
+                    {
+                        if(tmp->fitness() < best->fitness()){
+                            for(size_t i=0;i<tmp->schedule.size();i++){
+                                best->schedule[i]=tmp->schedule[i];
+                            }
+                            best->set_fitness(tmp->fitness());
+
+                            std::cout<<i<<" better "<<best->fitness()<<"\n";
+                        }
+                    }
+                }
+            }
+
+            for(size_t i=0;i<best->schedule.size();i++){
+                p->schedule[i]=best->schedule[i];
+            }
+            p->set_fitness(best->fitness());
         }
 
 
