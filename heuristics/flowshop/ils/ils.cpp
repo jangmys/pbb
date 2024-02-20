@@ -8,6 +8,7 @@ IG::IG(const std::vector<std::vector<int>> p_times, const int N, const int M) :
     nhood(std::make_unique<fspnhood<int>>(p_times,N,M)),
     ls(std::make_unique<LocalSearch>(p_times,N,M))
 {
+    //instance parameters
     nbJob=nhood->m->nbJob;
     nbMachines=nhood->m->nbMachines;
 
@@ -18,15 +19,13 @@ IG::IG(const std::vector<std::vector<int>> p_times, const int N, const int M) :
         }
     }
     avgPT = (float)sum/(nbJob*nbMachines);
+
+    //ILS parameters
     acceptanceParameter=0.2;
 	destructStrength=2;
-
     igiter=200;
 
     visitOrder = std::vector<int>(nbJob);
-
-    // std::cout<<"heeeree\n"<<std::endl;
-
 	int start=nbJob/2;
 	int ind=0;
 	for(int i=start;i<nbJob;i++){
@@ -225,11 +224,13 @@ void IG::run(std::shared_ptr<subproblem> s)
 //iterated local search from starting point "current"
 int IG::runIG(std::shared_ptr<subproblem> current, const int niter)
 {
+    //temporary and best found solutions
     std::unique_ptr<subproblem> temp = std::make_unique<subproblem>(nbJob);
     std::unique_ptr<subproblem> best = std::make_unique<subproblem>(nbJob);
 
     *best=*current;
 
+    //set initial
     int bestcost=nhood->m->computeHeads(best->schedule, nbJob);
     int currentcost=bestcost;
 	current->ub=bestcost;

@@ -9,6 +9,8 @@
 #include "pruning.h"
 
 class Tree;
+class Pruning;
+class Branching;
 
 struct prio_compare {
     bool
@@ -22,6 +24,7 @@ struct prio_compare {
 class Beam{
 public:
     Beam(pbab* _pbb,instance_abstract& inst);
+    ~Beam(){};
 
     pbab* pbb;
 
@@ -46,5 +49,7 @@ public:
     void decompose(const subproblem& n, std::vector<std::unique_ptr<subproblem>>& ns);
     // std::vector<subproblem*> decompose(const subproblem& n);
 };
+
+
 
 #endif

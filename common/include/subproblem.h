@@ -44,6 +44,27 @@ public:
     shuffle();
 
     void swap(int a, int b);
+
+    int fitness() const
+    {
+        return _ub;
+    }
+    int lower_bound() const{
+        return _cost;
+    }
+
+    void set_fitness(const int ub)
+    {
+        _ub = ub;
+    }
+    void set_lower_bound(const int lb)
+    {
+        _cost = lb;
+    }
+
+private:
+    int _cost=0;
+    int _ub=0 ;
 };
 
 std::ostream&

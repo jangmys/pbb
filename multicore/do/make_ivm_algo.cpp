@@ -21,8 +21,8 @@ std::shared_ptr<Intervalbb<T>> make_ivmbb(pbab* pbb)
         bb->set_secondary_bound( make_bound_ptr<int>(pbb,arguments::secondary_bound));
     }
 
-    bb->set_prune( make_prune_ptr<int>(pbb) );
-    bb->set_branch( make_branch_ptr<int>(pbb) );
+    bb->set_prune( make_prune_ptr<int>(pbb->best_found.initial_cost) );
+    bb->set_branch( make_branch_ptr<int>(pbb->size,pbb->best_found.initial_cost) );
 
     bb->print_new_solutions = arguments::printSolutions;
 

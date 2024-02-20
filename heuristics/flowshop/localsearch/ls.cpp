@@ -1,6 +1,6 @@
 #include "ls.h"
 
-LocalSearch::LocalSearch(instance_abstract& _inst) : nhood(std::make_unique<fspnhood<int>>(_inst))
+LocalSearch::LocalSearch(instance_abstract& _inst) : LocalSearchBase(),nhood(std::make_unique<fspnhood<int>>(_inst))
 {
 };
 
@@ -101,7 +101,6 @@ LocalSearch::localSearchKI(std::vector<int>& perm,const int kmax)
     std::vector<int>tmp(perm.size());
 
     int best=nhood->m->computeHeads(perm, perm.size());
-    std::cout<<"best : "<<best<<"\n";
 
 	//ls iterations ... 10000 = 'infinity' (likely getting trapped in local min much earlier)
     for(int k=0;k<10000;k++){

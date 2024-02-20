@@ -47,15 +47,15 @@ public:
     int nbbounds;
 
     void
-    boundChildren(int permutation[], int limite1, int limite2, int * costsBegin, int * costsEnd, int * prioBegin, int * prioEnd, int best);
+    boundChildren(std::vector<int> permutation, int limite1, int limite2, int * costsBegin, int * costsEnd, int * prioBegin, int * prioEnd, int best);
 
     void
-    bornes_calculer(int permutation[], int limite1, int limite2, int * couts, int);
+    bornes_calculer(std::vector<int> permutation, int limite1, int limite2, int * couts, int);
     int
-    bornes_calculer(int permutation[], int limite1, int limite2);
+    bornes_calculer(std::vector<int> permutation, int limite1, int limite2);
 
     int
-    evalSolution(int * permut);
+    evalSolution(std::vector<int> permut);
 };
 
 #endif // ifndef BOUND_FSP_STRONG_H

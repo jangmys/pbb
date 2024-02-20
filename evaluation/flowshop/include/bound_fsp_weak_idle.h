@@ -38,15 +38,15 @@ public:
     addBackAndBound(int job, float &prio, const std::vector<int>& front, const std::vector<float>& idleFront, const std::vector<int>& back, const std::vector<float>& idleBack, const std::vector<int>& remain);
 
     void
-    boundChildren(const int * permut, int limit1, int limit2, int * costsBegin, int * costsEnd, float * prioBegin, float * prioEnd);
+    boundChildren(std::vector<int> permut, int limit1, int limit2, int * costsBegin, int * costsEnd, float * prioBegin, float * prioEnd);
 
     int
-    evalSolution(int * permut);
+    evalSolution(std::vector<int> permut);
 
     void
-    bornes_calculer(int permutation[], int limite1, int limite2, int * couts, int best);
+    bornes_calculer(std::vector<int> permutation, int limite1, int limite2, int * couts, int best);
     void
-    bornes_calculer(int permutation[], int limite1, int limite2);
+    bornes_calculer(std::vector<int> permutation, int limite1, int limite2);
 
 private:
     void

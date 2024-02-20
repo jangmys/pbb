@@ -7,12 +7,12 @@
 
 #include "pbab.h"
 #include "tree.h"
-#include "branching.h"
-#include "pruning.h"
 #include "beam.h"
 
 class Tree;
 class Beam;
+class Pruning;
+class Branching;
 
 class Treeheuristic{
 public:
@@ -31,6 +31,9 @@ public:
     std::unique_ptr<LocalSearch> ls;
     std::unique_ptr<IG> ig;
     std::unique_ptr<Beam> beam;
+    std::unique_ptr<fastNEH> neh;
+
+    long long int cutoff;
 
     int run(std::shared_ptr<subproblem>& s, int _ub);
 

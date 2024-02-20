@@ -64,12 +64,12 @@ Poolbb::decompose(subproblem& n){
     //if only 2 solutions ...
     if (n.is_simple()) {
         tmp = std::make_unique<subproblem>(n, n.limit1 + 1, Branching::Front);
-        tmp->lb = primary_bound->evalSolution(tmp->schedule.data());
+        tmp->lb = primary_bound->evalSolution(tmp->schedule);
         if(!(*prune)(tmp.get()))
             children.push_back(std::move(tmp));
 
         tmp = std::make_unique<subproblem>(n, n.limit1+2 , Branching::Front);
-        tmp->lb = primary_bound->evalSolution(tmp->schedule.data());
+        tmp->lb = primary_bound->evalSolution(tmp->schedule);
         if(!(*prune)(tmp.get()))
             children.push_back(std::move(tmp));
     } else {
@@ -84,17 +84,17 @@ Poolbb::decompose(subproblem& n){
 
         if(dir<0){
             //eval begin-end
-            this->primary_bound->boundChildren( n.schedule.data(),n.limit1,n.limit2, costFwd.data(),costBwd.data(),  prioFwd.data(),prioBwd.data(), this->prune->local_best
+            this->primary_bound->boundChildren( n.schedule,n.limit1,n.limit2, costFwd.data(),costBwd.data(),  prioFwd.data(),prioBwd.data(), this->prune->local_best
             );
 
             dir = (*branch)(costFwd.data(),costBwd.data(),n.depth);
         }else if(dir == Branching::Front){
             //only begin
-            this->primary_bound->boundChildren( n.schedule.data(),n.limit1,n.limit2, costFwd.data(),nullptr,  prioFwd.data(),nullptr, this->prune->local_best
+            this->primary_bound->boundChildren( n.schedule,n.limit1,n.limit2, costFwd.data(),nullptr,  prioFwd.data(),nullptr, this->prune->local_best
             );
         }else{
             //only end
-            this->primary_bound->boundChildren( n.schedule.data(),n.limit1,n.limit2, nullptr,costBwd.data(), nullptr,prioBwd.data(), this->prune->local_best
+            this->primary_bound->boundChildren( n.schedule,n.limit1,n.limit2, nullptr,costBwd.data(), nullptr,prioBwd.data(), this->prune->local_best
             );
         }
 

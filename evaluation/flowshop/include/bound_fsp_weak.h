@@ -23,15 +23,15 @@ public:
     init(instance_abstract& _instance);
 
     void
-    boundChildren(int * permut, int limit1, int limit2, int * costsBegin, int * costsEnd, int * prioBegin, int * prioEnd, int best);
+    boundChildren(std::vector<int> permut, int limit1, int limit2, int * costsBegin, int * costsEnd, int * prioBegin, int * prioEnd, int best);
 
     int
-    evalSolution(int * permut);
+    evalSolution(std::vector<int> permut);
 
     void
-    bornes_calculer(int permutation[], int limite1, int limite2, int * couts, int best);
+    bornes_calculer(std::vector<int> permutation, int limite1, int limite2, int * couts, int best);
     int
-    bornes_calculer(int permutation[], int limite1, int limite2);
+    bornes_calculer(std::vector<int> permutation, int limite1, int limite2);
 private:
     // this is CONSTANT data. in multi-core BB each thread will instantiate the lower bound. making the following static will save some space ("shared"), but performance hits are observed especially on dual-socket NUMA nodes.
     bound_data *data;

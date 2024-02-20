@@ -4,7 +4,14 @@
 #include "fastneighborhood.h"
 #include "libbounds.h"
 
-class LocalSearch{
+
+class LocalSearchBase{
+public:
+    LocalSearchBase(){};
+};
+
+
+class LocalSearch : LocalSearchBase{
 public:
     LocalSearch(instance_abstract& inst);
     LocalSearch(const std::vector<std::vector<int>> p_times, const int N, const int M);

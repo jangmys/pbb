@@ -2,6 +2,9 @@
 
 #include <limits.h>
 #include <string.h>
+#include <stdio.h>
+
+
 
 
 bound_data* new_bound_data(int _jobs, int _machines)
@@ -103,14 +106,15 @@ int eval_solution(const bound_data* const data, const int* const permutation)
 {
     int N=data->nb_jobs;
     int M=data->nb_machines;
-    int tmp[N];
+    int tmp[M];
 
-    for(int i=0;i<N;i++){
+    for(int i=0;i<M;i++){
         tmp[i]=0;
     }
     for(int i=0;i<N;i++){
         add_forward(permutation[i], data->p_times, N, M, tmp);
     }
+
     return tmp[M-1];
 }
 
