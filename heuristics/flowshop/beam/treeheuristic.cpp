@@ -24,6 +24,8 @@ Treeheuristic::Treeheuristic(pbab* _pbb,instance_abstract& inst) :
     ig = std::make_unique<IG>(inst);
     beam = std::make_unique<Beam>(pbb,inst);
     neh = std::make_unique<fastNEH>(inst);
+
+    cutoff = inst.size*inst.size*10;
 }
 
 
@@ -52,7 +54,7 @@ Treeheuristic::run(std::shared_ptr<subproblem>& s, int _ub)
     std::shared_ptr<subproblem> currsol = std::make_shared<subproblem>(*bsol);
 
     int c=0;
-    long long int cutoff = bsol->size*bsol->size*1000;
+    // cutoff = bsol->size*bsol->size*100;
     bool perturb = false;
 
     while(1){
@@ -71,10 +73,10 @@ Treeheuristic::run(std::shared_ptr<subproblem>& s, int _ub)
             std::shuffle(tmpsol->schedule.begin()+r, tmpsol->schedule.begin()+r+l, g);
 
             // (tmpsol)->ub = eval->evalSolution((tmpsol)->schedule);
-            (tmpsol)->ub = (*ls)(tmpsol->schedule,-1,tmpsol->size);
+            ig->run(tmpsol);
+            // (tmpsol)->ub = (*ls)(tmpsol->schedule,-1,tmpsol->size);
 
             // neh->runNEH(tmpsol->schedule,tmpsol->ub);
-            // ig->run(tmpsol);
 
             std::cout<<"shuffle\t"<<tmpsol->ub<<"\n";
 
@@ -104,7 +106,7 @@ Treeheuristic::run(std::shared_ptr<subproblem>& s, int _ub)
 
 
 
-        if(c++ > 500)
+        if(c++ > 100)
             break;
     }
 
@@ -138,6 +140,7 @@ Treeheuristic::exploreNeighborhood(std::shared_ptr<subproblem> s,long long int c
         //take next subproblem from pool
         if (!tr->empty()) {
             std::shared_ptr<subproblem> n = tr->take();
+
             //if not pruned (additional check - should get filtered out before)
             if(!(*prune)(n.get())){
                 if(n->leaf()){ // unpruned leaf == new best
@@ -148,6 +151,8 @@ Treeheuristic::exploreNeighborhood(std::shared_ptr<subproblem> s,long long int c
                     std::vector<std::shared_ptr<subproblem>>ns;
                     ns = decompose(*n);
 
+                    std::cout<<n->depth<<" "<<n->lb<<" "<<n->ub<<std::endl;
+
                     //compute priorities (used as tiebreaker)
                     float alpha = (float)(n->depth+1)/n->size;
                     for(auto &c : ns){
@@ -157,19 +162,24 @@ Treeheuristic::exploreNeighborhood(std::shared_ptr<subproblem> s,long long int c
                     //evaluate
                     for (auto i = ns.begin(); i != ns.end(); i++) {
 
-                        if((*i)->depth < 50 && (*i)->depth%5 == 0){
-                            (*i)->ub = (*ls)((*i)->schedule,-1,(*i)->size);
-                            // int nb_iter = 20;
-                            // int f = ig->runIG((*i).get(),(*i)->limit1+1,(*i)->limit2, nb_iter);
-                            // (*i)->ub = f;
-                        }else if((*i)->depth%5 == 0){
-                            int c = (*ls)((*i)->schedule,(*i)->limit1+1,(*i)->limit2);
-                            (*i)->ub = c;
-                        }else{
+                        // if((*i)->depth < 50 && (*i)->depth%5 == 0){
+                        //     (*i)->ub = (*ls)((*i)->schedule,-1,(*i)->size);
+                        //     // int nb_iter = 20;
+                        //     // int f = ig->runIG((*i).get(),(*i)->limit1+1,(*i)->limit2, nb_iter);
+                        //     // (*i)->ub = f;
+                        // }else if((*i)->depth%5 == 0){
+                        //     int c = (*ls)((*i)->schedule,(*i)->limit1+1,(*i)->limit2);
+                        //     (*i)->ub = c;
+                        // }else{
                         // }else{
                             // (*i)->ub = (*ls)((*i)->schedule,-1,(*i)->size);
-                            (*i)->ub = eval->evalSolution((*i)->schedule);
+
+                        if((*i)->depth%5 == 0){
+                            int c = (*ls)((*i)->schedule,(*i)->limit1+1,(*i)->limit2);
+                            (*i)->ub = c;
                         }
+                        (*i)->ub = eval->evalSolution((*i)->schedule);
+                        // }
                     }
 
                     //insert in tr (priority queue!)
@@ -289,5 +299,6 @@ Treeheuristic::insert(std::vector<std::shared_ptr<subproblem>>&ns)
         // (*i)->ub = eval->evalSolution((*i)->schedule);
 
         tr->push(std::move(*i));
+
     }
 }

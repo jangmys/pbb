@@ -33,6 +33,8 @@ public:
     std::unique_ptr<Beam> beam;
     std::unique_ptr<fastNEH> neh;
 
+    long long int cutoff;
+
     int run(std::shared_ptr<subproblem>& s, int _ub);
 
     void exploreNeighborhood(std::shared_ptr<subproblem> s, long long int cutoff);
