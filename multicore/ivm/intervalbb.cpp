@@ -53,6 +53,14 @@ Intervalbb<T>::setRoot(const int *varOrder)
     }
 }
 
+template<typename T>
+void
+Intervalbb<T>::setRoot(const std::vector<int> varOrder)
+{
+    setRoot(varOrder.data());
+}
+
+
 
 template<typename T>
 bool

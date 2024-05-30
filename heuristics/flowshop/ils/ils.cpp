@@ -2,7 +2,7 @@
 
 #include "subproblem.h"
 #include "ils.h"
-#include "ls.h"
+#include "libheuristic.h"
 
 IG::IG(const std::vector<std::vector<int>> p_times, const int N, const int M) :
     nhood(std::make_unique<fspnhood<int>>(p_times,N,M)),

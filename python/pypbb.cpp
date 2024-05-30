@@ -63,22 +63,6 @@ PYBIND11_MODULE(pypbb, m) {
 
     m.doc() = "pybind11 example plugin"; // optional module docstring
 
-    // m.def("_floatRand",floatRand);
-    //
-    //
-    // m.def("adder", &adder, "A function that adds two numbers",
-    //       py::arg("i") = 1, py::arg("j") = 2
-    // );
-    //
-    // m.attr("the_answer") = 42;
-    //
-    // py::object world = py::cast("World");
-    // m.attr("what") = world;
-    //
-    // py::class_<test>(m, "test")
-    //     .def(py::init<>())
-    //     .def("init", &test::init);
-    //
     // //=============================================================
     py::class_<arguments>(m, "args")
         .def(py::init<>())

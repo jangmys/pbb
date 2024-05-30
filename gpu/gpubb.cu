@@ -12,7 +12,6 @@
 #include "subproblem.h"
 #include "ttime.h"
 #include "log.h"
-
 #include "libbounds.h"
 #include "gpubb.h"
 

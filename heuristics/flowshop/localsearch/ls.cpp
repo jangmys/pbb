@@ -1,12 +1,13 @@
 #include "ls.h"
 
-LocalSearch::LocalSearch(instance_abstract& _inst) : LocalSearchBase(),nhood(std::make_unique<fspnhood<int>>(_inst))
-{
-};
+#include <vector>
+// LocalSearch::LocalSearch(instance_abstract& _inst) : LocalSearchBase(),nhood(std::make_unique<fspnhood<int>>(_inst))
+// {
+// };
 
-LocalSearch::LocalSearch(const std::vector<std::vector<int>> p_times,const int N, const int M) : nhood(std::make_unique<fspnhood<int>>(p_times,N,M))
-{
-};
+// LocalSearch::LocalSearch(const std::vector<std::vector<int>> p_times,const int N, const int M) : nhood(std::make_unique<fspnhood<int>>(p_times,N,M))
+// {
+// };
 
 
 

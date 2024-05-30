@@ -22,7 +22,10 @@ public:
     Intervalbb(pbab* _pbb);
 
     bool initAtInterval(std::vector<int>& pos, std::vector<int>& end);
+
     void setRoot(const int* varOrder);
+    void setRoot(const std::vector<int> varOrder);
+
 
     void run();
     bool next();
