@@ -22,7 +22,7 @@ set(CMAKE_CXX_FLAGS_DEBUG "-g -pg -O0 -rdynamic" CACHE STRING "")
 #endif()
 
 if(${CMAKE_HOST_SYSTEM_PROCESSOR} MATCHES "aarch64")
-    message(STATUS )
+    message(STATUS "build for aarch64")
     SET(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -mcpu=neoverse-n1")
     SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -mcpu=neoverse-n1")
 endif()
@@ -42,6 +42,9 @@ if(MPI)
     add_compile_definitions(WITH_MPI)
     add_subdirectory(distributed)
 endif()
+
+
+
 
 #add lower bounds library
 add_subdirectory(evaluation)

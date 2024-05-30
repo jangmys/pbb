@@ -37,7 +37,7 @@ In the PBB root directory:
 3. `cmake .. <options>` where `<options>` are
     - `-DMPI=true` #enable MPI build
     - `-DGPU=true` #enable GPU build
-    - `-DCMAKE_BUILD_TYPE=Release/Debug` #(un)define NDEBUG
+    - `-DCMAKE_BUILD_TYPE=Release/Debug` #(un)define NDEBUG, default : Release
 4. `make`
 
 This will build the following executables (if enabled)
