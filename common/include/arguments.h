@@ -27,7 +27,6 @@ public:
     static int initial_ub;
     static bool increaseInitialUB;
 
-
     // distributed
     static char worker_type; //cpu or gpu (distributed mode)
     static bool singleNode; //no MPI = 1 ; distributed = 0
@@ -46,7 +45,6 @@ public:
     static int balancingv;
     static int timeout;
 
-
     static int initial_work;
     static int sortNodes;
     static int nodePriority;
@@ -54,9 +52,8 @@ public:
     static int nbivms_gpu;//chose ...
 
     //problem
-    static char problem[50];
-    static char inst_name[50];
-    // static char inifile[50];
+    static std::string problem;
+    static std::string inst_name;
     static char work_directory[50];
 
     static char logfile[50];
