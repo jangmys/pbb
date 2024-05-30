@@ -43,7 +43,7 @@ int main(int argc, char* argv[])
     //====================================
     auto instance = pbb_instance::make_inst(arguments::problem, arguments::inst_name);
 
-    int inst_id = atoi(arguments::inst_name+2);
+    int inst_id = std::stoi(arguments::inst_name.substr(2));
     int N,M;
 
     N=taillard_get_nb_jobs(inst_id);

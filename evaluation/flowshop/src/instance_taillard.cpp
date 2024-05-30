@@ -13,7 +13,7 @@
 #include <climits>
 #include <sys/stat.h>
 
-instance_taillard::instance_taillard(const char * inst)
+instance_taillard::instance_taillard(const std::string inst)
 {
     // expect instance-name to be "taX", where X is the number of Ta instance...
     int id = atoi(&inst[2]);

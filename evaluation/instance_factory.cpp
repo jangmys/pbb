@@ -5,7 +5,7 @@
 namespace pbb_instance
 {
     std::shared_ptr<instance_abstract>
-        make_inst(char problem[],char inst_name[])
+        make_inst(std::string problem, std::string inst_name)
     {
         switch(problem[0])//DIFFERENT PROBLEMS...
         {

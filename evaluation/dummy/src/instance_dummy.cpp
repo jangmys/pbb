@@ -3,17 +3,14 @@
 #include <instance_abstract.h>
 #include <instance_dummy.h>
 
-instance_dummy::instance_dummy(const char * inst_name){
+instance_dummy::instance_dummy(const std::string inst_name){
     data = new std::stringstream();
 
-    std::string s(inst_name);
-
-    auto nbJob = std::stoi(s);
+    auto nbJob = std::stoi(inst_name);
     size = nbJob;
 
     (*data) << size;
-
-    // std::cout<<"dummy instance : "<<nbJob<<" "<<size<<"\n";
+    std::cout<<"dummy instance : "<<size<<"\n";
 }
 
 instance_dummy::~instance_dummy()

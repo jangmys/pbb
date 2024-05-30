@@ -24,7 +24,7 @@ f_exists(const std::string& name)
 }
 
 struct instance_taillard : public instance_abstract {
-    instance_taillard(const char * inst);
+    instance_taillard(const std::string inst);
 
     int get_job_number(int id);
     int get_machine_number(int id);

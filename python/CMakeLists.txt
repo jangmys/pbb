@@ -13,7 +13,7 @@ add_subdirectory(extern/pybind11)
 # set(ENV{pybind11_DIR} ../extern/pybind11)
 
 find_package(Python COMPONENTS Interpreter Development)
-find_package(pybind11 CONFIG)
+# find_package(pybind11 CONFIG)
 
 pybind11_add_module(pypbb pypbb.cpp)
 

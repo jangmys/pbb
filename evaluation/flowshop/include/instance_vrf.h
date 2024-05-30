@@ -8,7 +8,7 @@
 struct instance_vrf : public instance_abstract {
     char * file;
 
-    instance_vrf(const char * inst_name);
+    instance_vrf(const std::string inst_name);
     ~instance_vrf();
 
     int
