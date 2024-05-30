@@ -76,8 +76,10 @@ std::unique_ptr<bound_abstract<int>> make_bound_ptr(pbab* pbb, const int _bound_
         auto bd = std::make_unique<bound_dummy>();
         bd->init(*(pbb->inst.get()));
         return bd;
+    }else{
+        std::cout<<"no valid problem defined. can't continue.\n";
+        return nullptr;
     }
-    return nullptr;
 }
 
 
