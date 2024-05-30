@@ -4,7 +4,6 @@
 #include <iostream>
 #include <vector>
 
-#include "add.h"
 #include "libbounds.h"
 #include "subproblem.h"
 #include "rand.hpp"
@@ -14,12 +13,7 @@
 #include "matrix_controller.h"
 
 namespace py = pybind11;
-// #include "../evaluation/libbounds.h"
-// #include "../heuristics/flowshop/neh/fastNEH.h"
 
-// int add(int i, int j) {
-//     return i + j;
-// }
 
 class test_abstract {
 public:

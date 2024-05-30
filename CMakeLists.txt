@@ -28,6 +28,12 @@ if(${CMAKE_HOST_SYSTEM_PROCESSOR} MATCHES "aarch64")
 endif()
 
 ######################################################################################
+#add lower bounds library
+add_subdirectory(evaluation)
+#add heuristics library
+add_subdirectory(heuristics)
+#add multicore IVM-based BB
+add_subdirectory(multicore)
 
 #optional : add GPUBB (requires CUDA)
 if(GPU)
@@ -43,15 +49,10 @@ if(MPI)
     add_subdirectory(distributed)
 endif()
 
+if(PYTHON)
+    add_subdirectory(python)
+endif()
 
-
-
-#add lower bounds library
-add_subdirectory(evaluation)
-#add heuristics library
-add_subdirectory(heuristics)
-#add multicore IVM-based BB
-add_subdirectory(multicore)
 
 ######################################################################################
 
