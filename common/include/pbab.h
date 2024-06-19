@@ -18,8 +18,8 @@
 
 /*
 - instance
-- bb operator factories
-- best
+- best/incumbent
+- timers
 - stats
 */
 class pbab
