@@ -71,8 +71,8 @@ IVMController::work_share(unsigned id, unsigned thief_id)
     int numShared = 0;
     int l         = 0;
 
-    std::shared_ptr<ivm> thief(ivmbb[thief_id]->get_ivm());
-    std::shared_ptr<ivm> IVM(ivmbb[id]->get_ivm());
+    std::shared_ptr<IVM> thief(ivmbb[thief_id]->get_ivm());
+    std::shared_ptr<IVM> IVM(ivmbb[id]->get_ivm());
 
     while (IVM->getPosition(l) == IVM->getEnd(l) && l < IVM->getDepth() && l < pbb->size - 4) l++;
 

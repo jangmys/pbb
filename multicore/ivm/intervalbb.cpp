@@ -9,7 +9,7 @@
 
 
 template<typename T>
-Intervalbb<T>::Intervalbb(pbab *_pbb) : MCbb<T>(_pbb),first(true), pbb(_pbb), size(_pbb->size),IVM(std::make_shared<ivm>(size)) //,count_leaves(0),count_decomposed(0)
+Intervalbb<T>::Intervalbb(pbab *_pbb) : MCbb<T>(_pbb),first(true), pbb(_pbb), size(_pbb->size),IVM(std::make_shared<IVM>(size)) //,count_leaves(0),count_decomposed(0)
 {
     rootRow = std::vector<T>(size,0);
 }

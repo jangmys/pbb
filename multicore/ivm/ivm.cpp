@@ -3,99 +3,99 @@
 #include "../../common/include/pbab.h"
 #include "ivm.h"
 
-ivm::ivm(int _size) : size(_size),line(0),
+IVM::IVM(int _size) : size(_size),line(0),
     posVect(_size,0),endVect(_size,0),dirVect(_size,0),jobMat(_size*_size,0),
     node(_size){
     clearInterval();
     posVect[0]=size; //makes interval empty
 }
 
-subproblem& ivm::getNode(){
+subproblem& IVM::getNode(){
     return node;
 }
 
-int ivm::getDepth() const{
+int IVM::getDepth() const{
     return line;
 }
 
-void ivm::setDepth(int _line){
+void IVM::setDepth(int _line){
     line = _line;
 };
 
-void ivm::incrDepth(){
+void IVM::incrDepth(){
     line++;
 };
 
-void ivm::alignLeft(){
+void IVM::alignLeft(){
     for (int i = getDepth() + 1; i < size; i++) {
         posVect[i] = 0;
     }
 };
 
-void ivm::setPosition(int* pos){
+void IVM::setPosition(int* pos){
     for(int i=0;i<size;i++){
         posVect[i] = pos[i];
     }
 }
 
-void ivm::setPosition(int depth, int pos){
+void IVM::setPosition(int depth, int pos){
     posVect[depth] = pos;
 }
 
-int ivm::getPosition(const int _d) const{
+int IVM::getPosition(const int _d) const{
     return posVect[_d];
 }
 
-void ivm::setEnd(int* end){
+void IVM::setEnd(int* end){
     for(int i=0;i<size;i++){
         endVect[i] = end[i];
     }
 }
 
-void ivm::setEnd(int depth,int end){
+void IVM::setEnd(int depth,int end){
     endVect[depth] = end;
 }
 
-int ivm::getEnd(const int _d) const{
+int IVM::getEnd(const int _d) const{
     return endVect[_d];
 }
 
-void ivm::setDirection(int depth, int dir){
+void IVM::setDirection(int depth, int dir){
     dirVect[depth] = dir;
 };
 
-void ivm::setDirection(int dir){
+void IVM::setDirection(int dir){
     dirVect[getDepth()] = dir;
 };
 
-int ivm::getDirection(const int _d) const{
+int IVM::getDirection(const int _d) const{
     return dirVect[_d];
 }
 
-int ivm::getDirection() const{
+int IVM::getDirection() const{
     return dirVect[getDepth()];
 }
 
 void
-ivm::setRow(int k, const int *row){
+IVM::setRow(int k, const int *row){
     for(int i=0;i<size;i++){
         jobMat[k*size + i] = row[i];
     }
 };
 
 int*
-ivm::getRowPtr(int i){
+IVM::getRowPtr(int i){
     return jobMat.data()+i*size;
 }
 
 int
-ivm::getCell(int i, int j) const{
+IVM::getCell(int i, int j) const{
     return jobMat[i*size+j];
 }
 
 /**
 */
-void ivm::clearInterval()
+void IVM::clearInterval()
 {
     std::fill(std::begin(posVect),std::end(posVect),0);
     std::fill(std::begin(endVect),std::end(endVect),0);
@@ -104,20 +104,20 @@ void ivm::clearInterval()
 
 /** getter for an interval in factoradic form
 */
-void ivm::getInterval(int* pos, int* end)
+void IVM::getInterval(int* pos, int* end)
 {
     memcpy(pos,posVect.data(), size*sizeof(int));
     memcpy(end,endVect.data(), size*sizeof(int));
 }
 
 //"prune"
-void ivm::goRight()
+void IVM::goRight()
 {
     posVect[line]++;
 }
 
 //"backtrack"
-void ivm::goUp()
+void IVM::goUp()
 {
     //"go up" with line=0 can occur :
     //pos==end==N!-1 --> beforeEnd == true
@@ -131,7 +131,7 @@ void ivm::goUp()
 }
 
 //"branch"
-void ivm::goDown()
+void IVM::goDown()
 {
     line++;
     generateLine(line, true);
@@ -143,7 +143,7 @@ inline int removeFlag(int a)
 }
 
 void
-ivm::generateLine(const int line, const bool explore)
+IVM::generateLine(const int line, const bool explore)
 {
     int lineMinus1 = line - 1;
     int column     = posVect[lineMinus1];
@@ -161,25 +161,25 @@ ivm::generateLine(const int line, const bool explore)
 }
 
 bool
-ivm::lineEndState() const
+IVM::lineEndState() const
 {
     return posVect[line] >= (size-line);
 }
 
 bool
-ivm::isLastLine() const
+IVM::isLastLine() const
 {
     return line == size - 1;
 }
 
 bool
-ivm::pruningCellState() const
+IVM::pruningCellState() const
 {
     return getCurrentCell() < 0;
 }
 
 bool
-ivm::beforeEnd() const
+IVM::beforeEnd() const
 {
     for (int i = 0; i < size; i++) {
         if (posVect[i] == endVect[i]) continue;
@@ -190,7 +190,7 @@ ivm::beforeEnd() const
 }
 
 int
-ivm::vectorCompare(const int* a,const int* b)
+IVM::vectorCompare(const int* a,const int* b)
 {
     for (int i = 0; i < size; i++) {
         if(a[i]==b[i])continue;
@@ -202,7 +202,7 @@ ivm::vectorCompare(const int* a,const int* b)
 
 
 
-bool ivm::selectNext()
+bool IVM::selectNext()
 {
     while (beforeEnd()) {
         if (lineEndState()) {
@@ -220,7 +220,7 @@ bool ivm::selectNext()
     return false;
 }
 
-bool ivm::selectNextIt()
+bool IVM::selectNextIt()
 {
     auto v = posVect.begin()+line;
     auto m = jobMat.begin()+line*size+(*v);
@@ -259,7 +259,7 @@ bool ivm::selectNextIt()
 
 //reads IVM and sets current subproblem
 void
-ivm::decodeIVM()
+IVM::decodeIVM()
 {
     const int d = getDepth();
 
@@ -302,7 +302,7 @@ void reverse_order(int* jobs, int line, int size)
 
 
 template<typename T>
-void ivm::sortSiblingNodes(std::vector<T> lb,std::vector<T> prio)
+void IVM::sortSiblingNodes(std::vector<T> lb,std::vector<T> prio)
 {
     int _line=line;
 
@@ -355,14 +355,14 @@ void ivm::sortSiblingNodes(std::vector<T> lb,std::vector<T> prio)
 }
 
 void
-ivm::eliminateCurrent()
+IVM::eliminateCurrent()
 {
     int pos = getPosition(getDepth());
     jobMat[getDepth() * size + pos] = negative(getCurrentCell());
 }
 
 void
-ivm::displayVector(int *ptr) const
+IVM::displayVector(int *ptr) const
 {
     for(int i=0;i<size;i++){
         printf("%3d ",ptr[i]);
@@ -372,7 +372,7 @@ ivm::displayVector(int *ptr) const
 }
 
 void
-ivm::displayMatrix() const
+IVM::displayMatrix() const
 {
     for(int i=0;i<size;i++){
         printf("%2d%2s",posVect[i],"| ");
@@ -384,7 +384,7 @@ ivm::displayMatrix() const
 }
 
 void
-ivm::printRow(const int r) const
+IVM::printRow(const int r) const
 {
     for(int i=0;i<size;i++){
         printf("%3d ",getCell(r,i));
@@ -395,7 +395,7 @@ ivm::printRow(const int r) const
 
 
 // count the number of explorable subtrees
-int ivm::countExplorableSubtrees(const int line)
+int IVM::countExplorableSubtrees(const int line)
 {
     int count = 0;
 
@@ -406,7 +406,7 @@ int ivm::countExplorableSubtrees(const int line)
 }
 
 // determine the position where to cut the line between the 2 threads
-int ivm::cuttingPosition(const int line, const int division)
+int IVM::cuttingPosition(const int line, const int division)
 {
 	int expSubtrees = countExplorableSubtrees(line);
 
@@ -431,7 +431,7 @@ int ivm::cuttingPosition(const int line, const int division)
 	return pos;
 }
 
-bool ivm::intervalValid() const{
+bool IVM::intervalValid() const{
     for (int i = 0; i < size; i++) {
         if ( (posVect[i] < 0) || (posVect[i] >= size - i) ) {
             return false;
@@ -443,4 +443,4 @@ bool ivm::intervalValid() const{
     return true;
 }
 
-template void ivm::sortSiblingNodes<int>(std::vector<int> lb,std::vector<int> prio);
+template void IVM::sortSiblingNodes<int>(std::vector<int> lb,std::vector<int> prio);

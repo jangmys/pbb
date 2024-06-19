@@ -45,7 +45,7 @@ public:
 
     virtual void boundAndKeepSurvivors(subproblem& subproblem);
 
-    std::shared_ptr<ivm> get_ivm(){
+    std::shared_ptr<IVM> get_ivm(){
         return IVM;
     }
 
@@ -64,7 +64,7 @@ public:
 protected:
     pbab* pbb;
     int size;
-    std::shared_ptr<ivm> IVM;
+    std::shared_ptr<IVM> IVM;
 
     void unfold();
 };
