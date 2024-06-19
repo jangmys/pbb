@@ -9,7 +9,7 @@
 
 
 template<typename T>
-Intervalbb<T>::Intervalbb(pbab *_pbb) : MCbb<T>(_pbb),first(true), pbb(_pbb), size(_pbb->size),IVM(std::make_shared<IVM>(size)) //,count_leaves(0),count_decomposed(0)
+Intervalbb<T>::Intervalbb(pbab *_pbb) : MCbb<T>(_pbb),first(true), pbb(_pbb), size(_pbb->size),_IVM(std::make_shared<IVM>(size)) //,count_leaves(0),count_decomposed(0)
 {
     rootRow = std::vector<T>(size,0);
 }
@@ -18,38 +18,38 @@ template<typename T>
 void
 Intervalbb<T>::clear()
 {
-    IVM->clearInterval();
+    _IVM->clearInterval();
 }
 
 template<typename T>
 void
 Intervalbb<T>::setRoot(const int *varOrder)
 {
-    // IVM->clearInterval();
-    IVM->setDepth(0);
+    // _IVM->clearInterval();
+    _IVM->setDepth(0);
 
     if(!first){
         //row 0 and direction have been saved
-        IVM->setRow(0,rootRow.data());
-        IVM->setDirection(0,rootDir);
+        _IVM->setRow(0,rootRow.data());
+        _IVM->setDirection(0,rootDir);
     }else{
         //first line of Matrix
-        IVM->setRow(0,varOrder);
-        IVM->decodeIVM();
+        _IVM->setRow(0,varOrder);
+        _IVM->decodeIVM();
 
-        //compute children bounds (of IVM->node), choose Branching and modify IVM accordingly
+        //compute children bounds (of _IVM->node), choose Branching and modify _IVM accordingly
         pbb->best_found.getBest(this->prune->local_best);
-        boundAndKeepSurvivors(IVM->getNode());
+        boundAndKeepSurvivors(_IVM->getNode());
 
         //save first line of matrix (bounded root decomposition)
-        rootDir = IVM->getDirection(0);
+        rootDir = _IVM->getDirection(0);
         int c=0;
         for(auto &i : rootRow)
-            i=IVM->getCell(0,c++);
+            i=_IVM->getCell(0,c++);
 
         first = false;
 
-        FILE_LOG(logDEBUG) << " === Root : ["<<rootDir<<"]"<<IVM->getNode()<<"\n";
+        FILE_LOG(logDEBUG) << " === Root : ["<<rootDir<<"]"<<_IVM->getNode()<<"\n";
     }
 }
 
@@ -66,28 +66,28 @@ template<typename T>
 bool
 Intervalbb<T>::initAtInterval(std::vector<int> &pos, std::vector<int> &end)
 {
-    IVM->setDepth(0);
+    _IVM->setDepth(0);
 
     // std::vector<int>tmppos(size);
     // std::vector<int>tmpend(size);
     //
-    // IVM->getInterval(tmppos.data(),tmpend.data());
+    // _IVM->getInterval(tmppos.data(),tmpend.data());
     //
-    // if(IVM->vectorCompare(tmpend.data(),end.data()) != 0 ||
-    //     IVM->vectorCompare(tmppos.data(),pos.data()) < 0)
+    // if(_IVM->vectorCompare(tmpend.data(),end.data()) != 0 ||
+    //     _IVM->vectorCompare(tmppos.data(),pos.data()) < 0)
     // {
     //     std::cout<<"current\n";
-    //     IVM->displayVector(tmppos.data());
-    //     IVM->displayVector(tmpend.data());
+    //     _IVM->displayVector(tmppos.data());
+    //     _IVM->displayVector(tmpend.data());
     //     std::cout<<"new\n";
-    //     IVM->displayVector(pos.data());
-    //     IVM->displayVector(end.data());
+    //     _IVM->displayVector(pos.data());
+    //     _IVM->displayVector(end.data());
     // }
 
-    IVM->setPosition(pos.data());
-    IVM->setEnd(end.data());
+    _IVM->setPosition(pos.data());
+    _IVM->setEnd(end.data());
 
-    if (IVM->beforeEnd()) {
+    if (_IVM->beforeEnd()) {
         unfold();
         return true;
     }else{
@@ -122,7 +122,7 @@ void Intervalbb<T>::boundAndKeepSurvivors(subproblem& _subpb)
     std::vector<T> prioBwd(size,0);
 
     //a priori choice of branching direction
-    auto dir = this->branch->pre_bound_choice(IVM->getDepth());
+    auto dir = this->branch->pre_bound_choice(_IVM->getDepth());
 
     if(dir<0){    //if undecided
         // get lower bounds : both directions
@@ -136,7 +136,7 @@ void Intervalbb<T>::boundAndKeepSurvivors(subproblem& _subpb)
         dir = (*this->branch)(
             costFwd.data(),
             costBwd.data(),
-            IVM->getDepth()
+            _IVM->getDepth()
         );
     }else if(dir == Branching::Front){
         // get lower bounds : forward only
@@ -154,11 +154,11 @@ void Intervalbb<T>::boundAndKeepSurvivors(subproblem& _subpb)
             );
     }
 
-    IVM->setDirection(dir);
+    _IVM->setDirection(dir);
 
     //all
-    // dir = IVM->getDirection();
-    // IVM->sortSiblingNodes(
+    // dir = _IVM->getDirection();
+    // _IVM->sortSiblingNodes(
     //     lb[dir],
     //     prio[dir]
     // );
@@ -175,15 +175,15 @@ void Intervalbb<T>::boundAndKeepSurvivors(subproblem& _subpb)
 template<typename T>
 bool Intervalbb<T>::next()
 {
-    if(IVM->selectNextIt()){ //modify IVM : set to next subproblem
-        IVM->decodeIVM(); // decode IVM -> subproblem
+    if(_IVM->selectNextIt()){ //modify _IVM : set to next subproblem
+        _IVM->decodeIVM(); // decode _IVM -> subproblem
 
-        if (IVM->isLastLine()) {
+        if (_IVM->isLastLine()) {
             this->count_leaves++;
-            boundLeaf(IVM->getNode());
+            boundLeaf(_IVM->getNode());
         }else{
             this->count_decomposed++;
-            boundAndKeepSurvivors(IVM->getNode());
+            boundAndKeepSurvivors(_IVM->getNode());
         }
         return true;
     }else{
@@ -191,28 +191,28 @@ bool Intervalbb<T>::next()
     }
 }
 
-//initializes IVM at a given interval
+//initializes _IVM at a given interval
 template<typename T>
 void
 Intervalbb<T>::unfold()
 {
-    assert(IVM->intervalValid());
-    assert(IVM->getDepth() == 0);
+    assert(_IVM->intervalValid());
+    assert(_IVM->getDepth() == 0);
 
     pbb->best_found.getBest(this->prune->local_best);
 
-    while (IVM->getDepth() < size - 2) {
-        if (IVM->pruningCellState()) {
-            IVM->goRight();
-            IVM->alignLeft();
+    while (_IVM->getDepth() < size - 2) {
+        if (_IVM->pruningCellState()) {
+            _IVM->goRight();
+            _IVM->alignLeft();
             break;
         }
 
-        IVM->incrDepth();
-        IVM->generateLine(IVM->getDepth(), false);
-        IVM->decodeIVM();
+        _IVM->incrDepth();
+        _IVM->generateLine(_IVM->getDepth(), false);
+        _IVM->decodeIVM();
 
-        boundAndKeepSurvivors(IVM->getNode());
+        boundAndKeepSurvivors(_IVM->getNode());
     }
 } // matrix::unfold
 
@@ -251,7 +251,7 @@ Intervalbb<T>::boundLeaf(subproblem& node)
         }
     }
     //mark solution as visited
-    IVM->eliminateCurrent();
+    _IVM->eliminateCurrent();
 
     return better;
 }
@@ -260,8 +260,8 @@ template<typename T>
 void
 Intervalbb<T>::eliminateJobs(std::vector<T> lb)
 {
-    int _line=IVM->getDepth();
-    int * jm = IVM->getRowPtr(_line);
+    int _line=_IVM->getDepth();
+    int * jm = _IVM->getRowPtr(_line);
 
     // eliminate
     for (int i = 0; i < size-_line; i++) {
