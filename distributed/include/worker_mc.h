@@ -17,7 +17,7 @@ public:
         worker(_pbb,_nthreads),
         mc(std::make_unique<matrix_controller>(pbb,_nthreads,true))
     {
-        mc->set_victim_select(std::make_unique<RandomVictimSelector>(M));
+        mc->set_victim_select(std::make_shared<RandomVictimSelector>(M));
     };
 
     std::unique_ptr<matrix_controller> mc;

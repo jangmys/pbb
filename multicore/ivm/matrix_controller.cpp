@@ -33,7 +33,7 @@ matrix_controller::matrix_controller(pbab* _pbb,int _nthreads,bool distributed /
 
 //nbint := number received intervals
 void
-matrix_controller::initFromFac(const unsigned int nbint, const int * ids, int * _pos, int * _end)
+matrix_controller::initFromFac(const unsigned int nbint, const std::vector<int> ids, std::vector<int> _pos, std::vector<int> _end)
 {
     FILE_LOG(logDEBUG) << "=== init from factorial ";
     updatedIntervals=1;
@@ -126,6 +126,7 @@ matrix_controller::explore_multicore()
     int id = explorer_get_new_id();
     FILE_LOG(logDEBUG) << "=== got ID " << id;
 
+
     if(!is_distributed()){
         stick_this_thread_to_core(id);
     }
@@ -158,6 +159,7 @@ matrix_controller::explore_multicore()
     //reset counters and request queue
     thd_data[id]->reset_request_queue();
     ivmbb[id]->reset_node_counter();
+
 
     if(updatedIntervals){
         // std::cout<<"ID "<<id<<" init at interval\n";

@@ -46,8 +46,14 @@ target_sources(pypbb PRIVATE ${CommonCSources})
 # target_sources(pypbb PRIVATE ../common/src/ttime.cpp)
 # target_sources(pypbb PRIVATE ../common/src/pbab.cpp)
 
+target_sources(pypbb PRIVATE ../multicore/base/thread_controller.cpp)
+target_sources(pypbb PRIVATE ../multicore/base/victim_selector.cpp)
+
+
 target_sources(pypbb PRIVATE ../multicore/ivm/ivm.cpp)
 target_sources(pypbb PRIVATE ../multicore/ivm/intervalbb.cpp)
+target_sources(pypbb PRIVATE ../multicore/ivm/matrix_controller.cpp)
+
 target_sources(pypbb PRIVATE ../multicore/do/make_ivm_algo.cpp)
 
 

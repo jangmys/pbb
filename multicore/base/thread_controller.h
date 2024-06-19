@@ -19,10 +19,10 @@ public:
     ThreadController(pbab * _pbb,int _nthreads);
     virtual ~ThreadController();
 
-    void set_victim_select(std::unique_ptr<VictimSelector> _select)
+    void set_victim_select(std::shared_ptr<VictimSelector> _select)
     {
-        victim_select = std::move(_select);
-    }
+        victim_select = _select;
+    };
 protected:
     pbab* pbb;
     unsigned M;
@@ -55,7 +55,7 @@ protected:
 
     void resetExplorationState();
 
-    std::unique_ptr<VictimSelector> victim_select;
+    std::shared_ptr<VictimSelector> victim_select;
 private:
 
 };

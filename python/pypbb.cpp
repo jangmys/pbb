@@ -66,6 +66,7 @@ PYBIND11_MODULE(pypbb, m) {
         .def_readwrite_static("threads",&arguments::nbivms_mc)
         .def_readwrite_static("problem",&arguments::problem)
         .def_readwrite_static("inst_name",&arguments::inst_name)
+        .def_readwrite_static("ws",&arguments::mc_ws_select)
         ;
 
 
@@ -136,6 +137,23 @@ PYBIND11_MODULE(pypbb, m) {
     m.def("make_ivmbb", &make_ivmbb<int>);
 
 
+    py::class_<VictimSelector, std::shared_ptr<VictimSelector>>(m, "_victim_selector");
+
+    py::class_<ThreadController, std::shared_ptr<ThreadController>>(m, "_thread_controller")
+        // .def(py::init<pbab*,int>)
+        // .def("set_ws",&ThreadController::set_victim_select)
+    ;
+
+    py::class_<matrix_controller, ThreadController, std::shared_ptr<matrix_controller>>(m, "matrix_controller")
+        .def(py::init<pbab*,int>())
+        .def("run",&matrix_controller::next)
+        .def("set_ws",&matrix_controller::set_victim_select)
+        .def("init_intervals",&matrix_controller::initFromFac)
+    ;
+
+    m.def("make_victim_selector", &make_victim_selector);
+
+
     //###### Flowshop Heuristics
     //>>    neh=test_add.fastNEH(inst)
     //>>    neh.run(s)
@@ -144,6 +162,7 @@ PYBIND11_MODULE(pypbb, m) {
         .def(py::init<const std::vector<std::vector<int>>, const int, const int>())
         .def("run", py::overload_cast<std::shared_ptr<subproblem>>(&fastNEH::run)) //there are 2 run methods
         .def("run", py::overload_cast<std::vector<int>&,int&>(&fastNEH::run))
+        .def("run", py::overload_cast<>(&fastNEH::run))
         ;
 
     py::class_<LocalSearchBase>(m, "_local_search_base")

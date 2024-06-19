@@ -74,7 +74,7 @@ main(int argc, char ** argv)
 
                 std::vector<int>_id(nthreads,0);
 
-                mc.initFromFac(1,_id.data(),zeroFact.data(),endFact.data());
+                mc.initFromFac(1,_id,zeroFact,endFact);
 
                 std::cout<<" === Run multi-core IVM-based BB with "<<nthreads<<" threads"<<std::endl;
                 mc.next();

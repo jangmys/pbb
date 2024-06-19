@@ -20,7 +20,7 @@ public:
 
     int work_share(unsigned id, unsigned thief);
 
-    void initFromFac(const unsigned int nbint, const int* ids, int*pos, int* end);
+    void initFromFac(const unsigned int nbint, const std::vector<int> ids, std::vector<int> pos, std::vector<int> end);
     int getSubproblem(int *ret, const int N);
 
     bool next();
