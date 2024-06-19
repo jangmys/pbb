@@ -144,11 +144,11 @@ PYBIND11_MODULE(pypbb, m) {
         // .def("set_ws",&ThreadController::set_victim_select)
     ;
 
-    py::class_<matrix_controller, ThreadController, std::shared_ptr<matrix_controller>>(m, "matrix_controller")
+    py::class_<IVMController, ThreadController, std::shared_ptr<IVMController>>(m, "IVMController")
         .def(py::init<pbab*,int>())
-        .def("run",&matrix_controller::next)
-        .def("set_ws",&matrix_controller::set_victim_select)
-        .def("init_intervals",&matrix_controller::initFromFac)
+        .def("run",&IVMController::next)
+        .def("set_ws",&IVMController::set_victim_select)
+        .def("init_intervals",&IVMController::initFromFac)
     ;
 
     m.def("make_victim_selector", &make_victim_selector);

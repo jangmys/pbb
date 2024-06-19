@@ -13,10 +13,10 @@
 #include "intervalbb.h"
 #include "thread_controller.h"
 
-class matrix_controller : public ThreadController{
+class IVMController : public ThreadController{
     friend class worker_mc;
 public:
-    matrix_controller(pbab* _pbb,int _nthreads,bool distributed = false);
+    IVMController(pbab* _pbb,int _nthreads,bool distributed = false);
 
     int work_share(unsigned id, unsigned thief);
 

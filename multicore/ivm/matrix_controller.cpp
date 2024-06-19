@@ -20,7 +20,7 @@
 
 #include "make_ivm_algo.h"
 
-matrix_controller::matrix_controller(pbab* _pbb,int _nthreads,bool distributed /*=false*/) : ThreadController(_pbb,_nthreads),_distributed(distributed){
+IVMController::IVMController(pbab* _pbb,int _nthreads,bool distributed /*=false*/) : ThreadController(_pbb,_nthreads),_distributed(distributed){
     ivmbb = std::vector< std::shared_ptr<Intervalbb<int>> >(get_num_threads(),nullptr);
 
     state = std::vector<int>(get_num_threads(),0);
@@ -33,7 +33,7 @@ matrix_controller::matrix_controller(pbab* _pbb,int _nthreads,bool distributed /
 
 //nbint := number received intervals
 void
-matrix_controller::initFromFac(const unsigned int nbint, const std::vector<int> ids, std::vector<int> _pos, std::vector<int> _end)
+IVMController::initFromFac(const unsigned int nbint, const std::vector<int> ids, std::vector<int> _pos, std::vector<int> _end)
 {
     FILE_LOG(logDEBUG) << "=== init from factorial ";
     updatedIntervals=1;
@@ -62,7 +62,7 @@ matrix_controller::initFromFac(const unsigned int nbint, const std::vector<int> 
 }
 
 int
-matrix_controller::work_share(unsigned id, unsigned thief_id)
+IVMController::work_share(unsigned id, unsigned thief_id)
 {
     assert(id != thief_id);
     assert(id < get_num_threads());
@@ -120,7 +120,7 @@ stick_this_thread_to_core(int core_id)
 // run by multiple threads!!!
 // in distributed setting re-entry is possible
 void
-matrix_controller::explore_multicore()
+IVMController::explore_multicore()
 {
     //---------------get unique ID---------------
     int id = explorer_get_new_id();
@@ -232,13 +232,13 @@ matrix_controller::explore_multicore()
 void *
 mcbb_thread(void * _mc)
 {
-    matrix_controller * mc = (matrix_controller *) _mc;
+    IVMController * mc = (IVMController *) _mc;
     mc->explore_multicore();
     return NULL;
 }
 
 bool
-matrix_controller::next()
+IVMController::next()
 {
     resetExplorationState();
 
@@ -265,7 +265,7 @@ matrix_controller::next()
 
 //try to get N subproblems from mc-explorer
 int
-matrix_controller::getSubproblem(int *ret, const int N)
+IVMController::getSubproblem(int *ret, const int N)
 {
     int countActive=0;
     //how many active?

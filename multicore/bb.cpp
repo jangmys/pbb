@@ -69,7 +69,7 @@ main(int argc, char ** argv)
 
                 sbb->run();
             }else{ //MULTICORE
-                matrix_controller mc(pbb.get(),nthreads);
+                IVMController mc(pbb.get(),nthreads);
                 mc.set_victim_select(make_victim_selector(nthreads,arguments::mc_ws_select));
 
                 std::vector<int>_id(nthreads,0);
