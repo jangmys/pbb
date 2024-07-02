@@ -70,11 +70,6 @@ main(int argc, char ** argv)
                 sbb->run();
             }else{ //MULTICORE
                 IVMController mc(pbb.get(),nthreads);
-                mc.set_victim_select(make_victim_selector(nthreads,arguments::mc_ws_select));
-
-                std::vector<int>_id(nthreads,0);
-
-                mc.initFromFac(1,_id,zeroFact,endFact);
 
                 std::cout<<" === Run multi-core IVM-based BB with "<<nthreads<<" threads"<<std::endl;
                 mc.next();

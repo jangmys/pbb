@@ -5,7 +5,11 @@
 #include "pbab.h"
 #include "thread_controller.h"
 
-ThreadController::ThreadController(pbab * _pbb, int _nthreads) : pbb(_pbb),M(_nthreads),thd_data(std::vector< std::shared_ptr<RequestQueue> >(_nthreads,nullptr))
+ThreadController::ThreadController(pbab * _pbb, int _nthreads) :
+    pbb(_pbb),
+    M(_nthreads),
+    thd_data(std::vector< std::shared_ptr<RequestQueue> >(_nthreads,nullptr)),
+    victim_select(std::make_shared<RandomVictimSelector>(_nthreads))
 {
     //barrier for syncing all explorer threads
     pthread_barrier_init(&barrier, NULL, M);

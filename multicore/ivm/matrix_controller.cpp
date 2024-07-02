@@ -29,9 +29,28 @@ IVMController::IVMController(pbab* _pbb,int _nthreads,bool distributed /*=false*
         end.emplace_back(std::vector<int>(_pbb->size,0));
     }
     pthread_mutex_init(&mutex_buffer,NULL);
+
+    initFromFac();
 };
 
-//nbint := number received intervals
+//initialize at
+//[(0,N!),(0,0),...,(0,0)]
+void
+IVMController::initFromFac()
+{
+    std::vector<int> ids(get_num_threads(),0);
+    std::vector<int> zeroFact(pbb->size,0);
+
+    std::vector<int> endFact(pbb->size,0);
+    for (int i = 0; i < pbb->size; i++) {
+        endFact[i]  = pbb->size - i - 1;
+    }
+
+    initFromFac(1,ids,zeroFact,endFact);
+}
+
+//nbint : number received intervals
+//ids,pos,end : arrays of explorer-ids, position-vectors, end-vectors
 void
 IVMController::initFromFac(const unsigned int nbint, const std::vector<int> ids, std::vector<int> _pos, std::vector<int> _end)
 {
