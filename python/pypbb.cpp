@@ -148,7 +148,8 @@ PYBIND11_MODULE(pypbb, m) {
         .def(py::init<pbab*,int>())
         .def("run",&IVMController::next)
         .def("set_ws",&IVMController::set_victim_select)
-        .def("init_intervals",&IVMController::initFromFac)
+        .def("init_intervals",py::overload_cast<>(&IVMController::initFromFac))
+        .def("init_intervals",py::overload_cast<const unsigned int, const std::vector<int>, std::vector<int>, std::vector<int>>(&IVMController::initFromFac))
     ;
 
     m.def("make_victim_selector", &make_victim_selector);

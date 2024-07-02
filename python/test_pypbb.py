@@ -39,7 +39,7 @@ print('test BB')
 
 #static
 pypbb.args.problem='f'
-pypbb.args.inst_name='ta30'
+pypbb.args.inst_name='ta20'
 pypbb.args.threads=4
 
 inst=pypbb.instance_taillard(pypbb.args.inst_name)
@@ -62,8 +62,7 @@ pypbb.args.ws='a'
 
 mcbb = pypbb.IVMController(bb,pypbb.args.threads)
 
-mcbb.set_ws(pypbb.make_victim_selector(pypbb.args.threads,'a'))
-mcbb.init_intervals(1,[0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,0]);
+mcbb.init_intervals();
 mcbb.run()
 
 bb.print_stats()
