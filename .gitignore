@@ -4,3 +4,4 @@ removed/
 scripts/
 *.o
 *.so
+python
