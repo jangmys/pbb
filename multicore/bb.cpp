@@ -23,6 +23,7 @@ main(int argc, char ** argv)
     FILELog::ReportingLevel() = logINFO;
 #ifndef NDEBUG
     FILELog::ReportingLevel() = logDEBUG;
+    std::cout<<"RUNNING IN DEBUG MODE\n";
 #endif
     FILE* log_fd = fopen(arguments::logfile, "w" );
     Output2FILE::Stream() = log_fd;

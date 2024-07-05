@@ -113,10 +113,16 @@ int master::processRequest(std::shared_ptr<work> w) {
             auto wsz = w->wsize(); //worker size
 
             if(tmpsz<wsz){
-                std::cout<<"xxxxxxxxxxxx M "<<tmpsz<<" > W  "<<wsz<<std::endl;
-                tmp->displayUinterval();
-                std::cout<<"<< M ================================ W >>\n";
+                std::cout<<"=== WARNING ===\n Master's copy of WU (ID: "<<tmp->id<<") is smaller than received WU (ID:"<<w->id<<")"<<std::endl;
+
+                std::cout<<std::scientific;
+                std::cout<<"M: "<<tmpsz<<"\n";
+                std::cout<<"W: "<<wsz<<"\n";
+                std::cout<<"================================\n";
+                std::cout<<"Worker intervals:\n";
                 w->displayUinterval();
+                std::cout<<"Master intervals:\n";
+                tmp->displayUinterval();
                 std::cout<<std::endl;
 
                 // FILE_LOG(logINFO)<<"*********** "<<tmpsz<<" > "<<wsz;
@@ -198,7 +204,6 @@ int master::processRequest(std::shared_ptr<work> w) {
 
     //---------------------------------output---------------------------------
     FILE_LOG(logINFO) << "ActiveSize: "<<wrks.get_size()<<"\t Remain#: "<<wrks.get_num_unassigned()<<"\t Active#: "<<wrks.get_num_works();
-    FILE_LOG(logINFO) << "WORKSIZE : "<<wrks.get_size()<<std::endl;
 
     //DEBUG
     if (debug) {
