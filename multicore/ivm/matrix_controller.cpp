@@ -30,8 +30,29 @@ IVMController::IVMController(pbab* _pbb,int _nthreads,bool distributed /*=false*
     }
     pthread_mutex_init(&mutex_buffer,NULL);
 
-    initFromFac();
+    if(_distributed){
+        //in distributed mode, work should come only from master
+        initAsEmpty();
+    }else{
+        //in single-node mode, initialize at full interval
+        initFromFac();
+    }
 };
+
+//initialize at
+//[(0,N!),(0,0),...,(0,0)]
+void
+IVMController::initAsEmpty()
+{
+    for(unsigned i=0;i<get_num_threads();i++){
+        state[i]=0;
+        for (int j = 0; j < pbb->size; j++) {
+            pos[i][j] = 0;
+            end[i][j] = 0;
+        }
+        pos[i][0]=pbb->size;
+    }
+}
 
 //initialize at
 //[(0,N!),(0,0),...,(0,0)]

@@ -75,19 +75,21 @@ worker_mc::updateWorkUnit()
     //     pthread_mutex_unlock(&mutex_wunit);
     // }
 
-    // FILE_LOG(logDEBUG) << " === update work unit (rank " << comm->rank<<")";
+    FILE_LOG(logINFO) << "=== update work unit (rank " << comm->rank<<") : "<<pbb->best_found.getBest();
 
     assert(work_buf->nb_intervals <= mc->get_num_threads());
 
-    std::vector<int> v_ids(work_buf->pbsize);
-    std::vector<int> v_pos(work_buf->pbsize);
-    std::vector<int> v_end(work_buf->pbsize);
+    std::vector<int> v_ids(work_buf->max_intervals);
+    std::vector<int> v_pos(work_buf->max_intervals*work_buf->pbsize,0);
+    std::vector<int> v_end(work_buf->max_intervals*work_buf->pbsize,0);
 
     pthread_mutex_lock_check(&mutex_wunit);
-    for (int i = 0; i < work_buf->pbsize; i++){
-        v_ids.push_back(work_buf->ids[i]);
-        v_pos.push_back(work_buf->pos[i]);
-        v_end.push_back(work_buf->end[i]);
+    for (int i = 0; i < work_buf->max_intervals; i++){
+        v_ids[i]=work_buf->ids[i];
+        for (int j = 0; j < work_buf->pbsize; j++){
+            v_pos[i*work_buf->pbsize+j]=work_buf->pos[i*work_buf->pbsize+j];
+            v_end[i*work_buf->pbsize+j]=work_buf->end[i*work_buf->pbsize+j];
+        }
     }
 
     mc->initFromFac(work_buf->nb_intervals,v_ids,v_pos,v_end);

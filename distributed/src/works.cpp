@@ -284,7 +284,7 @@ works::adopt(int max)
         // divide into
         tmp->split(max);
 
-        FILE_LOG(logINFO) << "Take unassigned " << (tmp->Uinterval).size();
+        FILE_LOG(logINFO) << "Take unassigned WU (ID:"<<tmp->id<<") size : " << (tmp->Uinterval).size();
         // tmp->displayUinterval();
 
         tmp->set_id();
