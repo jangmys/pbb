@@ -18,6 +18,8 @@ set(CMAKE_CXX_FLAGS_RELEASE "-Wall -O2 -DNDEBUG")#-Wno-unused-function -Wno-unus
 set(CMAKE_C_FLAGS_RELEASE "-std=c99 -Wall -Wextra -pedantic -O2")
 set(CMAKE_CXX_FLAGS_DEBUG "-g -pg -O0 -rdynamic" CACHE STRING "")
 
+message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
+
 #if(${CMAKE_HOST_SYSTEM_PROCESSOR} MATCHES "x64_86")
 #endif()
 
