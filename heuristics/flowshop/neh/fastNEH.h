@@ -25,6 +25,7 @@ public:
 
     void run(std::vector<int>& perm, int &cost);
     void run(std::shared_ptr<subproblem> p);
+    subproblem run();
 
     subproblem operator()();
 private:

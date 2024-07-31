@@ -70,7 +70,10 @@ void fastNEH::run(std::shared_ptr<subproblem> p)
     p->ub = makespan;
 };
 
-
+subproblem fastNEH::run()
+{
+    return operator()();
+}
 
 subproblem fastNEH::operator()()
 {
