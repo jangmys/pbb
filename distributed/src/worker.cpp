@@ -37,8 +37,6 @@ worker::worker(pbab * _pbb, unsigned int nbIVM, int _mpi_local_rank) : pbb(_pbb)
     pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_ERRORCHECK);
 
     pthread_mutex_init(&mutex_wunit, &attr);
-    pthread_mutex_init(&mutex_inst, &attr);
-    pthread_mutex_init(&mutex_best, &attr);
     pthread_mutex_init(&mutex_end, &attr);
     pthread_mutex_init(&mutex_updateAvail, &attr);
     pthread_mutex_init(&mutex_trigger, &attr);
@@ -60,8 +58,6 @@ worker::~worker()
     pthread_barrier_destroy(&barrier);
 
     pthread_mutex_destroy(&mutex_wunit);
-    pthread_mutex_destroy(&mutex_inst);
-    pthread_mutex_destroy(&mutex_best);
     pthread_mutex_destroy(&mutex_end);
     pthread_mutex_destroy(&mutex_updateAvail);
     pthread_mutex_destroy(&mutex_trigger);

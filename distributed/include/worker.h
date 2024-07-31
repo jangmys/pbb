@@ -43,10 +43,8 @@ public:
     virtual bool doWork() = 0;
 
     pthread_barrier_t barrier;
-    // pthread_mutex_t mutex_inst;
     pthread_mutex_t mutex_end;//protects bool end
     pthread_mutex_t mutex_wunit;//get intervals, init from WU
-    // pthread_mutex_t mutex_best;
     pthread_mutex_t mutex_updateAvail;//prtects bool updateAvailable
     pthread_cond_t cond_updateApplied;
 
