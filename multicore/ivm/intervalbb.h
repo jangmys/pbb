@@ -22,7 +22,9 @@ public:
     Intervalbb(pbab* _pbb);
 
     bool initAtInterval(std::vector<int>& pos, std::vector<int>& end);
+
     void setRoot(const int* varOrder);
+    void setRoot(const std::vector<int> varOrder);
 
     void run();
     bool next();
@@ -42,8 +44,8 @@ public:
 
     virtual void boundAndKeepSurvivors(subproblem& subproblem);
 
-    std::shared_ptr<ivm> get_ivm(){
-        return IVM;
+    std::shared_ptr<IVM> get_ivm(){
+        return _IVM;
     }
 
     subproblem&
@@ -61,7 +63,7 @@ public:
 protected:
     pbab* pbb;
     int size;
-    std::shared_ptr<ivm> IVM;
+    std::shared_ptr<IVM> _IVM;
 
     void unfold();
 };
@@ -77,7 +79,7 @@ public:
         std::vector<std::vector<T>> lb(2,std::vector<T>(this->size,0));
         std::vector<std::vector<T>> prio(2,std::vector<T>(this->size,0));
 
-        int dir = this->branch->pre_bound_choice(this->IVM->getDepth());
+        int dir = this->branch->pre_bound_choice(this->_IVM->getDepth());
 
         if(dir<0){
             //get bounds for both children sets using incremental evaluator
@@ -91,7 +93,7 @@ public:
             dir = (*(this->branch))(
                 lb[Branching::Front].data(),
                 lb[Branching::Back].data(),
-                this->IVM->getDepth()
+                this->_IVM->getDepth()
             );
         }else if(dir==Branching::Front){
             this->primary_bound->boundChildren(
@@ -108,7 +110,7 @@ public:
         }
 
         //branching direction was selected
-        this->IVM->setDirection(dir);
+        this->_IVM->setDirection(dir);
 
         // std::cout<<"refine bounds\n";
 
@@ -151,7 +153,7 @@ public:
             }
         }
 
-        this->IVM->sortSiblingNodes(
+        this->_IVM->sortSiblingNodes(
             lb[dir],
             prio[dir]
         );
@@ -172,7 +174,7 @@ public:
         std::vector<std::vector<T>> prio(2,std::vector<T>(this->size,0));
 
         //a priori choice of branching direction
-        int dir = this->branch->pre_bound_choice(this->IVM->getDepth());
+        int dir = this->branch->pre_bound_choice(this->_IVM->getDepth());
         std::vector<bool> mask(this->size,true);
 
         if(dir<0){
@@ -201,9 +203,9 @@ public:
             dir = (*this->branch)(
                 lb[Branching::Front].data(),
                 lb[Branching::Back].data(),
-                this->IVM->getDepth()
+                this->_IVM->getDepth()
             );
-            // this->IVM->setDirection(dir);
+            // this->_IVM->setDirection(dir);
         }else if(dir==Branching::Front){
             int costs[2];
             for (int i = _subpb.limit1 + 1; i < _subpb.limit2; i++) {
@@ -216,7 +218,7 @@ public:
                     std::swap(_subpb.schedule[_subpb.limit1 + 1], _subpb.schedule[i]);
                 }
             }
-            // this->IVM->setDirection(dir);
+            // this->_IVM->setDirection(dir);
         }else{
             int costs[2];
             for (int i = _subpb.limit2 - 1; i > _subpb.limit1; i--) {
@@ -230,9 +232,9 @@ public:
                 }
             }
         }
-        this->IVM->setDirection(dir);
+        this->_IVM->setDirection(dir);
 
-        this->IVM->sortSiblingNodes(
+        this->_IVM->sortSiblingNodes(
             lb[dir],
             prio[dir]
         );

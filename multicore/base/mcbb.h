@@ -47,12 +47,18 @@ public:
 
     void set_primary_bound(std::unique_ptr<bound_abstract<T>> _bound)
     {
-        primary_bound = std::move(_bound);
+        if(_bound)
+            primary_bound = std::move(_bound);
+        else
+            std::cout<<"no bound ?!!!\n";
     }
 
     void set_secondary_bound(std::unique_ptr<bound_abstract<T>> _bound)
     {
-        secondary_bound = std::move(_bound);
+        if(_bound)
+            secondary_bound = std::move(_bound);
+        else
+            std::cout<<"trying to set secondary bound, but none provided.\n";
     }
 
 protected:

@@ -112,11 +112,16 @@ int master::processRequest(std::shared_ptr<work> w) {
             auto wsz = w->wsize(); //worker size
 
             if(tmpsz<wsz){
-                std::cout<<"Something is wrong. Size of work unit "<<w->id<<" has increased since last checkpoint";
-                std::cout<<"Master has : "<<tmpsz<<". Worker sends :"<<wsz<<std::endl;
-                tmp->displayUinterval();
-                std::cout<<"<< M ================================ W >>\n";
+                std::cout<<"=== WARNING ===\n Master's copy of WU (ID: "<<tmp->id<<") is smaller than received WU (ID:"<<w->id<<")"<<std::endl;
+
+                std::cout<<std::scientific;
+                std::cout<<"M: "<<tmpsz<<"\n";
+                std::cout<<"W: "<<wsz<<"\n";
+                std::cout<<"================================\n";
+                std::cout<<"Worker intervals:\n";
                 w->displayUinterval();
+                std::cout<<"Master intervals:\n";
+                tmp->displayUinterval();
                 std::cout<<std::endl;
             }
 
@@ -129,14 +134,11 @@ int master::processRequest(std::shared_ptr<work> w) {
         }else{
             //-------------compute intersection--------------------
             return_type = (tmp->intersection(w))?WORK:NIL;
-            wrks.sizes_update(tmp);
 
-            if(return_type==WORK){
-                FILE_LOG(logDEBUG)<<"Full Intersect "<<w->id<<"\t: "<<wrks.get_size();
-            }
-            if(return_type==NIL){
-                FILE_LOG(logDEBUG)<<"Full Intersect "<<w->id<<"\t: EMPTY";
-            }
+            if(return_type==WORK)FILE_LOG(logDEBUG)<<"Full Intersect "<<w->id<<"\t: "<<wrks.get_size();
+            if(return_type==NIL)FILE_LOG(logDEBUG)<<"Full Intersect "<<w->id<<"\t: EMPTY";
+
+            wrks.sizes_update(tmp);
         }
 
         //if result of intersection is empty work
@@ -206,6 +208,14 @@ int master::processRequest(std::shared_ptr<work> w) {
 
     return return_type;
     // return (updateWorker?WORK:NIL);
+}
+
+void master::shutdown() {
+    std::cout<<" = master:\t shutting down\n";
+
+    std::cout<<"MASTER %\t\t:\t"<<pbb->ttm->masterLoadPerc()<<std::endl;
+    pbb->ttm->printElapsed(pbb->ttm->processRequest,"ProcessREQUEST\t");
+    pbb->printStats();
 }
 
 //main thread of proc 0...
@@ -344,12 +354,10 @@ master::run()
 
     pbb->ttm->off(pbb->ttm->wall);
 
-    std::cout<<" = master:\t shutting down\n";
-	usleep(100);
-    std::cout << " = master:\t #iterations: "<<iter<<"\n";
+    usleep(100);
+
     std::cout << " = master:\t #processed work-in messages: "<<work_in<<"\n";
     std::cout << " = master:\t #processed work-out messages: "<<work_out<<std::endl;
-    std::cout << " = master load %\t: "<<pbb->ttm->masterLoadPerc()<<std::endl;
-    pbb->ttm->printElapsed(pbb->ttm->processRequest,"T(process-request): ");
-    pbb->printStats();
+
+    shutdown();
 }

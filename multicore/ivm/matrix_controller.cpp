@@ -20,7 +20,7 @@
 
 #include "make_ivm_algo.h"
 
-matrix_controller::matrix_controller(pbab* _pbb,int _nthreads,bool distributed /*=false*/,int _local_mpi_rank/*=0*/) : ThreadController(_pbb,_nthreads,_local_mpi_rank),_distributed(distributed){
+IVMController::IVMController(pbab* _pbb,int _nthreads,bool distributed /*=false*/,int _local_mpi_rank/*=0*/) : ThreadController(_pbb,_nthreads,_local_mpi_rank),_distributed(distributed){
     ivmbb = std::vector< std::shared_ptr<Intervalbb<int>> >(get_num_threads(),nullptr);
 
     state = std::vector<int>(get_num_threads(),0);
@@ -29,11 +29,51 @@ matrix_controller::matrix_controller(pbab* _pbb,int _nthreads,bool distributed /
         end.emplace_back(std::vector<int>(_pbb->size,0));
     }
     pthread_mutex_init(&mutex_buffer,NULL);
+
+    if(_distributed){
+        //in distributed mode, work should come only from master
+        initAsEmpty();
+    }else{
+        //in single-node mode, initialize at full interval
+        initFromFac();
+    }
 };
 
-//nbint := number received intervals
+//initialize at
+//[(0,N!),(0,0),...,(0,0)]
 void
-matrix_controller::initFromFac(const unsigned int nbint, const int * ids, int * _pos, int * _end)
+IVMController::initAsEmpty()
+{
+    for(unsigned i=0;i<get_num_threads();i++){
+        state[i]=0;
+        for (int j = 0; j < pbb->size; j++) {
+            pos[i][j] = 0;
+            end[i][j] = 0;
+        }
+        pos[i][0]=pbb->size;
+    }
+}
+
+//initialize at
+//[(0,N!),(0,0),...,(0,0)]
+void
+IVMController::initFromFac()
+{
+    std::vector<int> ids(get_num_threads(),0);
+    std::vector<int> zeroFact(pbb->size,0);
+
+    std::vector<int> endFact(pbb->size,0);
+    for (int i = 0; i < pbb->size; i++) {
+        endFact[i]  = pbb->size - i - 1;
+    }
+
+    initFromFac(1,ids,zeroFact,endFact);
+}
+
+//nbint : number received intervals
+//ids,pos,end : arrays of explorer-ids, position-vectors, end-vectors
+void
+IVMController::initFromFac(const unsigned int nbint, const std::vector<int> ids, std::vector<int> _pos, std::vector<int> _end)
 {
     FILE_LOG(logDEBUG) << "=== init from factorial ";
     updatedIntervals=1;
@@ -62,7 +102,7 @@ matrix_controller::initFromFac(const unsigned int nbint, const int * ids, int * 
 }
 
 int
-matrix_controller::work_share(unsigned id, unsigned thief_id)
+IVMController::work_share(unsigned id, unsigned thief_id)
 {
     assert(id != thief_id);
     assert(id < get_num_threads());
@@ -71,8 +111,8 @@ matrix_controller::work_share(unsigned id, unsigned thief_id)
     int numShared = 0;
     int l         = 0;
 
-    std::shared_ptr<ivm> thief(ivmbb[thief_id]->get_ivm());
-    std::shared_ptr<ivm> IVM(ivmbb[id]->get_ivm());
+    std::shared_ptr<IVM> thief(ivmbb[thief_id]->get_ivm());
+    std::shared_ptr<IVM> IVM(ivmbb[id]->get_ivm());
 
     while (IVM->getPosition(l) == IVM->getEnd(l) && l < IVM->getDepth() && l < pbb->size - 4) l++;
 
@@ -122,7 +162,7 @@ stick_this_thread_to_core(int core_id)
 // run by multiple threads!!!
 // in distributed setting re-entry is possible
 void
-matrix_controller::explore_multicore(unsigned id)
+IVMController::explore_multicore(unsigned id)
 {
     // //---------------get unique ID---------------
     // int id = explorer_get_new_id();
@@ -130,7 +170,7 @@ matrix_controller::explore_multicore(unsigned id)
 
     // if(!is_distributed()){
     int core_id = local_mpi_rank*M + id;
-        // std::cout<<"local_rank "<<local_mpi_rank<<" fix worker "<<id<<" to core "<<core_id<<"\n";
+    // std::cout<<"local_rank "<<local_mpi_rank<<" fix worker "<<id<<" to core "<<core_id<<"\n";
     stick_this_thread_to_core(core_id);
     // }
 
@@ -234,7 +274,7 @@ matrix_controller::explore_multicore(unsigned id)
 void *
 mcbb_thread(void * _mc)
 {
-    matrix_controller * mc = (matrix_controller *) _mc;
+    IVMController * mc = (IVMController *) _mc;
 
     //---------------get unique ID---------------
     unsigned id = mc->explorer_get_new_id();
@@ -245,7 +285,7 @@ mcbb_thread(void * _mc)
 }
 
 bool
-matrix_controller::next()
+IVMController::next()
 {
     resetExplorationState();
 
@@ -272,7 +312,7 @@ matrix_controller::next()
 
 //try to get N subproblems from mc-explorer
 int
-matrix_controller::getSubproblem(int *ret, const int N)
+IVMController::getSubproblem(int *ret, const int N)
 {
     int countActive=0;
     //how many active?

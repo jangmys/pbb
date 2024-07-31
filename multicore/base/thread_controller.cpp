@@ -5,10 +5,14 @@
 #include "pbab.h"
 #include "thread_controller.h"
 
-ThreadController::ThreadController(pbab * _pbb, int _nthreads,int _worker_rank/*=0*/) : pbb(_pbb),M(_nthreads),local_mpi_rank(_worker_rank),thd_data(std::vector< std::shared_ptr<RequestQueue> >(_nthreads,nullptr))
+ThreadController::ThreadController(pbab * _pbb, int _nthreads,int _worker_rank/*=0*/) : 
+	pbb(_pbb),
+	M(_nthreads),
+	local_mpi_rank(_worker_rank),
+	thd_data(std::vector< std::shared_ptr<RequestQueue> >(_nthreads,nullptr)),
+    	victim_select(std::make_shared<RandomVictimSelector>(_nthreads))
 {
     int num_cores = sysconf(_SC_NPROCESSORS_ONLN);
-
     std::cout<<"LRank : "<<local_mpi_rank<<" Got "<<num_cores<<" cores for "<<M<<" workers\n";
 
     //barrier for syncing all explorer threads

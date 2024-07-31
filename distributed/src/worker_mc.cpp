@@ -79,13 +79,20 @@ worker_mc::updateWorkUnit()
 
     assert(work_buf->nb_intervals <= mc->get_num_threads());
 
+    std::vector<int> v_ids(work_buf->max_intervals);
+    std::vector<int> v_pos(work_buf->max_intervals*work_buf->pbsize,0);
+    std::vector<int> v_end(work_buf->max_intervals*work_buf->pbsize,0);
+
     pthread_mutex_lock_check(&mutex_wunit);
-    mc->initFromFac(
-        work_buf->nb_intervals,
-        work_buf->ids,
-        work_buf->pos,
-        work_buf->end
-    );
+    for (int i = 0; i < work_buf->max_intervals; i++){
+        v_ids[i]=work_buf->ids[i];
+        for (int j = 0; j < work_buf->pbsize; j++){
+            v_pos[i*work_buf->pbsize+j]=work_buf->pos[i*work_buf->pbsize+j];
+            v_end[i*work_buf->pbsize+j]=work_buf->end[i*work_buf->pbsize+j];
+        }
+    }
+
+    mc->initFromFac(work_buf->nb_intervals,v_ids,v_pos,v_end);
     pthread_mutex_unlock(&mutex_wunit);
 
     pthread_mutex_lock_check(&mutex_updateAvail);

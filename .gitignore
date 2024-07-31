@@ -4,4 +4,4 @@ removed/
 scripts/
 *.o
 *.so
-python
+CMakeFiles/

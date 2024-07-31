@@ -6,7 +6,7 @@ Integer-Vector-MAtrix Data Structure
 
 #include <subproblem.h>
 
-class ivm{
+class IVM{
 private:
     int size;
     int line = 0;
@@ -24,7 +24,7 @@ private:
     };
 
 public:
-    explicit ivm(int _size);
+    explicit IVM(int _size);
 
     //Tree operations
     void goDown(); //branch node

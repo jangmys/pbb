@@ -13,14 +13,16 @@
 #include "intervalbb.h"
 #include "thread_controller.h"
 
-class matrix_controller : public ThreadController{
+class IVMController : public ThreadController{
     friend class worker_mc;
 public:
-    matrix_controller(pbab* _pbb,int _nthreads,bool distributed = false,int _local_mpi_rank=0);
+    IVMController(pbab* _pbb,int _nthreads,bool distributed = false,int _local_mpi_rank=0);
 
     int work_share(unsigned id, unsigned thief);
 
-    void initFromFac(const unsigned int nbint, const int* ids, int*pos, int* end);
+    void initAsEmpty();
+    void initFromFac();
+    void initFromFac(const unsigned int nbint, const std::vector<int> ids, std::vector<int> pos, std::vector<int> end);
     int getSubproblem(int *ret, const int N);
 
     bool next();
