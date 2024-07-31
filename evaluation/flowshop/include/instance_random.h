@@ -5,7 +5,7 @@
 #include <random>
 
 struct instance_random : public instance_abstract {
-    instance_random(const char *inst_name){
+    instance_random(const std::string inst_name){
         data = new std::stringstream();
 
         std::string s(inst_name);

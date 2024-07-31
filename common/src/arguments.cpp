@@ -8,8 +8,8 @@
 char arguments::work_directory[50] = "../../bbworks/";
 
 //instance / problem
-char arguments::inst_name[50];
-char arguments::problem[50];
+std::string arguments::inst_name="ta20";
+std::string arguments::problem="flowshop";
 
 char arguments::worker_type='c'; // default : CPU
 
@@ -121,8 +121,8 @@ arguments::readIniFile(std::string inifile)
     }
 
     // ---------------------------problem definition---------------------------
-    strncpy(problem, reader.Get("problem", "problem", "UNKNOWN").c_str(), 49);
-    strncpy(inst_name, reader.Get("problem", "instance", "UNKNOWN").c_str(), 49);
+    problem = reader.Get("problem", "problem", "UNKNOWN");
+    inst_name = reader.Get("problem", "instance", "UNKNOWN");
 
     char init_mode_str[50];
     strncpy(init_mode_str, reader.Get("problem", "init_ub", "UNKNOWN").c_str(), 49);
@@ -289,10 +289,10 @@ arguments::parse_arguments(int argc, char ** argv)
             while (*subopts != '\0'){
                 switch (getsubopt(&subopts, problem_opts, &value)) {
                 case PROBLEM:
-                    strcpy(problem, value);
+                    problem = std::string(value);
                     break;
                 case INST:
-                    strcpy(inst_name, value);
+                    inst_name = std::string(value);
                     break;
                 case OPT:
                     read_init_mode(value,init_mode,initial_ub);

@@ -23,8 +23,8 @@ Author : Jan GMYS (jan.gmys@univ-lille.fr)
 
 class IG{
 public:
-    IG(const std::vector<std::vector<int>> p_times, const int N, const int M);
     IG(instance_abstract& inst);
+    IG(const std::vector<std::vector<int>> p_times, const int N, const int M);
 
     std::unique_ptr<fspnhood<int>> nhood;
     std::unique_ptr<LocalSearch> ls;

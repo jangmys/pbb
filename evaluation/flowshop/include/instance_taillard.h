@@ -24,7 +24,7 @@ f_exists(const std::string& name)
 }
 
 struct instance_taillard : public instance_abstract {
-    instance_taillard(const char * inst);
+    instance_taillard(const std::string inst);
 
     int get_job_number(int id);
     int get_machine_number(int id);
@@ -35,7 +35,7 @@ struct instance_taillard : public instance_abstract {
     void
     generate_instance(int id, std::ostream& stream);
 
-    int read_initial_ub_from_file(const char * inst_name)
+    int read_initial_ub_from_file(std::string inst_name)
     {
         std::stringstream rubrique;
         std::string tmp;

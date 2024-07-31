@@ -9,7 +9,7 @@
 #include "instance_abstract.h"
 #include "instance_vrf.h"
 
-instance_vrf::instance_vrf(const char * inst_name)
+instance_vrf::instance_vrf(const std::string inst_name)
 {
     data = new std::stringstream();
 
@@ -22,10 +22,10 @@ instance_vrf::instance_vrf(const char * inst_name)
     // };
     const char ext[]        = "_Gap.txt";
 
-    file = (char *) malloc(strlen(inst_name) + strlen(vrfdirname) + strlen(ext) + 1); /* make space for the new string*/
+    file = (char *) malloc(strlen(inst_name.c_str()) + strlen(vrfdirname) + strlen(ext) + 1); /* make space for the new string*/
 
     strcpy(file, vrfdirname);/* copy dirname into the new var */
-    strcat(file, inst_name); /* add the instance name */
+    strcat(file, inst_name.c_str()); /* add the instance name */
     strcat(file, ext);       /* add the extension */
 
     generate_instance(file, *data);
@@ -79,7 +79,7 @@ instance_vrf::generate_instance(const char * _file, std::ostream& stream)
 } // instance_vrf::generate_instance
 
 int
-instance_vrf::get_initial_ub_from_file(const char* inst_name)
+instance_vrf::get_initial_ub_from_file(const std::string inst_name)
 {
     std::string tmp = "";
     int jobs     = 0;

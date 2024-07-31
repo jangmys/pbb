@@ -2,7 +2,7 @@
 #define INSTANCE_FILENAME_H
 
 struct instance_filename : public instance_abstract {
-    instance_filename(const char * inst_name):instance_abstract(){
+    instance_filename(const std::string inst_name):instance_abstract(){
         data = new std::stringstream();
 
         std::ifstream infile(inst_name);
