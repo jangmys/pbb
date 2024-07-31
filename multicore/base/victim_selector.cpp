@@ -2,7 +2,7 @@
 
 #include <memory>
 
-std::unique_ptr<VictimSelector> make_victim_selector(const unsigned _nthreads, const char _type)
+std::shared_ptr<VictimSelector> make_victim_selector(const unsigned _nthreads, const char _type)
 {
     std::cout<<" === Work Stealing : ";
 
@@ -10,17 +10,17 @@ std::unique_ptr<VictimSelector> make_victim_selector(const unsigned _nthreads, c
         case 'r':
         {
             std::cout<<" Round-Robin\n";
-            return std::make_unique<RingVictimSelector>(_nthreads);
+            return std::make_shared<RingVictimSelector>(_nthreads);
         }
         case 'a':
         {
             std::cout<<" Random\n";
-            return std::make_unique<RandomVictimSelector>(_nthreads);
+            return std::make_shared<RandomVictimSelector>(_nthreads);
         }
         case 'o':
         {
             std::cout<<" Honest\n";
-            return std::make_unique<HonestVictimSelector>(_nthreads);
+            return std::make_shared<HonestVictimSelector>(_nthreads);
         }
     }
     return nullptr;

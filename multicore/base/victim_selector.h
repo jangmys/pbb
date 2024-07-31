@@ -105,6 +105,6 @@ private:
 };
 
 
-std::unique_ptr<VictimSelector> make_victim_selector(const unsigned _nthreads, const char _type);
+std::shared_ptr<VictimSelector> make_victim_selector(const unsigned _nthreads, const char _type);
 
 #endif
