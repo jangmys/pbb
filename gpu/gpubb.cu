@@ -633,7 +633,15 @@ gpubb::boundLeaves(bool reached, int& best)
 
     for (int k = 0; k < nbIVM; ++k) {
         if (flags[k] == 1) {
-            int cost=bound->evalSolution(schedule_h+k*size);
+            std::vector<int> tmp_sched(size,0);
+
+            for(int i=0; i<size; i++){
+                tmp_sched[i]=schedule_h[k*size+i];
+            }
+
+            // int cost=bound->evalSolution(schedule_h+k*size);
+            int cost=bound->evalSolution(tmp_sched);
+
             pbb->stats.leaves++;
             // FILE_LOG(logINFO) << "Evaluated Leaf\t" << cost << " vs. Best "<<best;
 
