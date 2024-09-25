@@ -23,7 +23,7 @@ int arguments::johnsonPairs      = 0;
 
 //Branching options
 int arguments::branchingMode = 1;
-int arguments::sortNodes         = 0;
+int arguments::sortNodes         = -1;
 
 //Pruning options
 bool arguments::findAll        = false;
@@ -76,17 +76,17 @@ void read_init_mode(char* init_mode_str, int& init_mode, int& initial_ub)
     initial_ub = INT_MAX;
     if(init_mode_str){
         if(*init_mode_str == 'f'){
-            init_mode = 0;
+            init_mode = 0; //read opt from file
         }
         else if(*init_mode_str == 'i'){
-            init_mode = -1;
+            init_mode = -1; //infinity
         }
         else if(strcmp(init_mode_str,"neh") == 0){
-            init_mode = 1;
+            init_mode = 1; // NEH
         }else if(strcmp(init_mode_str,"beam") == 0){
-            init_mode = 2;
+            init_mode = 2; //BEAM search
         }else{
-            init_mode = -1;
+            init_mode = -1; //set value
             initial_ub = atoi(init_mode_str);
         }
     }
@@ -204,6 +204,7 @@ arguments::parse_arguments(int argc, char ** argv)
                 {"inc-initial-ub", no_argument, NULL, 0},
                 {"file",required_argument,NULL, 0},
                 {"heuristic-threads",  required_argument, NULL,  0 },
+                {"sortDFS",  required_argument, NULL,  0 },
                 {0,         0,                 0,  0 }
             };
 
@@ -261,6 +262,10 @@ arguments::parse_arguments(int argc, char ** argv)
             else if(strcmp(long_options[option_index].name,"inc-initial-ub")  == 0)
             {
                 increaseInitialUB = true;
+            }
+            else if(strcmp(long_options[option_index].name,"sortDFS")  == 0)
+            {
+                sortNodes = atoi(optarg);
             }
             else if(strcmp(long_options[option_index].name,"primary-bound") == 0)
             {
@@ -350,6 +355,7 @@ void arguments::arg_summary()
     }
 
     std::cout<<"Bounding mode:\t\t"<<arguments::boundMode<<std::endl;
+    //if Johnson bound is Used (PFSP)
     if(arguments::primary_bound == 1 || (arguments::boundMode == 2 && arguments::secondary_bound == 1))
     {
         std::cout<<"\t#Johnson Pairs:\t\t"<<arguments::johnsonPairs<<std::endl;

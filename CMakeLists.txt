@@ -7,12 +7,17 @@ project("PBB"
     DESCRIPTION "Branch-and-Bound for permutation problems"
 LANGUAGES C CXX)
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release)
 endif()
+
+SET(CMAKE_CXX_FLAGS  "-Ofast -Wall -DNDEBUG")
+SET(CMAKE_C_FLAGS  "-std=c99 -Wall -Wextra -pedantic -O2")
 
 set(CMAKE_CXX_FLAGS_RELEASE "-Wall -O2 -DNDEBUG")#-Wno-unused-function -Wno-unused-variable -O2 -DNDEBUG")
 set(CMAKE_C_FLAGS_RELEASE "-std=c99 -Wall -Wextra -pedantic -O2")

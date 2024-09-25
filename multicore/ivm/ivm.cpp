@@ -304,6 +304,10 @@ void reverse_order(int* jobs, int line, int size)
 template<typename T>
 void IVM::sortSiblingNodes(std::vector<T> lb,std::vector<T> prio)
 {
+    //do nothing
+    if(arguments::sortNodes<0)
+        return;
+
     int _line=line;
 
     switch (arguments::sortNodes) {
@@ -343,12 +347,6 @@ void IVM::sortSiblingNodes(std::vector<T> lb,std::vector<T> prio)
         {
             int *jm = getRowPtr(_line);
             gnomeSortByKeyInc(jm, prio.data(), 0, size-_line-1);
-            break;
-        }
-        case 4:
-        {
-            int *jm = getRowPtr(_line);
-            gnomeSortByKeysInc(jm, lb.data(), prio.data(), 0, size-_line-1);
             break;
         }
     }

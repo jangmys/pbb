@@ -15,23 +15,54 @@
 class arguments
 {
 public:
-    // B&B components
-    static int branchingMode;    // --branch
+    // B&B components (all B&B's)
+    static int branchingMode;  // --branch
     static int boundMode;// --bound
 
-    static int primary_bound; // simple / johnson
-    static int secondary_bound;
+    static int primary_bound; // --primary-bound simple 0 / johnson 1
+    static int secondary_bound; // only = 1 (johnson)
 
-    // incumbent
-    static int init_mode;
+    static bool findAll; // prune on equality?
+
+
+    // incumbent o=
+    static int init_mode;  //-z o= suboption
     static int initial_ub;
     static bool increaseInitialUB;
 
-    // distributed
+    //problem
+    static std::string problem;
+    static std::string inst_name;
+
+    //work stealing
+    static char mc_ws_select; //work stealing selection strategy (default : 'a' (random))
+
+    //verbosity & logging
+    static bool printSolutions;
+    static int gpuverb;
+    static char logfile[50];
+    static TLogLevel logLevel;
+
+
+
+
+    // dbb : distributed only
     static char worker_type; //cpu or gpu (distributed mode)
     static bool singleNode; //no MPI = 1 ; distributed = 0
 
-    //heuristic
+    static int initial_work; // how to split initial work interval
+    static char work_directory[50]; //work units read from file
+
+    //dbb : time (checkpointing )
+    static int checkpointv;
+    static int balancingv;
+    static int timeout;
+
+
+
+
+
+    //heuristic (in parallel to dbb)
     static char heuristic_type;
     static int heuristic_threads; //number of heuristic threads
     static int heuristic_iters;
@@ -40,39 +71,17 @@ public:
     //data struct
     static char ds;
 
-    //time
-    static int checkpointv;
-    static int balancingv;
-    static int timeout;
 
-    static int initial_work;
-    static int sortNodes;
+    static int sortNodes; //=0
     static int nodePriority;
     static int nbivms_mc;//la m^me ...
     static int nbivms_gpu;//chose ...
 
-    //problem
-    static std::string problem;
-    static std::string inst_name;
-    static char work_directory[50];
 
-    static char logfile[50];
-    static TLogLevel logLevel;
 
-    // problem specific (FSP) =================
+    // problem specific (FSP - Johnson bound) =================
     static bool earlyStopJohnson;
     static int johnsonPairs;
-
-    static int singleNodeDS;
-
-    static bool findAll;
-
-    //verbosity
-    static bool printSolutions;
-    static int gpuverb;
-
-    //work stealing
-    static char mc_ws_select;
 
     static void arg_summary();
 

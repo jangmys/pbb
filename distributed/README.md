@@ -2,6 +2,11 @@
 
 For now, PBB@Cluster can either use GPU-based worker (if built with the `-DPU=true` option) or multi-core-workers, but not both.
 
+## MPI+threads
+
+
+
+
 ##### Example 1 : Single-GPU Single-node
 
 If your system has a single GPU you can run
