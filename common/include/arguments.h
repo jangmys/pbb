@@ -75,8 +75,9 @@ public:
     static int sortNodes; //=0
     static int nodePriority;
     static int nbivms_mc;//la m^me ...
+#ifdef WITH_GPU
     static int nbivms_gpu;//chose ...
-
+#endif
 
 
     // problem specific (FSP - Johnson bound) =================

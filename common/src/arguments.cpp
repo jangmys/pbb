@@ -39,7 +39,10 @@ bool arguments::increaseInitialUB = false;
 //parallel
 bool arguments::singleNode = true;// false;
 int arguments::nbivms_mc  = -1;
+
+#ifdef WITH_GPU
 int arguments::nbivms_gpu = 16384;
+#endif
 
 //load balance / fault tolerance
 int arguments::checkpointv = 3600;
@@ -135,8 +138,9 @@ arguments::readIniFile(std::string inifile)
 
     // ------------------------nb concurrent explorers------------------------
     nbivms_mc  = reader.GetInteger("multicore", "threads", nbivms_mc);
+#ifdef WITH_GPU
     nbivms_gpu = reader.GetInteger("gpu", "nbIVMs", nbivms_gpu);
-
+#endif
     // ---------------------------sort sibling nodes---------------------------
     sortNodes    = reader.GetInteger("bb", "sortedDFS", sortNodes);
 
@@ -227,9 +231,14 @@ arguments::parse_arguments(int argc, char ** argv)
             // --gpu=<nbivm_gpu>
             if(strcmp(long_options[option_index].name,"gpu") == 0)
             {
+#ifdef WITH_GPU
                 worker_type='g';
                 //how many GPU workers ?
                 nbivms_gpu=(optarg == NULL) ? 4096 : atoi(optarg);
+#else
+                printf("Not compiled with -DGPU. Cannot set worker type to GPU.\n");
+#endif
+
             }
             if(strcmp(long_options[option_index].name,"ll") == 0)
             {
@@ -348,7 +357,11 @@ void arguments::arg_summary()
     std::cout<<"Problem:\t\t"<<arguments::problem<<" / Instance "<<arguments::inst_name<<"\n";
     std::cout<<"Worker type:\t\t"<<arguments::worker_type<<std::endl;
     if(arguments::worker_type=='g'){
+#ifdef WITH_GPU
         std::cout<<"#GPU workers:\t\t"<<arguments::nbivms_gpu<<std::endl;
+#else
+        std::cout<<"Not compiled with -DGPU but arguments::worker_type=='g'"<<std::endl;
+#endif
     }
     else if(arguments::worker_type=='c'){
         std::cout<<"#CPU threads:\t\t"<<arguments::nbivms_mc<<std::endl;
@@ -372,7 +385,11 @@ void arguments::arg_summary()
     FILE_LOG(logINFO)<<"Problem:\t\t"<<arguments::problem<<" / Instance "<<arguments::inst_name;
     FILE_LOG(logINFO)<<"Worker type:\t\t"<<arguments::worker_type;
     if(arguments::worker_type=='g'){
+#ifdef WITH_GPU
         FILE_LOG(logINFO)<<"#GPU workers:\t\t"<<arguments::nbivms_gpu;
+#else
+        std::cout<<"Not compiled with -DGPU but arguments::worker_type=='g'"<<std::endl;
+#endif
     }
     else if(arguments::worker_type=='c'){
         FILE_LOG(logINFO)<<"#CPU threads:\t\t"<<arguments::nbivms_mc;

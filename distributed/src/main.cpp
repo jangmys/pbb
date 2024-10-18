@@ -122,8 +122,13 @@ main(int argc, char ** argv)
         std::cout<<"\t#ProblemSize:\t\t"<<pbb->size<<"\n"<<std::endl;
 
         std::cout<<"\t#Worker type:\t\t"<<arguments::worker_type<<std::endl;
-        if(arguments::worker_type=='g')std::cout<<"\t#GPU workers:\t\t"<<arguments::nbivms_gpu<<std::endl;
-        if(arguments::worker_type=='c'){
+        if(arguments::worker_type=='g'){
+#ifdef WITH_GPU
+            std::cout<<"\t#GPU workers:\t\t"<<arguments::nbivms_gpu<<std::endl;
+#else
+            std::cout<<"Not compiled with -DGPU but arguments::worker_type=='g'"<<std::endl;
+#endif
+        }else if(arguments::worker_type=='c'){
             std::cout<<"\t#CPU threads:\t\t"<<arguments::nbivms_mc<<std::endl;
             std::cout<<"\tCPU work stealing:\t"<<arguments::mc_ws_select<<std::endl;
         }

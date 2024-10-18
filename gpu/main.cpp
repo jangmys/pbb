@@ -36,7 +36,9 @@ main(int argc, char ** argv)
     std::cout<<"\t#ProblemSize:\t\t"<<pbb->size<<"\n"<<std::endl;
 
     std::cout<<"\t#Worker type:\t\t"<<arguments::worker_type<<std::endl;
+#ifdef WITH_GPU
     std::cout<<"\t#GPU workers:\t\t"<<arguments::nbivms_gpu<<std::endl;
+#endif
     std::cout<<"\t#Bounding mode:\t\t"<<arguments::boundMode<<std::endl;
     std::cout<<"\t#Branching:\t\t"<<arguments::branchingMode<<std::endl;
 
