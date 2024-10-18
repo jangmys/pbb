@@ -43,9 +43,6 @@ public:
     static char logfile[50];
     static TLogLevel logLevel;
 
-
-
-
     // dbb : distributed only
     static char worker_type; //cpu or gpu (distributed mode)
     static bool singleNode; //no MPI = 1 ; distributed = 0

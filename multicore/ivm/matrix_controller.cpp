@@ -170,7 +170,7 @@ IVMController::explore_multicore(unsigned id)
 
     // if(!is_distributed()){
     int core_id = local_mpi_rank*M + id;
-    // std::cout<<"local_rank "<<local_mpi_rank<<" fix worker "<<id<<" to core "<<core_id<<"\n";
+    // std::cout<<"local_rank "<<local_mpi_rank<<" stick worker "<<id<<" to core "<<core_id<<"\n";
     stick_this_thread_to_core(core_id);
     // }
 
@@ -179,8 +179,10 @@ IVMController::explore_multicore(unsigned id)
         //make sequential bb-explorer
         ivmbb[id] = make_ivmbb<int>(pbb);
 
-        if(is_distributed())
+        if(is_distributed()){
+            //new best solutions are printed by master
             ivmbb[id]->print_new_solutions=false;
+        }
 
         //thread-local data for MC exploration
         thd_data[id] = std::make_shared<RequestQueue>();

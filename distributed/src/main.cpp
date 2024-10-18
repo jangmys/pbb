@@ -189,7 +189,9 @@ main(int argc, char ** argv)
             }
             int nproc_per_node = num_cores/nthreads;
 
-            wrkr = new worker_mc(pbb,nthreads,(myrank-1)%nproc_per_node);
+            std::cout<<"MPI Rank "<<myrank<<"\tLocal Rank "<<myrank%nproc_per_node<<"\n";
+
+            wrkr = new worker_mc(pbb,nthreads,myrank%nproc_per_node);
             #endif
             //
             // FILE_LOG(logINFO) << "Worker running with "<<nthreads<<" threads.\n";

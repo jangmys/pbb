@@ -158,10 +158,12 @@ void Intervalbb<T>::boundAndKeepSurvivors(subproblem& _subpb)
 
     //all
     // dir = _IVM->getDirection();
-    // _IVM->sortSiblingNodes(
-    //     lb[dir],
-    //     prio[dir]
-    // );
+    if(dir == Branching::Front){
+        _IVM->sortSiblingNodes(costFwd,prioFwd);
+    }else{
+        _IVM->sortSiblingNodes(costBwd,prioBwd);
+    }
+
 
     if(dir==Branching::Front)
         eliminateJobs(costFwd);
@@ -225,10 +227,6 @@ Intervalbb<T>::boundLeaf(subproblem& node)
 
     bool better=false;
     int cost=this->primary_bound->evalSolution(node.schedule);
-
-    // std::cout<<cost<<"\t"<<prune->local_best<<"\n";
-    // std::cout<<this->count_leaves<<" ";
-    // node.print();
 
     if(!(*this->prune)(cost)){
         better=true;
