@@ -24,8 +24,6 @@
 worker::worker(pbab * _pbb, unsigned int nbIVM, int _mpi_local_rank) : pbb(_pbb),size(pbb->size),M(nbIVM),mpi_local_rank(_mpi_local_rank),local_decomposed_count(0),comm(std::make_unique<communicator>(size)),
         work_buf(std::make_shared<fact_work>(M, size))
 {
-    std::cout<<"lrank "<<_mpi_local_rank<<"\n";
-
     dwrk = std::make_shared<work>();
 
     nb_heuristic_threads = arguments::heuristic_threads;
