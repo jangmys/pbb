@@ -5,6 +5,7 @@
 //
 // #include "libbounds.h"
 // #include "gpubb.h"
+#include "gpuerrchk.h"
 
 #include <cuda.h>
 #include <cuda_runtime.h>
