@@ -66,11 +66,11 @@ else()
     target_link_libraries(gpubb PUBLIC bounds)
     target_link_libraries(gpubb PUBLIC fspHeuristic)
 
-    add_executable(test test.cpp)
+    add_executable(test test.cu)
+    target_compile_options(test PRIVATE $<$<COMPILE_LANGUAGE:CUDA>:-Xcompiler -pthread>)
     target_include_directories(test PUBLIC ${PARENT_DIR}/gpu/include)
     target_include_directories(test PUBLIC ${CMAKE_CUDA_INCLUDE_DIRS})
     target_include_directories(test PUBLIC ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
-    target_compile_options(test PRIVATE $<$<COMPILE_LANGUAGE:CUDA>:-Xcompiler -pthread>)
 endif()
 
 add_definitions(-DFSP)
