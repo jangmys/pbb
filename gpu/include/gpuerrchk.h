@@ -1,6 +1,7 @@
 #ifndef GPUERRCHK_H_
 #define GPUERRCHK_H_
 
+#include <stdio.h>
 #include <cuda.h>
 #include <cuda_runtime.h>
 //#include "/usr/local/cuda-7.5/include/cuda.h"
