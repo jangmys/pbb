@@ -57,6 +57,8 @@ else()
     message(STATUS "CMAKE_CUDA" ${CMAKE_CUDA_LIBRARIES})
     message(STATUS "gpubb CUDA_DRIVER" ${CUDA_DRIVER_LIBRARY})
     message(STATUS "gpubb CUDART " ${CUDA_CUDART_LIBRARY})
+    message(STATUS "gpubb CMAKE_CUDA_INCLUDE_DIRS " ${CMAKE_CUDA_INCLUDE_DIRS})
+    message(STATUS "gpubb CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES " ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
 
     # target_link_libraries(gpubb PUBLIC ${CUDA_DRIVER_LIBRARIES})
     # target_link_libraries(gpubb PUBLIC ${CUDA_CUDART_LIBRARY})
@@ -65,6 +67,7 @@ else()
     target_link_libraries(gpubb PUBLIC fspHeuristic)
 
     add_executable(test test.cpp)
+    target_include_directories(test PUBLIC ${CMAKE_CUDA_INCLUDE_DIRS})
 endif()
 
 add_definitions(-DFSP)
