@@ -2,7 +2,7 @@
 #define GPUERRCHK_H_
 
 #include <cuda.h>
-#include <cuda_runtime.h>
+// #include <cuda_runtime.h>
 //#include "/usr/local/cuda-7.5/include/cuda.h"
 
 #define gpuErrchk(ans)                                                         \
@@ -17,4 +17,4 @@ inline void gpuAssert(cudaError_t code, const char *file, int line,
   }
 }
 
-#endif 	
+#endif
