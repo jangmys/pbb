@@ -70,6 +70,7 @@ else()
     target_include_directories(test PUBLIC ${PARENT_DIR}/gpu/include)
     target_include_directories(test PUBLIC ${CMAKE_CUDA_INCLUDE_DIRS})
     target_include_directories(test PUBLIC ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
+    target_compile_options(test PRIVATE $<$<COMPILE_LANGUAGE:CUDA>:-Xcompiler -pthread>)
 endif()
 
 add_definitions(-DFSP)
