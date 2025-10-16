@@ -68,6 +68,7 @@ else()
 
     add_executable(test test.cpp)
     target_include_directories(test PUBLIC ${CMAKE_CUDA_INCLUDE_DIRS})
+    target_include_directories(test PUBLIC ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
 endif()
 
 add_definitions(-DFSP)
