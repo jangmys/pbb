@@ -67,6 +67,7 @@ else()
     target_link_libraries(gpubb PUBLIC fspHeuristic)
 
     add_executable(test test.cpp)
+    target_include_directories(test PUBLIC ${PARENT_DIR}/gpu/include)
     target_include_directories(test PUBLIC ${CMAKE_CUDA_INCLUDE_DIRS})
     target_include_directories(test PUBLIC ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
 endif()
