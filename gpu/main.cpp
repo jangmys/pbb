@@ -13,7 +13,7 @@ main(int argc, char ** argv)
 {
     //------------------PARAMETER PARSING-----------------
     arguments::parse_arguments(argc, argv);
-    std::cout<<" === solving "<<arguments::problem<<" - instance "<<arguments::inst_name<<std::endl;
+    std::cout<<"=== solving "<<arguments::problem<<" - instance "<<arguments::inst_name<<std::endl;
 
     //------------------SET UP LOGGING--------------------
     FILELog::ReportingLevel() = logERROR;
@@ -28,7 +28,7 @@ main(int argc, char ** argv)
     arguments::worker_type='g';
 
     //------------------SET INSTANCE----------------------
-    pbab * pbb = new pbab(        pbb_instance::make_inst(arguments::problem, arguments::inst_name));
+    pbab * pbb = new pbab(pbb_instance::make_inst(arguments::problem, arguments::inst_name));
 
     pbb->set_initial_solution();
 
@@ -44,9 +44,11 @@ main(int argc, char ** argv)
 
     std::cout<<"\t#Initial solution\n"<<pbb->best_found;
 
+#ifdef WITH_GPU
     //use device 0 by default
-    cudaSetDevice(0);
-    cudaFree(0);
+    gpuErrchk(cudaSetDevice(0));
+    gpuErrchk(cudaFree(0));
+#endif
 
     //start timer
     struct timespec tstart, tend;
