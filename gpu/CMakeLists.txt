@@ -63,6 +63,8 @@ else()
 #    target_link_libraries(gpubb PUBLIC ${PARENT_DIR}/evaluation/build/libbounds.a)
     target_link_libraries(gpubb PUBLIC bounds)
     target_link_libraries(gpubb PUBLIC fspHeuristic)
+
+    add_executable(test test.cpp)
 endif()
 
 add_definitions(-DFSP)
