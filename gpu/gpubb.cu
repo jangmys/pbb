@@ -71,6 +71,7 @@ int gpu_worksteal::steal_in_device(int* line, int* pos, int* end, int* dir, int*
 
 
 
+
 gpubb::gpubb(pbab * _pbb, int rank) : pbb(_pbb),size(pbb->size),nbIVM(arguments::nbivms_gpu)
 {
     int device,num_devices;
@@ -81,11 +82,6 @@ gpubb::gpubb(pbab * _pbb, int rank) : pbb(_pbb),size(pbb->size),nbIVM(arguments:
     pbb  = _pbb;
     size = pbb->size;
     nbIVM    = arguments::nbivms_gpu;
-    ringsize = nbIVM;
-
-
-
-    setHypercubeConfig(nbIVM); //work stealing
 
     ws = std::make_unique<gpu_worksteal>(size,nbIVM);
 
