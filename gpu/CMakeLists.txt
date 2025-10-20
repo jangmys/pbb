@@ -67,6 +67,7 @@ else()
     target_link_libraries(gpubb PUBLIC fspHeuristic)
 
     add_executable(test test.cu)
+    set_target_properties(test PROPERTIES CUDA_ARCHITECTURES "60;75;80;89")
     target_compile_options(test PRIVATE $<$<COMPILE_LANGUAGE:CUDA>:-Xcompiler -pthread>)
     target_include_directories(test PUBLIC ${PARENT_DIR}/gpu/include)
     target_include_directories(test PUBLIC ${CMAKE_CUDA_INCLUDE_DIRS})
