@@ -73,19 +73,19 @@ int gpu_worksteal::steal_in_device(int* line, int* pos, int* end, int* dir, int*
 
 gpubb::gpubb(pbab * _pbb, int rank) : pbb(_pbb),size(pbb->size),nbIVM(arguments::nbivms_gpu)
 {
-    // int device,num_devices;
-    // gpuErrchk( cudaGetDeviceCount(&num_devices) );
-    // gpuErrchk( cudaSetDevice(rank % num_devices) );
+    int device,num_devices;
+    gpuErrchk( cudaGetDeviceCount(&num_devices) );
+    gpuErrchk( cudaSetDevice(rank % num_devices) );
 
-    // printf(" === Device %d/%d ==\n", rank % num_devices, num_devices);
-    // pbb  = _pbb;
-    // size = pbb->size;
-    // nbIVM    = arguments::nbivms_gpu;
-    // ringsize = nbIVM;
+    printf(" === Device %d/%d ==\n", rank % num_devices, num_devices);
+    pbb  = _pbb;
+    size = pbb->size;
+    nbIVM    = arguments::nbivms_gpu;
+    ringsize = nbIVM;
 
 
 
-    // setHypercubeConfig(nbIVM); //work stealing
+    setHypercubeConfig(nbIVM); //work stealing
 
     ws = std::make_unique<gpu_worksteal>(size,nbIVM);
 
