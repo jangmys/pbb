@@ -234,13 +234,13 @@ gpubb::selectAndBranch(const int NN)
     gpuErrchk(cudaMemset(counter_d, 0, 6 * sizeof(unsigned int)));
 
     //dense mapping : one thread = one IVM
-    // goToNext_dense<<< (nbIVM+127) / 128, 128, 0, stream[0] >>>(mat_d, pos_d, end_d, dir_d, line_d, state_d, nbDecomposed_d, counter_d, NN);
+    goToNext_dense<<< (nbIVM+127) / 128, 128, 0, stream[0] >>>(mat_d, pos_d, end_d, dir_d, line_d, state_d, nbDecomposed_d, counter_d, NN);
 
 	//wide mapping : one warp = one IVM
     // assume:
     // 1 block = NN warps = NN IVM
-    size_t smem = NN * (2 * size * sizeof(int) + 2 * sizeof(int));
-    goToNext2<4><<< (nbIVM+NN-1) / NN, NN * 32, smem, stream[0] >>>(mat_d, pos_d, end_d, dir_d, line_d, state_d, nbDecomposed_d, counter_d);
+    // size_t smem = NN * (2 * size * sizeof(int) + 2 * sizeof(int));
+    // goToNext2<4><<< (nbIVM+NN-1) / NN, NN * 32, smem, stream[0] >>>(mat_d, pos_d, end_d, dir_d, line_d, state_d, nbDecomposed_d, counter_d);
 
 #ifndef NDEBUG
     gpuErrchk(cudaPeekAtLastError());
