@@ -74,6 +74,7 @@ int gpu_worksteal::steal_in_device(int* line, int* pos, int* end, int* dir, int*
 
 gpubb::gpubb(pbab * _pbb, int rank) : pbb(_pbb),size(pbb->size),nbIVM(arguments::nbivms_gpu)
 {
+    //set device should be called before cudaMalloc etc
     int device,num_devices;
     gpuErrchk( cudaGetDeviceCount(&num_devices) );
     gpuErrchk( cudaSetDevice(rank % num_devices) );
@@ -103,8 +104,6 @@ gpubb::gpubb(pbab * _pbb, int rank) : pbb(_pbb),size(pbb->size),nbIVM(arguments:
 
     // "one time events"
     firstbound = true;
-    // search_cut = 1.0;
-
 	execmode.triggered = false;
 }
 
@@ -114,17 +113,21 @@ gpubb::~gpubb()
     // free etc
 }
 
+
+
+
 //
 void
 gpubb::initialize(int rank)
 {
+
+
     //-----------mapping MPI_ranks to devices-----------
     int device;
     int num_devices;
     gpuErrchk( cudaGetDeviceCount(&num_devices) );
     gpuErrchk( cudaGetDevice(&device) );
-    std::cout<<rank<<" using device "<<device<<" of "<<num_devices<<"\n";
-    // gpuErrchk( cudaSetDevice(rank % num_devices) );
+
 
 
     gpuErrchk(cudaFree(0));
@@ -229,14 +232,15 @@ gpubb::selectAndBranch(const int NN)
     // int best = INT_MAX;
     // pbb->sltn->getBest(best);
     gpuErrchk(cudaMemset(counter_d, 0, 6 * sizeof(unsigned int)));
-	//dense mapping : one thread = one IVM
-    goToNext_dense<<< (nbIVM+127) / 128, 128, 0, stream[0] >>>(mat_d, pos_d, end_d, dir_d, line_d, state_d, nbDecomposed_d, counter_d, NN);
+
+    //dense mapping : one thread = one IVM
+    // goToNext_dense<<< (nbIVM+127) / 128, 128, 0, stream[0] >>>(mat_d, pos_d, end_d, dir_d, line_d, state_d, nbDecomposed_d, counter_d, NN);
 
 	//wide mapping : one warp = one IVM
     // assume:
     // 1 block = NN warps = NN IVM
-    // size_t smem = NN * (2 * size * sizeof(int) + 2 * sizeof(int));
-    // goToNext2<4><<< (nbIVM+NN-1) / NN, NN * 32, smem, stream[0] >>>(mat_d, pos_d, end_d, dir_d, line_d, state_d, nbDecomposed_d, counter_d);
+    size_t smem = NN * (2 * size * sizeof(int) + 2 * sizeof(int));
+    goToNext2<4><<< (nbIVM+NN-1) / NN, NN * 32, smem, stream[0] >>>(mat_d, pos_d, end_d, dir_d, line_d, state_d, nbDecomposed_d, counter_d);
 
 #ifndef NDEBUG
     gpuErrchk(cudaPeekAtLastError());
