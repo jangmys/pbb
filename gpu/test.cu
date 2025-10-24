@@ -6,6 +6,7 @@
 // #include "libbounds.h"
 // #include "gpubb.h"
 #include "gpuerrchk.h"
+#include "fsp_int8_eval.cuh"
 
 #include <cuda.h>
 #include <cuda_runtime.h>
@@ -15,6 +16,8 @@ main(int argc, char ** argv)
 {
     arguments::parse_arguments(argc, argv);
     std::cout<<"=== solving "<<arguments::problem<<" - instance "<<arguments::inst_name<<std::endl;
+
+    pbab * pbb = new pbab(pbb_instance::make_inst(arguments::problem, arguments::inst_name));
 
 #ifdef WITH_GPU
     int dev=1;
@@ -29,6 +32,9 @@ main(int argc, char ** argv)
 
     printf("\nDevice %d: \"%s\"\n", dev, deviceProp.name);
 #endif
+
+
+
 
     return EXIT_SUCCESS;
 } // main
