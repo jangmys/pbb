@@ -16,7 +16,7 @@
 #include <cuda_runtime.h>
 
 
-void initializeBoundFSP(std::shared_ptr<instance_abstract> pbb)
+void initializeBoundFSP(std::shared_ptr<instance_abstract> inst)
 {
     int nbJob_h,nbMachines_h;
 
