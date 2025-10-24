@@ -36,6 +36,8 @@ endif()
 
 ######################################################################################
 #add lower bounds library
+add_subdirectory(common)
+#add lower bounds library
 add_subdirectory(evaluation)
 #add heuristics library
 add_subdirectory(heuristics)
