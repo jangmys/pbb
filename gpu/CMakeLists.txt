@@ -71,6 +71,7 @@ else()
     target_compile_options(test PRIVATE $<$<COMPILE_LANGUAGE:CUDA>:-Xcompiler -pthread>)
     target_link_libraries(test PUBLIC common)
 
+    target_include_directories(test PUBLIC ${PARENT_DIR}/evaluation)
     target_include_directories(test PUBLIC ${PARENT_DIR}/common/include)
     target_include_directories(test PUBLIC ${PARENT_DIR}/gpu/include)
     target_include_directories(test PUBLIC ${CMAKE_CUDA_INCLUDE_DIRS})
