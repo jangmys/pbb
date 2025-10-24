@@ -11,9 +11,9 @@
 #include <cuda.h>
 #include <cuda_runtime.h>
 
+class pbab;
 
-void
-initializeBoundFSP(pbab * pbb)
+void initializeBoundFSP(pbab * pbb)
 {
     int nbJob_h,nbMachines_h;
 
