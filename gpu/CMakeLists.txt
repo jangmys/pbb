@@ -70,6 +70,7 @@ else()
     set_target_properties(test PROPERTIES CUDA_ARCHITECTURES "60;75;80;89")
     target_compile_options(test PRIVATE $<$<COMPILE_LANGUAGE:CUDA>:-Xcompiler -pthread>)
     target_link_libraries(test PUBLIC common)
+    target_link_libraries(test PUBLIC bounds)
 
     target_include_directories(test PUBLIC ${PARENT_DIR}/evaluation)
     target_include_directories(test PUBLIC ${PARENT_DIR}/common/include)
