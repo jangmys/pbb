@@ -1,4 +1,4 @@
-// #include "arguments.h"
+#include "arguments.h"
 // #include "pbab.h"
 // #include "ttime.h"
 // #include "log.h"
@@ -13,9 +13,13 @@
 int
 main(int argc, char ** argv)
 {
+    arguments::parse_arguments(argc, argv);
+    std::cout<<"=== solving "<<arguments::problem<<" - instance "<<arguments::inst_name<<std::endl;
+
+
 #ifdef WITH_GPU
     //use device 0 by default
-    gpuErrchk(cudaSetDevice(0));
+    gpuErrchk(cudaSetDevice(1));
     gpuErrchk(cudaFree(0));
 #endif
 
