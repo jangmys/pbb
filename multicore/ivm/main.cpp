@@ -6,11 +6,6 @@
 #include "libbounds.h"
 #include "libheuristic.h"
 #include "matrix_controller.h"
-#include "pool_controller.h"
-
-// #include "../ivm/intervalbb.h"
-
-#include "make_ll_algo.h"
 #include "make_ivm_algo.h"
 
 int
@@ -77,31 +72,31 @@ main(int argc, char ** argv)
             }
             break;
         }
-        case 'p': //POOL
-        {
-            if(arguments::nbivms_mc == 1){
-                std::cout<<" === Run single-threaded POOL-BB"<<std::endl;
-
-                auto sbb = make_poolbb(pbb.get());
-
-                subproblem p(pbb->size,pbb->best_found.initial_perm);
-                sbb->set_root(p);
-                sbb->run();
-
-                pbb->stats.totDecomposed = sbb->get_decomposed_count();
-                pbb->stats.leaves = sbb->get_leaves_count();
-            }else{
-                std::cout<<" === Run multi-core LL-based BB ..."<<std::endl;
-
-                int nthreads = (arguments::nbivms_mc < 1) ? get_nprocs() : arguments::nbivms_mc;
-                PoolController pc(pbb.get(),nthreads);
-
-                pc.set_victim_select(make_victim_selector(nthreads,arguments::mc_ws_select));
-
-                pc.next();
-            }
-            break;
-        }
+        // case 'p': //POOL
+        // {
+        //     if(arguments::nbivms_mc == 1){
+        //         std::cout<<" === Run single-threaded POOL-BB"<<std::endl;
+        //
+        //         auto sbb = make_poolbb(pbb.get());
+        //
+        //         subproblem p(pbb->size,pbb->best_found.initial_perm);
+        //         sbb->set_root(p);
+        //         sbb->run();
+        //
+        //         pbb->stats.totDecomposed = sbb->get_decomposed_count();
+        //         pbb->stats.leaves = sbb->get_leaves_count();
+        //     }else{
+        //         std::cout<<" === Run multi-core LL-based BB ..."<<std::endl;
+        //
+        //         int nthreads = (arguments::nbivms_mc < 1) ? get_nprocs() : arguments::nbivms_mc;
+        //         PoolController pc(pbb.get(),nthreads);
+        //
+        //         pc.set_victim_select(make_victim_selector(nthreads,arguments::mc_ws_select));
+        //
+        //         pc.next();
+        //     }
+        //     break;
+        // }
     }
 
     std::cout<<"stop\n";

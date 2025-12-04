@@ -9,7 +9,7 @@ named constructor for IVM-based BB
 #include <pbab.h>
 
 #include "../base/mcbb.h"
-#include "../ll/poolbb.h"
+#include "poolbb.h"
 
 std::shared_ptr<Poolbb> make_poolbb(pbab* pbb);
 
