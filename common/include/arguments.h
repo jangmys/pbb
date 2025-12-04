@@ -55,18 +55,11 @@ public:
     static int balancingv;
     static int timeout;
 
-
-
-
-
     //heuristic (in parallel to dbb)
     static char heuristic_type;
     static int heuristic_threads; //number of heuristic threads
     static int heuristic_iters;
     static int initial_heuristic_iters;
-
-    //data struct
-    static char ds;
 
 
     static int sortNodes; //=0
