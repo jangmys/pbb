@@ -28,9 +28,6 @@ int arguments::sortNodes         = -1;
 //Pruning options
 bool arguments::findAll        = false;
 
-//Data struct
-char arguments::ds = 'i';
-
 //initial upper bound and solutions
 int arguments::init_mode = 1;
 int arguments::initial_ub;
@@ -204,7 +201,6 @@ arguments::parse_arguments(int argc, char ** argv)
                 {"singlenode",  no_argument, NULL,  0 },
                 {"primary-bound",  required_argument, NULL,  0 },
                 {"gpu", optional_argument, NULL, 0},
-                {"ll", no_argument, NULL, 0},
                 {"inc-initial-ub", no_argument, NULL, 0},
                 {"file",required_argument,NULL, 0},
                 {"heuristic-threads",  required_argument, NULL,  0 },
@@ -239,10 +235,6 @@ arguments::parse_arguments(int argc, char ** argv)
                 printf("Not compiled with -DGPU. Cannot set worker type to GPU.\n");
 #endif
 
-            }
-            if(strcmp(long_options[option_index].name,"ll") == 0)
-            {
-                ds='p';
             }
             if(strcmp(long_options[option_index].name,"bound") == 0)
             {

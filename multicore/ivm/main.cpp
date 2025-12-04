@@ -43,63 +43,32 @@ main(int argc, char ** argv)
 
     //---------------------RUN-------------------------------------
     pbb->ttm->on(pbb->ttm->wall);
-    switch(arguments::ds){
-        case 'i': //IVM
-        {
-            int nthreads = (arguments::nbivms_mc < 1) ? get_nprocs() : arguments::nbivms_mc;
 
-            //interval to explore (full [0,N!])
-            std::vector<int> zeroFact(pbb->size,0);
-            std::vector<int> endFact(pbb->size,0);
-            for (int i = 0; i < pbb->size; i++) {
-                endFact[i]  = pbb->size - i - 1;
-            }
+    int nthreads = (arguments::nbivms_mc < 1) ? get_nprocs() : arguments::nbivms_mc;
 
-            if(nthreads == 1){ //SEQUENTIAL
-                std::cout<<" === Run single-threaded IVM-BB"<<std::endl;
-                auto sbb = make_ivmbb<int>(pbb.get());
-
-                //set first line of matrix
-                sbb->setRoot(pbb->best_found.initial_perm.data());
-                sbb->initAtInterval(zeroFact, endFact);
-
-                sbb->run();
-            }else{ //MULTICORE
-                IVMController mc(pbb.get(),nthreads);
-
-                std::cout<<" === Run multi-core IVM-based BB with "<<nthreads<<" threads"<<std::endl;
-                mc.next();
-            }
-            break;
-        }
-        // case 'p': //POOL
-        // {
-        //     if(arguments::nbivms_mc == 1){
-        //         std::cout<<" === Run single-threaded POOL-BB"<<std::endl;
-        //
-        //         auto sbb = make_poolbb(pbb.get());
-        //
-        //         subproblem p(pbb->size,pbb->best_found.initial_perm);
-        //         sbb->set_root(p);
-        //         sbb->run();
-        //
-        //         pbb->stats.totDecomposed = sbb->get_decomposed_count();
-        //         pbb->stats.leaves = sbb->get_leaves_count();
-        //     }else{
-        //         std::cout<<" === Run multi-core LL-based BB ..."<<std::endl;
-        //
-        //         int nthreads = (arguments::nbivms_mc < 1) ? get_nprocs() : arguments::nbivms_mc;
-        //         PoolController pc(pbb.get(),nthreads);
-        //
-        //         pc.set_victim_select(make_victim_selector(nthreads,arguments::mc_ws_select));
-        //
-        //         pc.next();
-        //     }
-        //     break;
-        // }
+    //interval to explore (full [0,N!])
+    std::vector<int> zeroFact(pbb->size,0);
+    std::vector<int> endFact(pbb->size,0);
+    for (int i = 0; i < pbb->size; i++) {
+        endFact[i]  = pbb->size - i - 1;
     }
 
-    std::cout<<"stop\n";
+    if(nthreads == 1){ //SEQUENTIAL
+        std::cout<<" === Run single-threaded IVM-BB"<<std::endl;
+        auto sbb = make_ivmbb<int>(pbb.get());
+
+        //set first line of matrix
+        sbb->setRoot(pbb->best_found.initial_perm.data());
+        sbb->initAtInterval(zeroFact, endFact);
+
+        sbb->run();
+    }else{ //MULTICORE
+        IVMController mc(pbb.get(),nthreads);
+
+        std::cout<<" === Run multi-core IVM-based BB with "<<nthreads<<" threads"<<std::endl;
+            mc.next();
+    }
+
 	pbb->printStats();
     pbb->ttm->off(pbb->ttm->wall);
     pbb->ttm->printElapsed(pbb->ttm->wall,"Walltime");
