@@ -5,7 +5,7 @@
 #include <subproblem.h>
 #include <pbab.h>
 #include <libbounds.h>
-#include <pool.h>
+#include "pool.h"
 #include <mcbb.h>
 
 class Poolbb : public MCbb<int>{

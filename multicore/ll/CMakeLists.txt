@@ -1,5 +1,2 @@
 FILE(GLOB MyCppSources *.cpp)
-
-if (TARGET bb)
-    target_sources(bb PUBLIC ${MyCppSources})
-endif()
+target_sources(llbb PUBLIC ${MyCppSources})

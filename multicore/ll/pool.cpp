@@ -48,7 +48,7 @@ Pool::take_top()
     std::unique_ptr<subproblem> n=(empty()) ? NULL : std::move(top());
     if(n) pop();
 
-    return std::move(n);
+    return n;
 }
 
 std::unique_ptr<subproblem>
@@ -57,7 +57,7 @@ Pool::take_back()
     std::unique_ptr<subproblem> n=(empty()) ? NULL : std::move(back());
     if(n) pop_back();
 
-    return std::move(n);
+    return n;
 }
 
 std::unique_ptr<subproblem>

@@ -31,13 +31,13 @@ void Poolbb::run()
 bool Poolbb::next()
 {
     if(!pool->empty()){
-        auto n = std::move(pool->take_top());
+        auto n = pool->take_top();
 
         if(n->leaf()){
             if(!(*prune)(n->lb))
             {
                 prune->local_best = n->lb;
-                std::cout<<n->lb<<"\t"<<prune->local_best<<"\n";
+                // std::cout<<n->lb<<"\t"<<prune->local_best<<"\n";
             }
             count_leaves++;
         }
