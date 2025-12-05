@@ -4,7 +4,7 @@
 #define MCBB_H_
 
 #include <pbab.h>
-#include <branching.h>
+#include "branching.h"
 #include <pruning.h>
 
 template<typename T>

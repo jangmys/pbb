@@ -10,8 +10,8 @@ base class for multi-core exploration, independent from data structure used for 
 #include <vector>
 #include <iostream>
 
-#include <victim_selector.h>
-#include <thread_data.h>
+#include "victim_selector.h"
+#include "request_queue.h"
 
 
 class ThreadController{
