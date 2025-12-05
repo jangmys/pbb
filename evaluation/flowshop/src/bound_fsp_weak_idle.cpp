@@ -1,3 +1,10 @@
+/*
+In addition to LB1 this bound evaluates the weighted idle time as in
+
+https://hal.archives-ouvertes.fr/hal-02937115/document
+
+Luc Libralesso, Pablo Focke, Aurélien Secardin, Vincent Jost. Iterative beam search algorithms for the permutation flowshop. 2020. ffhal-02937115f
+*/
 #include <iostream>
 #include <limits.h>
 #include <string.h>
@@ -8,14 +15,6 @@
 
 #include "bound_fsp_weak_idle.h"
 
-/*
-In addition to LB1 this bound evaluates the weighted idle time as in
-
-https://hal.archives-ouvertes.fr/hal-02937115/document
-
-Luc Libralesso, Pablo Focke, Aurélien Secardin, Vincent Jost. Iterative beam search algorithms for
-the permutation flowshop. 2020. ffhal-02937115f
-*/
 
 
 // lower bound and evaluation function for the PFSP
