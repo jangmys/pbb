@@ -12,7 +12,7 @@ add_subdirectory(ll)
 
 add_subdirectory(base)
 add_subdirectory(operators)
-add_subdirectory(do)
+# add_subdirectory(do)
 add_subdirectory(${PARENT_DIR}/common/src ./build_common_mc)
 
 target_include_directories(bb PUBLIC ${PARENT_DIR}/evaluation)
@@ -21,7 +21,7 @@ target_include_directories(bb PUBLIC ${PARENT_DIR}/common/src)
 target_include_directories(bb PUBLIC ${PARENT_DIR}/heuristics)
 
 target_include_directories(bb PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/base)
-target_include_directories(bb PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/do)
+# target_include_directories(bb PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/do)
 target_include_directories(bb PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/ivm)
 # target_include_directories(bb PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/ll)
 target_include_directories(bb PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/operators)
