@@ -3,7 +3,7 @@
 
 #include "make_ivm_algo.h"
 
-//factory for interval-based CPU-BB : build and configure CPU-BB according to arguments
+//factory for SEQUENTIAL interval-based CPU-BB : build and configure CPU-BB according to arguments
 template<typename T>
 std::shared_ptr<Intervalbb<T>> make_ivmbb(pbab* pbb)
 {

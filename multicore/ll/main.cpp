@@ -34,8 +34,6 @@ main(int argc, char ** argv)
     auto inst = pbb_instance::make_inst(arguments::problem, arguments::inst_name);
 
     std::shared_ptr<pbab> pbb = std::make_shared<pbab>(inst);
-    //     pbb_instance::make_inst(arguments::problem, arguments::inst_name)
-    // );
 
     //------------------BUILD INITIAL SOLUTION------------------
     pbb->set_initial_solution();
