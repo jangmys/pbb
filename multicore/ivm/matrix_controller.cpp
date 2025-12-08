@@ -21,6 +21,7 @@
 #include "make_ivm_algo.h"
 
 IVMController::IVMController(pbab* _pbb,int _nthreads,bool distributed /*=false*/,int _local_mpi_rank/*=0*/) : ThreadController(_pbb,_nthreads,_local_mpi_rank),_distributed(distributed){
+    //a vector of shared pointers to sequential B&B's - uninitialized : see explore_multicore for allocation
     ivmbb = std::vector< std::shared_ptr<Intervalbb<int>> >(get_num_threads(),nullptr);
 
     state = std::vector<int>(get_num_threads(),0);
@@ -176,16 +177,19 @@ IVMController::explore_multicore(unsigned id)
 
     //------check if explorer already exists------
     if(!ivmbb[id]){
+        //Why make things here - instead of the constructor?
+        //Performance consideration : this ensures memory is allocated on the same NUMA as the thread executing the allocation. This + stick_thread_to_core above gives better scalability on NUMA architectures.
+
         //make sequential bb-explorer
         ivmbb[id] = make_ivmbb<int>(pbb);
+
+        //thread-local data for MC exploration
+        thd_data[id] = std::make_shared<RequestQueue>();
 
         if(is_distributed()){
             //new best solutions are printed by master
             ivmbb[id]->print_new_solutions=false;
         }
-
-        //thread-local data for MC exploration
-        thd_data[id] = std::make_shared<RequestQueue>();
 
         //set level 0 subproblems
         ivmbb[id]->setRoot(pbb->best_found.initial_perm.data());
@@ -286,6 +290,7 @@ mcbb_thread(void * _mc)
     return NULL;
 }
 
+//This is the "main" method to start multi-threaded exploration
 bool
 IVMController::next()
 {
