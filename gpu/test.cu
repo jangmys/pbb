@@ -37,8 +37,7 @@ void initializeBoundFSP(std::shared_ptr<instance_abstract> inst)
     // allocate_host_bound_tmp();
     //pbb_instance
     // for (int i = 0; i < nbMachines_h; i++) {
-    //     fillMachine();cmake .. -DGMX_THREAD_MPI=OFF -DGMX_MPI=ON -DBUILD_SHARED_LIBS=OFF -DGMXAPI=OFF -DGMX_INSTALL_NBLIB_API=OFF -DGMX_DOUBLE=ON -DGMX_FFT_LIBRARY=fftw3 -DFFTWF_LIBRARY=/share/libraries/fftw/3.3.10-openmpi.4.1.5/lib/ -DFFTWF_INCLUDE_DIR=/share/libraries/fftw/3.3.10-openmpi.4.1.5/include -DGMX_BLAS_USER=/share/libraries/openblas/0.3.28/gcc/11.3.1/lib/ -DGMX_LAPACK_USER=/share/libraries/openblas/0.3.28/gcc/11.3.1/lib/ -DGMX_CP2K=ON -DCP2K_DIR=/share/applications/cp2k/v2025.2/lib/local/psmp/
-
+    //     fillMachine();
     //
     //     for (int j = 0; j < nbJob_h; j++)
     //         *(pbb->inst->data) >> tempsJob_h[i * nbJob_h + j];
@@ -68,7 +67,6 @@ main(int argc, char ** argv)
     std::shared_ptr<instance_abstract> inst=pbb_instance::make_inst(arguments::problem, arguments::inst_name);
     // pbab * pbb = new pbab(pbb_instance::make_inst(arguments::problem, arguments::inst_name));
 
-#ifdef WITH_GPU
     int dev=1;
 
     //use device 0 by default
@@ -80,7 +78,11 @@ main(int argc, char ** argv)
     cudaGetDeviceProperties(&deviceProp, dev);
 
     printf("\nDevice %d: \"%s\"\n", dev, deviceProp.name);
-#endif
+
+    unsigned int njobs,nmachines;
+    uint16_t *ptm;
+
+    
 
 
 
