@@ -13,7 +13,7 @@ main(int argc, char ** argv)
 {
     //------------------PARAMETER PARSING-----------------
     arguments::parse_arguments(argc, argv);
-    std::cout<<" === solving "<<arguments::problem<<" - instance "<<arguments::inst_name<<std::endl;
+    std::cout<<"=== solving "<<arguments::problem<<" - instance "<<arguments::inst_name<<std::endl;
 
     //------------------SET UP LOGGING--------------------
     FILELog::ReportingLevel() = logERROR;
@@ -28,7 +28,7 @@ main(int argc, char ** argv)
     arguments::worker_type='g';
 
     //------------------SET INSTANCE----------------------
-    pbab * pbb = new pbab(        pbb_instance::make_inst(arguments::problem, arguments::inst_name));
+    pbab * pbb = new pbab(pbb_instance::make_inst(arguments::problem, arguments::inst_name));
 
     pbb->set_initial_solution();
 
@@ -36,15 +36,19 @@ main(int argc, char ** argv)
     std::cout<<"\t#ProblemSize:\t\t"<<pbb->size<<"\n"<<std::endl;
 
     std::cout<<"\t#Worker type:\t\t"<<arguments::worker_type<<std::endl;
+#ifdef WITH_GPU
     std::cout<<"\t#GPU workers:\t\t"<<arguments::nbivms_gpu<<std::endl;
+#endif
     std::cout<<"\t#Bounding mode:\t\t"<<arguments::boundMode<<std::endl;
     std::cout<<"\t#Branching:\t\t"<<arguments::branchingMode<<std::endl;
 
     std::cout<<"\t#Initial solution\n"<<pbb->best_found;
 
+#ifdef WITH_GPU
     //use device 0 by default
-    cudaSetDevice(0);
-    cudaFree(0);
+    gpuErrchk(cudaSetDevice(0));
+    gpuErrchk(cudaFree(0));
+#endif
 
     //start timer
     struct timespec tstart, tend;
@@ -57,8 +61,10 @@ main(int argc, char ** argv)
 
     cudaDeviceSetCacheConfig(cudaFuncCachePreferShared);
 
-    gpubb* gbb = new gpubb(pbb,0);//%numDevices);
-    gbb->initialize(0);// allocate IVM on host/device
+    const int rank=0;
+
+    gpubb* gbb = new gpubb(pbb,rank);
+    gbb->initialize(rank);// allocate IVM on host/device
 
 #ifdef FSP
     gbb->initializeBoundFSP();

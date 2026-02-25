@@ -16,7 +16,7 @@
 class IVMController : public ThreadController{
     friend class worker_mc;
 public:
-    IVMController(pbab* _pbb,int _nthreads,bool distributed = false);
+    IVMController(pbab* _pbb,int _nthreads,bool distributed = false,int _local_mpi_rank=0);
 
     int work_share(unsigned id, unsigned thief);
 
@@ -26,7 +26,7 @@ public:
     int getSubproblem(int *ret, const int N);
 
     bool next();
-    void explore_multicore();
+    void explore_multicore(unsigned id);
 
     //----------------for distributed mode----------------
 

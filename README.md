@@ -53,6 +53,8 @@ Command line arguments override the options provided in the configuration file.
 
 ### Command line options
 
+All three executables (bb,dbb,gpubb) accept the same set of options (but some may be irrelevant).
+
 #### Problem instance
 
 The `-z` multioption allows to select a PFSP problem instance
@@ -69,7 +71,7 @@ where
     - `f` to read known optimum from a file
     - `neh` NEH heuristic
     - `beam` beam search
-    - N - an integer UB to set the initial ub to UB.
+    - `N` an integer to set the initial ub to `N`.
 
 PFSP Benchmark instances for are included in the `evaluation/flowshop/data` folder.
 The available options for the problem instance are:
@@ -102,21 +104,43 @@ The available options for the problem instance are:
 
 
 
-#### Other options
-- `-t <nbthreads>`
-    - number of threads(multi-core)
-- `--bound <0,1,2>`
-    - incremental bounding of child nodes
-    - full bound for child nodes
-    - mixed mode    
-- `--branch <-3,-2,-1,1,2,3>`
-    - branching mode
-- `--findall`,`-a`
-    - changes pruning s.th. nodes with lb==ub are NOT pruned
-- `--primary-bound <s,j>`
-    - simple or johnson bound
-- `--gpu <nbIVM>`
-    - number of GPU explorers (GPU)
+#### Search options
+
+##### `--bound <0,1,2>`
+
+defines bounding scheme (default: 0)
+
+- 0: incremental bounding of child nodes
+- 1: full bound for child nodes
+- 2: mixed mode    
+
+#####  `--branch <-3,-2,-1,1,2,3>`
+- -3: alternate
+- -2: forward
+- -1: backward
+- 1: MaxSum
+- 2: MinBranch
+- 3: MinMin
+
+##### `--findall`,`-a`
+- changes pruning s.th. nodes with lb==ub are NOT pruned
+
+##### `--print-sol`
+- prints solutions
+
+##### `--singlenode`
+- run in single-node mode
+
+##### `--gpu <nbIVM>`
+- number of GPU explorers (GPU)
+
+##### `-t <nbthreads>`
+- number of threads(multi-core)
+
+##### `--heuristic-threads`
+
+##### `--primary-bound <s,j>`
+- simple or johnson bound
 
 
 

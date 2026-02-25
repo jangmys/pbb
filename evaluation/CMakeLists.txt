@@ -12,7 +12,6 @@ target_include_directories(bounds PUBLIC ${PROJECT_SOURCE_DIR}/evaluation)
 add_subdirectory(${PROJECT_SOURCE_DIR}/evaluation/flowshop)
 add_subdirectory(${PROJECT_SOURCE_DIR}/evaluation/dummy)
 
-
 target_link_libraries(bounds PUBLIC Threads::Threads)
 
 # build tests

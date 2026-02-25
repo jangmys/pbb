@@ -16,6 +16,7 @@ public:
     pbab * pbb;
     int size;
     int M;
+    int mpi_local_rank;
     unsigned nb_heuristic_threads;
     unsigned long long int local_decomposed_count;
 
@@ -30,7 +31,7 @@ public:
     int *solutions;
     pthread_mutex_t mutex_solutions;
 
-    worker(pbab * _pbb, unsigned int _nbIVM);
+    worker(pbab * _pbb, unsigned int _nbIVM,int _mpi_local_rank = 0);
     virtual ~worker();
 
     void tryLaunchCommBest();
@@ -42,11 +43,9 @@ public:
     virtual bool doWork() = 0;
 
     pthread_barrier_t barrier;
-    pthread_mutex_t mutex_inst;
-    pthread_mutex_t mutex_end;
-    pthread_mutex_t mutex_wunit;
-    pthread_mutex_t mutex_best;
-    pthread_mutex_t mutex_updateAvail;
+    pthread_mutex_t mutex_end;//protects bool end
+    pthread_mutex_t mutex_wunit;//get intervals, init from WU
+    pthread_mutex_t mutex_updateAvail;//prtects bool updateAvailable
     pthread_cond_t cond_updateApplied;
 
     pthread_mutex_t mutex_trigger;
@@ -70,6 +69,11 @@ public:
 
     void reset();
     void run();
+protected:
+    /*
+    using pthreads... void* thdroutine(void*)
+    mixing C and C++... keep everything public.
+    */
 };
 
 #endif // ifndef WORKER_H

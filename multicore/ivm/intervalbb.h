@@ -26,7 +26,6 @@ public:
     void setRoot(const int* varOrder);
     void setRoot(const std::vector<int> varOrder);
 
-
     void run();
     bool next();
     void clear();

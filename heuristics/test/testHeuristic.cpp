@@ -115,9 +115,41 @@ int main(int argc, char* argv[])
         {
             Beam bs(pbb,*(instance.get()));
 
+            // bs.verbose=true;
+
+            fastNEH neh(p_times,N,M);
+            neh.run(p);
+            //
+            //
+            bs.run(1<<2,p.get());
+            // *p = *(bs.bestSolution);
+
+            std::cout<<" === CMAX: "<<*(p.get())<<std::endl;
+
+            //
+            bs.run(1<<4,p.get());
+            // *p = *(bs.bestSolution);
+
+            std::cout<<" === CMAX: "<<*(p.get())<<std::endl;
+
+            //
+            // bs.run(1<<6,p.get());
+            // *p = *(bs.bestSolution);
+            //
+            // bs.run(1<<8,p.get());
+            // *p = *(bs.bestSolution);
+            //
+            // bs.run(1<<10,p.get());
+            // *p = *(bs.bestSolution);
+            //
+            // bs.run(1<<12,p.get());
             bs.run(1<<14,p.get());
-            // bs.run_loop(1<<14,p.get());
+            // bs.run(1<<16,p.get());
+
             *p = *(bs.bestSolution);
+
+            // bs.run_loop(1<<14,p.get());
+            // *p = *(bs.bestSolution);
             //
             // std::cout<<" = BEAM :\t";
             break;

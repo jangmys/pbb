@@ -11,7 +11,7 @@
 
 #include <memory>
 
-#include "../../common/inih/INIReader.h"
+// #include "../../common/inih/INIReader.h"
 
 #include "libheuristic.h"
 #include "libbounds.h"
@@ -67,7 +67,7 @@ private:
     int psize;
 
 public:
-    Tree(instance_abstract& inst, int _size);
+    Tree(int _size);
 
     int strategy;
 

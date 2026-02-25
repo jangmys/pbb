@@ -23,7 +23,7 @@ int arguments::johnsonPairs      = 0;
 
 //Branching options
 int arguments::branchingMode = 1;
-int arguments::sortNodes         = 0;
+int arguments::sortNodes         = -1;
 
 //Pruning options
 bool arguments::findAll        = false;
@@ -39,7 +39,10 @@ bool arguments::increaseInitialUB = false;
 //parallel
 bool arguments::singleNode = true;// false;
 int arguments::nbivms_mc  = -1;
+
+#ifdef WITH_GPU
 int arguments::nbivms_gpu = 16384;
+#endif
 
 //load balance / fault tolerance
 int arguments::checkpointv = 3600;
@@ -76,17 +79,17 @@ void read_init_mode(char* init_mode_str, int& init_mode, int& initial_ub)
     initial_ub = INT_MAX;
     if(init_mode_str){
         if(*init_mode_str == 'f'){
-            init_mode = 0;
+            init_mode = 0; //read opt from file
         }
         else if(*init_mode_str == 'i'){
-            init_mode = -1;
+            init_mode = -1; //infinity
         }
         else if(strcmp(init_mode_str,"neh") == 0){
-            init_mode = 1;
+            init_mode = 1; // NEH
         }else if(strcmp(init_mode_str,"beam") == 0){
-            init_mode = 2;
+            init_mode = 2; //BEAM search
         }else{
-            init_mode = -1;
+            init_mode = -1; //set value
             initial_ub = atoi(init_mode_str);
         }
     }
@@ -122,7 +125,6 @@ arguments::readIniFile(std::string inifile)
 
     // ---------------------------problem definition---------------------------
     problem = reader.Get("problem", "problem", "UNKNOWN");
-
     inst_name = reader.Get("problem", "instance", "UNKNOWN");
 
     char init_mode_str[50];
@@ -136,8 +138,9 @@ arguments::readIniFile(std::string inifile)
 
     // ------------------------nb concurrent explorers------------------------
     nbivms_mc  = reader.GetInteger("multicore", "threads", nbivms_mc);
+#ifdef WITH_GPU
     nbivms_gpu = reader.GetInteger("gpu", "nbIVMs", nbivms_gpu);
-
+#endif
     // ---------------------------sort sibling nodes---------------------------
     sortNodes    = reader.GetInteger("bb", "sortedDFS", sortNodes);
 
@@ -204,6 +207,8 @@ arguments::parse_arguments(int argc, char ** argv)
                 {"ll", no_argument, NULL, 0},
                 {"inc-initial-ub", no_argument, NULL, 0},
                 {"file",required_argument,NULL, 0},
+                {"heuristic-threads",  required_argument, NULL,  0 },
+                {"sortDFS",  required_argument, NULL,  0 },
                 {0,         0,                 0,  0 }
             };
 
@@ -226,9 +231,14 @@ arguments::parse_arguments(int argc, char ** argv)
             // --gpu=<nbivm_gpu>
             if(strcmp(long_options[option_index].name,"gpu") == 0)
             {
+#ifdef WITH_GPU
                 worker_type='g';
                 //how many GPU workers ?
                 nbivms_gpu=(optarg == NULL) ? 4096 : atoi(optarg);
+#else
+                printf("Not compiled with -DGPU. Cannot set worker type to GPU.\n");
+#endif
+
             }
             if(strcmp(long_options[option_index].name,"ll") == 0)
             {
@@ -262,6 +272,10 @@ arguments::parse_arguments(int argc, char ** argv)
             {
                 increaseInitialUB = true;
             }
+            else if(strcmp(long_options[option_index].name,"sortDFS")  == 0)
+            {
+                sortNodes = atoi(optarg);
+            }
             else if(strcmp(long_options[option_index].name,"primary-bound") == 0)
             {
                 if(optarg[0]=='j')
@@ -275,6 +289,10 @@ arguments::parse_arguments(int argc, char ** argv)
                 // printf(" == primary-bound %c\n",optarg[2]);
                 // printf(" == primary-bound %c\n",optarg[4]);
             }
+            else if(strcmp(long_options[option_index].name,"heuristic-threads")  == 0)
+            {
+                heuristic_threads = atoi(optarg);
+            }
             break;
         }
         //multi-option, ex. "-z p=fsp,i=ta20,o"
@@ -285,12 +303,10 @@ arguments::parse_arguments(int argc, char ** argv)
             while (*subopts != '\0'){
                 switch (getsubopt(&subopts, problem_opts, &value)) {
                 case PROBLEM:
-                    // strcpy(problem, value);
                     problem = std::string(value);
                     break;
                 case INST:
                     inst_name = std::string(value);
-                    // strcpy(inst_name, value);
                     break;
                 case OPT:
                     read_init_mode(value,init_mode,initial_ub);
@@ -341,13 +357,18 @@ void arguments::arg_summary()
     std::cout<<"Problem:\t\t"<<arguments::problem<<" / Instance "<<arguments::inst_name<<"\n";
     std::cout<<"Worker type:\t\t"<<arguments::worker_type<<std::endl;
     if(arguments::worker_type=='g'){
+#ifdef WITH_GPU
         std::cout<<"#GPU workers:\t\t"<<arguments::nbivms_gpu<<std::endl;
+#else
+        std::cout<<"Not compiled with -DGPU but arguments::worker_type=='g'"<<std::endl;
+#endif
     }
     else if(arguments::worker_type=='c'){
         std::cout<<"#CPU threads:\t\t"<<arguments::nbivms_mc<<std::endl;
     }
 
     std::cout<<"Bounding mode:\t\t"<<arguments::boundMode<<std::endl;
+    //if Johnson bound is Used (PFSP)
     if(arguments::primary_bound == 1 || (arguments::boundMode == 2 && arguments::secondary_bound == 1))
     {
         std::cout<<"\t#Johnson Pairs:\t\t"<<arguments::johnsonPairs<<std::endl;
@@ -364,7 +385,11 @@ void arguments::arg_summary()
     FILE_LOG(logINFO)<<"Problem:\t\t"<<arguments::problem<<" / Instance "<<arguments::inst_name;
     FILE_LOG(logINFO)<<"Worker type:\t\t"<<arguments::worker_type;
     if(arguments::worker_type=='g'){
+#ifdef WITH_GPU
         FILE_LOG(logINFO)<<"#GPU workers:\t\t"<<arguments::nbivms_gpu;
+#else
+        std::cout<<"Not compiled with -DGPU but arguments::worker_type=='g'"<<std::endl;
+#endif
     }
     else if(arguments::worker_type=='c'){
         FILE_LOG(logINFO)<<"#CPU threads:\t\t"<<arguments::nbivms_mc;

@@ -71,20 +71,18 @@ int gpu_worksteal::steal_in_device(int* line, int* pos, int* end, int* dir, int*
 
 
 
+
 gpubb::gpubb(pbab * _pbb, int rank) : pbb(_pbb),size(pbb->size),nbIVM(arguments::nbivms_gpu)
 {
+    //set device should be called before cudaMalloc etc
     int device,num_devices;
     gpuErrchk( cudaGetDeviceCount(&num_devices) );
     gpuErrchk( cudaSetDevice(rank % num_devices) );
 
-    // pbb  = _pbb;
-    // size = pbb->size;
-    // nbIVM    = arguments::nbivms_gpu;
-    // ringsize = nbIVM;
-
-
-
-    // setHypercubeConfig(nbIVM); //work stealing
+    printf(" === Device %d/%d ==\n", rank % num_devices, num_devices);
+    pbb  = _pbb;
+    size = pbb->size;
+    nbIVM    = arguments::nbivms_gpu;
 
     ws = std::make_unique<gpu_worksteal>(size,nbIVM);
 
@@ -106,8 +104,6 @@ gpubb::gpubb(pbab * _pbb, int rank) : pbb(_pbb),size(pbb->size),nbIVM(arguments:
 
     // "one time events"
     firstbound = true;
-    // search_cut = 1.0;
-
 	execmode.triggered = false;
 }
 
@@ -117,17 +113,21 @@ gpubb::~gpubb()
     // free etc
 }
 
+
+
+
 //
 void
 gpubb::initialize(int rank)
 {
+
+
     //-----------mapping MPI_ranks to devices-----------
     int device;
     int num_devices;
     gpuErrchk( cudaGetDeviceCount(&num_devices) );
     gpuErrchk( cudaGetDevice(&device) );
-    std::cout<<rank<<" using device "<<device<<" of "<<num_devices<<"\n";
-    // gpuErrchk( cudaSetDevice(rank % num_devices) );
+
 
 
     gpuErrchk(cudaFree(0));
@@ -232,7 +232,8 @@ gpubb::selectAndBranch(const int NN)
     // int best = INT_MAX;
     // pbb->sltn->getBest(best);
     gpuErrchk(cudaMemset(counter_d, 0, 6 * sizeof(unsigned int)));
-	//dense mapping : one thread = one IVM
+
+    //dense mapping : one thread = one IVM
     goToNext_dense<<< (nbIVM+127) / 128, 128, 0, stream[0] >>>(mat_d, pos_d, end_d, dir_d, line_d, state_d, nbDecomposed_d, counter_d, NN);
 
 	//wide mapping : one warp = one IVM
@@ -633,7 +634,15 @@ gpubb::boundLeaves(bool reached, int& best)
 
     for (int k = 0; k < nbIVM; ++k) {
         if (flags[k] == 1) {
-            int cost=bound->evalSolution(schedule_h+k*size);
+            std::vector<int> tmp_sched(size,0);
+
+            for(int i=0; i<size; i++){
+                tmp_sched[i]=schedule_h[k*size+i];
+            }
+
+            // int cost=bound->evalSolution(schedule_h+k*size);
+            int cost=bound->evalSolution(tmp_sched);
+
             pbb->stats.leaves++;
             // FILE_LOG(logINFO) << "Evaluated Leaf\t" << cost << " vs. Best "<<best;
 
