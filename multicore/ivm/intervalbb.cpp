@@ -157,21 +157,11 @@ void Intervalbb<T>::boundAndKeepSurvivors(subproblem& _subpb)
 
     _IVM->setDirection(dir);
 
-    //all
-    // dir = _IVM->getDirection();
-<<<<<<< HEAD
-    // _IVM->sortSiblingNodes(
-    //     lb[dir],
-    //     prio[dir]
-    // );
-=======
     if(dir == Branching::Front){
         _IVM->sortSiblingNodes(costFwd,prioFwd);
     }else{
         _IVM->sortSiblingNodes(costBwd,prioBwd);
     }
-
->>>>>>> debug
 
     if(dir==Branching::Front)
         eliminateJobs(costFwd);
