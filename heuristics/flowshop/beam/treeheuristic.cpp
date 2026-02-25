@@ -6,7 +6,7 @@
 
 Treeheuristic::Treeheuristic(pbab* _pbb,instance_abstract& inst) :
     pbb(_pbb),
-    tr(std::make_unique<Tree>(inst,inst.size)),
+    tr(std::make_unique<Tree>(inst.size)),
     eval(std::make_unique<bound_fsp_weak_idle>())
 {
     arguments::findAll=0;
