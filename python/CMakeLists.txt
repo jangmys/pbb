@@ -54,7 +54,7 @@ target_sources(pypbb PRIVATE ../multicore/ivm/ivm.cpp)
 target_sources(pypbb PRIVATE ../multicore/ivm/intervalbb.cpp)
 target_sources(pypbb PRIVATE ../multicore/ivm/matrix_controller.cpp)
 
-target_sources(pypbb PRIVATE ../multicore/do/make_ivm_algo.cpp)
+target_sources(pypbb PRIVATE ../multicore/ivm/make_ivm_algo.cpp)
 
 
 
