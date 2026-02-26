@@ -1,5 +1,6 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
+#include <pybind11/stl_bind.h>
 
 #include <iostream>
 #include <vector>
@@ -11,8 +12,11 @@
 
 #include "libheuristic.h"
 #include "matrix_controller.h"
+// #include "log.h"
 
 namespace py = pybind11;
+
+PYBIND11_MAKE_OPAQUE(std::vector<int>)
 
 
 class test_abstract {
@@ -50,12 +54,15 @@ void print_vector(std::vector<int> v){
 }
 
 
-#include "log.h"
 
 PYBIND11_MODULE(pypbb, m) {
     FILELog::ReportingLevel() = logINFO;
 
     m.doc() = "pybind11 example plugin"; // optional module docstring
+
+    // https://pybind11.readthedocs.io/en/stable/advanced/cast/stl.html#making-opaque-types
+    py::bind_vector<std::vector<int>>(m, "VectorInt", py::buffer_protocol());
+    py::implicitly_convertible<py::list, std::vector<int>>();
 
     // //=============================================================
     py::class_<arguments>(m, "args")
