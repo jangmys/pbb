@@ -6,3 +6,4 @@ scripts/
 *.so
 CMakeFiles/
 /omp
+.idea
